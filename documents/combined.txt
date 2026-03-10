@@ -1,0 +1,2223 @@
+=== START api ===
+# SLP API Design (v1)
+
+Base URL: `/api/v1`  
+Authentication: Cookie‑based session (HTTP‑only, secure). All endpoints except explicitly noted require an active session.  
+Response Format: JSON (`application/json`)  
+Pagination: For list endpoints, use `page` and `limit` query parameters (default `page=1`, `limit=20`). Response includes `data` array, `total`, `page`, `limit`.  
+Error Responses: Standard HTTP status codes with a JSON body: `{ "error": { "code": "ERROR_CODE", "message": "Human readable message" } }`
+
+---
+
+## Authentication & Users
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| POST   | `/auth/login`                 | Login with username + password. Sets session cookie. |
+| POST   | `/auth/logout`                | Logout – destroys session. |
+| POST   | `/auth/reset-password`        | Request password reset token. Body: `{ "email": "..." }` |
+| POST   | `/auth/reset-password/confirm`| Confirm reset with token. Body: `{ "token": "...", "new_password": "..." }` |
+| POST   | `/auth/verify-email`          | Submit email verification OTP. Body: `{ "otp": "123456" }` |
+| GET    | `/users/me`                   | Get current user profile. |
+| PUT    | `/users/me`                   | Update profile (e.g., email). Body: `{ "email": "..." }` |
+| POST   | `/users/me/verify-email/send` | Request a new email verification OTP (rate limited). |
+
+---
+
+## Quizzes
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/quizzes`                    | List quizzes. Supports query filters: `visibility` (public/private), `tags` (comma separated), `search` (text). |
+| POST   | `/quizzes`                    | Create a new quiz. Body: `{ "title": "...", "description": "...", "visibility": "public" }` |
+| GET    | `/quizzes/:id`                | Get public quiz data (for taking). Includes questions (cloned snapshot). |
+| PUT    | `/quizzes/:id`                | Update quiz metadata and questions. Body includes full quiz definition (see below). |
+| DELETE | `/quizzes/:id`                | Soft delete (admin only). |
+| POST   | `/quizzes/:id/duplicate`      | Create a copy of the quiz owned by the current user. |
+| GET    | `/quizzes/:id/edit`           | Get detailed quiz for editing, includes mismatch info per question (`mismatch: true` if bank question updated). |
+
+**Quiz Update Payload (PUT):**
+```json
+{
+  "title": "Updated Title",
+  "description": "...",
+  "visibility": "private",
+  "questions": [
+    {
+      "original_question_id": 42,      // null if new custom question
+      "type": "multiple_choice",
+      "content": "What is 2+2?",
+      "explanation": "...",
+      "metadata": {                     // type-specific
+        "options": [{"id": "a", "text": "3"}, ...],
+        "correct": ["b"]
+      },
+      "display_order": 1
+    }
+  ],
+  "source_ids": [1,2,3],
+  "note_ids": [4,5],
+  "tag_names": ["math", "addition"]
+}
+```
+
+---
+
+## Quiz Attempts
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| POST   | `/quizzes/:id/attempts`       | Start a new attempt. Returns `attempt_id`. |
+| GET    | `/attempts/:id`               | Get current attempt state (questions, answers so far). |
+| POST   | `/attempts/:id/answers`       | Submit an answer for a question. Body: `{ "question_id": 123, "answer_json": {...} }` |
+| POST   | `/attempts/:id/submit`        | Finish the attempt (manual submission). Calculates score. |
+| GET    | `/attempts/:id/review`        | Get completed attempt details (snapshots, correct/incorrect). |
+
+---
+
+## Question Bank
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/questions`                  | List bank questions. Supports `type`, `tag`, `search` filters. |
+| POST   | `/questions`                  | Create a new bank question. Body similar to question object (without `original_question_id`). |
+| GET    | `/questions/:id`              | Get bank question. |
+| PUT    | `/questions/:id`              | Update bank question. |
+| DELETE | `/questions/:id`              | Soft delete (hides from bank, but existing quiz clones remain). |
+
+---
+
+## Sources
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| POST   | `/sources`                    | Upload a file (PDF/TXT) or submit text/URL. Multipart/form-data or JSON. Returns source object. |
+| GET    | `/sources/:id`                | Get source metadata and content (rich text, raw_text, etc.). |
+| DELETE | `/sources/:id`                | Soft delete (hides from UI, remains attached to quizzes). |
+| GET    | `/sources/:id/progress`       | Get reading progress for current user. |
+| PUT    | `/sources/:id/progress`       | Update reading progress. Body: `{ "last_position": "paragraph:42" }` |
+
+---
+
+## Explanations
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/sources/:id/explanations`   | List explanations for a source (both system and user). |
+| POST   | `/explanations`               | Create a user explanation. Body: `{ "source_id": 1, "text_range": {...}, "content": "..." }` |
+| PUT    | `/explanations/:id`           | Update explanation (only if `editable` is true). |
+| DELETE | `/explanations/:id`           | Delete user explanation. |
+
+---
+
+## Favorites
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/favorites`                  | List user's favorite items. |
+| POST   | `/favorites`                  | Add a favorite. Body: `{ "text": "word", "type": "word", "note": "optional" }` |
+| PUT    | `/favorites/:id`              | Update note or type. |
+| DELETE | `/favorites/:id`              | Remove from favorites. |
+
+---
+
+## Comments
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/comments`                   | List comments. Requires `target` query param: `target=quiz:123` or `target=question:456`. Supports pagination. |
+| POST   | `/comments`                   | Create a comment. Body: `{ "target_type": "quiz", "target_id": 123, "content": "...", "parent_id": null }` |
+| PUT    | `/comments/:id`               | Edit own comment. Body: `{ "content": "..." }` |
+| DELETE | `/comments/:id`               | Soft delete own comment (or admin). |
+| POST   | `/comments/:id/report`        | Report a comment. Body: `{ "reason": "spam" }` |
+
+---
+
+## Reports (Admin only)
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/reports`                    | List unresolved reports. |
+| POST   | `/reports/:id/resolve`        | Mark a report as resolved. Body: `{ "action_taken": "disabled quiz" }` |
+
+---
+
+## LLM (AI) Operations
+
+All LLM endpoints accept a request and return a job ID. Processing is asynchronous via Kafka; the frontend can poll or use WebSocket for completion (not specified, but typical pattern). For simplicity, we'll define synchronous‑style endpoints that queue and return immediately with a job ID, and a separate status endpoint.
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| POST   | `/llm/explain`                | Request explanation for selected text. Body: `{ "source_id": 1, "text_range": {...} }` |
+| POST   | `/llm/generate-questions`     | Generate questions from source text. Body: `{ "source_id": 1, "count": 5 }` |
+| POST   | `/llm/summarize`              | Summarize source. Body: `{ "source_id": 1 }` |
+| POST   | `/llm/grammar-check`          | Check grammar of selected text. Body: `{ "text": "..." }` |
+| GET    | `/llm/jobs/:job_id`           | Get status/result of an LLM job. |
+
+---
+
+## Admin
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/admin/users`                | List all users (with filters: role, status). |
+| POST   | `/admin/users/:id/ban`        | Ban a user. |
+| POST   | `/admin/users/:id/unban`      | Unban a user. |
+| GET    | `/admin/quizzes`              | List all quizzes (with filters). |
+| POST   | `/admin/quizzes/:id/disable`  | Disable a quiz (no new attempts). |
+| POST   | `/admin/quizzes/:id/enable`   | Re‑enable a quiz. |
+| GET    | `/admin/comments`             | List all comments (with filters). |
+| DELETE | `/admin/comments/:id`         | Soft delete any comment. |
+| POST   | `/admin/comments/:id/restore` | Restore a soft‑deleted comment. |
+
+---
+
+## Search
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/search`                     | Global search. Query param `q=...`. Optionally filter by `type` (quiz, question, source, favorite). Returns paginated mixed results with type indicator. |
+
+---
+
+## Tags
+
+| Method | Path                          | Description |
+|--------|-------------------------------|-------------|
+| GET    | `/tags`                       | List all tags used across quizzes/questions (with usage count). Supports prefix search via `q` param. |
+
+---
+
+## Data Models (Selected)
+
+**User**
+```json
+{
+  "id": 1,
+  "username": "johndoe",
+  "email": "john@example.com",
+  "email_confirmed": true,
+  "role": "user",
+  "status": "active",
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+**Quiz**
+```json
+{
+  "id": 10,
+  "title": "Math Basics",
+  "description": "Simple arithmetic",
+  "user_id": 1,
+  "visibility": "public",
+  "note_id": null,
+  "created_at": "...",
+  "updated_at": "...",
+  "tags": ["math", "addition"],
+  "question_count": 5,
+  "attempt_count": 42
+}
+```
+
+**Question** (bank)
+```json
+{
+  "id": 100,
+  "type": "multiple_choice",
+  "content": "What is 2+2?",
+  "explanation": "Basic addition",
+  "metadata": {
+    "options": [
+      {"id": "a", "text": "3"},
+      {"id": "b", "text": "4"},
+      {"id": "c", "text": "5"}
+    ],
+    "correct": ["b"]
+  },
+  "created_at": "...",
+  "updated_at": "...",
+  "tags": ["math"]
+}
+```
+
+**QuizQuestion** (as stored in quiz)
+```json
+{
+  "id": 200,
+  "quiz_id": 10,
+  "original_question_id": 100,
+  "type": "multiple_choice",
+  "content": "What is 2+2?",
+  "explanation": "...",
+  "metadata": { ... },
+  "display_order": 1,
+  "created_at": "...",
+  "mismatch": false   // only in edit view
+}
+```
+
+**Source**
+```json
+{
+  "id": 300,
+  "type": "pdf",
+  "title": "My Notes",
+  "url": null,
+  "content": "<p>Rich text...</p>",
+  "raw_text": "Plain text...",
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+**Attempt**
+```json
+{
+  "id": 400,
+  "quiz_id": 10,
+  "user_id": 1,
+  "start_time": "...",
+  "end_time": null,
+  "score": null,
+  "max_score": 5,
+  "status": "in_progress"
+}
+```
+
+---
+
+## Notes
+
+- All `POST`, `PUT`, `DELETE` endpoints return the created/updated resource or a success message.
+- File uploads for sources use `multipart/form-data` with fields: `file` (for PDF/TXT) or `text` (for plain text) or `url` (for link import).
+- Admin endpoints require `role=admin` in the session.
+- Rate limits are enforced per IP (see design doc). Responses may include `X-RateLimit-*` headers.
+- Session cookie name: `slp_session` (HTTP‑only, Secure, SameSite=Lax).
+- For paginated lists, the response envelope is:
+  ```json
+  {
+    "data": [...],
+    "total": 100,
+    "page": 1,
+    "limit": 20
+  }
+  ```
+- Error codes follow resource‑action conventions, e.g., `AUTH_INVALID_CREDENTIALS`, `QUIZ_NOT_FOUND`, `VALIDATION_ERROR`.
+
+This API design covers all major features described in the SLP design document, including authentication, content management, learning interactions, and administrative functions.
+=== END api ===
+
+=== START database ===
+# Self Learning Platform – Database Design
+
+## Core Tables
+
+### `users`
+| Column            | Type           | Modifiers                                      | Description |
+|-------------------|----------------|------------------------------------------------|-------------|
+| id                | SERIAL         | PRIMARY KEY                                    | Unique user ID |
+| username          | VARCHAR(50)    | NOT NULL UNIQUE                                | Immutable after creation |
+| password_hash     | VARCHAR(255)   | NOT NULL                                       | Argon2id hash |
+| email             | VARCHAR(255)   | UNIQUE                                         | Optional, immutable once confirmed |
+| email_confirmed   | BOOLEAN        | NOT NULL DEFAULT false                         | |
+| role              | VARCHAR(20)    | NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')) | |
+| status            | VARCHAR(20)    | NOT NULL DEFAULT 'active' CHECK (status IN ('active','banned')) | Banned users cannot log in |
+| created_at        | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at        | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `username`, `email` (unique), `status`.
+
+### `password_reset_tokens`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| token         | VARCHAR(64)    | NOT NULL UNIQUE                                | Secure random token |
+| expires_at    | TIMESTAMPTZ    | NOT NULL                                       | 30 minutes from creation |
+| used          | BOOLEAN        | NOT NULL DEFAULT false                         | |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `token`, `user_id`, `expires_at`.
+
+### `email_verification_otps`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| otp           | CHAR(6)        | NOT NULL                                       | 6-digit code |
+| expires_at    | TIMESTAMPTZ    | NOT NULL                                       | 10 minutes |
+| attempts      | INTEGER        | NOT NULL DEFAULT 0                             | Count attempts for this OTP |
+| resent_count  | INTEGER        | NOT NULL DEFAULT 0                             | Count resends (within expiry) |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| used_at       | TIMESTAMPTZ    |                                                | When successfully used |
+
+**Indexes**: `user_id` (unique for active? We'll allow multiple, but we can clean up expired). Better to have a unique constraint on `(user_id, used_at)`? Not needed. We'll rely on application to enforce max resends/attempts.
+
+## Content Tables
+
+### `source`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | Owner |
+| type          | VARCHAR(20)    | NOT NULL CHECK (type IN ('book','link','note','pdf','txt')) | |
+| title         | VARCHAR(255)   | NOT NULL                                       | |
+| url           | TEXT           |                                                | For 'link' type |
+| content       | JSONB          |                                                | Rich text (TipTap JSON) |
+| raw_html      | TEXT           |                                                | Original HTML (if imported) |
+| raw_text      | TEXT           |                                                | Extracted plain text (for search) |
+| file_path     | TEXT           |                                                | Path to uploaded file (PDF/TXT) |
+| metadata      | JSONB          |                                                | Additional metadata (e.g., author, page count) |
+| deleted_at    | TIMESTAMPTZ    |                                                | Soft delete flag |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, `deleted_at` (partial for active sources), GIN on `raw_text` for full‑text search, GIN on `metadata`.
+
+### `note`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| title         | VARCHAR(255)   | NOT NULL                                       | |
+| content       | TEXT           | NOT NULL                                       | Markdown or rich text? We'll use TEXT for now. |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`.
+
+### `quiz`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | Creator |
+| title         | VARCHAR(255)   | NOT NULL                                       | |
+| description   | TEXT           |                                                | |
+| visibility    | VARCHAR(20)    | NOT NULL DEFAULT 'private' CHECK (visibility IN ('public','private')) | |
+| disabled      | BOOLEAN        | NOT NULL DEFAULT false                         | Admin‑disabled; blocks new attempts |
+| note_id       | INTEGER        | REFERENCES note(id) ON DELETE SET NULL         | Optional associated note |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, `visibility`, `disabled`, `created_at`.
+
+### `quiz_source`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| quiz_id       | INTEGER        | REFERENCES quiz(id) ON DELETE CASCADE          | |
+| source_id     | INTEGER        | REFERENCES source(id) ON DELETE CASCADE        | |
+| PRIMARY KEY (quiz_id, source_id) |           |                                                | |
+
+**Indexes**: `source_id` (for reverse lookup).
+
+### `quiz_note`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| quiz_id       | INTEGER        | REFERENCES quiz(id) ON DELETE CASCADE          | |
+| note_id       | INTEGER        | REFERENCES note(id) ON DELETE CASCADE          | |
+| PRIMARY KEY (quiz_id, note_id) |           |                                                | |
+
+**Indexes**: `note_id`.
+
+## Question System
+
+### `question` (bank)
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | Creator |
+| type          | VARCHAR(20)    | NOT NULL CHECK (type IN ('multiple_choice','single_choice','fill_blank','ordering','matching','true_false','flashcard')) | |
+| content       | TEXT           | NOT NULL                                       | Question text/prompt |
+| explanation   | TEXT           |                                                | Optional explanation |
+| metadata      | JSONB          | NOT NULL                                       | Type‑specific data (options, answers, etc.) |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, `type`, GIN on `metadata`, GIN on `content` for full‑text search.
+
+### `quiz_question`
+| Column              | Type           | Modifiers                                      | Description |
+|---------------------|----------------|------------------------------------------------|-------------|
+| id                  | SERIAL         | PRIMARY KEY                                    | Surrogate key for ordering and stable references |
+| quiz_id             | INTEGER        | NOT NULL REFERENCES quiz(id) ON DELETE CASCADE | |
+| original_question_id| INTEGER        | REFERENCES question(id) ON DELETE SET NULL     | Reference to bank question (if any) |
+| question_snapshot   | JSONB          | NOT NULL                                       | Cloned question data (type, content, explanation, metadata) |
+| display_order       | INTEGER        | NOT NULL                                       | Order within quiz |
+| created_at          | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at          | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `quiz_id`, `original_question_id`, `display_order`.  
+**Note**: The snapshot preserves the question as it was at creation time, allowing edits to bank without breaking old attempts.
+
+## Quiz Attempts
+
+### `quiz_attempt`
+| Column         | Type           | Modifiers                                      | Description |
+|----------------|----------------|------------------------------------------------|-------------|
+| id             | SERIAL         | PRIMARY KEY                                    | |
+| user_id        | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| quiz_id        | INTEGER        | NOT NULL REFERENCES quiz(id) ON DELETE CASCADE | |
+| start_time     | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| end_time       | TIMESTAMPTZ    |                                                | When submitted or abandoned |
+| score          | INTEGER        |                                                | Number of correct answers |
+| max_score      | INTEGER        | NOT NULL                                       | Total questions in attempt |
+| question_count | INTEGER        | NOT NULL                                       | Should equal max_score |
+| status         | VARCHAR(20)    | NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','completed','abandoned')) | |
+| created_at     | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at     | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, `quiz_id`, `status`, `start_time`.  
+**Note**: Unfinished attempts auto‑abandoned after 24h (handled by application).
+
+### `quiz_attempt_answer`
+| Column            | Type           | Modifiers                                      | Description |
+|-------------------|----------------|------------------------------------------------|-------------|
+| id                | SERIAL         | PRIMARY KEY                                    | |
+| attempt_id        | INTEGER        | NOT NULL REFERENCES quiz_attempt(id) ON DELETE CASCADE | |
+| quiz_question_id  | INTEGER        | NOT NULL REFERENCES quiz_question(id) ON DELETE CASCADE | The specific question snapshot instance |
+| question_snapshot | JSONB          | NOT NULL                                       | Redundant snapshot for safety (or we can join quiz_question) |
+| answer_json       | JSONB          | NOT NULL                                       | User's answer (format depends on question type) |
+| is_correct        | BOOLEAN        |                                                | Null if not yet scored? But we score per question; after submission, set. |
+| created_at        | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at        | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `attempt_id`, `quiz_question_id`.  
+**Note**: `question_snapshot` could be omitted if we always join `quiz_question`, but storing it ensures historical integrity if quiz_question is ever updated (though quiz_question itself is a snapshot, so it's immutable). We'll keep it for clarity.
+
+## Favorites & Reading
+
+### `favorite_item`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| text          | TEXT           | NOT NULL                                       | The word/phrase/idiom |
+| type          | VARCHAR(20)    | NOT NULL DEFAULT 'word' CHECK (type IN ('word','phrase','idiom','other')) | |
+| note          | TEXT           |                                                | Personal note |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, GIN on `text` for full‑text search.
+
+### `user_source_progress`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| source_id     | INTEGER        | NOT NULL REFERENCES source(id) ON DELETE CASCADE | |
+| last_position | TEXT           |                                                | Opaque position indicator (e.g., paragraph index or character offset) |
+| updated_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| UNIQUE (user_id, source_id) |           |                                                | |
+
+**Indexes**: `user_id`, `source_id`.
+
+### `explanation`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | REFERENCES users(id) ON DELETE SET NULL        | NULL if system‑generated |
+| source_id     | INTEGER        | NOT NULL REFERENCES source(id) ON DELETE CASCADE | |
+| text_range    | JSONB          | NOT NULL                                       | e.g., `{start:100, end:150}` or paragraph/offset |
+| content       | TEXT           | NOT NULL                                       | Explanation text |
+| author_type   | VARCHAR(10)    | NOT NULL CHECK (author_type IN ('system','user')) | |
+| editable      | BOOLEAN        | NOT NULL DEFAULT true                           | User explanations editable; system not |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+| updated_at    | TIMESTAMPTZ    |                                                | |
+
+**Indexes**: `source_id`, `user_id`, GIN on `text_range`? We'll keep it simple; application will query by source and possibly range.
+
+## Tagging
+
+### `tag`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| name          | VARCHAR(50)    | NOT NULL UNIQUE                                | Normalized lowercase |
+
+### `quiz_tag`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| quiz_id       | INTEGER        | REFERENCES quiz(id) ON DELETE CASCADE          | |
+| tag_id        | INTEGER        | REFERENCES tag(id) ON DELETE CASCADE           | |
+| PRIMARY KEY (quiz_id, tag_id) |           |                                                | |
+
+**Indexes**: `tag_id`.
+
+### `question_tag`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| question_id   | INTEGER        | REFERENCES question(id) ON DELETE CASCADE      | |
+| tag_id        | INTEGER        | REFERENCES tag(id) ON DELETE CASCADE           | |
+| PRIMARY KEY (question_id, tag_id) |       |                                                | |
+
+**Indexes**: `tag_id`.
+
+## Comments & Moderation
+
+### `comment`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| parent_id     | INTEGER        | REFERENCES comment(id) ON DELETE CASCADE       | For nested replies (max depth 5 enforced by app) |
+| target_type   | VARCHAR(20)    | NOT NULL CHECK (target_type IN ('quiz','source','question')) | |
+| target_id     | INTEGER        | NOT NULL                                       | ID of the target entity |
+| content       | TEXT           | NOT NULL                                       | |
+| deleted_at    | TIMESTAMPTZ    |                                                | Soft delete |
+| edited_at     | TIMESTAMPTZ    |                                                | Set when edited |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `target_type`, `target_id`, `created_at`, `parent_id`, `deleted_at`.  
+**Note**: We'll rely on application to validate that `target_id` exists in the respective table (no FK due to polymorphic nature).
+
+### `report`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | Reporter |
+| target_type   | VARCHAR(20)    | NOT NULL CHECK (target_type IN ('quiz','question','comment')) | |
+| target_id     | INTEGER        | NOT NULL                                       | |
+| reason        | TEXT           | NOT NULL                                       | |
+| resolved      | BOOLEAN        | NOT NULL DEFAULT false                         | |
+| resolved_by   | INTEGER        | REFERENCES users(id) ON DELETE SET NULL        | Admin who resolved |
+| resolved_at   | TIMESTAMPTZ    |                                                | |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `target_type`, `target_id`, `resolved`, `created_at`.
+
+### `admin_log`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| admin_id      | INTEGER        | NOT NULL REFERENCES users(id) ON DELETE CASCADE | |
+| action        | VARCHAR(50)    | NOT NULL                                       | e.g., 'ban_user', 'disable_quiz', 'delete_comment' |
+| target_type   | VARCHAR(20)    |                                                | |
+| target_id     | INTEGER        |                                                | |
+| details       | JSONB          |                                                | Additional data |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `admin_id`, `created_at`.
+
+## LLM & System Logs
+
+### `llm_log`
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| user_id       | INTEGER        | REFERENCES users(id) ON DELETE SET NULL        | NULL if unauthenticated (not applicable here, all users logged in) |
+| request_type  | VARCHAR(30)    | NOT NULL CHECK (request_type IN ('explain','generate_questions','summarize','grammar_check')) | |
+| prompt        | TEXT           | NOT NULL                                       | The input sent to LLM |
+| response      | TEXT           |                                                | Raw LLM output |
+| tokens_used   | INTEGER        |                                                | Approximate token count |
+| created_at    | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `user_id`, `request_type`, `created_at`.
+
+### `quiz_view` (for view counting)
+| Column        | Type           | Modifiers                                      | Description |
+|---------------|----------------|------------------------------------------------|-------------|
+| id            | SERIAL         | PRIMARY KEY                                    | |
+| quiz_id       | INTEGER        | NOT NULL REFERENCES quiz(id) ON DELETE CASCADE | |
+| ip_address    | INET           | NOT NULL                                       | |
+| viewed_at     | TIMESTAMPTZ    | NOT NULL DEFAULT NOW()                         | |
+
+**Indexes**: `quiz_id`, `ip_address`, `viewed_at`.  
+**Note**: Unique constraint on `(quiz_id, ip_address, date_trunc('hour', viewed_at))` could be enforced by application to ensure one view per IP per hour.
+
+## Additional Considerations
+
+- **Full‑Text Search**: Use PostgreSQL GIN indexes on `raw_text` (source), `content` (question), `text` (favorite_item), `title` and `description` (quiz). We'll create a combined search function or materialized view as needed.
+- **Soft Deletes**: For tables with `deleted_at`, all queries should filter `deleted_at IS NULL` unless explicitly including deleted items (e.g., admin views).
+- **Timestamps**: All tables include `created_at` and `updated_at` (where applicable). Use `TIMESTAMPTZ` for timezone awareness.
+- **JSONB Validation**: Application must ensure metadata conforms to expected schemas per question type.
+- **Rate Limiting**: Not stored in DB; handled by Redis.
+- **File Storage**: File paths reference local filesystem; metadata in `source` table.
+- **Concurrency**: Optimistic locking not required; last write wins for quiz answers.
+
+This design covers all entities and relationships described in the SLP design document, with appropriate indexes and constraints for a PostgreSQL implementation.
+=== END database ===
+
+=== START overview ===
+# SLP — Self Learning Platform (Concise Design Document)
+
+## 1. Overview
+Personal learning platform for individuals to learn via quizzes, flashcards, reading, notes, and AI assistance. Focus: language & general knowledge. Users work individually; minimal interaction (public quizzes, comments). Public content discoverable via search.
+
+## 2. Users & Authentication
+- **Account fields**: id, username (unique, immutable), password_hash (Argon2id), email (optional, can be verified, immutable once confirmed), email_confirmed, role (user/admin), status, timestamps.
+- **Login**: username + password only; cookie‑based sessions (HTTP‑only, 7 days). No OAuth.
+- **Password reset**: single‑use token links (30 min expiry).
+- **Email verification**: 6‑digit OTP (10 min expiry, max 5 resends/hr, 10 attempts).
+- **Account deletion**: Not allowed by user; admins can ban (redirect to banned page).
+- **Admin capabilities**: ban users, disable quizzes, moderate comments.
+
+## 3. Quiz System
+- **Quiz table**: id, title, description, user_id, visibility (public/private), note_id (optional), timestamps.
+- **Sources** (books, links, personal notes): table with type, title, url, content (rich text), raw_html, raw_text. Users upload PDF/TXT, paste text, or import links (HTML fetched → cleaned with Readability). PDF text extraction via Apache PDFBox (max 20 MB, 5 MB for TXT). Max processed text 100k chars.
+- **Quiz–Source**: many‑to‑many via `quiz_source`.
+- **Quiz–Note**: many‑to‑many via `quiz_note`; notes are user‑created explanations/reminders.
+- **Quiz attempts**: unlimited, store full snapshots.
+  - `quiz_attempt`: id, user_id, quiz_id, start/end time, score, max_score, question_count, status (completed/abandoned).
+  - `quiz_attempt_answer`: attempt_id, question_id, question_snapshot (JSON), answer_json, is_correct.
+  - Unfinished attempts auto‑abandon after 24 hrs; resume allowed within that window.
+- **Attempt review**: users can see past attempts, incorrect answers, stats.
+- **Quiz timing**: no timer; users can take as long as needed.
+- **Quiz editing**: allowed after attempts exist; edits do not affect existing attempts (snapshots preserved). New attempts use latest version.
+- **Visibility**: private → hidden from search/comments, no new attempts; visible to creator. Admin‑disabled quizzes block new attempts but remain viewable to creator.
+
+## 4. Question System
+- **Question bank** (`question`): id, type, content, explanation, metadata (JSON), timestamps.
+- **Quiz question cloning**: quizzes use `quiz_question` table with copy of question data + original_question_id, display_order. Ensures quiz stability.
+- If bank question changes, quizzes show a mismatch notification; deletion of bank question does not affect quizzes.
+- **Types**: multiple_choice, single_choice, fill_blank, ordering, matching, true_false, flashcard.
+- **Metadata schemas** (examples):
+  - multiple/single choice: `{options: [{id,text}], correct: [ids]}`
+  - fill_blank: `{answers: ["answer1"]}` (case‑insensitive match)
+  - ordering: `{items: ["A","B"], correct_order: [2,1]}`
+  - matching: `{pairs: [{left, right}]}`
+  - true_false: `{correct: true}`
+  - flashcard: `{front, back}`
+- **Scoring**: 1 point per question, exact match only (no partial).
+- **Randomization**: optional random question order (flashcards grouped first, then scored questions randomized) and random answer order.
+
+## 5. Flashcards
+- Informational, unscored questions. Can appear interleaved in quizzes.
+- Spaced repetition **not** implemented.
+
+## 6. Reading System
+- Sources stored with rich text (TipTap JSON), raw_html, raw_text.
+- **Text interaction**: select text → bubble popover → modal with actions:
+  1. **Explain**: check internal DB; user can add personal explanation; optionally generate via LLM.
+  2. **Grammar check**: returns incorrect parts, corrected text, explanation (no auto‑apply).
+  3. **TTS**: read selected text (English only, Piper TTS, max 500 chars).
+  4. **Add to favorites** (see §8).
+- Highlights are temporary (browser selection only).
+
+## 7. LLM Integration
+- Local models via llama.cpp (Mistral 7B Instruct). Max input 4000 tokens.
+- **Prompts** enforce JSON output where required; backend validates JSON.
+- **Question generation**: from text; user selects number of questions (max based on content). Output structured JSON; user must review/edit before saving.
+- **Quiz generation**: from text, with user‑selected question count.
+- **Summarization**: free‑form text, stored.
+- **Grammar checking**: as above.
+- **Logging**: all requests stored indefinitely (`llm_log`).
+- **Safety**: JSON validation only; duplicate questions allowed; web content parsed without LLM to avoid prompt injection.
+
+## 8. Favorites
+- Personal vocabulary notebook: `favorite_item` (id, user_id, text, type (word/phrase/idiom/other), note, timestamps).
+- Editable, deletable. Not linked automatically to other entities. No spaced repetition.
+
+## 9. Tagging
+- Global, flat tags (`tag` with name, normalized lowercase). Many‑to‑many with quizzes and questions via `quiz_tag`, `question_tag`. Max 10 tags per entity.
+- Created by entering comma‑separated values.
+
+## 10. Search
+- PostgreSQL Full‑Text Search (language = simple). Pagination 20 items.
+- **Searchable**: quizzes (title, description, tags, question content), questions (content, explanation, tags), sources (title, text), favorites.
+- **Ranking**: exact match in title → exact match other fields → fuzzy title → fuzzy other.
+
+## 11. Moderation
+- Users can report quizzes, questions, comments (`report` table).
+- Admin actions (bans, disable quizzes/comments) logged in `admin_log`.
+- Soft delete for comments (displayed as "deleted comment").
+- Deleted sources soft‑deleted (`deleted_at`), remain attached to quizzes but hidden from search.
+
+## 12. System Architecture
+- Frontend ↔ Backend API (REST + procedure‑style) ↔ PostgreSQL.
+- Additional services: LLM (llama.cpp), TTS (Piper).
+- Business logic in backend.
+
+## 13. Storage & Performance
+- Expected users: ~1000.
+- Heavy storage: sources, quiz attempts, LLM logs – all in PostgreSQL.
+- Uploaded files (PDF, TXT) stored on filesystem with metadata in DB.
+- Indexes on large tables (attempts, answers, comments, reports).
+- Rate limiting: login (10/min), comments (20/min), quiz attempts (30/hr), LLM (10/hr).
+
+## 14. Security
+- Password hashing: Argon2id (64 MB, 3 passes, 1 thread).
+- Sessions: cookie‑based, HTTP‑only, expire after 7 days.
+- HTML sanitization (rich text): remove script, iframe, object, embed, onclick, javascript: links.
+- File size limits: PDF 20 MB, TXT 5 MB.
+- Rate limiting as above.
+
+## 15. Additional Design Clarifications
+
+### 15.1 Relationships (Core Tables)
+```
+User
+ ├── Sources
+ ├── Questions (bank)
+ ├── Quizzes
+ │    ├── quiz_source (m:m)
+ │    ├── quiz_note (m:m)
+ │    └── quiz_question (cloned)
+ ├── Favorites
+ └── QuizAttempts
+      └── QuizAttemptAnswers
+```
+
+### 15.2 Content Lifecycle
+- Sources: soft delete.
+- Quizzes: private/disabled states; creator always sees own.
+- Comments: soft delete, nested replies max depth 5, editable with `edited_at`.
+- Reports: target_type + target_id, reason.
+
+### 15.3 API Examples
+```
+POST   /auth/login
+POST   /quiz
+GET    /quiz/:id
+POST   /quiz/:id/attempt
+POST   /attempt/:id/answer
+POST   /attempt/:id/submit
+POST   /sources
+POST   /comment
+```
+
+### 15.4 Backup
+- Daily PostgreSQL dump + file storage backup, retained 30 days.
+
+### 15.5 UI/UX
+- Mobile‑first design.
+- Text selection bubble with actions.
+- Quiz player: navigate freely, change answers before submit, manual submission.
+- Reading progress tracking (resume later).
+
+### 15.6 Miscellaneous
+- View counting: 1 view per IP per hour.
+- Quiz player auto‑saves answers periodically.
+- No rating system.
+- Attempt snapshots ensure historical consistency.
+- Question mismatch notification when bank question changes.
+
+### 16.1 Authentication & User Management
+
+- **Email requirements**: Email is not **required** for registration.
+- **Email verification**: Users can verify their email via the profile page. Verification is **optional** but recommended. Unverified emails do not block login or basic usage.
+- **Account deletion**: Not allowed by users. Admins can ban accounts. Do not implement privacy regulations.
+- **Password reset flow**: Uses single‑use tokens sent to the registered email. Tokens expire after 30 minutes.
+
+### 16.2 Content Processing & External Services
+
+- **PDF/Text extraction**: Handled by a dedicated **microservice** (separate from the main backend). It exposes a REST API that accepts file uploads, extracts text using Apache PDFBox (or equivalent library), and returns plain text. The main backend stores the extracted text in the `source` table.
+- **LLM integration (llama.cpp)**:
+  - Requests are placed into an **Apache Kafka** queue to serialize processing and avoid overloading the local model.
+  - A consumer service picks up jobs, calls llama.cpp, and stores results in the `llm_log` table.
+  - No GPU constraints (runs on personal laptop CPU).
+- **TTS (Piper)**: Similarly, TTS requests are queued via Kafka. A consumer calls the Piper CLI or HTTP endpoint and returns the audio data (or a URL) to the frontend.
+- **Email delivery**: A separate lightweight email service (e.g., **Postal**, **Mailcow**, or a simple SMTP server) handles all outgoing emails. The main backend sends email requests via HTTP or SMTP.
+
+### 16.3 Data Model & Storage
+
+- **Reading progress**: New table `user_source_progress`:
+  ```sql
+  CREATE TABLE user_source_progress (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES user(id) ON DELETE CASCADE,
+      source_id INT REFERENCES source(id) ON DELETE CASCADE,
+      last_position TEXT,        -- e.g., paragraph index or character offset
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_id, source_id)
+  );
+  ```
+- **Explain feature**: New table `explanation`:
+  ```sql
+  CREATE TABLE explanation (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES user(id) ON DELETE CASCADE, -- NULL for system-generated
+      source_id INT REFERENCES source(id) ON DELETE CASCADE,
+      text_range JSONB,           -- {start: int, end: int} or {paragraph: int, offset: int}
+      content TEXT NOT NULL,
+      author_type VARCHAR(10) CHECK (author_type IN ('system', 'user')),
+      editable BOOLEAN DEFAULT true, -- user explanations can be edited; system ones cannot
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP
+  );
+  ```
+- **Quiz question mismatch detection**: When fetching a quiz for editing, the backend checks each `quiz_question` against its `original_question_id` (if any). If the bank question’s `updated_at` is newer than the `quiz_question.created_at`, the response includes a `mismatch: true` flag per question. The UI displays a warning icon next to such questions.
+- **Soft‑deleted sources**: When a source is soft‑deleted (`deleted_at` set), it becomes **completely invisible** in all UI contexts, including quizzes that reference it. The `quiz_source` link remains in the database but is ignored in all queries. Quiz questions derived from the source are unaffected (they are snapshots).
+
+### 16.4 Security & Rate Limiting
+
+- **Rate limiting**: All rate limits are enforced **per IP address** using Redis. Limits:
+  - Login: 10 requests/minute
+  - Comments: 20 requests/minute
+  - Quiz attempts: 30/hour
+  - LLM requests: 10/hour
+- **Session storage**: Stored in Redis with a 7‑day TTL. Session cookie is HTTP‑only and secure.
+- **HTML sanitization**: A dedicated microservice (or library) sanitizes rich text. **Allowed tags and attributes**:
+  ```
+  Tags: p, br, strong, em, u, s, ul, ol, li, blockquote, pre, code, a, img, h1, h2, h3, h4, h5, h6, span, div
+  Attributes (global): class, id
+  a: href, target="_blank"
+  img: src, alt, width, height (all URLs must be HTTPS)
+  ```
+  All `on*` attributes, `javascript:`, `iframe`, `object`, `embed`, `script` are stripped.
+- **File upload security**: No virus scanning. File size limits: PDF ≤20 MB, TXT ≤5 MB.
+
+### 16.5 Business Logic & Features
+
+- **Tag moderation**: No moderation. Tags are free‑form text, normalized to lowercase. Users can create any tags.
+- **LLM log retention**: Logs are stored indefinitely for debugging and improvement. No automatic anonymization.
+- **Admin dashboard**:
+  - **Users**: List all users with search/filter. Actions: ban, unban, view details (profile, quiz count, reports). Banned users see a “banned” message on login.
+  - **Quizzes**: List quizzes with visibility and status. Actions: disable (prevent new attempts), enable, delete (soft).
+  - **Comments**: List comments with reply threads. Actions: soft‑delete, restore.
+  - **Reports**: List unresolved reports (target type: quiz, question, comment). Actions: mark as resolved, take action on target (e.g., disable quiz, delete comment). All actions logged in `admin_log`.
+  - **System logs**: Optional view of `admin_log` and `llm_log` (for troubleshooting).
+  - **UI**: Sidebar navigation, tables with pagination (20 items), modals for confirmations.
+- **Concurrency in quiz attempts**: Not handled. In the rare event of simultaneous submissions, last write wins. This is considered acceptable.
+
+### 16.6 Technical Architecture & API Design
+
+- **Backend API**: RESTful with some RPC-style actions. Base URL: `/api/v1/`. All endpoints return JSON.
+  ```
+  Authentication
+  POST   /auth/login          – username/password → set cookie
+  POST   /auth/logout
+  POST   /auth/reset-password – request token
+  POST   /auth/reset-password/confirm – set new password
+  POST   /auth/verify-email   – submit OTP
+
+  Users
+  GET    /users/me
+  PUT    /users/me            – update profile (email, etc.)
+  POST   /users/me/verify-email/send – request OTP
+
+  Quizzes
+  GET    /quizzes             – list (with filters: visibility, tags)
+  POST   /quizzes             – create
+  GET    /quizzes/:id
+  PUT    /quizzes/:id         – update
+  DELETE /quizzes/:id         – soft delete (admin only)
+  POST   /quizzes/:id/duplicate
+  GET    /quizzes/:id/edit    – detailed for editing (includes mismatch info)
+
+  Quiz attempts
+  POST   /quizzes/:id/attempts            – start new attempt
+  GET    /attempts/:id                     – get current attempt state
+  POST   /attempts/:id/answers             – submit an answer (last write wins)
+  POST   /attempts/:id/submit               – finish attempt
+  GET    /attempts/:id/review                – review completed attempt
+
+  Sources
+  POST   /sources               – upload file or paste text
+  GET    /sources/:id
+  DELETE /sources/:id            – soft delete
+  GET    /sources/:id/progress   – get reading progress
+  PUT    /sources/:id/progress   – update reading progress
+
+  Explanations
+  GET    /sources/:id/explanations
+  POST   /explanations           – create (user)
+  PUT    /explanations/:id       – edit (if editable)
+  DELETE /explanations/:id
+
+  Favorites
+  GET    /favorites
+  POST   /favorites
+  PUT    /favorites/:id
+  DELETE /favorites/:id
+
+  Comments
+  GET    /comments?target=quiz:123
+  POST   /comments
+  PUT    /comments/:id
+  DELETE /comments/:id            – soft delete
+  POST   /comments/:id/report
+
+  Reports
+  GET    /reports                 – admin only
+  POST   /reports/:id/resolve     – admin only
+
+  LLM
+  POST   /llm/explain             – queue explanation request
+  POST   /llm/generate-questions   – queue question generation
+  POST   /llm/summarize
+  POST   /llm/grammar-check
+
+  Admin
+  GET    /admin/users
+  POST   /admin/users/:id/ban
+  POST   /admin/users/:id/unban
+  GET    /admin/quizzes
+  POST   /admin/quizzes/:id/disable
+  POST   /admin/quizzes/:id/enable
+  GET    /admin/comments
+  DELETE /admin/comments/:id       – soft delete
+  POST   /admin/comments/:id/restore
+  ```
+
+- **Frontend text selection (mobile)**:
+  - When the user selects text via tap‑and‑hold, the native selection handles appear.
+  - Upon releasing the selection, a **floating bubble menu** appears near the selected text (positioned above or below, avoiding handles).
+  - The bubble contains icons/buttons: **Explain**, **Grammar**, **TTS**, **Add to favorites** (if applicable). Tapping an icon opens a modal with the corresponding action (e.g., show explanation, listen).
+  - On small screens, the bubble is touch‑friendly (minimum tap target 44×44 px) and can be dismissed by tapping outside.
+  - For long selections, the bubble remains anchored to the selection while the user scrolls (if possible).
+=== END overview ===
+
+=== START project_structure ===
+Below is a detailed project file structure for the **SLP (Self Learning Platform)** based on the provided design. The structure is organized to support a service‑oriented architecture with a .NET backend, a modern frontend, multiple microservices, and all required infrastructure components. All paths are relative to the project root (`SLP/`).
+
+```
+SLP/
+├── backend/                      # Main backend API (ASP.NET Core)
+│   ├── Controllers/               # REST endpoints
+│   │   ├── AuthController.cs
+│   │   ├── UsersController.cs
+│   │   ├── QuizzesController.cs
+│   │   ├── QuestionsController.cs
+│   │   ├── SourcesController.cs
+│   │   ├── AttemptsController.cs
+│   │   ├── CommentsController.cs
+│   │   ├── FavoritesController.cs
+│   │   ├── SearchController.cs
+│   │   ├── LLMController.cs       # Queues LLM jobs
+│   │   ├── AdminController.cs
+│   │   └── ...
+│   ├── Models/                    # Entity classes & DTOs
+│   │   ├── Entities/               # Database models (User, Quiz, Source, etc.)
+│   │   ├── DTOs/                   # Request/response objects
+│   │   └── Enums/
+│   ├── Data/                       # Database context & migrations
+│   │   ├── AppDbContext.cs
+│   │   ├── Migrations/
+│   │   └── Repositories/           # Optional repository layer
+│   ├── Services/                    # Business logic & external integrations
+│   │   ├── AuthService.cs
+│   │   ├── QuizService.cs
+│   │   ├── SourceService.cs
+│   │   ├── LLMQueueService.cs       # Publishes to Kafka
+│   │   ├── TTSQueueService.cs
+│   │   ├── EmailService.cs          # Sends emails via SMTP/HTTP
+│   │   ├── RateLimitService.cs      # Redis counters
+│   │   ├── HtmlSanitizerService.cs
+│   │   └── ...
+│   ├── Middleware/                  # Custom middleware
+│   │   ├── RateLimitingMiddleware.cs
+│   │   ├── SessionMiddleware.cs
+│   │   └── ErrorHandlingMiddleware.cs
+│   ├── Config/                       # Configuration classes
+│   │   ├── KafkaSettings.cs
+│   │   ├── RedisSettings.cs
+│   │   ├── LlmSettings.cs
+│   │   └── ...
+│   ├── Program.cs
+│   ├── Startup.cs
+│   ├── appsettings.json              # Base config
+│   ├── appsettings.Development.json
+│   └── SLP.Backend.csproj
+│
+├── frontend/                         # Single‑page application (React / Vue)
+│   ├── public/
+│   │   ├── index.html
+│   │   └── favicon.ico
+│   ├── src/
+│   │   ├── assets/                   # Images, fonts, etc.
+│   │   ├── components/                # Reusable UI components
+│   │   │   ├── QuizPlayer/
+│   │   │   ├── TextSelectionBubble/
+│   │   │   ├── AdminDashboard/
+│   │   │   └── ...
+│   │   ├── pages/                     # Route‑level components
+│   │   │   ├── Home/
+│   │   │   ├── Quiz/
+│   │   │   ├── Reading/
+│   │   │   ├── Favorites/
+│   │   │   ├── Admin/
+│   │   │   └── ...
+│   │   ├── services/                  # API clients
+│   │   │   ├── api.js                 # Axios instance
+│   │   │   ├── auth.js
+│   │   │   ├── quizzes.js
+│   │   │   ├── sources.js
+│   │   │   └── ...
+│   │   ├── store/                      # State management (Vuex / Redux)
+│   │   ├── styles/                      # Global styles
+│   │   ├── App.js / App.vue
+│   │   └── index.js / main.js
+│   ├── package.json
+│   ├── vite.config.js / vue.config.js
+│   └── ...
+│
+├── microservices/                      # Independent auxiliary services
+│   ├── pdf-extractor/                  # Java (Apache PDFBox)
+│   │   ├── src/
+│   │   │   ├── main/java/.../ExtractorApplication.java
+│   │   │   └── ...
+│   │   ├── pom.xml
+│   │   └── Dockerfile
+│   ├── llm-service/                     # Python (llama.cpp)
+│   │   ├── app/
+│   │   │   ├── main.py                  # FastAPI / Flask
+│   │   │   ├── consumer.py               # Kafka consumer
+│   │   │   ├── llama_wrapper.py
+│   │   │   └── ...
+│   │   ├── requirements.txt
+│   │   ├── Dockerfile
+│   │   └── models/                       # Mistral 7B weights (git‑ignored)
+│   ├── tts-service/                      # Python (Piper)
+│   │   ├── app/
+│   │   │   ├── main.py
+│   │   │   ├── consumer.py
+│   │   │   └── ...
+│   │   ├── requirements.txt
+│   │   ├── Dockerfile
+│   │   └── voices/                        # Piper voice files (git‑ignored)
+│   └── email-service/                     # Node.js / Python SMTP handler
+│       ├── app/
+│       │   ├── server.js / main.py
+│       │   └── ...
+│       ├── package.json / requirements.txt
+│       └── Dockerfile
+│
+├── infrastructure/                      # Docker & configuration
+│   ├── docker-compose.yml                # Orchestrates all services
+│   ├── nginx/
+│   │   ├── nginx.conf
+│   │   └── ssl/                          # SSL certificates (dev only)
+│   ├── postgres/
+│   │   ├── init/                          # Initialisation scripts
+│   │   │   └── 01-schema.sql
+│   │   └── my.cnf
+│   ├── redis/
+│   │   └── redis.conf
+│   └── kafka/
+│       ├── zookeeper.properties
+│       └── server.properties
+│
+├── storage/                               # File storage (mounted volume)
+│   ├── uploads/                            # Original PDF/TXT files
+│   │   └── [year]/[month]/...
+│   └── backups/                             # Daily DB & file backups
+│
+├── scripts/                                # Utility scripts
+│   ├── backup.sh                            # Daily backup
+│   ├── deploy.sh                             # Deployment script
+│   ├── seed-data.sql                          # Test data
+│   └── ...
+│
+├── .env.example                             # Environment variables template
+├── .gitignore
+├── README.md                                # Project overview & setup
+└── LICENSE
+```
+
+## Key Files Explained
+
+### Backend (ASP.NET Core)
+- **Controllers/**: Map to the API endpoints listed in §16.6. Each controller handles HTTP requests, validates input, and calls appropriate services.
+- **Models/Entities/**: Plain C# classes representing database tables (`User`, `Quiz`, `Source`, etc.). Entity Framework Core uses these for migrations.
+- **Models/DTOs/**: Data transfer objects for requests/responses (e.g., `CreateQuizRequest`, `QuizResponse`). Ensures API contracts are decoupled from internal models.
+- **Data/AppDbContext.cs**: EF Core database context. Configures tables, relationships, indexes (including GIN for full‑text search).
+- **Services/**: Encapsulate business logic:
+  - `AuthService`: Registration, login, password hashing (Argon2id), session management.
+  - `QuizService`: CRUD for quizzes, cloning questions, handling attempts (snapshots).
+  - `SourceService`: File upload, text extraction (calls PDF‑extractor microservice), reading progress.
+  - `LLMQueueService`: Publishes requests to Kafka `llm_requests` topic.
+  - `RateLimitService`: Uses Redis to enforce per‑IP limits.
+- **Middleware/**: Custom pipeline components for rate limiting, session validation, and global error handling.
+- **Config/**: Strongly typed settings for Kafka, Redis, LLM endpoints, etc., bound from `appsettings.json`.
+- **Program.cs / Startup.cs**: Application entry point; configures services, middleware, and endpoints.
+
+### Frontend (React / Vue)
+- **src/components/**: Reusable UI pieces like `QuizPlayer` (navigates questions, auto‑save), `TextSelectionBubble` (floating menu on text selection), `AdminDashboard` (tables with actions).
+- **src/pages/**: Top‑level views for routes (e.g., `/quiz/:id`, `/source/:id`, `/admin/users`).
+- **src/services/**: API client modules using Axios/Fetch. Each module exports functions that call backend endpoints.
+- **src/store/**: Global state (authentication, current quiz attempt, UI theme). Could use Vuex, Redux, or Context API.
+- **public/index.html**: Entry HTML with mobile‑viewport meta tags.
+
+### Microservices
+- **pdf-extractor/**: Java Spring Boot (or simple servlet) that receives a file, extracts text via Apache PDFBox, and returns plain text. Synchronous HTTP.
+- **llm-service/**: Python FastAPI app with a Kafka consumer. Listens to `llm_requests`, calls llama.cpp (subprocess or C library), stores result in DB via backend API (or directly if shared DB access is allowed). Returns job ID for polling.
+- **tts-service/**: Similar to LLM service, but generates audio using Piper CLI. Audio may be saved to a public folder and URL returned.
+- **email-service/**: Lightweight SMTP sender. Consumes `email_requests` topic and sends emails via a configured SMTP relay (e.g., Postal, Mailcow, or direct SMTP).
+
+### Infrastructure
+- **docker-compose.yml**: Defines all containers (backend, frontend, postgres, redis, kafka, zookeeper, each microservice). Networks and volumes are set up.
+- **nginx/**: Reverse proxy configuration to serve frontend static files and route `/api` to backend. Also handles SSL termination if needed.
+- **postgres/init/**: SQL scripts to create tables, indexes, and full‑text search configuration on first run.
+- **kafka/**: Configuration files for Kafka and Zookeeper (minimal setup for single node).
+
+### Storage
+- **uploads/**: Retains original uploaded PDF/TXT files. Subdirectories by date to avoid too many files in one folder.
+- **backups/**: Daily dumps (PostgreSQL `pg_dump`) and archived copies of `uploads/`, retained for 30 days (handled by backup script).
+
+### Scripts
+- **backup.sh**: Runs via cron; creates timestamped dump and tarball, then cleans up old backups.
+- **deploy.sh**: Pulls latest code, rebuilds containers, runs migrations, and restarts services.
+- **seed-data.sql**: Populates development database with sample users, quizzes, and sources.
+
+## Additional Notes
+- **Environment variables**: Sensitive values (DB passwords, Kafka brokers, API keys) are stored in `.env` (not committed) and referenced in `docker-compose.yml` and `appsettings.json`.
+- **Rate limiting**: Implemented in backend middleware using Redis counters; limits defined in `appsettings.json`.
+- **Full‑text search**: PostgreSQL GIN indexes on `quizzes.title`, `quizzes.description`, `sources.text`, etc. Use `websearch_to_tsquery` for simple syntax.
+- **Session store**: Redis with 7‑day TTL; cookie contains only session ID (HTTP‑only, Secure, SameSite=Strict).
+- **HTML sanitization**: Use a library like `HtmlSanitizer` (C#) or a dedicated microservice; allowed tags and attributes as per §16.4.
+- **Quiz attempt snapshots**: When an attempt starts, backend copies question data into `quiz_attempt_answer.question_snapshot` (JSON). This ensures historical accuracy.
+
+This structure provides a clear separation of concerns, supports independent development of microservices, and simplifies deployment via Docker Compose. All components can run on a single laptop while remaining modular enough for future scaling.
+=== END project_structure ===
+
+=== START services ===
+# SLP — Self Learning Platform: Service Design Overview
+
+## 1. System Overview
+SLP is a personal learning platform enabling individuals to learn via quizzes, flashcards, reading materials, and AI‑assisted explanations. The system is built for **~1000 concurrent users**, with a focus on language and general knowledge. Users work independently, with minimal social features (public quizzes, comments). All content is discoverable through search.
+
+**Core Capabilities**  
+- User authentication (username/password, optional email verification, password reset).  
+- Quiz creation, taking, and review (snapshots ensure historical consistency).  
+- Reading with rich text, text selection actions (explain, grammar, TTS, favorites).  
+- AI integration via local LLM (llama.cpp) for explanation, question generation, summarization, and grammar checking.  
+- Personal vocabulary notebook (favorites).  
+- Tagging, full‑text search, and moderation tools for admins.
+
+## 2. High‑Level Architecture
+The platform follows a **service‑oriented** design with clear separation of concerns. All components run on a single server (personal laptop) but are decoupled to allow future scaling.
+
+```
+┌─────────────┐      ┌─────────────────────────────────────────────┐
+│   Browser   │◄────►│              Backend API (Dotnet)           │
+│(Mobile‑First│      │  - Authentication, Quiz, Reading, Search    │
+│    Web App) │      │  - Business Logic, Rate Limiting            │
+└─────────────┘      └─────────────────────┬───────────────────────┘
+                                            │
+                                            ▼
+              ┌─────────────────────────────────────────────┐
+              │              PostgreSQL                     │
+              │  - Core tables (users, quizzes, questions)  │
+              │  - Full‑text search, JSONB for metadata     │
+              │  - Attempt snapshots, LLM logs              │
+              └─────────────────────────────────────────────┘
+                                            ▲
+              ┌─────────────────────────────┼─────────────────────┐
+              │                             │                     │
+              ▼                             ▼                     ▼
+   ┌──────────────────┐          ┌────────────────── ┐  ┌──────────────────┐
+   │  Microservices   │          │    Message Queue  │  │   Redis          │
+   │ - PDF/TXT Extract│          │     (Kafka)       │  │ - Rate limiting  │
+   │ - LLM (llama.cpp)│◄────────►│ - Request queue   │  │ - Session store  │
+   │ - TTS (Piper)    │          │ - Async processing│  │ - Caching        │
+   │ - Email          │          └────────────────── ┘  └──────────────────┘
+   └──────────────────┘
+```
+- **Frontend**: Single‑page application (mobile‑first), communicates with backend via REST API.  
+- **Backend API**: Handles all user requests, enforces business rules, and orchestrates interactions with auxiliary services.  
+- **Database**: PostgreSQL stores all persistent data (users, quizzes, sources, attempts, logs). Full‑text search (GIN indexes) and JSONB for flexible metadata.  
+- **Microservices**: Isolated services for heavy or specialised tasks:
+  - **PDF/TXT extraction**: Accepts file uploads, extracts plain text using Apache PDFBox, returns text to backend.
+  - **LLM service**: Processes AI requests (explain, generate questions, summarise, grammar). Uses llama.cpp (Mistral 7B) running locally.
+  - **TTS service**: Converts selected text to speech via Piper TTS (English only).
+  - **Email service**: Sends verification OTPs and password‑reset links via SMTP or a lightweight mail server.
+- **Message Queue (Kafka)**: Decouples LLM and TTS requests from the main backend. Enables serialised processing and prevents overload.
+- **Redis**: Used for rate‑limiting counters, session storage (HTTP‑only cookies, 7‑day TTL), and optional caching.
+
+## 3. Core Services & Components
+
+### 3.1 Frontend
+- **Technology**: Modern JavaScript framework (e.g., Vue/React) with responsive design.  
+- **Key Features**:
+  - Quiz player with free navigation, answer changes, manual submission.
+  - Reading view with rich text rendering (TipTap JSON) and text‑selection bubble (explain, grammar, TTS, add to favorites).
+  - Search interface with pagination and ranking.
+  - Admin dashboard for moderation.
+
+### 3.2 Backend API
+- **REST + RPC style** endpoints (see §16.6 in design doc).  
+- **Responsibilities**:
+  - Authentication (session management, password hashing with Argon2id).
+  - CRUD for quizzes, questions, sources, favorites.
+  - Quiz attempt handling (start, answer, submit) with snapshot creation.
+  - Source management (upload, progress tracking).
+  - Commenting and reporting.
+  - Orchestration of async LLM/TTS tasks (publish to Kafka, poll for results).
+  - Rate limiting (Redis counters) and input validation.
+  - Admin actions (ban users, disable content).
+
+### 3.3 Database (PostgreSQL)
+- **Main Tables** (as per design):
+  - `user`, `source`, `question`, `quiz`, `quiz_question`, `quiz_attempt`, `quiz_attempt_answer`, `favorite_item`, `tag`, `comment`, `report`, `explanation`, `user_source_progress`, `llm_log`, `admin_log`.
+- **Indexing**: Heavy indexing on foreign keys, `updated_at` for mismatch detection, full‑text search columns (GIN).
+- **JSONB**: Used for question metadata, answer snapshots, text range in explanations.
+- **Soft deletes**: Implemented via `deleted_at` for sources, comments, quizzes (admin‑only).
+
+### 3.4 Microservices
+
+#### PDF/TXT Extraction Service
+- **Input**: File upload (PDF ≤20 MB, TXT ≤5 MB).  
+- **Processing**: Apache PDFBox (or equivalent) extracts text; plain text returned to backend.  
+- **Communication**: Synchronous HTTP call from backend (files small, processing fast). No queue needed.
+
+#### LLM Service (llama.cpp)
+- **Input**: Prompt (max 4000 tokens) with instructions to produce JSON output.  
+- **Processing**: llama.cpp runs locally (CPU). Output is validated by backend.  
+- **Queueing**: Backend publishes request to Kafka (`llm_requests` topic). Consumer picks up, calls llama.cpp, stores result in `llm_log`, and optionally notifies frontend via polling or WebSocket (future).  
+- **Logging**: All requests/responses stored indefinitely in `llm_log`.
+
+#### TTS Service (Piper)
+- **Input**: Text snippet (≤500 chars, English).  
+- **Processing**: Piper CLI or HTTP endpoint generates audio.  
+- **Queueing**: Similar to LLM, requests go through Kafka (`tts_requests`). Audio returned to frontend (direct download or URL).
+
+#### Email Service
+- **Input**: Recipient, subject, plain/html body.  
+- **Processing**: Lightweight SMTP server (e.g., Postal, Mailcow) or direct SMTP.  
+- **Communication**: Backend sends HTTP request or drops message into a dedicated queue.
+
+### 3.5 Message Queue (Kafka)
+- **Topics**: `llm_requests`, `tts_requests`, `email_requests`.  
+- **Purpose**:
+  - Serialise LLM/TTS processing to avoid overloading local resources.
+  - Provide retry and fault tolerance.
+  - Decouple backend from slow external services.
+- **Consumers**: Single consumer per topic (running on same server) processes jobs sequentially.
+
+### 3.6 Redis
+- **Session store**: Key‑value with 7‑day TTL; session cookie contains only session ID.  
+- **Rate limiting**: Counters per IP for each endpoint family (login, comments, quiz attempts, LLM).  
+- **Caching**: Optional – e.g., quiz metadata for public lists, tag suggestions.
+
+### 3.7 File Storage
+- **Location**: Local filesystem (or mounted volume).  
+- **Stored files**: Uploaded PDF/TXT files (originals kept for reprocessing if needed).  
+- **Backup**: Daily backups of database and file storage, retained 30 days.
+
+## 4. Key Functional Modules
+
+### 4.1 Authentication & User Management
+- Registration with username (unique, immutable) and optional email.  
+- Email verification via 6‑digit OTP (10‑min expiry, 5 resends/hour, 10 attempts).  
+- Password reset via single‑use token link (30‑min expiry).  
+- Login sessions: HTTP‑only cookie, 7 days, stored in Redis.  
+- No self‑deletion; admins can ban accounts. Banned users see a message on login.
+
+### 4.2 Quiz System
+- **Quiz creation**: Title, description, visibility (public/private), optional note association.  
+- **Sources**: Upload PDF/TXT, paste text, or import links (HTML fetched, cleaned with Readability). Extracted text stored in `source` table.  
+- **Question bank**: Reusable questions with metadata. Quizzes clone questions into `quiz_question` for stability.  
+- **Attempts**:
+  - Unlimited attempts, each stores snapshot of questions and answers.
+  - Auto‑abandon after 24 hours; resume allowed within that window.
+  - No timer; users can take as long as needed.
+- **Review**: Users see past attempts, incorrect answers, stats.
+- **Editing**: Changing a quiz does not affect existing attempts; mismatch warning if bank question updated.
+
+### 4.3 Reading System
+- **Sources** stored with rich text (TipTap), raw HTML, and plain text.  
+- **Progress tracking**: `user_source_progress` stores last position (e.g., paragraph index).  
+- **Text selection actions**:
+  - **Explain**: Show existing explanation (system/user) or trigger LLM to generate one (queued).
+  - **Grammar check**: LLM returns incorrect parts + corrected text.
+  - **TTS**: Queued Piper request; audio played in browser.
+  - **Add to favorites**: Save selected text as a vocabulary item.
+- **Explanations**: Stored in `explanation` table, can be user‑generated (editable) or system‑generated (uneditable).
+
+### 4.4 LLM Integration
+- **Use cases**: Explanation, question generation, summarization, grammar checking.  
+- **Workflow**:
+  1. Frontend requests LLM action → backend validates input and creates a job in Kafka.
+  2. Consumer processes job, calls llama.cpp, stores result in `llm_log`.
+  3. Frontend polls (or uses WebSocket) to retrieve result.
+- **Prompts**: Engineered to output JSON; backend validates JSON structure.
+- **Safety**: No HTML parsing; only plain text sent to LLM.
+
+### 4.5 Favorites & Tagging
+- **Favorites**: Personal vocabulary notebook – free‑form text + type (word/phrase/idiom/other) + optional note.
+- **Tagging**: Flat tags (lowercase, unique). Applied to quizzes and questions (max 10 per entity). Created on the fly.
+
+### 4.6 Search
+- PostgreSQL Full‑Text Search (language = simple).  
+- Searchable entities: quizzes (title, description, tags, question content), questions, sources, favorites.  
+- Ranking: exact title match → exact other → fuzzy title → fuzzy other.
+
+### 4.7 Moderation & Admin
+- **Reports**: Users can report quizzes, questions, comments.  
+- **Admin dashboard**:
+  - User management (ban/unban, view details).
+  - Quiz moderation (disable/enable, soft delete).
+  - Comment moderation (soft delete/restore).
+  - Report resolution (mark resolved, take action on target).
+- **Logging**: All admin actions recorded in `admin_log`.
+
+## 5. Data Flow Examples
+
+### 5.1 Starting a Quiz Attempt
+1. User clicks “Start” on a quiz → `POST /quizzes/:id/attempts`.
+2. Backend creates a new `quiz_attempt` record (status = 'in_progress').
+3. For each `quiz_question`, a snapshot is taken (question content, options, etc.) and stored in `quiz_attempt_answer` (initially empty).
+4. Returns attempt ID and first question.
+
+### 5.2 Submitting an Answer
+1. User answers → `POST /attempts/:id/answers` with question index and answer data.
+2. Backend updates the corresponding `quiz_attempt_answer` row (last write wins; no concurrency handling).
+3. Returns next question or summary.
+
+### 5.3 LLM Explanation Request
+1. User selects text in reading view and taps “Explain”.
+2. Frontend calls `POST /llm/explain` with source ID and text range.
+3. Backend checks if an explanation already exists (user or system). If not, publishes a job to Kafka `llm_requests`.
+4. Consumer processes job: calls llama.cpp, stores result in `llm_log` and as a system explanation in `explanation` table.
+5. Frontend polls `/explanations?source=...` until new explanation appears, then displays it.
+
+## 6. Security & Performance Considerations
+
+- **Authentication**: Argon2id for password hashing; HTTP‑only cookies; rate limiting on login (10/min).  
+- **Input validation**: All user input sanitised; HTML sanitisation removes scripts, event handlers, and non‑HTTPS image sources.  
+- **File uploads**: Size limits (PDF 20 MB, TXT 5 MB); no virus scanning (accepting risk for personal laptop).  
+- **Rate limiting**: Enforced per IP via Redis for critical endpoints.  
+- **Concurrency**: Minimal; last‑write‑wins for quiz answers is acceptable.  
+- **Backup**: Daily PostgreSQL dump + file backup, retained 30 days.  
+- **Performance**: Indexes on large tables; full‑text search uses GIN; LLM/TTS queues prevent resource exhaustion.
+
+## 7. Deployment Notes
+
+- All components run on a single Linux server (personal laptop).  
+- Services are containerised (Docker) for ease of management:  
+  - Backend API container  
+  - PostgreSQL container  
+  - Redis container  
+  - Kafka + Zookeeper containers  
+  - Microservice containers (extraction, LLM, TTS, email)  
+- LLM service requires llama.cpp compiled for CPU (no GPU).  
+- TTS uses Piper with pre‑downloaded English voice.  
+- Environment variables manage configuration (database URLs, Kafka brokers, etc.).  
+- Nginx serves as reverse proxy for frontend static files and API.
+
+---
+
+This overview captures the essential services and their interactions, providing a solid foundation for implementation and future scaling.
+=== END services ===
+
+=== START test ===
+# SLP Full Project Playwright Test Document
+
+## 1. Introduction
+This document outlines the end‑to‑end (E2E) test strategy for the Self Learning Platform (SLP) using [Playwright](https://playwright.dev/). The goal is to ensure that all critical user journeys and administrative functions work correctly across supported browsers (Chromium, Firefox, WebKit) on desktop and mobile viewports.
+
+Playwright is chosen for its cross‑browser capabilities, auto‑waiting, network interception, and robust testing of modern web applications.
+
+## 2. Scope
+The tests cover the following functional areas:
+- Authentication & user management
+- Quiz creation, editing, duplication, and deletion
+- Question bank management
+- Quiz taking (attempts, answers, submission, review)
+- Source/reading management (upload, text selection actions, explanations, progress)
+- Favorites (vocabulary notebook)
+- Global search
+- Commenting and reporting
+- Admin dashboard (users, quizzes, comments, reports)
+- Edge cases, error handling, and rate‑limit scenarios
+
+The tests **do not** cover:
+- Unit or integration tests of backend services
+- Performance or load testing
+- Security penetration testing
+- Detailed visual regression testing (but can be added via Playwright’s screenshot comparison)
+
+## 3. Test Environment
+- **Frontend**: SPA (React/Vue) running on `http://localhost:3000` (or as defined in CI)
+- **Backend API**: .NET Core API running on `http://localhost:5000`
+- **Database**: PostgreSQL (test instance, reset before each test run)
+- **Microservices**: PDF extractor, LLM, TTS, email – should be mocked or pointed to test doubles to ensure deterministic tests.
+- **Redis**: In‑memory or test instance for rate limiting and sessions.
+
+### 3.1 Playwright Configuration
+- **Browsers**: Chromium, Firefox, WebKit (desktop). Mobile viewports: iPhone 12, Pixel 5.
+- **Test runner**: Playwright Test Runner.
+- **Fixtures**: Custom fixtures for authenticated pages, admin context, etc.
+- **Global setup**: Seed database with test users, quizzes, sources.
+- **Reporting**: HTML report, trace on failure.
+
+## 4. Test Data Strategy
+- Use a dedicated test database that is recreated from a known seed before the test run.
+- Seed data includes:
+  - Regular user (username: `testuser`, password: `Password123!`, email confirmed)
+  - Admin user (username: `admin`, password: `AdminPass123!`)
+  - A few public/private quizzes with questions
+  - A source (PDF/text) with known content
+  - Sample questions in the bank
+  - Some comments, reports, and favorites
+- For tests that modify data, we use API calls to reset state after each test or rely on unique generated data (e.g., random quiz titles) to avoid collisions.
+
+## 5. Test Organization
+Tests are organized by feature, mirroring the UI structure:
+```
+tests/
+├── auth/
+│   ├── login.spec.ts
+│   ├── registration.spec.ts
+│   ├── password-reset.spec.ts
+│   └── email-verification.spec.ts
+├── quiz/
+│   ├── create.spec.ts
+│   ├── edit.spec.ts
+│   ├── duplicate.spec.ts
+│   ├── delete.spec.ts
+│   ├── list-filter.spec.ts
+│   └── attempt.spec.ts
+├── question-bank/
+│   ├── crud.spec.ts
+│   ├── filter-search.spec.ts
+│   ├── add-to-quiz.spec.ts
+│   └── bulk-actions.spec.ts
+├── reading/
+│   ├── upload.spec.ts
+│   ├── text-selection.spec.ts
+│   ├── explanations.spec.ts
+│   └── progress.spec.ts
+├── favorites/
+│   ├── add-edit-delete.spec.ts
+│   └── search.spec.ts
+├── search/
+│   └── global-search.spec.ts
+├── comments/
+│   ├── create-reply.spec.ts
+│   ├── edit-delete.spec.ts
+│   └── report.spec.ts
+├── admin/
+│   ├── users.spec.ts
+│   ├── quizzes.spec.ts
+│   ├── comments.spec.ts
+│   └── reports.spec.ts
+└── edge/
+    ├── rate-limiting.spec.ts
+    ├── error-handling.spec.ts
+    └── permissions.spec.ts
+```
+
+## 6. Test Scenarios and Cases
+
+### 6.1 Authentication
+| Test Case | Steps | Expected Result |
+|-----------|-------|-----------------|
+| Successful login | Navigate to `/login`, enter valid credentials, submit | Redirected to home, user menu shows username |
+| Invalid password | Enter wrong password | Error message “Invalid credentials” |
+| Rate limiting | Attempt login 11 times within 1 minute | 11th attempt returns 429, user sees rate limit warning |
+| Registration | Fill form with unique username, optional email, password | Account created, redirected to email verification prompt (if email provided) or home |
+| Password reset request | Enter email of existing user | Success message; email service receives request |
+| Password reset confirm | Use token from email, set new password | Can log in with new password |
+| Email verification | Request OTP, enter correct OTP | Email marked confirmed, badge appears in profile |
+
+### 6.2 Quiz Management
+#### 6.2.1 Create Quiz
+- Navigate to `/quizzes`, click “Create Quiz”
+- Fill basic info, add a source (select existing or upload)
+- Add questions:
+  - Create a new multiple choice question from scratch
+  - Add a question from bank
+- Set tags, save
+- Verify quiz appears in “My Quizzes” list with correct details.
+
+#### 6.2.2 Edit Quiz
+- Open quiz edit page
+- Change title, description, visibility
+- Add/remove sources
+- Reorder questions via drag‑and‑drop
+- Update a question (if from bank, mismatch warning appears)
+- Save
+- Verify changes reflected in quiz detail.
+
+#### 6.2.3 Duplicate Quiz
+- On quiz detail, click “Duplicate”
+- New quiz created with “(copy)” suffix, owned by current user
+- Verify all questions and sources are copied.
+
+#### 6.2.4 Delete Quiz (admin only)
+- Log in as admin, navigate to admin quizzes
+- Soft delete a quiz
+- Quiz no longer appears in public lists, but still visible to owner with “disabled” badge.
+
+#### 6.2.5 Quiz List Filters
+- Apply visibility filter (public/private)
+- Search by title
+- Filter by tag
+- Verify results match.
+
+### 6.3 Quiz Attempt
+#### 6.3.1 Start Attempt
+- On public quiz detail, click “Start”
+- Quiz player opens with first question, progress shows “1/5”
+
+#### 6.3.2 Answer Questions
+- Answer a multiple choice question (select option)
+- Navigate to next question
+- Answer a fill‑in‑blank question
+- Use question sidebar to jump to a question and change answer
+- Verify auto‑save (after moving away, answer persists on page reload)
+
+#### 6.3.3 Submit Attempt
+- After answering all questions, click “Submit”
+- Confirmation modal appears; confirm
+- Redirect to review page with score and correct/incorrect indicators
+
+#### 6.3.4 Review Attempt
+- On review page, verify each question shows user answer and correct answer
+- Explanations displayed where available
+- Retake button starts new attempt
+
+#### 6.3.5 Resume Abandoned Attempt
+- Start an attempt, leave it open > 24h (simulate by manipulating DB)
+- Attempt auto‑abandoned; user cannot resume, sees option to start new
+
+### 6.4 Question Bank
+#### 6.4.1 CRUD Operations
+- Create a new question (all types)
+- Edit a question (type immutable, fields update)
+- Soft delete a question (removed from list, but quizzes using it show mismatch)
+- Restore deleted question (admin only)
+
+#### 6.4.2 Filtering and Search
+- Filter by type (e.g., “multiple choice”)
+- Filter by tag
+- Search by content text
+- Verify results correct
+
+#### 6.4.3 Add to Quiz
+- From question list, select “Add to quiz”
+- Choose target quiz, insertion position
+- Confirm question appears in quiz editor at correct position
+
+#### 6.4.4 Bulk Actions
+- Select multiple questions, delete
+- Select multiple, add tags
+- Verify bulk operations succeed
+
+### 6.5 Reading & Sources
+#### 6.5.1 Upload Source
+- Click “Upload” from sources page
+- Upload a PDF file (<20 MB)
+- Wait for processing, source card appears with title
+- Open source, content displayed
+
+#### 6.5.2 Text Selection Actions
+- Select a phrase in source content
+- Bubble menu appears with icons
+- Click “Explain” – if no explanation, LLM job queued, polling eventually shows explanation
+- Click “Add to Favorites” – phrase saved, appears in favorites list
+- Click “TTS” – audio plays (mock response)
+- Click “Grammar” – grammar suggestions displayed
+
+#### 6.5.3 Explanations
+- View explanations for a source
+- Add a user explanation for a text range
+- Edit own explanation
+- Delete own explanation
+- System explanations are not editable
+
+#### 6.5.4 Reading Progress
+- Scroll through a source, leave page
+- Reopen source, “Resume from last position” button appears
+- Click it, scroll position restored
+
+### 6.6 Favorites
+#### 6.6.1 Add Favorite
+- From reading selection bubble, add phrase
+- Verify appears in favorites list with correct type
+- Alternatively, add via “+” button on favorites page
+
+#### 6.6.2 Edit Favorite
+- Click on favorite item, change note
+- Save, note updated
+
+#### 6.6.3 Delete Favorite
+- Delete from list, item removed
+
+#### 6.6.4 Search Favorites
+- Use search bar, filter by text or type
+
+### 6.7 Global Search
+- Enter search term in header
+- Results grouped by type (quizzes, sources, questions, favorites)
+- Click on result navigates to detail
+- Pagination works
+
+### 6.8 Comments
+#### 6.8.1 Create Comment
+- On quiz detail, scroll to comments, write a comment
+- Comment appears immediately
+- Reply to a comment (nested)
+
+#### 6.8.2 Edit Comment
+- Edit own comment, “edited” indicator appears
+
+#### 6.8.3 Delete Comment
+- Delete own comment, content replaced with “[deleted]”
+- Admin can delete any comment (via admin panel)
+
+#### 6.8.4 Report Comment
+- Click “Report” on a comment, select reason
+- Report appears in admin reports list
+
+### 6.9 Admin Dashboard
+#### 6.9.1 Users
+- List users, filter by role/status
+- Ban a user, then attempt login as that user – sees banned message
+- Unban user, login works
+
+#### 6.9.2 Quizzes
+- List all quizzes, filter by disabled
+- Disable a quiz, then as normal user try to start it – not allowed
+- Enable quiz, attempt allowed
+
+#### 6.9.3 Comments
+- List comments, soft delete a comment
+- Restore comment, visible again
+
+#### 6.9.4 Reports
+- View unresolved reports
+- Resolve a report after taking action (e.g., disable quiz)
+- Action logged in admin log
+
+### 6.10 Edge Cases & Error Handling
+#### 6.10.1 404 Pages
+- Navigate to non‑existent quiz, source, question – friendly 404 page
+
+#### 6.10.2 Unauthorized Access
+- Try to access admin pages as normal user – redirected or 403
+
+#### 6.10.3 File Upload Limits
+- Upload PDF >20 MB – error message
+- Upload TXT >5 MB – error message
+
+#### 6.10.4 Rate Limit Reached
+- Exceed comment rate limit – see 429 and message
+
+#### 6.10.5 LLM Queue Timeout
+- Request LLM explanation while service is down – frontend shows timeout/retry option
+
+#### 6.10.6 Mismatch Notification
+- Edit a bank question that is used in a quiz
+- As quiz owner, view edit page – warning icon appears next to affected question
+
+## 7. Playwright‑Specific Implementation Notes
+
+### 7.1 Page Object Model
+Encapsulate page interactions into reusable classes, e.g.:
+- `LoginPage`
+- `QuizCreatePage`
+- `QuizPlayerPage`
+- `QuestionBankPage`
+- `AdminUsersPage`
+
+### 7.2 Fixtures
+Extend the base test with custom fixtures:
+```ts
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  // Automatically authenticate as a regular user
+  authedPage: async ({ page }, use) => {
+    await page.goto('/login');
+    await page.fill('input[name="username"]', 'testuser');
+    await page.fill('input[name="password"]', 'Password123!');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('/');
+    await use(page);
+  },
+  // Admin context
+  adminPage: async ({ page }, use) => {
+    // login as admin
+    // ...
+    await use(page);
+  },
+});
+```
+
+### 7.3 Mocking External Services
+- Use Playwright’s request interception to mock LLM responses, TTS audio, email sending, etc.
+- For Kafka‑based jobs, we can either:
+  - Use a test mode where the backend processes LLM requests synchronously.
+  - Or poll until the job completes (with a timeout) and mock the LLM service to respond quickly.
+
+### 7.4 Database Seeding & Cleanup
+- Before test run, run a global setup script that:
+  - Drops and recreates the test database.
+  - Runs migrations.
+  - Inserts seed data via SQL or API calls.
+- After each test, use transactions or unique data to avoid state pollution; otherwise, reset specific data via API.
+
+### 7.5 Visual Regression (Optional)
+- For critical UI components (quiz player, reading view), capture screenshots and compare against baselines.
+
+### 7.6 Accessibility Testing
+- Integrate `@axe-core/playwright` to run accessibility checks on key pages.
+
+## 8. CI Integration
+- Tests run on every pull request and main branch push.
+- Use GitHub Actions (or similar) with Playwright’s Docker image.
+- Parallelize tests across browsers using Playwright’s sharding.
+
+## 9. Reporting and Debugging
+- Generate HTML report with test results.
+- On failure, attach Playwright trace, screenshot, and video.
+- Use `--trace on` to capture traces for failed tests.
+=== END test ===
+
+=== START ui ===
+# Self Learning Platform – Full UI Design
+
+This document provides a comprehensive user interface design for all features of the Self Learning Platform (SLP). It follows a **mobile‑first** approach, ensuring usability on small screens while scaling gracefully to desktop. The design emphasises clarity, minimalism, and ease of learning. All interactions are based on the platform’s functional requirements and backend capabilities.
+
+---
+
+## 1. Global Layout & Navigation
+
+### 1.1 App Shell
+- **Header**: Contains the logo (left), a search bar (center on desktop, collapsible on mobile), and user menu (right).
+- **Sidebar (optional)**: On desktop, a collapsible sidebar provides quick access to main sections: Home, Quizzes, Reading, Questions (Bank), Favorites, Admin (if user is admin). On mobile, the sidebar is replaced by a bottom navigation bar (or a hamburger menu).
+- **Main content area**: Fills the remaining space, with appropriate padding.
+- **Footer**: Simple copyright/version info (optional).
+
+### 1.2 User Menu
+- Dropdown with: Profile, Settings, Logout.
+- If admin, a link to Admin Dashboard.
+
+### 1.3 Search Bar
+- Global search across quizzes, sources, questions, favorites.
+- As you type, shows recent suggestions (with type icons).
+- On mobile, search icon expands to full‑width input.
+
+---
+
+## 2. Authentication Pages
+
+### 2.1 Login
+- **URL**: `/login`
+- **Layout**: Centered card with platform name and tagline.
+- **Fields**:
+  - Username (text input)
+  - Password (password input)
+- **Actions**:
+  - Login button (primary)
+  - “Forgot password?” link
+  - “Create an account” link (to registration)
+- **Error handling**: Inline validation messages for incorrect credentials, rate‑limit warnings.
+
+### 2.2 Registration
+- **URL**: `/register`
+- **Fields**:
+  - Username (with real‑time availability check)
+  - Email (optional, with format validation)
+  - Password (with strength indicator)
+  - Confirm password
+- **Actions**:
+  - Register button
+  - Link to login if already have account
+- **Post‑registration**: Redirect to email verification prompt (if email provided) or directly to home.
+
+### 2.3 Password Reset
+- **Request reset**: Email input, send token.
+- **Confirm reset**: Token (pasted from email) + new password + confirm.
+- **Success**: Show confirmation with login link.
+
+### 2.4 Email Verification
+- **Prompt after registration**: “We’ve sent a 6‑digit code to your email.”
+- **Input**: 6 separate boxes for OTP, auto‑focus moves.
+- **Resend** link (rate‑limited).
+- **Verify** button; success redirects to profile.
+
+---
+
+## 3. Home / Dashboard
+
+- **URL**: `/`
+- **Purpose**: Quick overview and entry points.
+- **Sections**:
+  - **Continue Reading**: List of recently accessed sources with progress bar (if any). Max 3 items.
+  - **Recent Quizzes**: List of recently taken or created quizzes (with attempt stats).
+  - **Popular Public Quizzes**: (optional) based on view count.
+  - **Quick Actions**: “Create Quiz”, “Upload Source”, “Explore Quizzes”.
+- **Layout**: Card grid (2 columns on mobile, 3–4 on desktop) or list depending on content.
+
+---
+
+## 4. Quiz Management
+
+### 4.1 Quiz List
+- **URL**: `/quizzes`
+- **Tabs**: “My Quizzes” (private) and “Public Quizzes”.
+- **Filters**: By tag, search (title/description).
+- **Sort**: Date (newest/oldest), popularity (views/attempts).
+- **Each quiz card** shows:
+  - Title, description (truncated)
+  - Tags (as chips)
+  - Visibility badge (public/private)
+  - Question count, attempt count (optional)
+  - Actions: edit (if owner), duplicate, delete (admin only).
+- **Create new quiz** floating action button.
+
+### 4.2 Quiz Creation / Editing
+- **URL**: `/quizzes/new` and `/quizzes/:id/edit`
+- **Multi‑step or single page form**:
+  - **Basic Info**: Title, description, visibility, associated note (optional).
+  - **Sources**: List of attached sources (with add/remove). Adding a source opens a modal to select from existing or upload new.
+  - **Questions**:
+    - List of questions with drag handles to reorder.
+    - Each question card shows: type icon, question text, number of options (if MC), and a warning icon if mismatched with bank.
+    - Actions: edit (opens question modal), duplicate, delete.
+    - Add question button: dropdown to choose type or “From Bank”.
+  - **Tags**: Input with autocomplete (comma‑separated).
+- **Save** button (updates quiz and redirects to detail view).
+
+#### Question Editor Modal
+- **Fields**:
+  - Type (pre‑selected, disabled for bank questions)
+  - Content (rich text? – likely plain text with limited formatting)
+  - Metadata fields depending on type:
+    - **Multiple/Single Choice**: Options list (add/remove, set correct).
+    - **Fill in Blank**: Acceptable answers (list).
+    - **Ordering**: Items list (order defined by list order, correct order stored separately).
+    - **Matching**: Pairs of left/right.
+    - **True/False**: Toggle.
+    - **Flashcard**: Front/Back fields.
+  - Explanation (optional)
+  - “Save to Bank” checkbox (if new, creates bank question; if editing, updates bank or creates new version?)
+- **For bank questions**: Show a “View in Bank” link and mismatch warning if updated.
+
+### 4.3 Quiz Detail / Public View
+- **URL**: `/quizzes/:id`
+- **Header**: Title, description, author, tags.
+- **Stats**: Attempts, last updated.
+- **Actions**:
+  - Start quiz (if not disabled and visible)
+  - Edit (if owner)
+  - Duplicate
+  - Report (if public)
+- **Comments section** at bottom.
+
+### 4.4 Quiz Player
+- **URL**: `/quizzes/:id/attempt` (or inside a modal)
+- **Layout**: Question panel with navigation sidebar.
+- **Header**: Quiz title, progress (e.g., “Question 3/10”), timer (none).
+- **Question area**:
+  - Question text (with possible formatting)
+  - Answer input (depending on type: radio buttons, checkboxes, text input, drag‑and‑drop list, etc.)
+  - “Next” and “Previous” buttons; “Submit” enabled after all questions answered (or manual).
+- **Sidebar** (collapsible on mobile): list of question numbers with status icons (answered, unanswered, current). Click to jump.
+- **Auto‑save**: Answers saved as soon as user moves away.
+- **Submit confirmation**: Modal before final submission.
+- **After submit**: Redirect to results/review page.
+
+### 4.5 Attempt Review
+- **URL**: `/attempts/:id/review`
+- **Header**: Quiz title, date taken, score (X/Y).
+- **Question list**: Each question shows:
+  - Question text
+  - User’s answer (formatted)
+  - Correct answer (if incorrect)
+  - Explanation (if available)
+- **Actions**: Retake quiz, share (copy link).
+
+---
+
+## 5. Question Bank
+
+### 5.1 Access & Navigation
+- **Location**: Main navigation – a “Questions” link placed between “Quizzes” and “Reading”.
+- **Permissions**: All logged‑in users can view and manage their own questions. Admins can view and manage all questions.
+- **Breadcrumbs**: Home > Questions
+
+### 5.2 Layout Overview
+Two‑column layout on desktop, collapsing to single column on mobile.
+- **Left column (filters)**: Contains search, filters by type, tags, date range. Collapsible on mobile.
+- **Right column (main content)**: Displays the list of questions with sorting and pagination controls.
+- At the top right of the main column, a **“+ New Question”** button triggers the question creation modal (same as in quiz editor).
+
+### 5.3 Filtering & Search (Left Column)
+- **Search bar**: Placeholder “Search by content, explanation, or tags...”. Debounced.
+- **Type filter**: Checkbox group for question types (multiple choice, single choice, fill blank, ordering, matching, true/false, flashcard).
+- **Tag filter**: Input with autocomplete; selected tags appear as chips.
+- **Date range**: From and To date pickers (optional).
+- **Owner filter** (admin only): Dropdown to select “All users”, “My questions”, or a specific user.
+- **Reset filters**: “Clear all” link.
+
+### 5.4 Question List (Main Column)
+- **Sorting**: Dropdown: Newest first (default), Oldest first, Most used (in quizzes), Recently updated.
+- **View toggle**: List view (compact) or card view (more details). Default: list view.
+- **Items per page**: 20, 50, 100.
+- **Question item (list view)**:
+  - Type icon
+  - Question content (truncated)
+  - Tags (up to 3 chips; “+n” if more)
+  - Usage count – number of quizzes that use this question. Click shows tooltip with quiz names.
+  - Last updated (relative time)
+  - Action buttons: Edit, Duplicate, Delete, Add to quiz (plus icon)
+- **Question item (card view)**: Larger cards with full question text (up to 3 lines), all tags displayed, explanation snippet. Actions arranged at bottom.
+- **Empty state**: Illustration and message: “No questions found. Try adjusting your filters or create a new question.” with “Create New Question” button.
+
+### 5.5 Create/Edit Question Modal
+Identical to the one used in quiz editor (see 4.2). Key points:
+- Type cannot be changed after creation (immutable to avoid breaking quizzes).
+- Metadata fields adapt to type.
+- Explanation optional.
+- Tags input with autocomplete.
+- Save button creates/updates the bank question.
+
+### 5.6 Question Detail Modal (Optional)
+Accessible by clicking question content in list view. Shows:
+- Full question text and answer options.
+- Explanation.
+- Tags.
+- List of quizzes using this question (with links).
+- Actions: Edit, Duplicate, Delete, Add to quiz.
+
+### 5.7 “Add to Quiz” Flow
+When user clicks “Add to quiz” icon:
+- Step 1: Select Quiz (list of user’s quizzes, searchable; option to create new quiz).
+- Step 2: Choose Insertion Point (at end, at specific position, or replace).
+- Step 3: Confirm; success message with link to view quiz.
+
+### 5.8 Bulk Actions (Optional)
+Select multiple questions via checkboxes:
+- Delete (soft delete)
+- Add tags (bulk tag assignment)
+- Add to quiz (add all selected to a chosen quiz)
+
+### 5.9 Admin Features
+- Admin badge on questions from other users.
+- Admin can edit any question (with warning if used in quizzes).
+- Admin can soft delete and restore (via “Include deleted” filter).
+- “Include deleted” checkbox for admins to view soft‑deleted questions (with strikethrough or “deleted” label).
+
+---
+
+## 6. Reading & Sources
+
+### 6.1 Sources List
+- **URL**: `/sources`
+- **Tabs**: “My Sources” (owned) and “Public Sources” (if any).
+- **Cards** show: type icon (PDF, link, note), title, date, progress (if reading).
+- **Upload button** (opens modal):
+  - Choose type: Upload file (PDF/TXT), Paste text, Enter URL.
+  - For file: drag‑and‑drop area, file picker.
+  - For text: textarea.
+  - For URL: input field.
+  - Submit starts processing; shows progress indicator.
+
+### 6.2 Reading View
+- **URL**: `/sources/:id`
+- **Layout**: Two‑column on desktop (content + tools), single column on mobile with floating tools.
+- **Content area**:
+  - Renders rich text (TipTap) with proper styling.
+  - User can select text (tap‑and‑hold on mobile, click‑drag on desktop).
+- **Text selection bubble** (appears near selection):
+  - Icons: Explain, Grammar, TTS, Add to Favorites.
+  - On mobile, bubble is touch‑friendly (minimum tap target 44×44 px) and anchored to selection.
+- **Side tools** (or bottom sheet on mobile):
+  - **Explanations** tab: List of explanations for the current text selection (if any). User can add new explanation (editable).
+  - **Notes** (personal): Quick sticky note for the source.
+  - **Progress**: “Resume from last position” button (based on `user_source_progress`).
+- **Progress saving**: Automatically saves position on scroll (debounced).
+
+### 6.3 Explanations List (within source)
+- Shows both system‑generated and user explanations.
+- Each entry shows: author (system/you), text snippet (the selected text), explanation content.
+- User can edit/delete their own explanations (if `editable` true).
+
+---
+
+## 7. Favorites (Vocabulary Notebook)
+
+- **URL**: `/favorites`
+- **List** of favorite items, each showing:
+  - Text (word/phrase)
+  - Type badge (word, phrase, idiom, other)
+  - Note (if any)
+  - Date added
+- **Add new** floating button opens modal:
+  - Text (required)
+  - Type (dropdown)
+  - Note (optional)
+- **Inline edit** (tap on item opens modal prefilled).
+- **Search** bar to filter by text or type.
+
+---
+
+## 8. Search Results
+
+- **URL**: `/search?q=...`
+- **Tabs** (or grouped results): All, Quizzes, Sources, Questions, Favorites.
+- Each result card includes:
+  - Type icon
+  - Title (highlighted match)
+  - Snippet of content with match
+  - Link to detail
+- **Pagination** at bottom.
+
+---
+
+## 9. Tags
+
+- **URL**: `/tags`
+- **Cloud** or list of tags with usage counts.
+- Clicking a tag shows all associated quizzes/questions.
+
+---
+
+## 10. User Profile
+
+- **URL**: `/profile`
+- **Sections**:
+  - **Public info**: Username, email (with verification status), member since.
+  - **Settings**: Change email, change password.
+  - **Email verification** button (if unconfirmed).
+  - **Statistics**: Number of quizzes created, attempts taken, sources uploaded, favorites saved.
+
+### 10.1 Change Password
+- Form: current password, new password, confirm.
+
+---
+
+## 11. Admin Dashboard
+
+- **URL**: `/admin`
+- **Sidebar** (within admin area): Users, Quizzes, Comments, Reports, Logs.
+- All tables have search/filter and pagination (20 items per page).
+
+### 11.1 Users
+- Table columns: ID, username, email, role, status, created at, actions (ban/unban, view details).
+- Click row expands details (profile, quiz count, reports).
+
+### 11.2 Quizzes
+- Table: ID, title, author, visibility, disabled flag, created at, actions (disable/enable, soft delete).
+- Filters: by visibility, disabled status.
+
+### 11.3 Comments
+- Table: comment snippet, author, target, date, soft‑delete status.
+- Actions: soft delete, restore.
+
+### 11.4 Reports
+- List unresolved reports with target type, target link, reason, reporter, date.
+- Buttons: Mark resolved, take action (disable quiz/comment, etc.). All actions logged.
+
+### 11.5 Logs
+- View `admin_log` and `llm_log` (read‑only, searchable).
+
+---
+
+## 12. Comments Section (on quizzes, sources, questions)
+
+- Threaded comments (max depth 5).
+- Each comment shows: author, timestamp, content (with edit indicator if edited).
+- Actions: reply, edit (own), delete (own or admin), report.
+- Input box at bottom (if logged in).
+
+---
+
+## 13. Notifications (optional)
+
+- Simple toast notifications for actions: “Quiz saved”, “Explanation queued”, etc.
+- For long‑running tasks (LLM), show a progress indicator or polling status.
+
+---
+
+## 14. Responsive Behaviour
+
+- **Mobile (<768px)**:
+  - Bottom navigation bar with icons: Home, Quizzes, Reading, Questions, Favorites, Profile.
+  - Search bar collapses to icon in header; tap expands.
+  - Modals slide from bottom.
+  - Text selection bubble positioned near selection, larger tap targets.
+- **Tablet (768px–1024px)**:
+  - Sidebar can be toggled; bottom nav disappears.
+  - Two‑column layouts where appropriate.
+- **Desktop (>1024px)**:
+  - Full sidebar visible.
+  - Maximum content width 1200px for readability.
+
+---
+
+## 15. Common UI Components
+
+### 15.1 Cards
+- Rounded corners, subtle shadow, padding.
+- Used for quizzes, sources, favorites, search results.
+
+### 15.2 Buttons
+- Primary: solid accent color.
+- Secondary: outlined.
+- Icon buttons for actions (edit, delete, etc.).
+- Floating action button (FAB) for primary creation actions.
+
+### 15.3 Forms
+- Labels above inputs.
+- Inline validation on blur.
+- Helper text for format hints.
+
+### 15.4 Modals
+- Centered with overlay.
+- Title, content, actions (Cancel, Confirm).
+- On mobile, full‑screen modal with close button.
+
+### 15.5 Tabs
+- Underlined active tab, scrollable on mobile.
+
+### 15.6 Tags / Chips
+- Small rounded rectangles with optional remove icon.
+
+### 15.7 Progress Indicators
+- Circular spinner for loading.
+- Linear progress bar for file uploads, LLM processing.
+- Reading progress as horizontal bar on source card.
+
+### 15.8 Empty States
+- Illustrations and helpful messages when no data (e.g., “No quizzes yet. Create one!”).
+
+---
+
+## 16. User Flows (Examples)
+
+### 16.1 Creating a Quiz from a Source
+1. User uploads a PDF via Sources page.
+2. After extraction, they click “Create Quiz from this Source”.
+3. They are taken to quiz creation page with the source pre‑attached.
+4. They click “Generate Questions” – opens modal to select count and type mix; LLM generates suggestions.
+5. They review/edit generated questions, then save quiz.
+6. They set visibility to public and publish.
+
+### 16.2 Taking a Quiz
+1. User finds a public quiz via search or home page.
+2. Clicks “Start Quiz”.
+3. Quiz player opens, showing first question.
+4. User answers all questions, using sidebar to navigate.
+5. Clicks “Submit” when done.
+6. Review page shows results and explanations.
+7. They can retake or return to quiz detail.
+
+### 16.3 Using Text Selection in Reading
+1. User opens a source and scrolls to a paragraph.
+2. On mobile, they tap‑and‑hold to select a phrase; handles appear.
+3. Upon release, a bubble appears with icons.
+4. They tap “Explain” – if explanation exists, it shows; if not, a loading indicator appears while LLM processes (via queue).
+5. Explanation appears below the text (or in side panel).
+6. They can also tap “Add to Favorites” to save the phrase.
+
+### 16.4 Managing Question Bank
+1. User clicks “Questions” in main nav.
+2. They filter by type “Multiple Choice” and tag “math”.
+3. They see a list of 5 questions.
+4. They click “Edit” on one, modify the options, and save.
+5. A warning appears that this question is used in 3 quizzes; changes will cause mismatch warnings. They confirm.
+6. They select two questions and choose “Add to quiz” → select a quiz → confirm.
+
+---
+
+## 17. Visual Style Notes
+
+- **Color palette**:
+  - Primary: calm blue (#3B82F6) – for primary actions, links.
+  - Secondary: soft gray for backgrounds, cards.
+  - Accent: green for success, red for errors/warnings.
+- **Typography**: Sans‑serif (e.g., Inter, Roboto) for readability.
+- **Icons**: Use a consistent icon set (e.g., Feather, Material Icons).
+- **Dark mode** (optional): Can be implemented with CSS variables.
+
+---
+
+This UI design covers all features described in the SLP design documents, including the Question Bank as a standalone page. It provides a clear blueprint for developers to implement a cohesive, user‑friendly learning platform.
+=== END ui ===
+
