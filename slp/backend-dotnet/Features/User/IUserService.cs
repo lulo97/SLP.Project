@@ -6,5 +6,7 @@ namespace backend_dotnet.Features.User
     {
         Task<User?> GetByIdAsync(string id);
         Task<User> UpdateAsync(string id, UpdateUserRequest request);
+        Task<User> RegisterAsync(RegisterUserRequest request);
+        Task<bool> DeleteAsync(int userId);
     }
 }

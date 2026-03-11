@@ -23,6 +23,11 @@ public class UserRepository : IUserRepository
         return await _db.Users.FirstOrDefaultAsync(x => x.Email == email);
     }
 
+    public async Task<User?> GetByUsernameAsync(string username)
+    {
+        return await _db.Users.FirstOrDefaultAsync(x => x.Username == username);
+    }
+
     public async Task<User?> GetByResetTokenAsync(string token)
     {
         return await _db.Users.FirstOrDefaultAsync(x => x.PasswordResetToken == token);
@@ -36,6 +41,18 @@ public class UserRepository : IUserRepository
     public async Task UpdateAsync(User user)
     {
         _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task CreateAsync(User user)
+    {
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(User user)
+    {
+        _db.Users.Remove(user);
         await _db.SaveChangesAsync();
     }
 }

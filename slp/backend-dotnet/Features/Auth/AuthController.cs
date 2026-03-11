@@ -1,5 +1,4 @@
-﻿using backend_dotnet.Features.Auth;  // Use our own DTOs
-using backend_dotnet.Features.User;
+﻿using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -25,7 +24,7 @@ public class AuthController : ControllerBase
     [HttpPost("auth/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _authService.LoginAsync(request.Email, request.Password);
+        var result = await _authService.LoginAsync(request.Username, request.Password);
 
         if (result == null)
             return Unauthorized(new { message = "Invalid credentials" });
@@ -113,5 +112,37 @@ public class AuthController : ControllerBase
         await _authService.SendVerificationEmailAsync(userId);
 
         return Ok(new { message = "Verification email sent." });
+    }
+
+    // POST /auth/register
+    [HttpPost("auth/register")]
+    public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+    {
+        var user = await _userService.RegisterAsync(request);
+
+        return Ok(user);
+    }
+
+    // DELETE /users/{id}
+    [Authorize]
+    [HttpDelete("users/{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var currentUser = await _userService.GetByIdAsync(currentUserId);
+
+        if (currentUser == null)
+            return Unauthorized();
+
+        if (currentUser.Username != "admin")
+            return Forbid();
+
+        var deleted = await _userService.DeleteAsync(id);
+
+        if (!deleted)
+            return NotFound();
+
+        return Ok(new { message = "User deleted successfully" });
     }
 }

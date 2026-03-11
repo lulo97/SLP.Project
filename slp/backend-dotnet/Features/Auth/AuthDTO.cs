@@ -1,6 +1,6 @@
 ﻿namespace backend_dotnet.Features.Auth
 {
-    public record LoginRequest(string Email, string Password);
+    public record LoginRequest(string Username, string Password);
 
     public record ResetPasswordRequest(string Email);
 
@@ -22,4 +22,10 @@
         public string UserId { get; set; } = "";       // now string to match controller
         public string Email { get; set; } = "";
     }
+
+    public record RegisterUserRequest(
+        string Username,
+        string Email,
+        string Password
+    );
 }

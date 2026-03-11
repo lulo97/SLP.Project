@@ -21,9 +21,9 @@ public class AuthService : IAuthService
         _email = email;
     }
 
-    public async Task<LoginResponse?> LoginAsync(string email, string password)
+    public async Task<LoginResponse?> LoginAsync(string username, string password)
     {
-        var user = await _users.GetByEmailAsync(email);
+        var user = await _users.GetByUsernameAsync(username);
 
         if (user == null)
             return null;
@@ -47,7 +47,7 @@ public class AuthService : IAuthService
         return new LoginResponse
         {
             Token = token,
-            UserId = user.Id.ToString(),   // convert int to string
+            UserId = user.Id.ToString(),
             Email = user.Email
         };
     }

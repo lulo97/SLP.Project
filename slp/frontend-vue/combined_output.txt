@@ -1,0 +1,255 @@
+
+--- File: ./index.html ---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend-vue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
+
+
+--- File: ./tsconfig.app.json ---
+
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "types": ["vite/client"],
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "jsx": "preserve",
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+}
+
+
+
+--- File: ./tsconfig.json ---
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+
+
+--- File: ./tsconfig.node.json ---
+
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+
+
+--- File: ./vite.config.ts ---
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import path from "path"
+
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src")
+    }
+  }
+})
+
+
+--- File: src\App.vue ---
+
+<template>
+  <a-layout class="min-h-screen">
+
+    <!-- Header -->
+    <a-layout-header class="flex justify-between items-center px-6">
+
+      <div class="text-white text-lg font-semibold">
+        My App
+      </div>
+
+      <div class="flex items-center gap-4">
+
+        <template v-if="auth.user">
+
+          <span class="text-white">
+            {{ auth.user.username }}
+          </span>
+
+          <a-button type="primary" ghost @click="goProfile">
+            Profile
+          </a-button>
+
+          <a-button danger @click="logout">
+            Logout
+          </a-button>
+
+        </template>
+
+        <template v-else>
+
+          <a-button type="primary" ghost @click="goLogin">
+            Login
+          </a-button>
+
+          <a-button @click="goRegister">
+            Register
+          </a-button>
+
+        </template>
+
+      </div>
+
+    </a-layout-header>
+
+    <!-- Content -->
+    <a-layout-content class="p-10">
+
+      <router-view />
+
+    </a-layout-content>
+
+  </a-layout>
+</template>
+
+<script setup lang="ts">
+
+import { onMounted } from "vue"
+import { useRouter } from "vue-router"
+import { useAuthStore } from "@/features/auth/store/authStore"
+
+const router = useRouter()
+const auth = useAuthStore()
+
+onMounted(async () => {
+
+  if (auth.token && !auth.user) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      auth.logout()
+    }
+  }
+
+})
+
+function goLogin() {
+  router.push("/login")
+}
+
+function goRegister() {
+  router.push("/register")
+}
+
+function goProfile() {
+  router.push("/profile")
+}
+
+async function logout() {
+
+  await auth.logout()
+
+  router.push("/login")
+}
+
+</script>
+
+
+--- File: src\main.ts ---
+
+import { createApp } from "vue"
+import { createPinia } from "pinia"
+
+import router from "./router"
+import App from "./App.vue"
+
+import Antd from "ant-design-vue"
+import "ant-design-vue/dist/reset.css"
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+app.use(Antd)
+
+app.mount("#app")
+
+
+--- File: src\router.ts ---
+
+import { createRouter, createWebHistory } from "vue-router"
+
+import LoginPage from "@/features/auth/pages/LoginPage.vue"
+import RegisterPage from "@/features/auth/pages/RegisterPage.vue"
+import DashboardPage from "@/features/dashboard/pages/DashboardPage.vue"
+import ProfilePage from "@/features/user/pages/ProfilePage.vue"
+
+const routes = [
+
+  { path: "/login", component: LoginPage },
+
+  { path: "/register", component: RegisterPage },
+
+  { path: "/", component: DashboardPage },
+
+  { path: "/profile", component: ProfilePage }
+
+]
+
+export default createRouter({
+  history: createWebHistory(),
+  routes
+})
+

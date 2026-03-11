@@ -34,8 +34,12 @@ public class User
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
 
+    [Column("password_reset_token")]
     public string? PasswordResetToken { get; set; }
+
+    [Column("password_reset_expiry")]
     public DateTime? PasswordResetExpiry { get; set; }
 
+    [Column("email_verification_token")]
     public string? EmailVerificationToken { get; set; }
 }

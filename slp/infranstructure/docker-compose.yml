@@ -33,6 +33,18 @@ services:
         - "${MAIL_PORT}:${MAIL_PORT}"
       env_file:
         - .env
+
+  backend-dotnet-img:
+    build: ../backend-dotnet
+    container_name: backend-dotnet-container
+    ports:
+      - "${BACKEND_DOTNET_PORT}:${BACKEND_DOTNET_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      # - postgres
+      - redis
+      - mail
         
 volumes:
   redis_data:

@@ -36,4 +36,38 @@ public class UserService : IUserService
 
         return user;
     }
+
+    public async Task<User> RegisterAsync(RegisterUserRequest request)
+    {
+        var existing = await _users.GetByEmailAsync(request.Email);
+        if (existing != null)
+            throw new Exception("Email already exists");
+
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            PasswordHash = PasswordHasher.Hash(request.Password),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Role = "user",
+            Status = "active"
+        };
+
+        await _users.CreateAsync(user);
+
+        return user;
+    }
+
+    public async Task<bool> DeleteAsync(int userId)
+    {
+        var user = await _users.GetByIdAsync(userId);
+
+        if (user == null)
+            return false;
+
+        await _users.DeleteAsync(user);
+
+        return true;
+    }
 }

@@ -1,6 +1,7 @@
-﻿using System.Text;
+﻿using backend_dotnet.Features.Email;
+using Microsoft.Extensions.Options;
+using System.Text;
 using System.Text.Json;
-using backend_dotnet.Features.Email;
 
 namespace backend_dotnet.Features.Email;
 
@@ -13,11 +14,11 @@ public class EmailService : IEmailService
     public EmailService(
         HttpClient httpClient,
         ILogger<EmailService> logger,
-        EmailSettings settings)
+        IOptions<EmailSettings> options)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _settings = settings;
+        _settings = options.Value;
     }
 
     public async Task SendAsync(string to, string subject, string body)

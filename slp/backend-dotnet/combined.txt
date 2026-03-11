@@ -2,8 +2,7 @@
 
 ===== Features\Auth\AuthController.cs =====
 
-﻿using backend_dotnet.Features.Auth;  // Use our own DTOs
-using backend_dotnet.Features.User;
+﻿using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -29,7 +28,7 @@ public class AuthController : ControllerBase
     [HttpPost("auth/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _authService.LoginAsync(request.Email, request.Password);
+        var result = await _authService.LoginAsync(request.Username, request.Password);
 
         if (result == null)
             return Unauthorized(new { message = "Invalid credentials" });
@@ -118,13 +117,45 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = "Verification email sent." });
     }
+
+    // POST /auth/register
+    [HttpPost("auth/register")]
+    public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+    {
+        var user = await _userService.RegisterAsync(request);
+
+        return Ok(user);
+    }
+
+    // DELETE /users/{id}
+    [Authorize]
+    [HttpDelete("users/{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var currentUser = await _userService.GetByIdAsync(currentUserId);
+
+        if (currentUser == null)
+            return Unauthorized();
+
+        if (currentUser.Username != "admin")
+            return Forbid();
+
+        var deleted = await _userService.DeleteAsync(id);
+
+        if (!deleted)
+            return NotFound();
+
+        return Ok(new { message = "User deleted successfully" });
+    }
 }
 
 ===== Features\Auth\AuthDTO.cs =====
 
 ﻿namespace backend_dotnet.Features.Auth
 {
-    public record LoginRequest(string Email, string Password);
+    public record LoginRequest(string Username, string Password);
 
     public record ResetPasswordRequest(string Email);
 
@@ -146,6 +177,12 @@ public class AuthController : ControllerBase
         public string UserId { get; set; } = "";       // now string to match controller
         public string Email { get; set; } = "";
     }
+
+    public record RegisterUserRequest(
+        string Username,
+        string Email,
+        string Password
+    );
 }
 
 ===== Features\Auth\AuthService.cs =====
@@ -173,9 +210,9 @@ public class AuthService : IAuthService
         _email = email;
     }
 
-    public async Task<LoginResponse?> LoginAsync(string email, string password)
+    public async Task<LoginResponse?> LoginAsync(string username, string password)
     {
-        var user = await _users.GetByEmailAsync(email);
+        var user = await _users.GetByUsernameAsync(username);
 
         if (user == null)
             return null;
@@ -199,7 +236,7 @@ public class AuthService : IAuthService
         return new LoginResponse
         {
             Token = token,
-            UserId = user.Id.ToString(),   // convert int to string
+            UserId = user.Id.ToString(),
             Email = user.Email
         };
     }
@@ -289,6 +326,41 @@ public class AuthService : IAuthService
     }
 }
 
+===== Features\Auth\DummyAuthHandler.cs =====
+
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+using System.Text.Encodings.Web;
+
+
+namespace backend_dotnet.Features.Auth
+{
+
+    public class DummyAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+    {
+        public DummyAuthHandler(
+            IOptionsMonitor<AuthenticationSchemeOptions> options,
+            ILoggerFactory logger,
+            UrlEncoder encoder,
+            ISystemClock clock)
+            : base(options, logger, encoder, clock)
+        {
+        }
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            if (Context.User?.Identity?.IsAuthenticated == true)
+            {
+                var ticket = new AuthenticationTicket(Context.User, Scheme.Name);
+                return Task.FromResult(AuthenticateResult.Success(ticket));
+            }
+
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+    }
+}
+
+
 ===== Features\Auth\IAuthService.cs =====
 
 ﻿using backend_dotnet.Features.Auth;
@@ -296,7 +368,7 @@ using System.Security.Claims;
 
 public interface IAuthService
 {
-    Task<LoginResponse?> LoginAsync(string email, string password);
+    Task<LoginResponse?> LoginAsync(string username, string password);
     Task LogoutAsync(ClaimsPrincipal user);
 
     Task RequestPasswordResetAsync(string email);
@@ -353,9 +425,10 @@ public class PasswordHasher
 
 ===== Features\Email\EmailService.cs =====
 
-﻿using System.Text;
+﻿using backend_dotnet.Features.Email;
+using Microsoft.Extensions.Options;
+using System.Text;
 using System.Text.Json;
-using backend_dotnet.Features.Email;
 
 namespace backend_dotnet.Features.Email;
 
@@ -368,11 +441,11 @@ public class EmailService : IEmailService
     public EmailService(
         HttpClient httpClient,
         ILogger<EmailService> logger,
-        EmailSettings settings)
+        IOptions<EmailSettings> options)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _settings = settings;
+        _settings = options.Value;
     }
 
     public async Task SendAsync(string to, string subject, string body)
@@ -516,20 +589,28 @@ namespace backend_dotnet.Features.Session;
 public class Session
 {
     [Key]
+    [Column("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
+    [Column("user_id")]
     public int UserId { get; set; }
 
+    [Column("token_hash")]
     public string TokenHash { get; set; } = "";
 
+    [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
+    [Column("expires_at")]
     public DateTime ExpiresAt { get; set; }
 
+    [Column("revoked")]
     public bool Revoked { get; set; }
 
+    [Column("ip_address")]
     public string? IpAddress { get; set; }
 
+    [Column("user_agent")]
     public string? UserAgent { get; set; }
 }
 
@@ -601,15 +682,15 @@ namespace backend_dotnet.Features.Session
 {
     public interface IUserRepository
     {
-        Task<User?> GetByIdAsync(int id);           // was string
-
+        Task<User?> GetByIdAsync(int id);
         Task<User?> GetByEmailAsync(string email);
-
+        Task<User?> GetByUsernameAsync(string username);
         Task<User?> GetByResetTokenAsync(string token);
-
         Task<User?> GetByEmailVerificationTokenAsync(string token);
 
         Task UpdateAsync(User user);
+        Task CreateAsync(User user);
+        Task DeleteAsync(User user);
     }
 }
 
@@ -623,6 +704,8 @@ namespace backend_dotnet.Features.User
     {
         Task<User?> GetByIdAsync(string id);
         Task<User> UpdateAsync(string id, UpdateUserRequest request);
+        Task<User> RegisterAsync(RegisterUserRequest request);
+        Task<bool> DeleteAsync(int userId);
     }
 }
 
@@ -664,9 +747,13 @@ public class User
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
 
+    [Column("password_reset_token")]
     public string? PasswordResetToken { get; set; }
+
+    [Column("password_reset_expiry")]
     public DateTime? PasswordResetExpiry { get; set; }
 
+    [Column("email_verification_token")]
     public string? EmailVerificationToken { get; set; }
 }
 
@@ -697,6 +784,11 @@ public class UserRepository : IUserRepository
         return await _db.Users.FirstOrDefaultAsync(x => x.Email == email);
     }
 
+    public async Task<User?> GetByUsernameAsync(string username)
+    {
+        return await _db.Users.FirstOrDefaultAsync(x => x.Username == username);
+    }
+
     public async Task<User?> GetByResetTokenAsync(string token)
     {
         return await _db.Users.FirstOrDefaultAsync(x => x.PasswordResetToken == token);
@@ -710,6 +802,18 @@ public class UserRepository : IUserRepository
     public async Task UpdateAsync(User user)
     {
         _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task CreateAsync(User user)
+    {
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(User user)
+    {
+        _db.Users.Remove(user);
         await _db.SaveChangesAsync();
     }
 }
@@ -753,6 +857,40 @@ public class UserService : IUserService
         await _users.UpdateAsync(user);
 
         return user;
+    }
+
+    public async Task<User> RegisterAsync(RegisterUserRequest request)
+    {
+        var existing = await _users.GetByEmailAsync(request.Email);
+        if (existing != null)
+            throw new Exception("Email already exists");
+
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            PasswordHash = PasswordHasher.Hash(request.Password),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Role = "user",
+            Status = "active"
+        };
+
+        await _users.CreateAsync(user);
+
+        return user;
+    }
+
+    public async Task<bool> DeleteAsync(int userId)
+    {
+        var user = await _users.GetByIdAsync(userId);
+
+        if (user == null)
+            return false;
+
+        await _users.DeleteAsync(user);
+
+        return true;
     }
 }
 
@@ -860,13 +998,25 @@ namespace backend_dotnet.Middlewares
 ===== ./Program.cs =====
 
 using backend_dotnet.Data;
+using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.User;
 using backend_dotnet.Middlewares;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 
@@ -888,12 +1038,24 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = "SampleApp";
 });
+builder.Services.AddAuthentication("Session")
+    .AddScheme<AuthenticationSchemeOptions, DummyAuthHandler>("Session", null);
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3002")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
-
+app.UseCors("Frontend");
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseMiddleware<SessionMiddleware>();
 
@@ -902,6 +1064,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
 
 ===== ./appsettings.json =====
 

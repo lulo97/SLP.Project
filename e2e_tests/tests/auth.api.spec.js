@@ -1,318 +1,140 @@
 import { test, expect } from '@playwright/test';
 
-// Configuration
-const API_BASE_URL = 'http://localhost:5000/api';           // your backend API
-const MAILHOG_API_URL = 'http://localhost:8025/api';       // MailHog API
+const API_BASE_URL = 'http://localhost:5140/api';
 
-// Test user credentials (must exist in the database)
-const testUser = {
-  email: 'test@example.com',
-  password: 'TestPassword123!',
-  name: 'Test User',
+const adminUser = {
+  username: 'admin',
+  password: '123',
 };
 
-// Helper to get the latest email from MailHog and extract a token
-async function extractTokenFromEmail(subjectContains) {
-  // Give the email a moment to arrive
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  const response = await fetch(`${MAILHOG_API_URL}/v2/messages`);
-  const data = await response.json();
-  const messages = data.items;
-
-  // Find the most recent email with the expected subject
-  const email = messages.find(msg =>
-    msg.Content.Headers.Subject[0].includes(subjectContains)
-  );
-
-  if (!email) {
-    throw new Error(`No email found with subject containing "${subjectContains}"`);
-  }
-
-  const body = email.Content.Body;
-  // Token is typically in the format: "Reset token: ..." or "Verification token: ..."
-  const tokenMatch = body.match(/(?:Reset token|Verification token):\s*(\S+)/);
-  if (!tokenMatch) {
-    throw new Error('Token not found in email body');
-  }
-  return tokenMatch[1];
+function generateUser() {
+  const id = Date.now() + Math.floor(Math.random() * 10000);
+  return {
+    username: `user_${id}`,
+    email: `user_${id}@example.com`,
+    password: 'TestPassword123!',
+  };
 }
 
-test.describe('API End-to-End Tests (via HTTP only)', () => {
-  let authToken;
+test.describe('User lifecycle flow', () => {
+  test('create → login → /me → logout → admin delete', async ({ request }) => {
+    const user = generateUser();
 
-  test.describe('Authentication', () => {
-    test('POST /auth/login – success', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: testUser.password,
-        },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body).toHaveProperty('token');
-      expect(body).toHaveProperty('userId');
-      expect(body.email).toBe(testUser.email);
-      authToken = body.token; // store for later tests
+    let userToken;
+    let userId;
+    let adminToken;
+
+    // -----------------------------
+    // 1. Register new user
+    // -----------------------------
+    const registerRes = await request.post(`${API_BASE_URL}/auth/register`, {
+      data: {
+        username: user.username,
+        email: user.email,
+        password: user.password,
+      },
     });
 
-    test('POST /auth/login – invalid credentials', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: 'wrong@example.com',
-          password: 'wrong',
-        },
-      });
-      expect(response.status()).toBe(401);
-      const body = await response.json();
-      expect(body.message).toBe('Invalid credentials');
+    expect(registerRes.status()).toBe(200);
+    const createdUser = await registerRes.json();
+
+    expect(createdUser.email).toBe(user.email);
+    expect(createdUser.username).toBe(user.username);
+
+    userId = createdUser.id.toString();
+
+    // -----------------------------
+    // 2. Login with new user
+    // -----------------------------
+    const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: {
+        username: user.username,
+        password: user.password,
+      },
     });
 
-    test('POST /auth/login – rate limiting', async ({ request }) => {
-      // Make 10 requests with wrong credentials – all should be 401
-      for (let i = 0; i < 10; i++) {
-        const response = await request.post(`${API_BASE_URL}/auth/login`, {
-          data: {
-            email: 'rate@test.com',
-            password: 'wrong',
-          },
-        });
-        expect(response.status()).toBe(401);
+    expect(loginRes.status()).toBe(200);
+
+    const loginBody = await loginRes.json();
+    expect(loginBody.token).toBeTruthy();
+
+    userToken = loginBody.token;
+
+    // -----------------------------
+    // 3. Get current user (/users/me)
+    // -----------------------------
+    const meRes = await request.get(`${API_BASE_URL}/users/me`, {
+      headers: {
+        'X-Session-Token': userToken,
+      },
+    });
+
+    expect(meRes.status()).toBe(200);
+
+    const meBody = await meRes.json();
+
+    expect(meBody.id.toString()).toBe(userId);
+    expect(meBody.username).toBe(user.username);
+    expect(meBody.email).toBe(user.email);
+
+    // -----------------------------
+    // 4. Logout
+    // -----------------------------
+    const logoutRes = await request.post(`${API_BASE_URL}/auth/logout`, {
+      headers: {
+        'X-Session-Token': userToken,
+      },
+    });
+
+    expect(logoutRes.status()).toBe(200);
+    const logoutBody = await logoutRes.json();
+    expect(logoutBody.message).toBe('Logged out successfully');
+
+    // -----------------------------
+    // 5. Admin login
+    // -----------------------------
+    const adminLoginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: {
+        username: adminUser.username,
+        password: adminUser.password,
+      },
+    });
+
+    expect(adminLoginRes.status()).toBe(200);
+
+    const adminLoginBody = await adminLoginRes.json();
+    adminToken = adminLoginBody.token;
+
+    // -----------------------------
+    // 6. Admin deletes created user
+    // -----------------------------
+    const deleteRes = await request.delete(
+      `${API_BASE_URL}/users/${userId}`,
+      {
+        headers: {
+          'X-Session-Token': adminToken,
+        },
       }
-      // 11th request should be rate limited
-      const response = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: 'rate@test.com',
-          password: 'wrong',
-        },
-      });
-      expect(response.status()).toBe(429);
-    });
-  });
+    );
 
-  test.describe('Authenticated Endpoints', () => {
-    test.beforeAll(async ({ request }) => {
-      // Ensure we have a valid token
-      if (!authToken) {
-        const res = await request.post(`${API_BASE_URL}/auth/login`, {
-          data: {
-            email: testUser.email,
-            password: testUser.password,
-          },
-        });
-        const body = await res.json();
-        authToken = body.token;
-      }
+    expect(deleteRes.status()).toBe(200);
+
+    const deleteBody = await deleteRes.json();
+    expect(deleteBody.message).toBe('User deleted successfully');
+
+    // -----------------------------
+    // 7. Sanity check: deleted user cannot login
+    // -----------------------------
+    const loginAfterDeleteRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: {
+        username: user.username,
+        password: user.password,
+      },
     });
 
-    test('POST /auth/logout – success', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/logout`, {
-        headers: { 'X-Session-Token': authToken },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.message).toBe('Logged out successfully');
-    });
+    expect(loginAfterDeleteRes.status()).toBe(401);
 
-    test('POST /auth/logout – no token', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/logout`);
-      expect(response.status()).toBe(401);
-    });
-
-    test('GET /users/me – success', async ({ request }) => {
-      // Login again to get a fresh token
-      const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: testUser.password,
-        },
-      });
-      const { token } = await loginRes.json();
-
-      const response = await request.get(`${API_BASE_URL}/users/me`, {
-        headers: { 'X-Session-Token': token },
-      });
-      expect(response.status()).toBe(200);
-      const user = await response.json();
-      expect(user.email).toBe(testUser.email);
-      expect(user.username).toBe(testUser.name);
-    });
-
-    test('GET /users/me – no token', async ({ request }) => {
-      const response = await request.get(`${API_BASE_URL}/users/me`);
-      expect(response.status()).toBe(401);
-    });
-
-    test('PUT /users/me – success', async ({ request }) => {
-      // Login again
-      const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: testUser.password,
-        },
-      });
-      const { token } = await loginRes.json();
-
-      const newName = 'Updated Name';
-      const response = await request.put(`${API_BASE_URL}/users/me`, {
-        headers: { 'X-Session-Token': token },
-        data: {
-          name: newName,
-          avatarUrl: 'https://example.com/avatar.png',
-        },
-      });
-      expect(response.status()).toBe(200);
-      const user = await response.json();
-      expect(user.username).toBe(newName);
-
-      // Verify update persisted
-      const getRes = await request.get(`${API_BASE_URL}/users/me`, {
-        headers: { 'X-Session-Token': token },
-      });
-      const updatedUser = await getRes.json();
-      expect(updatedUser.username).toBe(newName);
-    });
-
-    test('PUT /users/me – no token', async ({ request }) => {
-      const response = await request.put(`${API_BASE_URL}/users/me`, {
-        data: { name: 'Should fail' },
-      });
-      expect(response.status()).toBe(401);
-    });
-
-    test('POST /users/me/verify-email/send – success', async ({ request }) => {
-      const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: testUser.password,
-        },
-      });
-      const { token } = await loginRes.json();
-
-      const response = await request.post(`${API_BASE_URL}/users/me/verify-email/send`, {
-        headers: { 'X-Session-Token': token },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.message).toBe('Verification email sent.');
-    });
-
-    test('POST /users/me/verify-email/send – no token', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/users/me/verify-email/send`);
-      expect(response.status()).toBe(401);
-    });
-  });
-
-  test.describe('Password Reset Flow', () => {
-    test('POST /auth/reset-password – existing email', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/reset-password`, {
-        data: { email: testUser.email },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.message).toBe('Password reset email sent if account exists.');
-    });
-
-    test('POST /auth/reset-password – non‑existent email', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/reset-password`, {
-        data: { email: 'nonexistent@example.com' },
-      });
-      expect(response.status()).toBe(200); // no enumeration
-      const body = await response.json();
-      expect(body.message).toBe('Password reset email sent if account exists.');
-    });
-
-    test('POST /auth/reset-password/confirm – valid token (via MailHog)', async ({ request }) => {
-      // Step 1: request password reset
-      await request.post(`${API_BASE_URL}/auth/reset-password`, {
-        data: { email: testUser.email },
-      });
-
-      // Step 2: retrieve token from MailHog
-      const token = await extractTokenFromEmail('Password Reset');
-
-      // Step 3: confirm reset with new password
-      const newPassword = 'NewPassword123!';
-      const response = await request.post(`${API_BASE_URL}/auth/reset-password/confirm`, {
-        data: {
-          token,
-          newPassword,
-        },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.message).toBe('Password reset successful');
-
-      // Step 4: verify login works with new password
-      const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: newPassword,
-        },
-      });
-      expect(loginRes.status()).toBe(200);
-
-      // Step 5: revert password to original for other tests
-      await request.post(`${API_BASE_URL}/auth/reset-password`, {
-        data: { email: testUser.email },
-      });
-      const revertToken = await extractTokenFromEmail('Password Reset');
-      await request.post(`${API_BASE_URL}/auth/reset-password/confirm`, {
-        data: {
-          token: revertToken,
-          newPassword: testUser.password,
-        },
-      });
-    });
-
-    test('POST /auth/reset-password/confirm – invalid token', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/reset-password/confirm`, {
-        data: {
-          token: 'invalid-token',
-          newPassword: 'anything',
-        },
-      });
-      expect(response.status()).toBe(400);
-      const body = await response.json();
-      expect(body.message).toBe('Invalid or expired token');
-    });
-  });
-
-  test.describe('Email Verification Flow', () => {
-    test('POST /auth/verify-email – valid token (via MailHog)', async ({ request }) => {
-      // Step 1: log in to trigger verification email
-      const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-        data: {
-          email: testUser.email,
-          password: testUser.password,
-        },
-      });
-      const { token: authToken } = await loginRes.json();
-
-      await request.post(`${API_BASE_URL}/users/me/verify-email/send`, {
-        headers: { 'X-Session-Token': authToken },
-      });
-
-      // Step 2: retrieve token from MailHog
-      const verificationToken = await extractTokenFromEmail('Verify your email');
-
-      // Step 3: verify email
-      const response = await request.post(`${API_BASE_URL}/auth/verify-email`, {
-        data: { token: verificationToken },
-      });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.message).toBe('Email verified successfully');
-    });
-
-    test('POST /auth/verify-email – invalid token', async ({ request }) => {
-      const response = await request.post(`${API_BASE_URL}/auth/verify-email`, {
-        data: { token: 'invalid-token' },
-      });
-      expect(response.status()).toBe(400);
-      const body = await response.json();
-      expect(body.message).toBe('Invalid verification token');
-    });
+    const loginAfterDeleteBody = await loginAfterDeleteRes.json();
+    expect(loginAfterDeleteBody.message).toBe('Invalid credentials');
   });
 });

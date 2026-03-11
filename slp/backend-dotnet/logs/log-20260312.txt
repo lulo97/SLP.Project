@@ -1,0 +1,901 @@
+2026-03-12 00:11:15.802 +07:00 [INF] Application starting1
+2026-03-12 00:11:15.866 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:11:16.035 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:11:16.037 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:11:16.077 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:11:16.079 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:11:16.080 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:11:41.085 +07:00 [INF] DtsXfAbEsPrw5i8DZOEaNw==.HUDFlMvYikF1nsac3B/9hJi0xu4lR7dNbAdnd8u5rLk=
+2026-03-12 00:11:41.144 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:11:41.301 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:11:41.303 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:11:41.341 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:11:41.342 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:11:41.343 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:12:48.031 +07:00 [INF] QLgIukmLb3c7QJd5DyXDkQ==.p55wZNLVnG84k5+BADsFIpaFwEQ3L8vrHH4rrZ0kK4w=
+2026-03-12 00:12:48.101 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:12:48.297 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:12:48.299 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:12:48.351 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:12:48.352 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:12:48.353 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:13:01.446 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:13:01.671 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:13:01.674 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:13:01.750 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:13:01.751 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:13:01.752 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:13:14.276 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:13:14.276 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:13:14.276 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:13:14.349 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 74.5967ms
+2026-03-12 00:13:14.349 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 74.5045ms
+2026-03-12 00:13:14.349 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 74.5816ms
+2026-03-12 00:13:14.438 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:13:14.438 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:13:14.438 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:13:14.655 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:14.655 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:14.655 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:14.690 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:14.690 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:14.690 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:16.051 +07:00 [INF] Executed DbCommand (87ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:13:16.051 +07:00 [INF] Executed DbCommand (87ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:13:16.051 +07:00 [INF] Executed DbCommand (87ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:13:16.923 +07:00 [INF] Executed DbCommand (19ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:13:16.923 +07:00 [INF] Executed DbCommand (19ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:13:16.923 +07:00 [INF] Executed DbCommand (19ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:13:16.981 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:13:16.981 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:13:16.981 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:13:17.012 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2307.8017ms
+2026-03-12 00:13:17.012 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2312.0637ms
+2026-03-12 00:13:17.012 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2310.4259ms
+2026-03-12 00:13:17.015 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:17.016 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:17.017 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:13:17.031 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2592.8657ms
+2026-03-12 00:13:17.031 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2592.8638ms
+2026-03-12 00:13:17.031 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2592.8661ms
+2026-03-12 00:13:17.032 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:13:17.032 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:13:17.034 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:13:17.049 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 17.3028ms
+2026-03-12 00:13:17.053 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 20.577ms
+2026-03-12 00:13:17.054 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:13:17.056 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 21.6846ms
+2026-03-12 00:13:17.054 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:13:17.058 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:13:17.392 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:13:17.392 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:13:17.392 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:13:17.402 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:17.402 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:17.402 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:13:17.507 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:13:17.507 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:13:17.507 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:13:18.100 +07:00 [ERR] Failed executing DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions ("Id", "CreatedAt", "ExpiresAt", "IpAddress", "Revoked", "TokenHash", "UserAgent", "UserId")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:13:18.100 +07:00 [ERR] Failed executing DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions ("Id", "CreatedAt", "ExpiresAt", "IpAddress", "Revoked", "TokenHash", "UserAgent", "UserId")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:13:18.100 +07:00 [ERR] Failed executing DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions ("Id", "CreatedAt", "ExpiresAt", "IpAddress", "Revoked", "TokenHash", "UserAgent", "UserId")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:13:18.140 +07:00 [ERR] An exception occurred in the database while saving changes for context type 'backend_dotnet.Data.AppDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 42703: column "Id" of relation "sessions" does not exist
+
+POSITION: 23
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 42703
+    MessageText: column "Id" of relation "sessions" does not exist
+    Position: 23
+    File: parse_target.c
+    Line: 1073
+    Routine: checkInsertTargets
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 42703: column "Id" of relation "sessions" does not exist
+
+POSITION: 23
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 42703
+    MessageText: column "Id" of relation "sessions" does not exist
+    Position: 23
+    File: parse_target.c
+    Line: 1073
+    Routine: checkInsertTargets
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+2026-03-12 00:14:16.148 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:14:16.345 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:14:16.346 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:14:16.387 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:14:16.388 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:14:16.389 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:14:30.827 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:14:30.827 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:14:30.827 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:14:30.888 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 61.0831ms
+2026-03-12 00:14:30.888 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 61.0735ms
+2026-03-12 00:14:30.888 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 61.0589ms
+2026-03-12 00:14:30.958 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:14:30.958 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:14:30.958 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:14:31.145 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:31.145 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:31.145 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:31.180 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:31.180 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:31.180 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:32.932 +07:00 [INF] Executed DbCommand (99ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:14:32.932 +07:00 [INF] Executed DbCommand (99ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:14:32.932 +07:00 [INF] Executed DbCommand (99ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:14:33.926 +07:00 [INF] Executed DbCommand (20ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:14:33.926 +07:00 [INF] Executed DbCommand (20ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:14:33.926 +07:00 [INF] Executed DbCommand (20ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:14:33.991 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:14:33.991 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:14:33.991 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:14:34.030 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2838.7937ms
+2026-03-12 00:14:34.030 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2835.461ms
+2026-03-12 00:14:34.030 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2841.456ms
+2026-03-12 00:14:34.033 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:34.033 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:34.035 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:14:34.049 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:14:34.050 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:14:34.051 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:14:34.053 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 3094.5233ms
+2026-03-12 00:14:34.053 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 3094.5152ms
+2026-03-12 00:14:34.053 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 3094.523ms
+2026-03-12 00:14:34.054 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 4.3458ms
+2026-03-12 00:14:34.057 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 7.2627ms
+2026-03-12 00:14:34.064 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:14:34.067 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:14:34.060 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 8.634ms
+2026-03-12 00:14:34.071 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:14:34.407 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:34.407 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:34.407 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:34.420 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:34.420 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:34.421 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:34.519 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:34.519 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:34.519 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:35.079 +07:00 [INF] Executed DbCommand (6ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.079 +07:00 [INF] Executed DbCommand (6ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.079 +07:00 [INF] Executed DbCommand (6ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.083 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.084 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.087 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.090 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 667.6447ms
+2026-03-12 00:14:35.090 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 665.0625ms
+2026-03-12 00:14:35.091 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 662.9537ms
+2026-03-12 00:14:35.093 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.094 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.096 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.097 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1025.9279ms
+2026-03-12 00:14:35.100 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1032.5704ms
+2026-03-12 00:14:35.098 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1033.9637ms
+2026-03-12 00:14:35.106 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:14:35.106 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:14:35.106 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:14:35.115 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 8.7826ms
+2026-03-12 00:14:35.118 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 11.9302ms
+2026-03-12 00:14:35.119 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:14:35.120 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:14:35.122 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 15.1939ms
+2026-03-12 00:14:35.123 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:14:35.145 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:35.146 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:35.146 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:35.161 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.161 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.161 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.170 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.170 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.173 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.193 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:14:35.193 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:14:35.193 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:14:35.196 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:35.198 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:35.201 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:35.204 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 26.2745ms
+2026-03-12 00:14:35.204 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 28.8172ms
+2026-03-12 00:14:35.206 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 33.1489ms
+2026-03-12 00:14:35.208 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.209 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.211 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:14:35.213 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 92.5114ms
+2026-03-12 00:14:35.214 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 94.9188ms
+2026-03-12 00:14:35.215 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 92.4809ms
+2026-03-12 00:14:35.218 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:14:35.219 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:14:35.220 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:14:35.230 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 11.9498ms
+2026-03-12 00:14:35.231 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:14:35.236 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 15.0689ms
+2026-03-12 00:14:35.234 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:14:35.233 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 14.095ms
+2026-03-12 00:14:35.237 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:14:35.253 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.248 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.259 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.260 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.261 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.264 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:35.264 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:35.268 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:35.270 +07:00 [INF] Executed DbCommand (0ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:14:35.927 +07:00 [INF] Executed DbCommand (3ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.930 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.932 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 669.6465ms
+2026-03-12 00:14:35.935 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.935 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.937 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 702.7706ms
+2026-03-12 00:14:35.940 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.942 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:14:35.944 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/5 - null null
+2026-03-12 00:14:35.947 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 680.8678ms
+2026-03-12 00:14:35.950 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:14:35.953 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/5 - 307 0 null 9.1606ms
+2026-03-12 00:14:35.954 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.954 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/5 - null null
+2026-03-12 00:14:35.956 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 687.7334ms
+2026-03-12 00:14:35.961 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 730.3204ms
+2026-03-12 00:14:35.966 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/7 - null null
+2026-03-12 00:14:35.966 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:14:35.967 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:35.974 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/7 - 307 0 null 7.9756ms
+2026-03-12 00:14:35.975 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 738.5419ms
+2026-03-12 00:14:35.975 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/7 - null null
+2026-03-12 00:14:35.980 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/6 - null null
+2026-03-12 00:14:35.981 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:35.994 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/6 - null null
+2026-03-12 00:14:35.992 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:35.993 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/6 - 307 0 null 12.9987ms
+2026-03-12 00:14:35.999 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:14:36.000 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:36.007 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:36.007 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:36.008 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:36.010 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:14:36.108 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.108 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.108 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.114 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.114 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.117 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:14:36.131 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:14:36.131 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:14:36.131 +07:00 [INF] Executed DbCommand (3ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:14:36.138 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:36.138 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:36.140 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:14:36.141 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 128.9658ms
+2026-03-12 00:14:36.143 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 128.8241ms
+2026-03-12 00:14:36.145 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 127.9791ms
+2026-03-12 00:14:36.148 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:36.150 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:36.152 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:14:36.154 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/5 - 200 null application/json; charset=utf-8 199.4601ms
+2026-03-12 00:14:36.156 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/7 - 200 null application/json; charset=utf-8 180.3681ms
+2026-03-12 00:14:36.157 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/6 - 200 null application/json; charset=utf-8 163.6281ms
+2026-03-12 00:17:40.017 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:17:40.232 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:17:40.234 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:17:40.287 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:17:40.288 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:17:40.289 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:19:48.460 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:19:48.679 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:19:48.681 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:19:48.724 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:19:48.725 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:19:48.726 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 00:19:55.593 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:19:55.593 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:19:55.593 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/register - application/json 104
+2026-03-12 00:19:55.671 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 82.6705ms
+2026-03-12 00:19:55.671 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 82.6999ms
+2026-03-12 00:19:55.671 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/register - 307 0 null 82.7397ms
+2026-03-12 00:19:55.789 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:19:55.789 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:19:55.789 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/register - application/json 104
+2026-03-12 00:19:56.020 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:56.020 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:56.020 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:56.066 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:56.066 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:56.066 +07:00 [INF] Route matched with {action = "Register", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(backend_dotnet.Features.Auth.RegisterUserRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:57.683 +07:00 [INF] Executed DbCommand (89ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:19:57.683 +07:00 [INF] Executed DbCommand (89ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:19:57.683 +07:00 [INF] Executed DbCommand (89ms) [Parameters=[@email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.email = @email
+LIMIT 1
+2026-03-12 00:19:58.574 +07:00 [INF] Executed DbCommand (18ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:19:58.574 +07:00 [INF] Executed DbCommand (18ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:19:58.574 +07:00 [INF] Executed DbCommand (18ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?', @p7='?', @p8='?', @p9='?' (DbType = DateTime), @p10='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO users (created_at, email, email_confirmed, email_verification_token, password_hash, password_reset_expiry, password_reset_token, role, status, updated_at, username)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10)
+RETURNING id;
+2026-03-12 00:19:58.640 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:19:58.640 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:19:58.640 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:19:58.675 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2601.092ms
+2026-03-12 00:19:58.675 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2598.6295ms
+2026-03-12 00:19:58.675 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet) in 2595.9699ms
+2026-03-12 00:19:58.678 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:58.678 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:58.680 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Register (backend-dotnet)'
+2026-03-12 00:19:58.695 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:19:58.695 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:19:58.697 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:19:58.697 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2908.432ms
+2026-03-12 00:19:58.697 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2908.4337ms
+2026-03-12 00:19:58.697 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/register - 200 null application/json; charset=utf-8 2908.4357ms
+2026-03-12 00:19:58.699 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 4.1574ms
+2026-03-12 00:19:58.702 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 7.2328ms
+2026-03-12 00:19:58.706 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 8.8164ms
+2026-03-12 00:19:58.718 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:19:58.711 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:19:58.714 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:19:59.148 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.148 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.148 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.157 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:59.158 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:59.159 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:59.256 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:19:59.256 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:19:59.256 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:19:59.882 +07:00 [INF] Executed DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:19:59.882 +07:00 [INF] Executed DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:19:59.882 +07:00 [INF] Executed DbCommand (14ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:19:59.887 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:19:59.888 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:19:59.890 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:19:59.894 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 734.5651ms
+2026-03-12 00:19:59.894 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 729.9395ms
+2026-03-12 00:19:59.895 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 733.3198ms
+2026-03-12 00:19:59.897 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.899 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.901 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:19:59.902 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1191.4451ms
+2026-03-12 00:19:59.904 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1185.768ms
+2026-03-12 00:19:59.905 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 1191.3865ms
+2026-03-12 00:19:59.913 +07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5140/api/users/me - null null
+2026-03-12 00:19:59.913 +07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5140/api/users/me - null null
+2026-03-12 00:19:59.913 +07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5140/api/users/me - null null
+2026-03-12 00:19:59.921 +07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5140/api/users/me - 307 0 null 8.5439ms
+2026-03-12 00:19:59.925 +07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5140/api/users/me - 307 0 null 11.8203ms
+2026-03-12 00:19:59.926 +07:00 [INF] Request starting HTTP/1.1 GET https://localhost:7297/api/users/me - null null
+2026-03-12 00:19:59.926 +07:00 [INF] Request starting HTTP/1.1 GET https://localhost:7297/api/users/me - null null
+2026-03-12 00:19:59.928 +07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5140/api/users/me - 307 0 null 15.301ms
+2026-03-12 00:19:59.930 +07:00 [INF] Request starting HTTP/1.1 GET https://localhost:7297/api/users/me - null null
+2026-03-12 00:19:59.955 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:19:59.955 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:19:59.955 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:19:59.972 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:19:59.972 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:19:59.972 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:19:59.984 +07:00 [INF] Route matched with {action = "GetCurrentUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetCurrentUser() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:59.984 +07:00 [INF] Route matched with {action = "GetCurrentUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetCurrentUser() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:19:59.986 +07:00 [INF] Route matched with {action = "GetCurrentUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetCurrentUser() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.030 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.030 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.030 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.033 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:20:00.035 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:20:00.038 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.User.User'.
+2026-03-12 00:20:00.039 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet) in 44.5744ms
+2026-03-12 00:20:00.041 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet) in 48.5665ms
+2026-03-12 00:20:00.043 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet) in 56.5059ms
+2026-03-12 00:20:00.044 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:20:00.046 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:20:00.048 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.GetCurrentUser (backend-dotnet)'
+2026-03-12 00:20:00.049 +07:00 [INF] Request finished HTTP/1.1 GET https://localhost:7297/api/users/me - 200 null application/json; charset=utf-8 122.9408ms
+2026-03-12 00:20:00.057 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:20:00.053 +07:00 [INF] Request finished HTTP/1.1 GET https://localhost:7297/api/users/me - 200 null application/json; charset=utf-8 126.8809ms
+2026-03-12 00:20:00.056 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:20:00.051 +07:00 [INF] Request finished HTTP/1.1 GET https://localhost:7297/api/users/me - 200 null application/json; charset=utf-8 121.3655ms
+2026-03-12 00:20:00.058 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/logout - null 0
+2026-03-12 00:20:00.061 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 3.7015ms
+2026-03-12 00:20:00.068 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 12.3318ms
+2026-03-12 00:20:00.069 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:20:00.073 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:20:00.076 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/logout - 307 0 null 17.8398ms
+2026-03-12 00:20:00.077 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/logout - null 0
+2026-03-12 00:20:00.091 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.093 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.101 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.105 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.105 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.107 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.115 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.117 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.117 +07:00 [INF] Route matched with {action = "Logout", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Logout() on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.132 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:20:00.132 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:20:00.132 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p1='?', @p0='?' (DbType = Boolean)], CommandType='"Text"', CommandTimeout='30']
+UPDATE sessions SET revoked = @p0
+WHERE id = @p1;
+2026-03-12 00:20:00.135 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.138 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.140 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.144 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 21.1028ms
+2026-03-12 00:20:00.144 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 23.5599ms
+2026-03-12 00:20:00.145 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet) in 27.2945ms
+2026-03-12 00:20:00.147 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.149 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.151 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Logout (backend-dotnet)'
+2026-03-12 00:20:00.152 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 74.7353ms
+2026-03-12 00:20:00.153 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 80.4252ms
+2026-03-12 00:20:00.156 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/logout - 200 null application/json; charset=utf-8 86.1155ms
+2026-03-12 00:20:00.159 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:20:00.159 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:20:00.162 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 37
+2026-03-12 00:20:00.171 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 12.4975ms
+2026-03-12 00:20:00.173 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:20:00.174 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 15.1405ms
+2026-03-12 00:20:00.179 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:20:00.176 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 37
+2026-03-12 00:20:00.178 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 16.1413ms
+2026-03-12 00:20:00.192 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.198 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.201 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.206 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.207 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.209 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.214 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.216 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.219 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.762 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:20:00.765 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:20:00.765 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:20:00.767 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 552.4555ms
+2026-03-12 00:20:00.770 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:20:00.771 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.773 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 562.001ms
+2026-03-12 00:20:00.774 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 594.8962ms
+2026-03-12 00:20:00.776 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.780 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/9 - null null
+2026-03-12 00:20:00.781 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 608.6326ms
+2026-03-12 00:20:00.785 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/9 - 307 0 null 4.3575ms
+2026-03-12 00:20:00.786 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/9 - null null
+2026-03-12 00:20:00.787 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/10 - null null
+2026-03-12 00:20:00.791 +07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?', @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?', @p4='?' (DbType = Boolean), @p5='?', @p6='?', @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO sessions (id, created_at, expires_at, ip_address, revoked, token_hash, user_agent, user_id)
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2026-03-12 00:20:00.798 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.798 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/10 - 307 0 null 11.1214ms
+2026-03-12 00:20:00.800 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/10 - null null
+2026-03-12 00:20:00.801 +07:00 [INF] Executing OkObjectResult, writing value of type 'backend_dotnet.Features.Auth.LoginResponse'.
+2026-03-12 00:20:00.804 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.811 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 594.2331ms
+2026-03-12 00:20:00.812 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.814 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.817 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.818 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 200 null application/json; charset=utf-8 642.6163ms
+2026-03-12 00:20:00.823 +07:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5140/api/users/8 - null null
+2026-03-12 00:20:00.825 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.827 +07:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5140/api/users/8 - 307 0 null 4.4222ms
+2026-03-12 00:20:00.829 +07:00 [INF] Request starting HTTP/1.1 DELETE https://localhost:7297/api/users/8 - null null
+2026-03-12 00:20:00.829 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.835 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.839 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@hash='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.revoked, s.token_hash, s.user_agent, s.user_id
+FROM sessions AS s
+WHERE s.token_hash = @hash
+LIMIT 1
+2026-03-12 00:20:00.840 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.844 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.844 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.848 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.851 +07:00 [INF] Route matched with {action = "DeleteUser", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteUser(Int32) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.857 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.861 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:20:00.861 +07:00 [INF] Executed DbCommand (0ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.id = @p
+LIMIT 1
+2026-03-12 00:20:00.861 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:20:00.868 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+DELETE FROM users
+WHERE id = @p0;
+2026-03-12 00:20:00.868 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.869 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.871 +07:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.873 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 34.0987ms
+2026-03-12 00:20:00.875 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 45.0232ms
+2026-03-12 00:20:00.876 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet) in 20.354ms
+2026-03-12 00:20:00.878 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.879 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.881 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.DeleteUser (backend-dotnet)'
+2026-03-12 00:20:00.883 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/10 - 200 null application/json; charset=utf-8 82.7276ms
+2026-03-12 00:20:00.884 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/9 - 200 null application/json; charset=utf-8 97.9544ms
+2026-03-12 00:20:00.886 +07:00 [INF] Request finished HTTP/1.1 DELETE https://localhost:7297/api/users/8 - 200 null application/json; charset=utf-8 57.0075ms
+2026-03-12 00:20:00.888 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:20:00.890 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:20:00.891 +07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5140/api/auth/login - application/json 63
+2026-03-12 00:20:00.904 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 16.1774ms
+2026-03-12 00:20:00.905 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:20:00.911 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:20:00.908 +07:00 [INF] Request starting HTTP/1.1 POST https://localhost:7297/api/auth/login - application/json 63
+2026-03-12 00:20:00.910 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 19.3068ms
+2026-03-12 00:20:00.907 +07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5140/api/auth/login - 307 0 null 17.5614ms
+2026-03-12 00:20:00.923 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.926 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.920 +07:00 [INF] Executing endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.933 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.935 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.936 +07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(backend_dotnet.Features.Auth.LoginRequest) on controller backend_dotnet.Features.Auth.AuthController (backend-dotnet).
+2026-03-12 00:20:00.940 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.942 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.944 +07:00 [INF] Executed DbCommand (1ms) [Parameters=[@username='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u.id, u.created_at, u.email, u.email_confirmed, u.email_verification_token, u.password_hash, u.password_reset_expiry, u.password_reset_token, u.role, u.status, u.updated_at, u.username
+FROM users AS u
+WHERE u.username = @username
+LIMIT 1
+2026-03-12 00:20:00.946 +07:00 [INF] Executing UnauthorizedObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.948 +07:00 [INF] Executing UnauthorizedObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.950 +07:00 [INF] Executing UnauthorizedObjectResult, writing value of type '<>f__AnonymousType0`1[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-03-12 00:20:00.951 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 13.7291ms
+2026-03-12 00:20:00.953 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 12.7839ms
+2026-03-12 00:20:00.955 +07:00 [INF] Executed action backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet) in 11.9843ms
+2026-03-12 00:20:00.956 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.958 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.959 +07:00 [INF] Executed endpoint 'backend_dotnet.Features.Auth.AuthController.Login (backend-dotnet)'
+2026-03-12 00:20:00.960 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 401 null application/json; charset=utf-8 49.1455ms
+2026-03-12 00:20:00.962 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 401 null application/json; charset=utf-8 53.5858ms
+2026-03-12 00:20:00.963 +07:00 [INF] Request finished HTTP/1.1 POST https://localhost:7297/api/auth/login - 401 null application/json; charset=utf-8 58.5322ms
+2026-03-12 00:45:53.052 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 00:45:53.244 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 00:45:53.245 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 00:45:53.286 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 00:45:53.288 +07:00 [INF] Hosting environment: Development
+2026-03-12 00:45:53.289 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 03:25:24.696 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 03:25:24.997 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 03:25:24.999 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 03:25:25.049 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 03:25:25.050 +07:00 [INF] Hosting environment: Development
+2026-03-12 03:25:25.051 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
+2026-03-12 05:54:03.200 +07:00 [INF] Checking database connection...
+2026-03-12 05:54:03.543 +07:00 [INF] ✓ Database connection successful
+2026-03-12 05:54:04.011 +07:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM users LIMIT 1
+2026-03-12 05:54:04.022 +07:00 [INF] ✓ Users table is accessible
+2026-03-12 05:54:04.126 +07:00 [INF] User profile is available. Using 'C:\Users\ADMIN\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-12 05:54:04.308 +07:00 [INF] Now listening on: https://localhost:7297
+2026-03-12 05:54:04.310 +07:00 [INF] Now listening on: http://localhost:5140
+2026-03-12 05:54:04.359 +07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-12 05:54:04.360 +07:00 [INF] Hosting environment: Development
+2026-03-12 05:54:04.361 +07:00 [INF] Content root path: D:\SLP.Project\slp\backend-dotnet
