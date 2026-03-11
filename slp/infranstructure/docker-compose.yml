@@ -27,6 +27,13 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
+  mail:
+      build: ./mail
+      ports:
+        - "${MAIL_PORT}:${MAIL_PORT}"
+      env_file:
+        - .env
+        
 volumes:
   redis_data:
   kafka_data:

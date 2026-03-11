@@ -1,0 +1,926 @@
+
+
+===== Features\Auth\AuthController.cs =====
+
+﻿using backend_dotnet.Features.Auth;  // Use our own DTOs
+using backend_dotnet.Features.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace backend_dotnet.Features.Auth;
+
+[ApiController]
+[Route("api")]
+public class AuthController : ControllerBase
+{
+    private readonly IAuthService _authService;
+    private readonly IUserService _userService;
+
+    public AuthController(
+        IAuthService authService,
+        IUserService userService)
+    {
+        _authService = authService;
+        _userService = userService;
+    }
+
+    // POST /auth/login
+    [HttpPost("auth/login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        var result = await _authService.LoginAsync(request.Email, request.Password);
+
+        if (result == null)
+            return Unauthorized(new { message = "Invalid credentials" });
+
+        return Ok(result);
+    }
+
+    // POST /auth/logout
+    [Authorize]
+    [HttpPost("auth/logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await _authService.LogoutAsync(User);
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+    // POST /auth/reset-password
+    [HttpPost("auth/reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        await _authService.RequestPasswordResetAsync(request.Email);
+        return Ok(new { message = "Password reset email sent if account exists." });
+    }
+
+    // POST /auth/reset-password/confirm
+    [HttpPost("auth/reset-password/confirm")]
+    public async Task<IActionResult> ConfirmResetPassword([FromBody] ConfirmResetPasswordRequest request)
+    {
+        var success = await _authService.ConfirmPasswordResetAsync(
+            request.Token,
+            request.NewPassword);
+
+        if (!success)
+            return BadRequest(new { message = "Invalid or expired token" });
+
+        return Ok(new { message = "Password reset successful" });
+    }
+
+    // POST /auth/verify-email
+    [HttpPost("auth/verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        var success = await _authService.VerifyEmailAsync(request.Token);
+
+        if (!success)
+            return BadRequest(new { message = "Invalid verification token" });
+
+        return Ok(new { message = "Email verified successfully" });
+    }
+
+    // GET /users/me
+    [Authorize]
+    [HttpGet("users/me")]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var user = await _userService.GetByIdAsync(userId);
+
+        if (user == null)
+            return NotFound();
+
+        return Ok(user);
+    }
+
+    // PUT /users/me
+    [Authorize]
+    [HttpPut("users/me")]
+    public async Task<IActionResult> UpdateCurrentUser([FromBody] UpdateUserRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var updated = await _userService.UpdateAsync(userId, request);
+
+        return Ok(updated);
+    }
+
+    // POST /users/me/verify-email/send
+    [Authorize]
+    [HttpPost("users/me/verify-email/send")]
+    public async Task<IActionResult> SendVerificationEmail()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        await _authService.SendVerificationEmailAsync(userId);
+
+        return Ok(new { message = "Verification email sent." });
+    }
+}
+
+===== Features\Auth\AuthDTO.cs =====
+
+﻿namespace backend_dotnet.Features.Auth
+{
+    public record LoginRequest(string Email, string Password);
+
+    public record ResetPasswordRequest(string Email);
+
+    public record ConfirmResetPasswordRequest(
+        string Token,
+        string NewPassword
+    );
+
+    public record VerifyEmailRequest(string Token);
+
+    public record UpdateUserRequest(
+        string Name,
+        string AvatarUrl
+    );
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } = "";        // was SessionToken
+        public string UserId { get; set; } = "";       // now string to match controller
+        public string Email { get; set; } = "";
+    }
+}
+
+===== Features\Auth\AuthService.cs =====
+
+﻿using backend_dotnet.Features.Auth;
+using backend_dotnet.Features.Email;
+using backend_dotnet.Features.Session;
+using backend_dotnet.Features.User;
+using System.Security.Claims;
+using System.Text;
+
+public class AuthService : IAuthService
+{
+    private readonly IUserRepository _users;
+    private readonly ISessionRepository _sessions;
+    private readonly IEmailService _email;
+
+    public AuthService(
+        IUserRepository users,
+        ISessionRepository sessions,
+        IEmailService email)
+    {
+        _users = users;
+        _sessions = sessions;
+        _email = email;
+    }
+
+    public async Task<LoginResponse?> LoginAsync(string email, string password)
+    {
+        var user = await _users.GetByEmailAsync(email);
+
+        if (user == null)
+            return null;
+
+        if (!PasswordHasher.Verify(password, user.PasswordHash))
+            return null;
+
+        var token = SessionTokenService.GenerateToken();
+        var tokenHash = SessionTokenService.HashToken(token);
+
+        var session = new Session
+        {
+            UserId = user.Id,
+            TokenHash = tokenHash,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        };
+
+        await _sessions.CreateAsync(session);
+
+        return new LoginResponse
+        {
+            Token = token,
+            UserId = user.Id.ToString(),   // convert int to string
+            Email = user.Email
+        };
+    }
+
+    public async Task LogoutAsync(ClaimsPrincipal user)
+    {
+        var sessionId = user.FindFirst("session_id")?.Value;
+
+        if (sessionId != null)
+            await _sessions.RevokeAsync(sessionId);
+    }
+
+    public async Task RequestPasswordResetAsync(string email)
+    {
+        var user = await _users.GetByEmailAsync(email);
+
+        if (user == null)
+            return;
+
+        var token = Guid.NewGuid().ToString();
+
+        user.PasswordResetToken = token;
+        user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1);
+
+        await _users.UpdateAsync(user);
+
+        await _email.SendAsync(
+            user.Email,
+            "Password Reset",
+            $"Reset token: {token}");
+    }
+
+    public async Task<bool> ConfirmPasswordResetAsync(string token, string newPassword)
+    {
+        var user = await _users.GetByResetTokenAsync(token);
+
+        if (user == null)
+            return false;
+
+        if (user.PasswordResetExpiry < DateTime.UtcNow)
+            return false;
+
+        user.PasswordHash = PasswordHasher.Hash(newPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetExpiry = null;
+
+        await _users.UpdateAsync(user);
+
+        return true;
+    }
+
+    public async Task<bool> VerifyEmailAsync(string token)
+    {
+        var user = await _users.GetByEmailVerificationTokenAsync(token);
+
+        if (user == null)
+            return false;
+
+        user.EmailConfirmed = true;               // was EmailVerified
+        user.EmailVerificationToken = null;
+
+        await _users.UpdateAsync(user);
+
+        return true;
+    }
+
+    public async Task SendVerificationEmailAsync(string userId)
+    {
+        if (!int.TryParse(userId, out var id))    // parse string to int
+            return;
+
+        var user = await _users.GetByIdAsync(id);
+
+        if (user == null)
+            return;
+
+        var token = Guid.NewGuid().ToString();
+
+        user.EmailVerificationToken = token;
+
+        await _users.UpdateAsync(user);
+
+        await _email.SendAsync(
+            user.Email,
+            "Verify your email",
+            $"Verification token: {token}");
+    }
+}
+
+===== Features\Auth\IAuthService.cs =====
+
+﻿using backend_dotnet.Features.Auth;
+using System.Security.Claims;
+
+public interface IAuthService
+{
+    Task<LoginResponse?> LoginAsync(string email, string password);
+    Task LogoutAsync(ClaimsPrincipal user);
+
+    Task RequestPasswordResetAsync(string email);
+    Task<bool> ConfirmPasswordResetAsync(string token, string newPassword);
+
+    Task<bool> VerifyEmailAsync(string token);
+    Task SendVerificationEmailAsync(string userId);
+}
+
+===== Features\Auth\PasswordHasher.cs =====
+
+﻿using Konscious.Security.Cryptography;
+using System.Security.Cryptography;
+using System.Text;
+
+public class PasswordHasher
+{
+    public static string Hash(string password)
+    {
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+
+        var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+        {
+            Salt = salt,
+            DegreeOfParallelism = 8,
+            Iterations = 4,
+            MemorySize = 1024 * 64
+        };
+
+        var hash = argon2.GetBytes(32);
+
+        return Convert.ToBase64String(salt) + "." + Convert.ToBase64String(hash);
+    }
+
+    public static bool Verify(string password, string storedHash)
+    {
+        var parts = storedHash.Split('.');
+        var salt = Convert.FromBase64String(parts[0]);
+        var hash = Convert.FromBase64String(parts[1]);
+
+        var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+        {
+            Salt = salt,
+            DegreeOfParallelism = 8,
+            Iterations = 4,
+            MemorySize = 1024 * 64
+        };
+
+        var newHash = argon2.GetBytes(32);
+
+        return hash.SequenceEqual(newHash);
+    }
+}
+
+===== Features\Email\EmailService.cs =====
+
+﻿using System.Text;
+using System.Text.Json;
+using backend_dotnet.Features.Email;
+
+namespace backend_dotnet.Features.Email;
+
+public class EmailService : IEmailService
+{
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<EmailService> _logger;
+    private readonly EmailSettings _settings;
+
+    public EmailService(
+        HttpClient httpClient,
+        ILogger<EmailService> logger,
+        EmailSettings settings)
+    {
+        _httpClient = httpClient;
+        _logger = logger;
+        _settings = settings;
+    }
+
+    public async Task SendAsync(string to, string subject, string body)
+    {
+        try
+        {
+            var emailRequest = new EmailRequest
+            {
+                To = to,
+                Subject = subject,
+                Body = body,
+                From = _settings.FromEmail,
+                FromName = _settings.FromName
+            };
+
+            var json = JsonSerializer.Serialize(emailRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // Call the email Docker container API
+            var response = await _httpClient.PostAsync(_settings.ApiEndpoint, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Email sent successfully to {To}", to);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to send email to {To}. Status: {StatusCode}, Error: {Error}",
+                    to, response.StatusCode, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while sending email to {To}", to);
+            throw;
+        }
+    }
+
+    public async Task SendHtmlAsync(string to, string subject, string htmlBody)
+    {
+        var emailRequest = new EmailRequest
+        {
+            To = to,
+            Subject = subject,
+            HtmlBody = htmlBody,
+            IsHtml = true,
+            From = _settings.FromEmail,
+            FromName = _settings.FromName
+        };
+
+        await SendEmailRequest(emailRequest);
+    }
+
+    public async Task SendWithTemplateAsync(string to, string templateName, object model)
+    {
+        // In a real implementation, you would load and render a template
+        // For now, just create a simple email based on template name
+        string subject = $"Email from template: {templateName}";
+        string body = $"Template: {templateName}\nModel: {JsonSerializer.Serialize(model)}";
+
+        await SendAsync(to, subject, body);
+    }
+
+    private async Task SendEmailRequest(EmailRequest emailRequest)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(emailRequest);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(_settings.ApiEndpoint, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Email API returned {StatusCode}: {Error}",
+                    response.StatusCode, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email via API");
+            // Don't throw in development/fake mode
+            if (_settings.ThrowOnError)
+                throw;
+        }
+    }
+}
+
+public class EmailRequest
+{
+    public string To { get; set; } = "";
+    public string? From { get; set; }
+    public string? FromName { get; set; }
+    public string Subject { get; set; } = "";
+    public string? Body { get; set; }
+    public string? HtmlBody { get; set; }
+    public bool IsHtml { get; set; }
+    public Dictionary<string, string>? Headers { get; set; }
+}
+
+public class EmailSettings
+{
+    public string ApiEndpoint { get; set; } = "http://localhost:8025/api/send";
+    public string FromEmail { get; set; } = "noreply@yourapp.com";
+    public string FromName { get; set; } = "Your App";
+    public bool ThrowOnError { get; set; } = false;
+}
+
+===== Features\Email\IEmailService.cs =====
+
+﻿namespace backend_dotnet.Features.Email;
+
+public interface IEmailService
+{
+    Task SendAsync(string to, string subject, string body);
+    Task SendHtmlAsync(string to, string subject, string htmlBody);
+    Task SendWithTemplateAsync(string to, string templateName, object model);
+}
+
+===== Features\Session\ISessionRepository.cs =====
+
+﻿namespace backend_dotnet.Features.Session;
+
+public interface ISessionRepository
+{
+    Task CreateAsync(Session session);
+    Task<Session?> GetByTokenHashAsync(string hash);
+    Task RevokeAsync(string sessionId);
+}
+
+===== Features\Session\Session.cs =====
+
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend_dotnet.Features.Session;
+
+[Table("sessions")]
+public class Session
+{
+    [Key]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    public int UserId { get; set; }
+
+    public string TokenHash { get; set; } = "";
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime ExpiresAt { get; set; }
+
+    public bool Revoked { get; set; }
+
+    public string? IpAddress { get; set; }
+
+    public string? UserAgent { get; set; }
+}
+
+===== Features\Session\SessionRepository.cs =====
+
+﻿using backend_dotnet.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend_dotnet.Features.Session;
+
+public class SessionRepository : ISessionRepository
+{
+    private readonly AppDbContext _db;
+
+    public SessionRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task CreateAsync(Session session)
+    {
+        _db.Sessions.Add(session);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<Session?> GetByTokenHashAsync(string hash)
+    {
+        return await _db.Sessions.FirstOrDefaultAsync(x => x.TokenHash == hash);
+    }
+
+    public async Task RevokeAsync(string sessionId)
+    {
+        var session = await _db.Sessions.FindAsync(sessionId);
+
+        if (session == null)
+            return;
+
+        session.Revoked = true;
+
+        await _db.SaveChangesAsync();
+    }
+}
+
+===== Features\Session\SessionTokenService.cs =====
+
+﻿using System.Security.Cryptography;
+namespace backend_dotnet.Features.Session
+{
+    public static class SessionTokenService
+    {
+        public static string GenerateToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public static string HashToken(string token)
+        {
+            using var sha = SHA256.Create();
+            var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(token));
+            return Convert.ToBase64String(bytes);
+        }
+    }
+}
+
+===== Features\User\IUserRepository.cs =====
+
+﻿namespace backend_dotnet.Features.User
+{
+    public interface IUserRepository
+    {
+        Task<User?> GetByIdAsync(int id);           // was string
+
+        Task<User?> GetByEmailAsync(string email);
+
+        Task<User?> GetByResetTokenAsync(string token);
+
+        Task<User?> GetByEmailVerificationTokenAsync(string token);
+
+        Task UpdateAsync(User user);
+    }
+}
+
+===== Features\User\IUserService.cs =====
+
+﻿using backend_dotnet.Features.Auth;
+
+namespace backend_dotnet.Features.User
+{
+    public interface IUserService
+    {
+        Task<User?> GetByIdAsync(string id);
+        Task<User> UpdateAsync(string id, UpdateUserRequest request);
+    }
+}
+
+===== Features\User\User.cs =====
+
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend_dotnet.Features.User;
+
+[Table("users")]
+public class User
+{
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Column("username")]
+    public string Username { get; set; } = "";
+
+    [Column("password_hash")]
+    public string PasswordHash { get; set; } = "";
+
+    [Column("email")]
+    public string Email { get; set; } = "";
+
+    [Column("email_confirmed")]
+    public bool EmailConfirmed { get; set; }    // was EmailVerified in AuthService
+
+    [Column("role")]
+    public string Role { get; set; } = "user";
+
+    [Column("status")]
+    public string Status { get; set; } = "active";
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetExpiry { get; set; }
+
+    public string? EmailVerificationToken { get; set; }
+}
+
+===== Features\User\UserRepository.cs =====
+
+﻿using backend_dotnet.Data;
+using backend_dotnet.Features.User;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend_dotnet.Features.User;
+
+public class UserRepository : IUserRepository
+{
+    private readonly AppDbContext _db;
+
+    public UserRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<User?> GetByIdAsync(int id)   // matches interface
+    {
+        return await _db.Users.FindAsync(id);
+    }
+
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _db.Users.FirstOrDefaultAsync(x => x.Email == email);
+    }
+
+    public async Task<User?> GetByResetTokenAsync(string token)
+    {
+        return await _db.Users.FirstOrDefaultAsync(x => x.PasswordResetToken == token);
+    }
+
+    public async Task<User?> GetByEmailVerificationTokenAsync(string token)
+    {
+        return await _db.Users.FirstOrDefaultAsync(x => x.EmailVerificationToken == token);
+    }
+
+    public async Task UpdateAsync(User user)
+    {
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+    }
+}
+
+===== Features\User\UserService.cs =====
+
+﻿using backend_dotnet.Features.Auth;
+
+namespace backend_dotnet.Features.User;
+
+public class UserService : IUserService
+{
+    private readonly IUserRepository _users;
+
+    public UserService(IUserRepository users)
+    {
+        _users = users;
+    }
+
+    public async Task<User?> GetByIdAsync(string id)
+    {
+        if (!int.TryParse(id, out var userId))
+            return null;
+
+        return await _users.GetByIdAsync(userId);
+    }
+
+    public async Task<User?> UpdateAsync(string id, UpdateUserRequest request)
+    {
+        if (!int.TryParse(id, out var userId))
+            return null;
+
+        var user = await _users.GetByIdAsync(userId);
+
+        if (user == null)
+            return null;
+
+        user.Username = request.Name;
+        // AvatarUrl is ignored for now; extend as needed
+
+        await _users.UpdateAsync(user);
+
+        return user;
+    }
+}
+
+===== Middlewares\RateLimitingMiddleware.cs =====
+
+﻿using Microsoft.Extensions.Caching.Distributed;
+
+namespace backend_dotnet.Middlewares;
+
+public class RateLimitingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<RateLimitingMiddleware> _logger;
+    private const int MaxAttempts = 10;
+    private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
+
+    public RateLimitingMiddleware(RequestDelegate next, ILogger<RateLimitingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task Invoke(HttpContext context, IDistributedCache cache)
+    {
+        // Apply only to login endpoint
+        if (context.Request.Path.StartsWithSegments("/api/auth/login") &&
+            context.Request.Method == HttpMethods.Post)
+        {
+            var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var key = $"rate:login:{clientIp}";
+
+            var currentCount = await cache.GetStringAsync(key);
+            int attemptCount = currentCount == null ? 0 : int.Parse(currentCount);
+
+            if (attemptCount >= MaxAttempts)
+            {
+                _logger.LogWarning("Rate limit exceeded for IP {Ip}", clientIp);
+                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                await context.Response.WriteAsync("Too many login attempts. Please try again later.");
+                return;
+            }
+
+            // Increment counter
+            attemptCount++;
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = Window
+            };
+            await cache.SetStringAsync(key, attemptCount.ToString(), options);
+
+            await _next(context);
+        }
+        else
+        {
+            await _next(context);
+        }
+    }
+}
+
+===== Middlewares\SessionMiddleware.cs =====
+
+﻿using backend_dotnet.Features.Session;
+using System.Security.Claims;
+
+namespace backend_dotnet.Middlewares
+{
+    public class SessionMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public SessionMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task Invoke(HttpContext context, ISessionRepository sessions)
+        {
+            var token = context.Request.Headers["X-Session-Token"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                var hash = SessionTokenService.HashToken(token);
+
+                var session = await sessions.GetByTokenHashAsync(hash);
+
+                if (session != null && !session.Revoked && session.ExpiresAt > DateTime.UtcNow)
+                {
+                    var claims = new[]
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, session.UserId.ToString()),
+                        new Claim("session_id", session.Id)
+                    };
+
+                    var identity = new ClaimsIdentity(claims, "session");
+
+                    context.User = new ClaimsPrincipal(identity);
+                }
+            }
+
+            await _next(context);
+        }
+    }
+}
+
+===== ./Program.cs =====
+
+using backend_dotnet.Data;
+using backend_dotnet.Features.Email;
+using backend_dotnet.Features.Session;
+using backend_dotnet.Features.User;
+using backend_dotnet.Middlewares;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddHttpClient<IEmailService, EmailService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "SampleApp";
+});
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+app.UseHttpsRedirection();
+
+app.UseMiddleware<RateLimitingMiddleware>();
+app.UseMiddleware<SessionMiddleware>();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+===== ./appsettings.json =====
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "Default": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123",
+    "Redis": "localhost:6379"
+  },
+  "Email": {
+    "ApiEndpoint": "http://localhost:8025/api/send",
+    "FromEmail": "noreply@yourapp.com",
+    "FromName": "Your App Name",
+    "ThrowOnError": false
+  }
+}
