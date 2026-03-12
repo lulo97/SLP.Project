@@ -30,4 +30,7 @@ public class Session
 
     [Column("user_agent")]
     public string? UserAgent { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public virtual User.User? User { get; set; }
 }

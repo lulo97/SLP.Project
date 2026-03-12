@@ -29,6 +29,7 @@ services:
 
   mail:
       build: ./mail
+      container_name: mail
       ports:
         - "${MAIL_PORT}:${MAIL_PORT}"
       env_file:
@@ -45,7 +46,17 @@ services:
       # - postgres
       - redis
       - mail
-        
+
+  frontend-vue-img:
+    build: ../frontend-vue
+    container_name: frontend-vue-container
+    ports:
+      - "${VITE_FRONTEND_PORT}:${VITE_FRONTEND_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - backend-dotnet-img
+   
 volumes:
   redis_data:
   kafka_data:

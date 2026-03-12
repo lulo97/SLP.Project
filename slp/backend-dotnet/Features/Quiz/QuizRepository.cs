@@ -1,0 +1,141 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using backend_dotnet.Data;
+
+namespace backend_dotnet.Features.Quiz;
+
+public class QuizRepository : IQuizRepository
+{
+    private readonly AppDbContext _context;
+
+    public QuizRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Quiz?> GetByIdAsync(int id)
+    {
+        // First, check if the quiz exists at all (even disabled)
+        var anyQuiz = await _context.Quizzes
+            .IgnoreQueryFilters() // This bypasses the global filter
+            .Where(q => q.Id == id)
+            .Select(q => new { q.Id, q.Title, q.Disabled })
+            .FirstOrDefaultAsync();
+
+        if (anyQuiz == null)
+        {
+            Console.WriteLine($"[DEBUG] Quiz with ID {id} does not exist in database at all");
+            return null;
+        }
+
+        if (anyQuiz.Disabled)
+        {
+            Console.WriteLine($"[DEBUG] Quiz with ID {id} exists but is disabled (Disabled = true)");
+            return null;
+        }
+
+        Console.WriteLine($"[DEBUG] Quiz with ID {id} exists and is enabled. Fetching full data...");
+
+        // Now fetch the full quiz with all includes
+        var quiz = await _context.Quizzes
+            .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
+            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
+            .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
+            .Include(q => q.User) // Add this to debug user info
+            .FirstOrDefaultAsync(q => q.Id == id && !q.Disabled);
+
+        if (quiz != null)
+        {
+            Console.WriteLine($"[DEBUG] Successfully loaded quiz: ID={quiz.Id}, Title={quiz.Title}, UserId={quiz.UserId}, Visibility={quiz.Visibility}");
+            Console.WriteLine($"[DEBUG] Quiz has {quiz.QuizQuestions?.Count ?? 0} questions, {quiz.QuizTags?.Count ?? 0} tags, {quiz.QuizSources?.Count ?? 0} sources");
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Failed to load quiz with ID {id} despite existence check - possible filtering issue");
+        }
+
+        return quiz;
+    }
+
+    public async Task<IEnumerable<Quiz>> GetUserQuizzesAsync(int userId, bool includeDisabled = false)
+    {
+        var query = _context.Quizzes.Where(q => q.UserId == userId);
+        if (!includeDisabled)
+            query = query.Where(q => !q.Disabled);
+        return await query
+            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
+            .OrderByDescending(q => q.UpdatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Quiz>> GetPublicQuizzesAsync(string? visibility = null, bool includeDisabled = false)
+    {
+        var query = _context.Quizzes.AsQueryable();
+        if (!includeDisabled)
+            query = query.Where(q => !q.Disabled);
+
+        if (string.IsNullOrEmpty(visibility) || visibility == "public")
+            query = query.Where(q => q.Visibility == "public");
+        else if (visibility == "unlisted")
+            query = query.Where(q => q.Visibility == "unlisted");
+        // else all (including private? probably not for public listing)
+
+        return await query
+            .Include(q => q.User)
+            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
+            .OrderByDescending(q => q.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<Quiz> CreateAsync(Quiz quiz)
+    {
+        _context.Quizzes.Add(quiz);
+        await _context.SaveChangesAsync();
+        return quiz;
+    }
+
+    public async Task UpdateAsync(Quiz quiz)
+    {
+        quiz.UpdatedAt = DateTime.UtcNow;
+        _context.Quizzes.Update(quiz);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SoftDeleteAsync(int id)
+    {
+        var quiz = await _context.Quizzes.FindAsync(id);
+        if (quiz != null)
+        {
+            quiz.Disabled = true;
+            quiz.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Quizzes.AnyAsync(q => q.Id == id && !q.Disabled);
+    }
+
+    public async Task<IEnumerable<Quiz>> SearchAsync(string? searchTerm, int? userId, bool publicOnly = true)
+    {
+        var query = _context.Quizzes.Where(q => !q.Disabled);
+        if (publicOnly)
+            query = query.Where(q => q.Visibility == "public");
+        if (userId.HasValue)
+            query = query.Where(q => q.UserId == userId.Value);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = $"%{searchTerm}%";
+            query = query.Where(q => EF.Functions.ILike(q.Title, searchTerm) ||
+                                     (q.Description != null && EF.Functions.ILike(q.Description, searchTerm)));
+        }
+        return await query
+            .Include(q => q.User)
+            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
+            .OrderByDescending(q => q.UpdatedAt)
+            .ToListAsync();
+    }
+}
