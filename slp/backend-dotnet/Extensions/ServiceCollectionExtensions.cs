@@ -1,17 +1,14 @@
 using backend_dotnet.Data;
 using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Email;
-using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.Question;
+using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
 using backend_dotnet.Features.User;
-using backend_dotnet.Middlewares;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
-using StackExchange.Redis;
 
 namespace backend_dotnet.Extensions;
 
@@ -19,7 +16,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContextPool<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("Default")));
 
         // Repositories

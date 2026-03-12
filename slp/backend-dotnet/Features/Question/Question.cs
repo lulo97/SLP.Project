@@ -25,7 +25,7 @@ public class Question
     [Column("explanation")]
     public string? Explanation { get; set; }
 
-    [Column("metadata")]
+    [Column("metadata", TypeName = "jsonb")]
     public string? MetadataJson { get; set; } // JSONB with options, correct answers, etc.
 
     [Column("created_at")]

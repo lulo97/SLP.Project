@@ -136,3 +136,5 @@ coverage/
 *.rej
 *.patch
 *.diff
+
+slp/backend-dotnet/logs
