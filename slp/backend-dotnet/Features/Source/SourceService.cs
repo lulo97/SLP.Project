@@ -91,7 +91,7 @@ public class SourceService : ISourceService
         var source = new Source
         {
             UserId = userId,
-            Type = "url",
+            Type = "link",
             Title = title ?? url,
             Url = url,
             RawText = "[Content would be fetched from URL]",

@@ -25,7 +25,7 @@ public class Source
     [Column("url")]
     public string? Url { get; set; }
 
-    [Column("content")]
+    [Column("content", TypeName = "jsonb")]
     public string? ContentJson { get; set; } // Structured content (JSONB)
 
     [Column("raw_html")]
@@ -37,7 +37,7 @@ public class Source
     [Column("file_path")]
     public string? FilePath { get; set; } // Path to uploaded file
 
-    [Column("metadata")]
+    [Column("metadata", TypeName = "jsonb")]
     public string? MetadataJson { get; set; } // JSONB
 
     [Column("deleted_at")]
