@@ -1,9 +1,9 @@
 <template>
   <a-form-item label="Front">
-    <a-textarea v-model:value="front" placeholder="Front content" :rows="3" />
+    <a-textarea v-model:value="front" placeholder="Front content" :rows="3" data-testid="flashcard-front" />
   </a-form-item>
   <a-form-item label="Back">
-    <a-textarea v-model:value="back" placeholder="Back content" :rows="3" />
+    <a-textarea v-model:value="back" placeholder="Back content" :rows="3" data-testid="flashcard-back" />
   </a-form-item>
 </template>
 

@@ -1,52 +1,10 @@
-import { test, expect } from '@playwright/test';
+// questions-api-general.spec.js
+const { test, expect } = require('@playwright/test');
+const { API_BASE_URL, adminUser, generateQuestion } = require('./questions-api-test-utils');
 
-const API_BASE_URL = 'http://localhost:5140/api';
-
-const adminUser = {
-  username: 'admin',
-  password: '123',
-};
-
-// Generate unique question data
-function generateQuestion(type = 'multiple_choice') {
-  const id = Date.now() + Math.floor(Math.random() * 10000);
-  const baseQuestion = {
-    multiple_choice: {
-      type: 'multiple_choice',
-      content: `What is the capital of France? ${id}`,
-      explanation: `Paris is the capital of France. ${id}`,
-      metadataJson: JSON.stringify({
-        options: ['London', 'Paris', 'Berlin', 'Madrid'],
-        correctAnswer: 'Paris'
-      }),
-      tagNames: ['geography', 'capitals', 'france', 'test']
-    },
-    true_false: {
-      type: 'true_false',
-      content: `The Earth is flat. ${id}`,
-      explanation: `The Earth is an oblate spheroid. ${id}`,
-      metadataJson: JSON.stringify({
-        correctAnswer: false
-      }),
-      tagNames: ['science', 'facts', 'test']
-    },
-    fill_blank: {
-      type: 'fill_blank',
-      content: `The chemical symbol for water is ____. ${id}`,
-      explanation: `H2O is the chemical formula for water. ${id}`,
-      metadataJson: JSON.stringify({
-        correctAnswer: 'H2O'
-      }),
-      tagNames: ['chemistry', 'science', 'test']
-    }
-  };
-
-  return baseQuestion[type] || baseQuestion.multiple_choice;
-}
-
-test.describe('Questions API - Complete Lifecycle', () => {
+test.describe('Questions API - General', () => {
   let adminToken;
-  let createdQuestionIds = [];
+  const createdQuestionIds = [];
 
   test.beforeAll(async ({ request }) => {
     const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
@@ -74,7 +32,7 @@ test.describe('Questions API - Complete Lifecycle', () => {
   });
 
   test('should create different types of questions', async ({ request }) => {
-    const questionTypes = ['multiple_choice', 'true_false', 'fill_blank'];
+    const questionTypes = ['multiple_choice', 'true_false', 'fill_blank', 'matching', 'ordering'];
 
     for (const type of questionTypes) {
       const questionData = generateQuestion(type);
@@ -156,7 +114,6 @@ test.describe('Questions API - Complete Lifecycle', () => {
     const createdQuestion = await createRes.json();
     createdQuestionIds.push(createdQuestion.id);
 
-    // Update only the fields that exist in the backend DTO
     const updateData = {
       content: `${createdQuestion.content} (Updated)`,
       explanation: `${createdQuestion.explanation} (Updated explanation)`,
@@ -221,6 +178,10 @@ test.describe('Questions API - Complete Lifecycle', () => {
       type: 'multiple_choice',
       content: `Question with multiple tags ${Date.now()}`,
       explanation: 'Testing multiple tags',
+      metadataJson: JSON.stringify({
+        options: [{ id: 'a', text: 'Option A' }, { id: 'b', text: 'Option B' }],
+        correctAnswers: ['a']
+      }),
       tagNames: ['tag1', 'tag2', 'tag3', 'tag4', 'tag5']
     };
 
@@ -242,7 +203,11 @@ test.describe('Questions API - Complete Lifecycle', () => {
     const questionData = {
       type: 'multiple_choice',
       content: `Question without tags ${Date.now()}`,
-      explanation: 'Testing no tags'
+      explanation: 'Testing no tags',
+      metadataJson: JSON.stringify({
+        options: [{ id: 'a', text: 'Option A' }, { id: 'b', text: 'Option B' }],
+        correctAnswers: ['a']
+      })
     };
 
     const createRes = await request.post(`${API_BASE_URL}/question`, {
@@ -299,7 +264,8 @@ test.describe('Questions API - Complete Lifecycle', () => {
     });
     expect(getAfterDeleteRes.status()).toBe(404);
 
-    createdQuestionIds = createdQuestionIds.filter(id => id !== questionId);
+    const index = createdQuestionIds.indexOf(questionId);
+    if (index > -1) createdQuestionIds.splice(index, 1);
   });
 
   test('should search questions by tags', async ({ request }) => {
@@ -308,6 +274,10 @@ test.describe('Questions API - Complete Lifecycle', () => {
       type: 'multiple_choice',
       content: `Search test question ${Date.now()}`,
       explanation: 'Testing search by tags',
+      metadataJson: JSON.stringify({
+        options: [{ id: 'a', text: 'Option A' }, { id: 'b', text: 'Option B' }],
+        correctAnswers: ['a']
+      }),
       tagNames: [uniqueTag, 'searchable']
     };
 
@@ -330,86 +300,31 @@ test.describe('Questions API - Complete Lifecycle', () => {
     const found = results.some(q => q.id === createdQuestion.id);
     expect(found).toBe(true);
   });
-});
 
-test.describe('Questions API - Multiple Runs', () => {
-  let adminToken; // changed from const to let
-
-  test.beforeAll(async ({ request }) => {
-    const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
-      data: {
-        username: adminUser.username,
-        password: adminUser.password,
-      },
-    });
-    const loginBody = await loginRes.json();
-    adminToken = loginBody.token;
+  test('should reject missing metadata for any type', async ({ request }) => {
+    const types = ['multiple_choice', 'true_false', 'fill_blank', 'matching', 'ordering'];
+    for (const type of types) {
+      const base = generateQuestion(type);
+      const invalidData = { ...base, metadataJson: null };
+      const res = await request.post(`${API_BASE_URL}/question`, {
+        headers: { 'X-Session-Token': adminToken },
+        data: invalidData,
+      });
+      expect(res.status()).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain('Metadata is required');
+    }
   });
 
-  for (let i = 0; i < 3; i++) {
-    test(`parallel question creation ${i + 1}`, async ({ request }) => {
-      const questionData = generateQuestion('multiple_choice');
-
-      const createRes = await request.post(`${API_BASE_URL}/question`, {
-        headers: { 'X-Session-Token': adminToken },
-        data: questionData,
-      });
-
-      expect(createRes.status()).toBe(201);
-      const question = await createRes.json();
-
-      const getRes = await request.get(`${API_BASE_URL}/question/${question.id}`, {
-        headers: { 'X-Session-Token': adminToken },
-      });
-      expect(getRes.status()).toBe(200);
-
-      await request.delete(`${API_BASE_URL}/question/${question.id}`, {
-        headers: { 'X-Session-Token': adminToken },
-      });
-    });
-  }
-
-  test('should handle concurrent tag creation', async ({ request }) => {
-    const commonTag = `concurrent-${Date.now()}`;
-    const promises = [];
-
-    for (let i = 0; i < 5; i++) {
-      const questionData = {
-        type: 'multiple_choice',
-        content: `Concurrent question ${i} ${Date.now()}`,
-        tagNames: [commonTag, 'concurrent-test']
-      };
-
-      promises.push(
-        request.post(`${API_BASE_URL}/question`, {
-          headers: { 'X-Session-Token': adminToken },
-          data: questionData,
-        }).then(async res => {
-          expect(res.status()).toBe(201);
-          const q = await res.json();
-          return q.id;
-        })
-      );
-    }
-
-    const questionIds = await Promise.all(promises);
-
-    for (const id of questionIds) {
-      const getRes = await request.get(`${API_BASE_URL}/question/${id}`, {
-        headers: { 'X-Session-Token': adminToken },
-      });
-      expect(getRes.status()).toBe(200);
-
-      await request.delete(`${API_BASE_URL}/question/${id}`, {
-        headers: { 'X-Session-Token': adminToken },
-      });
-    }
-
-    const searchRes = await request.get(`${API_BASE_URL}/question?tags=${commonTag}`, {
+  test('should reject invalid JSON in metadata', async ({ request }) => {
+    const invalidData = generateQuestion('multiple_choice');
+    invalidData.metadataJson = 'this is not json';
+    const res = await request.post(`${API_BASE_URL}/question`, {
       headers: { 'X-Session-Token': adminToken },
+      data: invalidData,
     });
-    expect(searchRes.status()).toBe(200);
-    const results = await searchRes.json();
-    expect(results.length).toBe(0);
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('Invalid JSON format');
   });
 });

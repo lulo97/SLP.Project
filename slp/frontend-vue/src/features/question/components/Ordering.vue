@@ -9,10 +9,11 @@
         v-model:value="items[index]"
         :placeholder="`Item ${index + 1}`"
         class="flex-1"
+        :data-testid="`ordering-item-${index}`"
       />
-      <a-button @click="removeItem(index)" type="text" danger size="small" class="ml-2">Remove</a-button>
+      <a-button @click="removeItem(index)" type="text" danger size="small" class="ml-2" :data-testid="`ordering-remove-${index}`">Remove</a-button>
     </div>
-    <a-button @click="addItem" type="dashed" block>Add Item</a-button>
+    <a-button @click="addItem" type="dashed" block data-testid="ordering-add">Add Item</a-button>
   </a-form-item>
 </template>
 

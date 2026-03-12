@@ -1,5 +1,4 @@
 <!-- D:/SLP.Project/slp/frontend-vue/src/features/question/pages/QuestionFormPage.vue -->
-<!-- Update the template section for fill_blank -->
 <template>
   <MobileLayout :title="isEdit ? 'Edit Question' : 'Create Question'">
     <a-card class="shadow-sm">
@@ -9,6 +8,7 @@
           <a-input
             v-model:value="form.title"
             placeholder="Enter the question"
+            data-testid="question-title"
           />
         </a-form-item>
 
@@ -17,19 +17,18 @@
             v-model:value="form.description"
             placeholder="Additional context"
             :rows="2"
+            data-testid="question-description"
           />
         </a-form-item>
 
         <a-form-item label="Question Type" required>
-          <a-select v-model:value="form.type" placeholder="Select type">
-            <a-select-option value="multiple_choice"
-              >Multiple Choice</a-select-option
-            >
+          <a-select v-model:value="form.type" placeholder="Select type" data-testid="question-type">
+            <a-select-option value="multiple_choice">Multiple Choice</a-select-option>
             <a-select-option value="true_false">True/False</a-select-option>
             <a-select-option value="fill_blank">Fill Blank</a-select-option>
             <a-select-option value="ordering">Ordering</a-select-option>
             <a-select-option value="matching">Matching</a-select-option>
-            <a-select-option value="flashcard">Flashcard</a-select-option>
+            <!-- Flashcard removed – not supported by backend -->
           </a-select>
         </a-form-item>
 
@@ -60,16 +59,13 @@
           <Matching v-model:model-value="form.matchingPairs" />
         </template>
 
-        <template v-else-if="form.type === 'flashcard'">
-          <Flashcard v-model:front="form.front" v-model:back="form.back" />
-        </template>
-
-        <!-- Explanation (not needed for flashcards) -->
-        <a-form-item v-if="form.type !== 'flashcard'" label="Explanation">
+        <!-- Explanation -->
+        <a-form-item label="Explanation">
           <a-textarea
             v-model:value="form.explanation"
             placeholder="Why this answer is correct"
             :rows="2"
+            data-testid="question-explanation"
           />
         </a-form-item>
 
@@ -79,6 +75,7 @@
             mode="tags"
             placeholder="Enter tags and press enter"
             :token-separators="[',']"
+            data-testid="question-tags"
           />
         </a-form-item>
 
@@ -88,6 +85,7 @@
             html-type="submit"
             :loading="questionStore.loading"
             block
+            data-testid="submit-question"
           >
             {{ isEdit ? "Update Question" : "Create Question" }}
           </a-button>
@@ -108,7 +106,7 @@ import TrueFalse from "../components/TrueFalse.vue";
 import FillBlank from "../components/FillBlank.vue";
 import Ordering from "../components/Ordering.vue";
 import Matching from "../components/Matching.vue";
-import Flashcard from "../components/Flashcard.vue";
+// Flashcard component removed
 import type { CreateQuestionPayload } from "../stores/questionStore";
 
 const route = useRoute();
@@ -116,22 +114,20 @@ const router = useRouter();
 const questionStore = useQuestionStore();
 
 const questionId = computed(() =>
-  route.params.id ? Number(route.params.id) : null,
+  route.params.id ? Number(route.params.id) : null
 );
 const isEdit = computed(() => !!questionId.value);
 
 interface QuestionForm {
   title: string;
   description: string;
-  type: CreateQuestionPayload["type"];
-  options: string[]; // for multiple choice
-  correctAnswers: string[]; // selected correct options
-  answer: string; // for other types (TF, fill blank)
+  type: CreateQuestionPayload['type'];
+  options: string[];               // for multiple choice
+  correctAnswers: string[];         // selected correct options (text)
+  answer: string;                   // for TF (string 'true'/'false') and fill blank (JSON string)
   explanation: string;
   orderingItems: string[];
   matchingPairs: { left: string; right: string }[];
-  front: string;
-  back: string;
   tags: string[];
 }
 
@@ -150,24 +146,96 @@ const form = ref<QuestionForm>({
     { left: "", right: "" },
     { left: "", right: "" },
   ],
-  front: "",
-  back: "",
   tags: [],
 });
 
-// When type changes to multiple_choice, reset to 4 empty options
+// Reset type-specific fields when type changes
 watch(
   () => form.value.type,
   (newType) => {
     if (newType === "multiple_choice") {
       form.value.options = ["", "", "", ""];
       form.value.correctAnswers = [];
+      form.value.answer = "";
+    } else if (newType === "true_false") {
+      form.value.answer = "true";
     } else if (newType === "fill_blank") {
-      // Initialize fill blank with empty array as JSON
       form.value.answer = "[]";
+    } else if (newType === "ordering") {
+      form.value.orderingItems = ["", "", "", ""];
+    } else if (newType === "matching") {
+      form.value.matchingPairs = [
+        { left: "", right: "" },
+        { left: "", right: "" },
+        { left: "", right: "" },
+        { left: "", right: "" },
+      ];
     }
-  },
+  }
 );
+
+// Build metadata object according to backend expectations
+function buildMetadata(): Record<string, any> {
+  const metadata: Record<string, any> = {};
+
+  // Store description for all types
+  if (form.value.description.trim()) {
+    metadata.description = form.value.description.trim();
+  }
+
+  switch (form.value.type) {
+    case "multiple_choice": {
+      // Filter out empty options
+      const options = form.value.options.filter(opt => opt.trim() !== "");
+      // Build options array with id and text (id = index as string)
+      metadata.options = options.map((text, idx) => ({
+        id: idx.toString(),
+        text: text.trim()
+      }));
+      // Map correctAnswers (text) to ids
+      const correctTexts = form.value.correctAnswers.filter(ans => ans.trim() !== "");
+      metadata.correctAnswers = metadata.options
+        .filter((opt: { text: string; }) => correctTexts.includes(opt.text))
+        .map((opt: { id: any; }) => opt.id);
+      break;
+    }
+    case "true_false":
+      metadata.correctAnswer = form.value.answer === "true";
+      break;
+    case "fill_blank": {
+      let keywords: string[] = [];
+      try {
+        keywords = JSON.parse(form.value.answer);
+      } catch {
+        keywords = [];
+      }
+      metadata.keywords = keywords.filter((k: string) => k.trim() !== "");
+      break;
+    }
+    case "ordering": {
+      const items = form.value.orderingItems
+        .filter(item => item.trim() !== "")
+        .map((text, idx) => ({
+          order_id: idx + 1,
+          text: text.trim()
+        }));
+      metadata.items = items;
+      break;
+    }
+    case "matching": {
+      const pairs = form.value.matchingPairs
+        .filter(p => p.left.trim() !== "" || p.right.trim() !== "")
+        .map((p, idx) => ({
+          id: idx + 1,
+          left: p.left.trim(),
+          right: p.right.trim()
+        }));
+      metadata.pairs = pairs;
+      break;
+    }
+  }
+  return metadata;
+}
 
 const handleSubmit = async () => {
   if (!form.value.title.trim()) {
@@ -175,32 +243,19 @@ const handleSubmit = async () => {
     return;
   }
 
-  // Clean up empty options for multiple choice
+  // Basic validation per type
   if (form.value.type === "multiple_choice") {
-    form.value.options = form.value.options.filter((opt) => opt.trim() !== "");
-
-    // Validate that at least one correct answer is selected
+    const nonEmptyOptions = form.value.options.filter(opt => opt.trim() !== "");
+    if (nonEmptyOptions.length < 2) {
+      message.warning("At least two options are required");
+      return;
+    }
     if (form.value.correctAnswers.length === 0) {
       message.warning("Please select at least one correct answer");
       return;
     }
   }
 
-  // Clean up empty ordering items
-  if (form.value.type === "ordering") {
-    form.value.orderingItems = form.value.orderingItems.filter(
-      (item) => item.trim() !== "",
-    );
-  }
-
-  // Clean up empty matching pairs
-  if (form.value.type === "matching") {
-    form.value.matchingPairs = form.value.matchingPairs.filter(
-      (p) => p.left.trim() !== "" || p.right.trim() !== "",
-    );
-  }
-
-  // Validate fill blank keywords
   if (form.value.type === "fill_blank") {
     try {
       const keywords = JSON.parse(form.value.answer);
@@ -208,8 +263,6 @@ const handleSubmit = async () => {
         message.warning("Please enter at least one keyword");
         return;
       }
-
-      // Validate each keyword is a single word (no spaces)
       const invalidKeywords = keywords.filter((k: string) => k.includes(" "));
       if (invalidKeywords.length > 0) {
         message.warning("Keywords must be single words (no spaces allowed)");
@@ -221,34 +274,17 @@ const handleSubmit = async () => {
     }
   }
 
-  // Build payload
+  const metadata = buildMetadata();
   const payload: CreateQuestionPayload = {
-    title: form.value.title,
-    description: form.value.description || undefined,
     type: form.value.type,
-    options:
-      form.value.type === "multiple_choice" ? form.value.options : undefined,
-    // For multiple_choice, store correctAnswers as JSON string
-    // For fill_blank, answer is already JSON string of keywords
-    answer:
-      form.value.type === "multiple_choice"
-        ? JSON.stringify(form.value.correctAnswers)
-        : form.value.answer,
-    explanation: form.value.explanation || undefined,
-    orderingItems:
-      form.value.type === "ordering" ? form.value.orderingItems : undefined,
-    matchingPairs:
-      form.value.type === "matching" ? form.value.matchingPairs : undefined,
-    front: form.value.type === "flashcard" ? form.value.front : undefined,
-    back: form.value.type === "flashcard" ? form.value.back : undefined,
-    tags: form.value.tags,
+    content: form.value.title.trim(),
+    explanation: form.value.explanation.trim() || undefined,
+    metadataJson: Object.keys(metadata).length ? JSON.stringify(metadata) : undefined,
+    tagNames: form.value.tags.length ? form.value.tags : undefined,
   };
 
   if (isEdit.value) {
-    const updated = await questionStore.updateQuestion(
-      questionId.value!,
-      payload,
-    );
+    const updated = await questionStore.updateQuestion(questionId.value!, payload);
     if (updated) {
       message.success("Question updated");
       router.push("/questions");
@@ -268,39 +304,61 @@ onMounted(async () => {
     if (questionStore.currentQuestion) {
       const q = questionStore.currentQuestion;
 
-      // For multiple choice, parse the answer JSON if it exists
-      if (q.type === "multiple_choice") {
-        let correctAnswers: string[] = [];
-        if (q.answer) {
-          try {
-            const parsed = JSON.parse(q.answer);
-            correctAnswers = Array.isArray(parsed) ? parsed : [q.answer];
-          } catch {
-            correctAnswers = [q.answer];
-          }
+      // Common fields
+      form.value.title = q.content;
+      form.value.type = q.type as any;
+      form.value.explanation = q.explanation || "";
+      form.value.tags = q.tags || [];
+
+      // Parse metadata
+      let metadata: any = {};
+      if (q.metadataJson) {
+        try {
+          metadata = JSON.parse(q.metadataJson);
+        } catch {
+          metadata = {};
         }
-        form.value.correctAnswers = correctAnswers;
-        form.value.options = q.options || ["", "", "", ""];
-      } else {
-        // For other types, just copy the answer as is
-        form.value.answer = q.answer || "";
       }
 
-      // Common fields
-      form.value.title = q.title;
-      form.value.description = q.description || "";
-      form.value.type = q.type;
-      form.value.explanation = q.explanation || "";
-      form.value.orderingItems = q.orderingItems || ["", "", "", ""];
-      form.value.matchingPairs = q.matchingPairs || [
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-      ];
-      form.value.front = q.front || "";
-      form.value.back = q.back || "";
-      form.value.tags = q.tags;
+      // Description (stored in metadata)
+      form.value.description = metadata.description || "";
+
+      // Type-specific fields
+      switch (q.type) {
+        case "multiple_choice": {
+          const options = (metadata.options || []).map((opt: any) => opt.text);
+          form.value.options = options.length ? options : ["", "", "", ""];
+          const correctIds = metadata.correctAnswers || [];
+          form.value.correctAnswers = (metadata.options || [])
+            .filter((opt: any) => correctIds.includes(opt.id))
+            .map((opt: any) => opt.text);
+          break;
+        }
+        case "true_false":
+          form.value.answer = metadata.correctAnswer === true ? "true" : "false";
+          break;
+        case "fill_blank":
+          form.value.answer = JSON.stringify(metadata.keywords || []);
+          break;
+        case "ordering": {
+          const items = (metadata.items || []).map((item: any) => item.text);
+          form.value.orderingItems = items.length ? items : ["", "", "", ""];
+          break;
+        }
+        case "matching": {
+          const pairs = (metadata.pairs || []).map((p: any) => ({
+            left: p.left,
+            right: p.right
+          }));
+          form.value.matchingPairs = pairs.length ? pairs : [
+            { left: "", right: "" },
+            { left: "", right: "" },
+            { left: "", right: "" },
+            { left: "", right: "" },
+          ];
+          break;
+        }
+      }
     }
   }
 });

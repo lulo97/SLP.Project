@@ -17,7 +17,7 @@ public class Question
 
     [Column("type")]
     [MaxLength(50)]
-    public string Type { get; set; } = "multiple_choice"; // multiple_choice, true_false, fill_in, etc.
+    public string Type { get; set; } = "multiple_choice"; // multiple_choice, true_false, fill_blank, etc.
 
     [Column("content")]
     public string Content { get; set; } = string.Empty;

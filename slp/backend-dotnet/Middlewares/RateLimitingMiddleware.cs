@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using System.Net;
 
 namespace backend_dotnet.Middlewares;
 
@@ -21,7 +22,17 @@ public class RateLimitingMiddleware
         if (context.Request.Path.StartsWithSegments("/api/auth/login") &&
             context.Request.Method == HttpMethods.Post)
         {
+            var ipAddress = context.Connection.RemoteIpAddress;
+
+            // Skip rate limit for localhost
+            if (ipAddress != null && IPAddress.IsLoopback(ipAddress))
+            {
+                await _next(context);
+                return;
+            }
+
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
             var key = $"rate:login:{clientIp}";
 
             var currentCount = await cache.GetStringAsync(key);

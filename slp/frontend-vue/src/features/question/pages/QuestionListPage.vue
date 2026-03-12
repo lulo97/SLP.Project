@@ -7,6 +7,7 @@
         placeholder="Search questions..."
         enter-button
         @search="fetchQuestions"
+        data-testid="question-search"
       />
       <div class="flex space-x-2">
         <a-select
@@ -15,16 +16,20 @@
           style="width: 120px"
           allow-clear
           @change="fetchQuestions"
+          data-testid="filter-type"
         >
           <a-select-option value="multiple_choice">Multiple Choice</a-select-option>
           <a-select-option value="true_false">True/False</a-select-option>
           <a-select-option value="fill_blank">Fill Blank</a-select-option>
+          <a-select-option value="ordering">Ordering</a-select-option>
+          <a-select-option value="matching">Matching</a-select-option>
         </a-select>
         <a-input
           v-model:value="tagFilter"
           placeholder="Filter by tag"
           style="flex: 1"
           @pressEnter="fetchQuestions"
+          data-testid="filter-tag"
         />
       </div>
     </div>
@@ -32,21 +37,22 @@
     <!-- Questions List -->
     <a-list
       :loading="questionStore.loading"
-      :data-source="questionStore.question"
+      :data-source="questionStore.questions"
       item-layout="vertical"
     >
       <template #renderItem="{ item }">
-        <a-list-item>
+        <a-list-item :data-testid="`question-item-${item.id}`">
           <a-list-item-meta>
             <template #title>
               <div class="flex items-center justify-between">
-                <span class="font-medium">{{ item.title }}</span>
+                <span class="font-medium">{{ item.content }}</span>
                 <a-tag>{{ item.type }}</a-tag>
               </div>
             </template>
             <template #description>
               <div class="text-sm">
-                <p class="text-gray-600">{{ item.description || 'No description' }}</p>
+                <!-- Extract description from metadata if present -->
+                <p class="text-gray-600">{{ getDescription(item) || 'No description' }}</p>
                 <div class="flex flex-wrap gap-1 mt-2">
                   <a-tag v-for="tag in item.tags" :key="tag" size="small">{{ tag }}</a-tag>
                 </div>
@@ -54,7 +60,7 @@
             </template>
           </a-list-item-meta>
           <template #actions>
-            <span @click="handleEdit(item.id)">
+            <span @click="handleEdit(item.id)" :data-testid="`edit-question-${item.id}`">
               <EditOutlined /> Edit
             </span>
             <a-popconfirm
@@ -63,7 +69,7 @@
               cancel-text="No"
               @confirm="handleDelete(item.id)"
             >
-              <span>
+              <span :data-testid="`delete-question-${item.id}`">
                 <DeleteOutlined /> Delete
               </span>
             </a-popconfirm>
@@ -73,7 +79,7 @@
     </a-list>
 
     <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
-      <a-float-button @click="goToCreateQuestion">
+      <a-float-button @click="goToCreateQuestion" data-testid="create-question">
         <template #icon><PlusOutlined /></template>
       </a-float-button>
     </a-float-button-group>
@@ -101,6 +107,17 @@ const fetchQuestions = () => {
   if (typeFilter.value) params.type = typeFilter.value;
   if (tagFilter.value) params.tag = tagFilter.value;
   questionStore.fetchQuestions(params);
+};
+
+// Helper to extract description from metadata
+const getDescription = (item: any) => {
+  if (!item.metadataJson) return '';
+  try {
+    const metadata = JSON.parse(item.metadataJson);
+    return metadata.description || '';
+  } catch {
+    return '';
+  }
 };
 
 const handleEdit = (id: number) => {

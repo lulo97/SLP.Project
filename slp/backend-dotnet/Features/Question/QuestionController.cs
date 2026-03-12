@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using backend_dotnet.Features.Auth;
@@ -61,8 +62,15 @@ public class QuestionController : ControllerBase
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
-        var question = await _questionService.CreateQuestionAsync(CurrentUserId.Value, dto);
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+        try
+        {
+            var question = await _questionService.CreateQuestionAsync(CurrentUserId.Value, dto);
+            return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
@@ -71,10 +79,17 @@ public class QuestionController : ControllerBase
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
-        var updated = await _questionService.UpdateQuestionAsync(id, CurrentUserId.Value, dto);
-        if (updated == null)
-            return NotFound();
-        return Ok(updated);
+        try
+        {
+            var updated = await _questionService.UpdateQuestionAsync(id, CurrentUserId.Value, dto);
+            if (updated == null)
+                return NotFound();
+            return Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]

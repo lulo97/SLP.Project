@@ -7,12 +7,14 @@
         placeholder="Left"
         size="small"
         class="input-left"
+        :data-testid="`matching-left-${index}`"
       />
       <a-input
         v-model:value="pair.right"
         placeholder="Right"
         size="small"
         class="input-right"
+        :data-testid="`matching-right-${index}`"
       />
       <a-button
         @click="removePair(index)"
@@ -21,11 +23,12 @@
         size="small"
         class="remove-btn"
         :aria-label="`Remove pair ${index + 1}`"
+        :data-testid="`matching-remove-${index}`"
       >
         <CloseOutlined />
       </a-button>
     </div>
-    <a-button @click="addPair" type="dashed" block size="small">Add Pair</a-button>
+    <a-button @click="addPair" type="dashed" block size="small" data-testid="matching-add">Add Pair</a-button>
   </a-form-item>
 </template>
 

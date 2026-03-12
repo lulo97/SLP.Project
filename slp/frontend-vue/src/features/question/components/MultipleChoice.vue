@@ -7,15 +7,17 @@
         @change="toggleCorrect(opt, $event.target.checked)"
         class="mr-2"
         :disabled="!opt.trim()"
+        :data-testid="`mc-option-${index}-checkbox`"
       />
       <a-input
         v-model:value="localOptions[index]"
         placeholder="Option"
         style="margin-right: 8px; flex: 1;"
+        :data-testid="`mc-option-${index}-input`"
       />
-      <a-button @click="removeOption(index)" type="text" danger size="small">Remove</a-button>
+      <a-button @click="removeOption(index)" type="text" danger size="small" :data-testid="`mc-option-${index}-remove`">Remove</a-button>
     </div>
-    <a-button @click="addOption" type="dashed" block>Add Option</a-button>
+    <a-button @click="addOption" type="dashed" block data-testid="mc-add-option">Add Option</a-button>
   </a-form-item>
 </template>
 

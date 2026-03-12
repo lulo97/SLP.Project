@@ -6,12 +6,13 @@
       <a-input
         v-model:value="keyword"
         placeholder="Enter the correct keyword"
+        data-testid="fill-blank-keyword"
       />
     </a-form-item>
 
     <!-- Preview field (read-only) -->
     <a-form-item label="Preview">
-      <div class="preview-container">
+      <div class="preview-container" data-testid="fill-blank-preview">
         <div v-if="!questionTitle" class="text-gray-400 italic p-3 bg-gray-50 rounded border">
           Enter question title first
         </div>

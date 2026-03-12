@@ -1,38 +1,35 @@
 import { defineStore } from 'pinia';
 import apiClient from '@/lib/api/client';
 
+// Match backend's QuestionDto
 export interface QuestionDto {
   id: number;
   userId: number;
-  title: string;
-  description?: string;
-  type: 'multiple_choice' | 'true_false' | 'fill_blank' | 'ordering' | 'matching' | 'flashcard';
-  // For multiple choice
-  options?: string[];
-  // For true_false (true/false answer stored as string 'true' or 'false')
-  // For fill_blank (answer stored as string)
-  answer?: string;
+  type: string;
+  content: string;               // was "title"
   explanation?: string;
-  // For ordering
-  orderingItems?: string[];          // items in correct order
-  // For matching
-  matchingPairs?: { left: string; right: string }[];
-  // For flashcard
-  front?: string;
-  back?: string;
-  tags: string[];
+  metadataJson?: string;          // JSON string
   createdAt: string;
   updatedAt: string;
+  tags: string[];                 // from navigation
+  userName?: string;
 }
 
-export type CreateQuestionPayload = Omit<QuestionDto, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
+// Payload for create – matches backend's CreateQuestionDto
+export interface CreateQuestionPayload {
+  type: string;
+  content: string;
+  explanation?: string;
+  metadataJson?: string;
+  tagNames?: string[];            // backend expects tagNames, not tags
+}
 
-// All fields optional for updates
-export type UpdateQuestionPayload = Partial<Omit<QuestionDto, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>;
+// Update payload (all optional)
+export type UpdateQuestionPayload = Partial<CreateQuestionPayload>;
 
 export const useQuestionStore = defineStore('question', {
   state: () => ({
-    question: [] as QuestionDto[],
+    questions: [] as QuestionDto[],
     currentQuestion: null as QuestionDto | null,
     loading: false,
     error: null as string | null,
@@ -44,9 +41,9 @@ export const useQuestionStore = defineStore('question', {
       this.error = null;
       try {
         const response = await apiClient.get<QuestionDto[]>('/question', { params });
-        this.question = response.data;
+        this.questions = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to fetch question';
+        this.error = err.response?.data?.message || 'Failed to fetch questions';
       } finally {
         this.loading = false;
       }
