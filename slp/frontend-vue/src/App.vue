@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { ConfigProvider } from 'ant-design-vue';
 import { onMounted } from 'vue';
-import { useAuthStore } from './stores/auth';
+import { useAuthStore } from './features/auth/stores/authStore';
 
 const AConfigProvider = ConfigProvider;
 const authStore = useAuthStore();

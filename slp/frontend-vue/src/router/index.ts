@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "../stores/auth";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -7,31 +7,31 @@ const router = createRouter({
     {
       path: "/login",
       name: "login",
-      component: () => import("../views/Login.vue"),
+      component: () => import("@/features/auth/pages/LoginPage.vue"),
       meta: { requiresGuest: true },
     },
     {
       path: "/register",
       name: "register",
-      component: () => import("../views/Register.vue"),
+      component: () => import("@/features/auth/pages/RegisterPage.vue"),
       meta: { requiresGuest: true },
     },
     {
       path: "/dashboard",
       name: "dashboard",
-      component: () => import("../views/Dashboard.vue"),
+      component: () => import("@/features/dashboard/pages/DashboardPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/profile",
       name: "profile",
-      component: () => import("../views/Profile.vue"),
+      component: () => import("@/features/profile/pages/ProfilePage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/admin",
       name: "admin",
-      component: () => import("../views/Admin.vue"),
+      component: () => import("@/features/admin/pages/AdminPage.vue"),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
@@ -41,49 +41,49 @@ const router = createRouter({
     {
       path: "/quiz",
       name: "quiz-list",
-      component: () => import("../views/quiz/QuizList.vue"),
+      component: () => import("@/features/quiz/pages/QuizListPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/quiz/new",
       name: "quiz-create",
-      component: () => import("../views/quiz/QuizForm.vue"),
+      component: () => import("@/features/quiz/pages/QuizFormPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/quiz/:id",
       name: "quiz-detail",
-      component: () => import("../views/quiz/QuizDetail.vue"),
+      component: () => import("@/features/quiz/pages/QuizDetailPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/quiz/:id/edit",
       name: "quiz-edit",
-      component: () => import("../views/quiz/QuizForm.vue"),
+      component: () => import("@/features/quiz/pages/QuizFormPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/questions",
       name: "question-list",
-      component: () => import("../views/question/QuestionList.vue"),
+      component: () => import("@/features/question/pages/QuestionListPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/question/new",
       name: "question-create",
-      component: () => import("../views/question/QuestionForm.vue"),
+      component: () => import("@/features/question/pages/QuestionFormPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/question/:id/edit",
       name: "question-edit",
-      component: () => import("../views/question/QuestionForm.vue"),
+      component: () => import("@/features/question/pages/QuestionFormPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/source/upload",
       name: "source-upload",
-      component: () => import("../views/source/SourceUpload.vue"),
+      component: () => import("@/features/source/pages/SourceUploadPage.vue"),
       meta: { requiresAuth: true },
     },
   ],
