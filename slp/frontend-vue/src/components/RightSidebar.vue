@@ -31,6 +31,7 @@
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
         <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
+          <!-- Dashboard -->
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
               <LayoutDashboard :size="18" class="mr-2" />
@@ -38,6 +39,47 @@
             </router-link>
           </a-menu-item>
           
+          <!-- Quiz Section -->
+          <a-menu-item key="/quiz">
+            <router-link to="/quiz" class="flex items-center">
+              <FileText :size="18" class="mr-2" />
+              My Quizzes
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-item key="/quiz/new">
+            <router-link to="/quiz/new" class="flex items-center">
+              <PlusCircle :size="18" class="mr-2" />
+              Create Quiz
+            </router-link>
+          </a-menu-item>
+
+          <!-- Question Bank Section -->
+          <a-menu-item key="/questions">
+            <router-link to="/questions" class="flex items-center">
+              <HelpCircle :size="18" class="mr-2" />
+              Question Bank
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-item key="/question/new">
+            <router-link to="/question/new" class="flex items-center">
+              <Plus :size="18" class="mr-2" />
+              New Question
+            </router-link>
+          </a-menu-item>
+
+          <!-- Source Section -->
+          <a-menu-item key="/source/upload">
+            <router-link to="/source/upload" class="flex items-center">
+              <Upload :size="18" class="mr-2" />
+              Upload Source
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-divider />
+
+          <!-- Profile -->
           <a-menu-item key="/profile">
             <router-link to="/profile" class="flex items-center">
               <User :size="18" class="mr-2" />
@@ -45,6 +87,7 @@
             </router-link>
           </a-menu-item>
 
+          <!-- Admin (if admin) -->
           <a-menu-item v-if="authStore.isAdmin" key="/admin">
             <router-link to="/admin" class="flex items-center">
               <Shield :size="18" class="mr-2" />
@@ -54,6 +97,7 @@
 
           <a-menu-divider />
 
+          <!-- Logout -->
           <a-menu-item key="logout" @click="handleLogout">
             <div class="flex items-center text-red-500">
               <LogOut :size="18" class="mr-2" />
@@ -75,7 +119,18 @@
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { Menu, Divider, Button } from 'ant-design-vue';
-import { X, LayoutDashboard, User, Shield, LogOut } from 'lucide-vue-next';
+import { 
+  X, 
+  LayoutDashboard, 
+  User, 
+  Shield, 
+  LogOut,
+  FileText,
+  PlusCircle,
+  HelpCircle,
+  Plus,
+  Upload
+} from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 import { message } from 'ant-design-vue';
 

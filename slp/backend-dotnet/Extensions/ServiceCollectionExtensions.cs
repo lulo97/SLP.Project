@@ -72,9 +72,9 @@ public static class ServiceCollectionExtensions
         {
             options.AddPolicy("Frontend", policy =>
             {
-                policy.WithOrigins("http://localhost:3002")
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
+                policy.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
             });
         });
 
