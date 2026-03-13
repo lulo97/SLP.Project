@@ -48,4 +48,5 @@ public class Quiz
     public virtual ICollection<QuizQuestion> QuizQuestions { get; set; } = new List<QuizQuestion>();
     public virtual ICollection<QuizTag> QuizTags { get; set; } = new List<QuizTag>();
     public virtual ICollection<QuizSource> QuizSources { get; set; } = new List<QuizSource>();
+    public virtual ICollection<QuizNote> QuizNotes { get; set; } = new List<QuizNote>();
 }

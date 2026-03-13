@@ -1,4 +1,5 @@
 using backend_dotnet.Data;
+using backend_dotnet.Features.Note;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,7 @@ public class QuizRepository : IQuizRepository
             .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
+            .Include(q => q.QuizNotes).ThenInclude(qn => qn.Note)   // <-- add this
             .Include(q => q.User)
             .FirstOrDefaultAsync(q => q.Id == id && !q.Disabled);
 
@@ -178,5 +180,55 @@ public class QuizRepository : IQuizRepository
             }
         }
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Note.Note>> GetNotesByQuizIdAsync(int quizId)
+    {
+        var quiz = await _context.Quizzes
+            .Include(q => q.QuizNotes)
+                .ThenInclude(qn => qn.Note)
+            .FirstOrDefaultAsync(q => q.Id == quizId && !q.Disabled);
+        return quiz?.QuizNotes.Select(qn => qn.Note) ?? Enumerable.Empty<Note.Note>();
+    }
+
+    public async Task AddNoteToQuizAsync(int quizId, int noteId)
+    {
+        var quizNote = new QuizNote { QuizId = quizId, NoteId = noteId };
+        _context.QuizNotes.Add(quizNote);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveNoteFromQuizAsync(int quizId, int noteId)
+    {
+        var quizNote = await _context.QuizNotes
+            .FirstOrDefaultAsync(qn => qn.QuizId == quizId && qn.NoteId == noteId);
+        if (quizNote != null)
+        {
+            _context.QuizNotes.Remove(quizNote);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<Note.Note> CreateNoteAndAddToQuizAsync(int quizId, int userId, string title, string content)
+    {
+        var note = new Note.Note
+        {
+            UserId = userId,
+            Title = title,
+            Content = content,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Notes.Add(note);
+        await _context.SaveChangesAsync(); // save to generate Id
+
+        await AddNoteToQuizAsync(quizId, note.Id);
+        return note;
+    }
+
+    public async Task<Note.Note?> GetNoteByIdAndUserAsync(int noteId, int userId)
+    {
+        return await _context.Notes
+            .FirstOrDefaultAsync(n => n.Id == noteId && n.UserId == userId);
     }
 }

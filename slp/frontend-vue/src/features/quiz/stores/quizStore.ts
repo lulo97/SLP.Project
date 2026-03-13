@@ -31,6 +31,14 @@ export interface UpdateQuizPayload {
   tagNames?: string[];
 }
 
+export interface NoteDto {
+  id: number;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const useQuizStore = defineStore("quiz", {
   state: () => ({
     quizzes: [] as QuizListDto[],

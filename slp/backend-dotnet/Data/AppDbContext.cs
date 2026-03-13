@@ -1,5 +1,4 @@
-﻿using backend_dotnet.Features.Auth;
-using backend_dotnet.Features.Note;
+﻿using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.Session;
@@ -30,6 +29,7 @@ public class AppDbContext : DbContext
     public DbSet<Source> Sources => Set<Source>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Note> Notes => Set<Note>();
+    public DbSet<QuizNote> QuizNotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -156,5 +156,11 @@ public class AppDbContext : DbContext
                   .HasForeignKey(n => n.UserId);
             entity.HasIndex(n => n.UserId);
         });
+
+        modelBuilder.Entity<QuizNote>()
+            .HasKey(qn => new { qn.QuizId, qn.NoteId });
+
+        modelBuilder.Entity<QuizNote>()
+            .HasKey(qn => new { qn.QuizId, qn.NoteId });
     }
 }

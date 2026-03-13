@@ -19,4 +19,9 @@ public interface IQuizRepository
     Task UpdateQuizQuestionAsync(QuizQuestion quizQuestion);
     Task DeleteQuizQuestionAsync(int id);
     Task ReorderQuizQuestionsAsync(int quizId, List<int> questionIds); // optional
+    Task<IEnumerable<Note.Note>> GetNotesByQuizIdAsync(int quizId);
+    Task AddNoteToQuizAsync(int quizId, int noteId);
+    Task RemoveNoteFromQuizAsync(int quizId, int noteId);
+    Task<Note.Note> CreateNoteAndAddToQuizAsync(int quizId, int userId, string title, string content);
+    Task<Note.Note?> GetNoteByIdAndUserAsync(int noteId, int userId);
 }

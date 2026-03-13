@@ -1,7 +1,8 @@
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using backend_dotnet.Features.Auth;
+using backend_dotnet.Features.Note;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -168,6 +169,46 @@ public class QuizController : ControllerBase
 
         var deleted = await _quizService.DeleteQuizQuestionAsync(id, CurrentUserId.Value, IsAdmin);
         if (!deleted)
+            return NotFound();
+        return NoContent();
+    }
+
+    [HttpGet("{quizId}/notes")]
+    public async Task<IActionResult> GetQuizNotes(int quizId)
+    {
+        var notes = await _quizService.GetQuizNotesAsync(quizId, CurrentUserId);
+        return Ok(notes);
+    }
+
+    [HttpPost("{quizId}/notes")]
+    public async Task<IActionResult> AddNoteToQuiz(int quizId, [FromBody] AddNoteToQuizDto dto)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var note = await _quizService.AddNoteToQuizAsync(quizId, CurrentUserId.Value, dto);
+            return CreatedAtAction(nameof(GetQuizNotes), new { quizId }, note);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpDelete("{quizId}/notes/{noteId}")]
+    public async Task<IActionResult> RemoveNoteFromQuiz(int quizId, int noteId)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var removed = await _quizService.RemoveNoteFromQuizAsync(quizId, noteId, CurrentUserId.Value, IsAdmin);
+        if (!removed)
             return NotFound();
         return NoContent();
     }

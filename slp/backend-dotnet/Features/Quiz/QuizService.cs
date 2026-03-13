@@ -1,4 +1,6 @@
+using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Tag;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -311,5 +313,78 @@ public class QuizService : IQuizService
             CreatedAt = qq.CreatedAt,
             UpdatedAt = qq.UpdatedAt
         };
+    }
+
+    public async Task<IEnumerable<NoteDto>> GetQuizNotesAsync(int quizId, int? currentUserId)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            return Enumerable.Empty<NoteDto>();
+
+        // Check visibility
+        if (quiz.Visibility == "private" && quiz.UserId != currentUserId)
+            return Enumerable.Empty<NoteDto>();
+
+        var notes = await _quizRepository.GetNotesByQuizIdAsync(quizId);
+        return notes.Select(n => new NoteDto
+        {
+            Id = n.Id,
+            Title = n.Title,
+            Content = n.Content,
+            CreatedAt = n.CreatedAt,
+            UpdatedAt = n.UpdatedAt
+        });
+    }
+
+    public async Task<NoteDto> AddNoteToQuizAsync(int quizId, int userId, AddNoteToQuizDto dto)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            throw new ArgumentException("Quiz not found");
+
+        if (quiz.UserId != userId)
+            throw new UnauthorizedAccessException("You do not own this quiz");
+
+        Note.Note note;
+        if (dto.NoteId.HasValue)
+        {
+            // Attach existing note – verify it belongs to the user
+            note = await _quizRepository.GetNoteByIdAndUserAsync(dto.NoteId.Value, userId);
+            if (note == null)
+                throw new ArgumentException("Note not found or does not belong to you");
+
+            await _quizRepository.AddNoteToQuizAsync(quizId, note.Id);
+        }
+        else if (!string.IsNullOrWhiteSpace(dto.Title) && !string.IsNullOrWhiteSpace(dto.Content))
+        {
+            // Create new note
+            note = await _quizRepository.CreateNoteAndAddToQuizAsync(quizId, userId, dto.Title, dto.Content);
+        }
+        else
+        {
+            throw new ArgumentException("Either provide a NoteId or both Title and Content");
+        }
+
+        return new NoteDto
+        {
+            Id = note.Id,
+            Title = note.Title,
+            Content = note.Content,
+            CreatedAt = note.CreatedAt,
+            UpdatedAt = note.UpdatedAt
+        };
+    }
+
+    public async Task<bool> RemoveNoteFromQuizAsync(int quizId, int noteId, int userId, bool isAdmin)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            return false;
+
+        if (!isAdmin && quiz.UserId != userId)
+            return false;
+
+        await _quizRepository.RemoveNoteFromQuizAsync(quizId, noteId);
+        return true;
     }
 }

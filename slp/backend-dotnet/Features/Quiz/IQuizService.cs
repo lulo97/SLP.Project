@@ -1,3 +1,4 @@
+using backend_dotnet.Features.Note;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,4 +19,7 @@ public interface IQuizService
     Task<QuizQuestionDto> CreateQuizQuestionAsync(int quizId, int userId, CreateQuizQuestionDto dto);
     Task<QuizQuestionDto?> UpdateQuizQuestionAsync(int id, int userId, UpdateQuizQuestionDto dto);
     Task<bool> DeleteQuizQuestionAsync(int id, int userId, bool isAdmin);
+    Task<IEnumerable<NoteDto>> GetQuizNotesAsync(int quizId, int? currentUserId);
+    Task<NoteDto> AddNoteToQuizAsync(int quizId, int userId, AddNoteToQuizDto dto);
+    Task<bool> RemoveNoteFromQuizAsync(int quizId, int noteId, int userId, bool isAdmin);
 }
