@@ -17,7 +17,7 @@ public class QuizQuestion
     [Column("original_question_id")]
     public int? OriginalQuestionId { get; set; }
 
-    [Column("question_snapshot")]
+    [Column("question_snapshot", TypeName = "jsonb")]
     public string? QuestionSnapshotJson { get; set; } // Stored as JSONB
 
     [Column("display_order")]

@@ -13,4 +13,9 @@ public interface IQuizService
     Task<bool> DeleteQuizAsync(int id, int userId, bool isAdmin);
     Task<QuizDto?> DuplicateQuizAsync(int id, int userId);
     Task<IEnumerable<QuizListDto>> SearchQuizzesAsync(string? searchTerm, int? userId, bool publicOnly);
+    Task<IEnumerable<QuizQuestionDto>> GetQuizQuestionsAsync(int quizId, int? currentUserId);
+    Task<QuizQuestionDto?> GetQuizQuestionByIdAsync(int id, int? currentUserId);
+    Task<QuizQuestionDto> CreateQuizQuestionAsync(int quizId, int userId, CreateQuizQuestionDto dto);
+    Task<QuizQuestionDto?> UpdateQuizQuestionAsync(int id, int userId, UpdateQuizQuestionDto dto);
+    Task<bool> DeleteQuizQuestionAsync(int id, int userId, bool isAdmin);
 }

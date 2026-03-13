@@ -1,8 +1,8 @@
+using backend_dotnet.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using backend_dotnet.Data;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -19,42 +19,23 @@ public class QuizRepository : IQuizRepository
     {
         // First, check if the quiz exists at all (even disabled)
         var anyQuiz = await _context.Quizzes
-            .IgnoreQueryFilters() // This bypasses the global filter
+            .IgnoreQueryFilters()
             .Where(q => q.Id == id)
             .Select(q => new { q.Id, q.Title, q.Disabled })
             .FirstOrDefaultAsync();
 
         if (anyQuiz == null)
-        {
-            Console.WriteLine($"[DEBUG] Quiz with ID {id} does not exist in database at all");
             return null;
-        }
 
         if (anyQuiz.Disabled)
-        {
-            Console.WriteLine($"[DEBUG] Quiz with ID {id} exists but is disabled (Disabled = true)");
             return null;
-        }
 
-        Console.WriteLine($"[DEBUG] Quiz with ID {id} exists and is enabled. Fetching full data...");
-
-        // Now fetch the full quiz with all includes
         var quiz = await _context.Quizzes
             .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
-            .Include(q => q.User) // Add this to debug user info
+            .Include(q => q.User)
             .FirstOrDefaultAsync(q => q.Id == id && !q.Disabled);
-
-        if (quiz != null)
-        {
-            Console.WriteLine($"[DEBUG] Successfully loaded quiz: ID={quiz.Id}, Title={quiz.Title}, UserId={quiz.UserId}, Visibility={quiz.Visibility}");
-            Console.WriteLine($"[DEBUG] Quiz has {quiz.QuizQuestions?.Count ?? 0} questions, {quiz.QuizTags?.Count ?? 0} tags, {quiz.QuizSources?.Count ?? 0} sources");
-        }
-        else
-        {
-            Console.WriteLine($"[DEBUG] Failed to load quiz with ID {id} despite existence check - possible filtering issue");
-        }
 
         return quiz;
     }
@@ -80,7 +61,6 @@ public class QuizRepository : IQuizRepository
             query = query.Where(q => q.Visibility == "public");
         else if (visibility == "unlisted")
             query = query.Where(q => q.Visibility == "unlisted");
-        // else all (including private? probably not for public listing)
 
         return await query
             .Include(q => q.User)
@@ -137,5 +117,66 @@ public class QuizRepository : IQuizRepository
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .OrderByDescending(q => q.UpdatedAt)
             .ToListAsync();
+    }
+
+    // ==================== QuizQuestion repository methods ====================
+
+    public async Task<IEnumerable<QuizQuestion>> GetQuestionsByQuizIdAsync(int quizId)
+    {
+        return await _context.QuizQuestions
+            .Where(qq => qq.QuizId == quizId)
+            .OrderBy(qq => qq.DisplayOrder)
+            .ToListAsync();
+    }
+
+    public async Task<QuizQuestion?> GetQuizQuestionByIdAsync(int id)
+    {
+        return await _context.QuizQuestions
+            .Include(qq => qq.Quiz)
+            .FirstOrDefaultAsync(qq => qq.Id == id);
+    }
+
+    public async Task<QuizQuestion> CreateQuizQuestionAsync(QuizQuestion quizQuestion)
+    {
+        quizQuestion.CreatedAt = DateTime.UtcNow;
+        quizQuestion.UpdatedAt = DateTime.UtcNow;
+        _context.QuizQuestions.Add(quizQuestion);
+        await _context.SaveChangesAsync();
+        return quizQuestion;
+    }
+
+    public async Task UpdateQuizQuestionAsync(QuizQuestion quizQuestion)
+    {
+        quizQuestion.UpdatedAt = DateTime.UtcNow;
+        _context.QuizQuestions.Update(quizQuestion);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteQuizQuestionAsync(int id)
+    {
+        var question = await _context.QuizQuestions.FindAsync(id);
+        if (question != null)
+        {
+            _context.QuizQuestions.Remove(question);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ReorderQuizQuestionsAsync(int quizId, List<int> questionIds)
+    {
+        var questions = await _context.QuizQuestions
+            .Where(qq => qq.QuizId == quizId)
+            .ToListAsync();
+
+        for (int i = 0; i < questionIds.Count; i++)
+        {
+            var q = questions.FirstOrDefault(qq => qq.Id == questionIds[i]);
+            if (q != null)
+            {
+                q.DisplayOrder = i + 1;
+                q.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await _context.SaveChangesAsync();
     }
 }

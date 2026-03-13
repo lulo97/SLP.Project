@@ -99,4 +99,76 @@ public class QuizController : ControllerBase
             return NotFound();
         return CreatedAtAction(nameof(GetQuiz), new { id = duplicated.Id }, duplicated);
     }
+
+    [HttpGet("{quizId}/questions")]
+    public async Task<IActionResult> GetQuizQuestions(int quizId)
+    {
+        var questions = await _quizService.GetQuizQuestionsAsync(quizId, CurrentUserId);
+        return Ok(questions);
+    }
+
+    // GET /api/quiz/questions/{id}
+    [HttpGet("questions/{id}")]
+    public async Task<IActionResult> GetQuizQuestion(int id)
+    {
+        var question = await _quizService.GetQuizQuestionByIdAsync(id, CurrentUserId);
+        if (question == null)
+            return NotFound();
+        return Ok(question);
+    }
+
+    // POST /api/quiz/{quizId}/questions
+    [HttpPost("{quizId}/questions")]
+    public async Task<IActionResult> CreateQuizQuestion(int quizId, [FromBody] CreateQuizQuestionDto dto)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var question = await _quizService.CreateQuizQuestionAsync(quizId, CurrentUserId.Value, dto);
+            return CreatedAtAction(nameof(GetQuizQuestion), new { id = question.Id }, question);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    // PUT /api/quiz/questions/{id}
+    [HttpPut("questions/{id}")]
+    public async Task<IActionResult> UpdateQuizQuestion(int id, [FromBody] UpdateQuizQuestionDto dto)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var updated = await _quizService.UpdateQuizQuestionAsync(id, CurrentUserId.Value, dto);
+            if (updated == null)
+                return NotFound();
+            return Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    // DELETE /api/quiz/questions/{id}
+    [HttpDelete("questions/{id}")]
+    public async Task<IActionResult> DeleteQuizQuestion(int id)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var deleted = await _quizService.DeleteQuizQuestionAsync(id, CurrentUserId.Value, IsAdmin);
+        if (!deleted)
+            return NotFound();
+        return NoContent();
+    }
 }

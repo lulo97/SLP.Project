@@ -1,11 +1,7 @@
 <template>
   <MobileLayout :title="isEdit ? 'Edit Quiz' : 'Create Quiz'">
     <a-card class="shadow-sm">
-      <a-form
-        :model="form"
-        @submit.prevent="handleSubmit"
-        layout="vertical"
-      >
+      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical">
         <a-form-item label="Title" required>
           <a-input v-model:value="form.title" placeholder="Enter quiz title" />
         </a-form-item>
@@ -17,7 +13,6 @@
         <a-form-item label="Visibility">
           <a-radio-group v-model:value="form.visibility">
             <a-radio value="private">Private (only you)</a-radio>
-            <a-radio value="unlisted">Unlisted (anyone with link)</a-radio>
             <a-radio value="public">Public (visible to everyone)</a-radio>
           </a-radio-group>
         </a-form-item>
@@ -47,19 +42,19 @@ import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { useQuizStore } from '../stores/quizStore';
-import type { CreateQuizPayload, UpdateQuizPayload } from '../../quiz/stores/quizStore';
+import type { CreateQuizPayload, UpdateQuizPayload } from '../stores/quizStore';
 
 const route = useRoute();
 const router = useRouter();
 const quizStore = useQuizStore();
 
-const quizId = computed(() => route.params.id ? Number(route.params.id) : null);
+const quizId = computed(() => (route.params.id ? Number(route.params.id) : null));
 const isEdit = computed(() => !!quizId.value);
 
 const form = ref<CreateQuizPayload & { tagNames: string[] }>({
   title: '',
   description: '',
-  visibility: 'private',
+  visibility: 'public', // default public
   tagNames: [],
 });
 

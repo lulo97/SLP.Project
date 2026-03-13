@@ -1,8 +1,9 @@
+using backend_dotnet.Features.Tag;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using backend_dotnet.Features.Tag;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -184,6 +185,131 @@ public class QuizService : IQuizService
             Tags = quiz.QuizTags?.Select(qt => qt.Tag?.Name ?? "").ToList() ?? new List<string>(),
             QuestionCount = quiz.QuizQuestions?.Count ?? 0,
             UserName = quiz.User?.Username
+        };
+    }
+
+    public async Task<IEnumerable<QuizQuestionDto>> GetQuizQuestionsAsync(int quizId, int? currentUserId)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            return new List<QuizQuestionDto>();
+
+        // Check visibility
+        if (quiz.Visibility == "private" && quiz.UserId != currentUserId)
+            return new List<QuizQuestionDto>();
+
+        var questions = await _quizRepository.GetQuestionsByQuizIdAsync(quizId);
+        return questions.Select(MapToQuizQuestionDto);
+    }
+
+    public async Task<QuizQuestionDto?> GetQuizQuestionByIdAsync(int id, int? currentUserId)
+    {
+        var question = await _quizRepository.GetQuizQuestionByIdAsync(id);
+        if (question == null || question.Quiz == null)
+            return null;
+
+        var quiz = question.Quiz;
+
+        // If the quiz is disabled, treat as not found
+        if (quiz.Disabled)
+            return null;
+
+        // Check visibility and ownership
+        if (quiz.Visibility == "private" && quiz.UserId != currentUserId)
+            return null;
+
+        return MapToQuizQuestionDto(question);
+    }
+
+    public async Task<QuizQuestionDto> CreateQuizQuestionAsync(int quizId, int userId, CreateQuizQuestionDto dto)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            throw new ArgumentException("Quiz not found");
+
+        if (quiz.UserId != userId)
+            throw new UnauthorizedAccessException("You do not own this quiz");
+
+        // Validate JSON string
+        if (!string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
+        {
+            try
+            {
+                JsonDocument.Parse(dto.QuestionSnapshotJson);
+            }
+            catch (JsonException)
+            {
+                throw new ArgumentException("Invalid JSON format in question snapshot.");
+            }
+        }
+
+        var question = new QuizQuestion
+        {
+            QuizId = quizId,
+            OriginalQuestionId = dto.OriginalQuestionId,
+            QuestionSnapshotJson = dto.QuestionSnapshotJson,
+            DisplayOrder = dto.DisplayOrder
+        };
+
+        var created = await _quizRepository.CreateQuizQuestionAsync(question);
+        return MapToQuizQuestionDto(created);
+    }
+
+    public async Task<QuizQuestionDto?> UpdateQuizQuestionAsync(int id, int userId, UpdateQuizQuestionDto dto)
+    {
+        var question = await _quizRepository.GetQuizQuestionByIdAsync(id);
+        if (question == null)
+            return null;
+
+        if (question.Quiz.UserId != userId)
+            throw new UnauthorizedAccessException("You do not own this quiz");
+
+        // Validate JSON if provided
+        if (dto.QuestionSnapshotJson != null && !string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
+        {
+            try
+            {
+                JsonDocument.Parse(dto.QuestionSnapshotJson);
+            }
+            catch (JsonException)
+            {
+                throw new ArgumentException("Invalid JSON format in question snapshot.");
+            }
+        }
+
+        question.OriginalQuestionId = dto.OriginalQuestionId ?? question.OriginalQuestionId;
+        question.QuestionSnapshotJson = dto.QuestionSnapshotJson ?? question.QuestionSnapshotJson;
+        question.DisplayOrder = dto.DisplayOrder ?? question.DisplayOrder;
+        question.UpdatedAt = DateTime.UtcNow;
+
+        await _quizRepository.UpdateQuizQuestionAsync(question);
+        return MapToQuizQuestionDto(question);
+    }
+
+    public async Task<bool> DeleteQuizQuestionAsync(int id, int userId, bool isAdmin)
+    {
+        var question = await _quizRepository.GetQuizQuestionByIdAsync(id);
+        if (question == null)
+            return false;
+
+        if (!isAdmin && question.Quiz.UserId != userId)
+            return false;
+
+        await _quizRepository.DeleteQuizQuestionAsync(id);
+        return true;
+    }
+
+    private QuizQuestionDto MapToQuizQuestionDto(QuizQuestion qq)
+    {
+        return new QuizQuestionDto
+        {
+            Id = qq.Id,
+            QuizId = qq.QuizId,
+            OriginalQuestionId = qq.OriginalQuestionId,
+            QuestionSnapshotJson = qq.QuestionSnapshotJson,
+            DisplayOrder = qq.DisplayOrder,
+            CreatedAt = qq.CreatedAt,
+            UpdatedAt = qq.UpdatedAt
         };
     }
 }

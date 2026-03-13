@@ -1,0 +1,287 @@
+import { test, expect } from '@playwright/test';
+
+const API_BASE_URL = 'http://localhost:5140/api';
+
+const adminUser = {
+  username: 'admin',
+  password: '123',
+};
+
+function generateQuiz() {
+  const id = Date.now() + Math.floor(Math.random() * 10000);
+  return {
+    title: `Playwright Quiz ${id}`,
+    description: 'Quiz created by Playwright API test',
+    visibility: 'private',
+    tagNames: ['playwright', 'api-test']
+  };
+}
+
+function generateQuestionSnapshot(order) {
+  return {
+    type: 'multiple_choice',
+    content: `Sample question ${order}`,
+    explanation: 'Explanation for sample question',
+    metadata: {
+      options: [
+        { id: '0', text: 'Option A' },
+        { id: '1', text: 'Option B' }
+      ],
+      correctAnswers: ['0']
+    },
+    tags: ['playwright']
+  };
+}
+
+test.describe('Quiz & QuizQuestion API End-to-End', () => {
+  test('Complete flow: create quiz → manage questions → duplicate → search → delete', async ({ request }) => {
+    let authToken;
+
+    // -----------------------------
+    // 1. Admin login
+    // -----------------------------
+    const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: adminUser
+    });
+    expect(loginRes.status()).toBe(200);
+    const loginBody = await loginRes.json();
+    authToken = loginBody.token;
+    expect(authToken).toBeTruthy();
+
+    const authHeaders = {
+      'X-Session-Token': authToken
+    };
+
+    // -----------------------------
+    // 2. Verify token works by fetching current user
+    // -----------------------------
+    const meRes = await request.get(`${API_BASE_URL}/users/me`, {
+      headers: authHeaders
+    });
+    expect(meRes.status()).toBe(200);
+    const meBody = await meRes.json();
+    expect(meBody.username).toBe(adminUser.username);
+
+    // -----------------------------
+    // 3. Create a quiz
+    // -----------------------------
+    const quizData = generateQuiz();
+    const createQuizRes = await request.post(`${API_BASE_URL}/quiz`, {
+      headers: authHeaders,
+      data: quizData
+    });
+    expect(createQuizRes.status()).toBe(201);
+    const createdQuiz = await createQuizRes.json();
+    expect(createdQuiz).toMatchObject({
+      title: quizData.title,
+      description: quizData.description,
+      visibility: quizData.visibility,
+      tags: quizData.tagNames
+    });
+    const quizId = createdQuiz.id;
+
+    // -----------------------------
+    // 4. Get the created quiz
+    // -----------------------------
+    const getQuizRes = await request.get(`${API_BASE_URL}/quiz/${quizId}`, {
+      headers: authHeaders
+    });
+    expect(getQuizRes.status()).toBe(200);
+    const fetchedQuiz = await getQuizRes.json();
+    expect(fetchedQuiz.id).toBe(quizId);
+
+    // -----------------------------
+    // 5. Update the quiz (preserve original title so search still works)
+    // -----------------------------
+    const updatedTitle = quizData.title + ' Updated'; // Keep "Playwright" in title
+    const updateRes = await request.put(`${API_BASE_URL}/quiz/${quizId}`, {
+      headers: authHeaders,
+      data: { title: updatedTitle, description: 'New description' }
+    });
+    expect(updateRes.status()).toBe(200);
+    const updatedQuiz = await updateRes.json();
+    expect(updatedQuiz.title).toBe(updatedTitle);
+    expect(updatedQuiz.description).toBe('New description');
+
+    // -----------------------------
+    // 6. Create first question (snapshot)
+    // -----------------------------
+    const snapshot1 = generateQuestionSnapshot(1);
+    const createQ1Res = await request.post(`${API_BASE_URL}/quiz/${quizId}/questions`, {
+      headers: authHeaders,
+      data: {
+        questionSnapshotJson: JSON.stringify(snapshot1),
+        displayOrder: 1
+      }
+    });
+    expect(createQ1Res.status()).toBe(201);
+    const q1 = await createQ1Res.json();
+    expect(q1.quizId).toBe(quizId);
+    expect(q1.displayOrder).toBe(1);
+    const questionId1 = q1.id;
+
+    // -----------------------------
+    // 7. Create second question (snapshot)
+    // -----------------------------
+    const snapshot2 = generateQuestionSnapshot(2);
+    const createQ2Res = await request.post(`${API_BASE_URL}/quiz/${quizId}/questions`, {
+      headers: authHeaders,
+      data: {
+        questionSnapshotJson: JSON.stringify(snapshot2),
+        displayOrder: 2
+      }
+    });
+    expect(createQ2Res.status()).toBe(201);
+    const q2 = await createQ2Res.json();
+    expect(q2.displayOrder).toBe(2);
+    const questionId2 = q2.id;
+
+    // -----------------------------
+    // 8. List questions for quiz
+    // -----------------------------
+    const listRes = await request.get(`${API_BASE_URL}/quiz/${quizId}/questions`, {
+      headers: authHeaders
+    });
+    expect(listRes.status()).toBe(200);
+    const questions = await listRes.json();
+    expect(questions.length).toBe(2);
+    expect(questions[0].displayOrder).toBe(1);
+    expect(questions[1].displayOrder).toBe(2);
+
+    // -----------------------------
+    // 9. Get first question by ID
+    // -----------------------------
+    const getQRes = await request.get(`${API_BASE_URL}/quiz/questions/${questionId1}`, {
+      headers: authHeaders
+    });
+    expect(getQRes.status()).toBe(200);
+    const fetchedQ = await getQRes.json();
+    expect(fetchedQ.id).toBe(questionId1);
+    expect(fetchedQ.quizId).toBe(quizId);
+
+    // -----------------------------
+    // 10. Update first question (change content)
+    // -----------------------------
+    const updatedSnapshot = { ...snapshot1, content: 'Updated question content' };
+    const updateQRes = await request.put(`${API_BASE_URL}/quiz/questions/${questionId1}`, {
+      headers: authHeaders,
+      data: {
+        questionSnapshotJson: JSON.stringify(updatedSnapshot),
+        displayOrder: 1
+      }
+    });
+    expect(updateQRes.status()).toBe(200);
+    const updatedQ = await updateQRes.json();
+    const parsedSnapshot = JSON.parse(updatedQ.questionSnapshotJson);
+    expect(parsedSnapshot.content).toBe('Updated question content');
+
+    // -----------------------------
+    // 11. Delete second question
+    // -----------------------------
+    const delQRes = await request.delete(`${API_BASE_URL}/quiz/questions/${questionId2}`, {
+      headers: authHeaders
+    });
+    expect(delQRes.status()).toBe(204);
+
+    // Verify deletion
+    const getDeletedRes = await request.get(`${API_BASE_URL}/quiz/questions/${questionId2}`, {
+      headers: authHeaders
+    });
+    expect(getDeletedRes.status()).toBe(404);
+
+    // -----------------------------
+    // 12. Duplicate the quiz (should copy remaining question)
+    // -----------------------------
+    const duplicateRes = await request.post(`${API_BASE_URL}/quiz/${quizId}/duplicate`, {
+      headers: authHeaders
+    });
+    expect(duplicateRes.status()).toBe(201);
+    const duplicatedQuiz = await duplicateRes.json();
+    expect(duplicatedQuiz.title).toContain('(Copy)');
+    const dupId = duplicatedQuiz.id;
+
+    // Get questions of duplicated quiz
+    const dupQuestionsRes = await request.get(`${API_BASE_URL}/quiz/${dupId}/questions`, {
+      headers: authHeaders
+    });
+    expect(dupQuestionsRes.status()).toBe(200);
+    const dupQuestions = await dupQuestionsRes.json();
+    expect(dupQuestions.length).toBe(1); // only the first question was copied
+    expect(dupQuestions[0].displayOrder).toBe(1);
+
+    // Cleanup duplicate
+    const delDupRes = await request.delete(`${API_BASE_URL}/quiz/${dupId}`, {
+      headers: authHeaders
+    });
+    expect(delDupRes.status()).toBe(204);
+
+    // -----------------------------
+    // 13. Change quiz visibility to public and search
+    // -----------------------------
+    const visibilityRes = await request.put(`${API_BASE_URL}/quiz/${quizId}`, {
+      headers: authHeaders,
+      data: { visibility: 'public' }
+    });
+    expect(visibilityRes.status()).toBe(200);
+
+    // Search (public endpoint, no auth required)
+    const searchRes = await request.get(`${API_BASE_URL}/quiz?search=Playwright`);
+    expect(searchRes.status()).toBe(200);
+    const searchResults = await searchRes.json();
+    const found = searchResults.some(q => q.id === quizId);
+    expect(found).toBe(true);
+
+    // -----------------------------
+    // 14. Get my quizzes (authenticated)
+    // -----------------------------
+    const myQuizzesRes = await request.get(`${API_BASE_URL}/quiz?mine=true`, {
+      headers: authHeaders
+    });
+    expect(myQuizzesRes.status()).toBe(200);
+    const myQuizzes = await myQuizzesRes.json();
+    expect(myQuizzes.some(q => q.id === quizId)).toBe(true);
+
+    // -----------------------------
+    // 15. Edge case: invalid JSON when creating question (should fail)
+    // -----------------------------
+    const invalidRes = await request.post(`${API_BASE_URL}/quiz/${quizId}/questions`, {
+      headers: authHeaders,
+      data: {
+        questionSnapshotJson: '{invalid json',
+        displayOrder: 10
+      }
+    });
+    expect(invalidRes.status()).toBe(400);
+
+    // -----------------------------
+    // 16. Edge case: access non‑existent quiz/question
+    // -----------------------------
+    const nonExistentQuiz = await request.get(`${API_BASE_URL}/quiz/999999`, {
+      headers: authHeaders
+    });
+    expect(nonExistentQuiz.status()).toBe(404);
+
+    const nonExistentQ = await request.get(`${API_BASE_URL}/quiz/questions/999999`, {
+      headers: authHeaders
+    });
+    expect(nonExistentQ.status()).toBe(404);
+
+    // -----------------------------
+    // 17. Delete original quiz and verify everything is gone
+    // -----------------------------
+    const delQuizRes = await request.delete(`${API_BASE_URL}/quiz/${quizId}`, {
+      headers: authHeaders
+    });
+    expect(delQuizRes.status()).toBe(204);
+
+    const getQuizAfterDel = await request.get(`${API_BASE_URL}/quiz/${quizId}`, {
+      headers: authHeaders
+    });
+    expect(getQuizAfterDel.status()).toBe(404);
+
+    const getQAfterDel = await request.get(`${API_BASE_URL}/quiz/questions/${questionId1}`, {
+      headers: authHeaders
+    });
+    expect(getQAfterDel.status()).toBe(404);
+  });
+});

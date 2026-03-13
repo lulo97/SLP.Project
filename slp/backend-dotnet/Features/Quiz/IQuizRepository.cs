@@ -13,4 +13,10 @@ public interface IQuizRepository
     Task SoftDeleteAsync(int id); // sets Disabled = true (admin only)
     Task<bool> ExistsAsync(int id);
     Task<IEnumerable<Quiz>> SearchAsync(string? searchTerm, int? userId, bool publicOnly = true);
+    Task<IEnumerable<QuizQuestion>> GetQuestionsByQuizIdAsync(int quizId);
+    Task<QuizQuestion?> GetQuizQuestionByIdAsync(int id);
+    Task<QuizQuestion> CreateQuizQuestionAsync(QuizQuestion quizQuestion);
+    Task UpdateQuizQuestionAsync(QuizQuestion quizQuestion);
+    Task DeleteQuizQuestionAsync(int id);
+    Task ReorderQuizQuestionsAsync(int quizId, List<int> questionIds); // optional
 }

@@ -43,7 +43,7 @@
                 <router-link :to="`/quiz/${item.id}`" class="text-lg font-medium">
                   {{ item.title }}
                 </router-link>
-                <a-tag :color="item.visibility === 'public' ? 'green' : item.visibility === 'unlisted' ? 'orange' : 'blue'">
+                <a-tag :color="item.visibility === 'public' ? 'green' : 'blue'">
                   {{ item.visibility }}
                 </a-tag>
               </div>
@@ -120,8 +120,6 @@ const handleSearch = () => {
 };
 
 const isOwnerOrAdmin = (quiz: QuizListDto) => {
-  // You need to store userId in auth store, or compare with quiz.userId
-  // For now, just check if user is admin or we have userId in quiz
   return authStore.isAdmin || (authStore.user && 'userId' in quiz && quiz.userId === authStore.user.id);
 };
 
@@ -150,7 +148,6 @@ const handleDelete = (id: number) => {
       const success = await quizStore.deleteQuiz(id);
       if (success) {
         message.success('Quiz deleted');
-        // Refresh list
         switchTab(currentTab.value);
       } else {
         message.error('Failed to delete');
