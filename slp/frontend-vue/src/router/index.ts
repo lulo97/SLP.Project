@@ -81,9 +81,35 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: "/source",
+      name: "source-list",
+      component: () => import("@/features/source/pages/SourceListPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/source/upload",
       name: "source-upload",
       component: () => import("@/features/source/pages/SourceUploadPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/source/new-url",
+      name: "source-url-create",
+      component: () =>
+        import("@/features/source/pages/SourceUrlCreatePage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/source/:id",
+      name: "source-detail",
+      component: () => import("@/features/source/pages/SourceDetailPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/source/new-text",
+      name: "SourceTextCreate",
+      component: () =>
+        import("@/features/source/pages/SourceTextCreatePage.vue"),
       meta: { requiresAuth: true },
     },
   ],

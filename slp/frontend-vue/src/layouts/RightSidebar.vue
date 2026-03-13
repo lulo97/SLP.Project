@@ -1,6 +1,8 @@
 <template>
-  <div class="fixed top-0 right-0 h-screen w-64 bg-white shadow-lg transform transition-transform duration-300 z-50"
-       :class="{ 'translate-x-0': isOpen, 'translate-x-full': !isOpen }">
+  <div
+    class="fixed top-0 right-0 h-screen w-64 bg-white shadow-lg transform transition-transform duration-300 z-50"
+    :class="{ 'translate-x-0': isOpen, 'translate-x-full': !isOpen }"
+  >
     <div class="flex flex-col h-full">
       <!-- Header -->
       <div class="p-4 border-b flex justify-between items-center">
@@ -13,16 +15,25 @@
       <!-- User Info -->
       <div v-if="authStore.user" class="p-4 border-b">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+          <div
+            class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
+          >
             {{ authStore.user.username.charAt(0).toUpperCase() }}
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ authStore.user.username }}</p>
-            <p class="text-sm text-gray-500 truncate">{{ authStore.user.email }}</p>
+            <p class="text-sm text-gray-500 truncate">
+              {{ authStore.user.email }}
+            </p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
-          <a-button type="link" size="small" @click="sendVerification" :loading="sendingVerification">
+          <a-button
+            type="link"
+            size="small"
+            @click="sendVerification"
+            :loading="sendingVerification"
+          >
             Verify Email
           </a-button>
         </div>
@@ -30,7 +41,11 @@
 
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
-        <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
+        <a-menu
+          mode="inline"
+          :selected-keys="[currentRoute]"
+          class="border-none"
+        >
           <!-- Dashboard -->
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
@@ -38,7 +53,7 @@
               Dashboard
             </router-link>
           </a-menu-item>
-          
+
           <!-- Quiz Section -->
           <a-menu-item key="/quiz">
             <router-link to="/quiz" class="flex items-center">
@@ -70,10 +85,31 @@
           </a-menu-item>
 
           <!-- Source Section -->
+          <a-menu-item key="/source">
+            <router-link to="/source" class="flex items-center">
+              <FolderOpen :size="18" class="mr-2" />
+              My Sources
+            </router-link>
+          </a-menu-item>
+
           <a-menu-item key="/source/upload">
             <router-link to="/source/upload" class="flex items-center">
               <Upload :size="18" class="mr-2" />
-              Upload Source
+              Upload File
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-item key="/source/new-url">
+            <router-link to="/source/new-url" class="flex items-center">
+              <Link :size="18" class="mr-2" />
+              Add from URL
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-item key="/source/new-text">
+            <router-link to="/source/new-text" class="flex items-center">
+              <FileText :size="18" class="mr-2" />
+              Add from Text
             </router-link>
           </a-menu-item>
 
@@ -110,29 +146,33 @@
   </div>
 
   <!-- Overlay -->
-  <div v-if="isOpen" 
-       class="fixed inset-0 bg-black bg-opacity-50 z-40"
-       @click="$emit('close')"></div>
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 bg-black bg-opacity-50 z-40"
+    @click="$emit('close')"
+  ></div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { Menu, Divider, Button } from 'ant-design-vue';
-import { 
-  X, 
-  LayoutDashboard, 
-  User, 
-  Shield, 
+import { ref } from "vue";
+import { useRoute } from "vue-router";
+import { Menu, Divider, Button } from "ant-design-vue";
+import {
+  X,
+  LayoutDashboard,
+  User,
+  Shield,
   LogOut,
   FileText,
   PlusCircle,
   HelpCircle,
   Plus,
-  Upload
-} from 'lucide-vue-next';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { message } from 'ant-design-vue';
+  Upload,
+  FolderOpen,
+  Link, 
+} from "lucide-vue-next";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { message } from "ant-design-vue";
 
 const AMenu = Menu;
 const AMenuItem = Menu.Item;
@@ -143,7 +183,7 @@ defineProps<{
   isOpen: boolean;
 }>();
 
-const emit = defineEmits(['close', 'logout']);
+const emit = defineEmits(["close", "logout"]);
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -153,19 +193,19 @@ const sendingVerification = ref(false);
 
 const handleLogout = async () => {
   await authStore.logout();
-  emit('logout');
-  emit('close');
+  emit("logout");
+  emit("close");
 };
 
 const sendVerification = async () => {
   sendingVerification.value = true;
   const success = await authStore.sendVerificationEmail();
   sendingVerification.value = false;
-  
+
   if (success) {
-    message.success('Verification email sent!');
+    message.success("Verification email sent!");
   } else {
-    message.error('Failed to send verification email');
+    message.error("Failed to send verification email");
   }
 };
 </script>

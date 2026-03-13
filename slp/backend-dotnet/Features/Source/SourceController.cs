@@ -47,14 +47,14 @@ public class SourceController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> UploadSource([FromForm] IFormFile file, [FromForm] string? title)
+    public async Task<IActionResult> UploadSource([FromForm] UploadSourceRequest request)
     {
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
         try
         {
-            var source = await _sourceService.UploadSourceAsync(CurrentUserId.Value, file, title);
+            var source = await _sourceService.UploadSourceAsync(CurrentUserId.Value, request.File, request.Title);
             return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
         }
         catch (ArgumentException ex)
@@ -83,6 +83,27 @@ public class SourceController : ControllerBase
         if (!deleted)
             return NotFound();
         return NoContent();
+    }
+
+    [HttpPost("text")]
+    public async Task<IActionResult> CreateFromText([FromBody] CreateTextSourceRequest request)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var source = await _sourceService.CreateSourceFromTextAsync(
+                CurrentUserId.Value,
+                request.Title,
+                request.Content
+            );
+            return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
 

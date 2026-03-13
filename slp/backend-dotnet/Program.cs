@@ -20,8 +20,16 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddCaching(builder.Configuration);
 builder.Services.AddAuthAndCors(builder.Configuration);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment() || true)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Check database connection at startup
 await app.CheckDatabaseConnectionAsync();

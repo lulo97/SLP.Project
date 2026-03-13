@@ -31,3 +31,15 @@ public class UploadSourceDto
     public string? Title { get; set; }
     // File is passed via IFormFile
 }
+
+public class UploadSourceRequest
+{
+    public required IFormFile File { get; set; }
+    public required string Title { get; set; }
+}
+
+public class CreateTextSourceRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}

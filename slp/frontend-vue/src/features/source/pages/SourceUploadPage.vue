@@ -1,30 +1,38 @@
 <template>
   <MobileLayout title="Upload Source">
-    <a-card class="shadow-sm">
-      <a-upload-dragger
-        v-model:file-list="fileList"
-        name="file"
-        :multiple="false"
-        :before-upload="beforeUpload"
-        @remove="handleRemove"
-      >
-        <p class="ant-upload-drag-icon">
-          <InboxOutlined />
-        </p>
-        <p class="ant-upload-text">Click or drag file to this area to upload</p>
-        <p class="ant-upload-hint">Support for PDF, TXT, DOCX. Max 10MB.</p>
-      </a-upload-dragger>
+    <a-card class="shadow-sm" data-testid="source-upload-card">
+      <a-form layout="vertical" @submit.prevent="handleUpload" data-testid="source-upload-form">
+        <a-form-item label="Title" required>
+          <a-input v-model:value="title" placeholder="Enter source title" data-testid="source-upload-title-input" />
+        </a-form-item>
 
-      <a-button
-        type="primary"
-        :loading="sourceStore.loading"
-        :disabled="!fileList.length"
-        @click="handleUpload"
-        block
-        class="mt-4"
-      >
-        Upload
-      </a-button>
+        <a-upload-dragger
+          v-model:file-list="fileList"
+          name="file"
+          :multiple="false"
+          :before-upload="beforeUpload"
+          @remove="handleRemove"
+          data-testid="source-upload-dragger"
+        >
+          <p class="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p class="ant-upload-text">Click or drag file to this area to upload</p>
+          <p class="ant-upload-hint">Support for PDF, TXT. Max 10MB.</p>
+        </a-upload-dragger>
+
+        <a-button
+          type="primary"
+          html-type="submit"
+          :loading="sourceStore.loading"
+          :disabled="!fileList.length || !title.trim()"
+          block
+          class="mt-4"
+          data-testid="source-upload-submit-button"
+        >
+          Upload
+        </a-button>
+      </a-form>
 
       <a-alert
         v-if="sourceStore.error"
@@ -34,6 +42,7 @@
         closable
         @close="sourceStore.clearError"
         class="mt-4"
+        data-testid="source-upload-error"
       />
     </a-card>
   </MobileLayout>
@@ -41,13 +50,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { InboxOutlined } from '@ant-design/icons-vue';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { useSourceStore } from '../stores/sourceStore';
 
+const router = useRouter();
 const sourceStore = useSourceStore();
 const fileList = ref<any[]>([]);
+const title = ref('');
 
 const beforeUpload = (file: File) => {
   const isLt10M = file.size / 1024 / 1024 < 10;
@@ -62,13 +74,14 @@ const handleRemove = () => {
 };
 
 const handleUpload = async () => {
-  if (fileList.value.length === 0) return;
+  if (fileList.value.length === 0 || !title.value.trim()) return;
   const file = fileList.value[0].originFileObj;
-  const result = await sourceStore.uploadSource(file);
+  const result = await sourceStore.uploadSource(file, title.value);
   if (result) {
     message.success('File uploaded successfully');
     fileList.value = [];
-    // Optionally navigate back or clear
+    title.value = '';
+    router.push(`/source/${result.id}`);
   }
 };
 </script>

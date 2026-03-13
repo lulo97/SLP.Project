@@ -152,4 +152,26 @@ public class SourceService : ISourceService
             UpdatedAt = s.UpdatedAt
         };
     }
+
+    public async Task<SourceDto> CreateSourceFromTextAsync(int userId, string title, string content)
+    {
+        // Optional: validate input
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title is required.");
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Content cannot be empty.");
+
+        var source = new Source
+        {
+            UserId = userId,
+            Type = "note",                     // matches the database constraint
+            Title = title,
+            RawText = content,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _sourceRepository.CreateAsync(source);
+        return MapToDto(created);
+    }
 }
