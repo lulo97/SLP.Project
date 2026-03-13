@@ -1,1 +1,1 @@
-npx playwright test tests/quiz/quiz.api.spec.js --headed
+npx playwright test tests/source/source.api.spec.js --headed

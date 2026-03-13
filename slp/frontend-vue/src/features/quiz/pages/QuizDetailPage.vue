@@ -99,7 +99,7 @@
         >
           <div v-for="(q, index) in questions" :key="q.id" class="relative">
             <!-- Question Item -->
-            <div class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+            <div class="flex items-start gap-2 p-2 bg-gray-50 rounded border">
               <!-- Left side: edit/delete -->
               <div class="flex flex-col gap-1">
                 <a-button
@@ -118,8 +118,18 @@
                   <DeleteOutlined />
                 </a-button>
               </div>
-              <!-- Question content (truncated) -->
-              <div class="flex-1 text-sm truncate">{{ q.content }}</div>
+              <!-- Question summary -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium truncate">{{
+                    q.content
+                  }}</span>
+                  <a-tag size="small">{{ formatQuestionType(q.type) }}</a-tag>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ getQuestionSummary(q) }}
+                </div>
+              </div>
               <!-- Right side: index -->
               <div class="text-xs text-gray-400 font-mono w-6 text-center">
                 {{ index + 1 }}
@@ -286,6 +296,61 @@ interface DisplayQuestion {
 
 const questions = ref<DisplayQuestion[]>([]);
 const totalQuestions = computed(() => questions.value.length);
+
+// Helper: generate a brief summary based on question type and metadata
+const getQuestionSummary = (q: DisplayQuestion): string => {
+  const type = q.type?.toLowerCase() || "";
+  const meta = q.metadata || {};
+
+  switch (type) {
+    case "multiple-choice":
+    case "multiple_choice": {
+      const options = meta.options || [];
+      const correctIndices =
+        meta.correctAnswers || meta.correctAnswerIndex
+          ? [meta.correctAnswerIndex]
+          : [];
+      if (correctIndices.length === 0) return "No correct answer set";
+      const letters = correctIndices
+        .map((i: number) => String.fromCharCode(65 + i))
+        .join(", ");
+      return `Correct: ${letters}`;
+    }
+
+    case "true-false":
+    case "true_false": {
+      const correct = meta.correctAnswer;
+      if (correct === undefined) return "No correct answer set";
+      return `Correct: ${correct ? "True" : "False"}`;
+    }
+
+    case "fill-in-the-blank":
+    case "fill_in_the_blank": {
+      const answers = meta.answers || [];
+      if (answers.length === 0) return "No answers set";
+      const preview = answers.map((a: string) => `"${a}"`).join(", ");
+      return `Answers: ${preview}`;
+    }
+
+    case "matching": {
+      const pairs = meta.pairs || [];
+      if (pairs.length === 0) return "No pairs set";
+      return `Matching (${pairs.length} pairs)`;
+    }
+
+    case "ordering": {
+      const items = meta.items || [];
+      if (items.length === 0) return "No items set";
+      return `Ordering (${items.length} items)`;
+    }
+
+    case "essay":
+      return "Essay question (no correct answer)";
+
+    default:
+      return `Type: ${q.type || "unknown"}`;
+  }
+};
 
 // Load questions from API
 const loadQuestions = async () => {
@@ -458,6 +523,15 @@ watch(
   },
   { deep: true },
 );
+
+const formatQuestionType = (type: string): string => {
+  if (!type) return "Unknown";
+  // Convert snake_case or kebab-case to Title Case with spaces
+  return type
+    .split(/[_\-]/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
 </script>
 
 <style scoped>
