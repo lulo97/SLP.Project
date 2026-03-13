@@ -20,11 +20,11 @@ test.describe("Source List Interactions", () => {
     const unique = generateUniqueSource("ListTest");
 
     // Create a text source first
-    await page.goto(`${FRONTEND_URL}/source/new-text`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator('[data-testid="source-text-create-card"]')).toBeVisible();
-    await page.fill('[data-testid="source-text-create-title-input"]', unique.title);
-    await page.fill('[data-testid="source-text-create-content-input"]', unique.content);
-    await page.click('[data-testid="source-text-create-submit-button"]');
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-note-create-card"]')).toBeVisible();
+    await page.fill('[data-testid="source-note-create-title-input"]', unique.title);
+    await page.fill('[data-testid="source-note-create-content-input"]', unique.content);
+    await page.click('[data-testid="source-note-create-submit-button"]');
     await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
     const url = page.url();
     const id = parseInt(url.split("/").pop(), 10);

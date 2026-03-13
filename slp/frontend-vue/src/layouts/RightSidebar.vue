@@ -106,8 +106,8 @@
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/source/new-text">
-            <router-link to="/source/new-text" class="flex items-center">
+          <a-menu-item key="/source/new-note">
+            <router-link to="/source/new-note" class="flex items-center">
               <FileText :size="18" class="mr-2" />
               Add from Text
             </router-link>

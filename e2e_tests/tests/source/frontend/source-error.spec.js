@@ -16,9 +16,9 @@ test.describe("Source Error Handling", () => {
     const page = await createAuthenticatedPage(browser, authToken);
 
     // Text creation - button disabled when title missing
-    await page.goto(`${FRONTEND_URL}/source/new-text`, { waitUntil: "domcontentloaded" });
-    await page.fill('[data-testid="source-text-create-content-input"]', "Some content");
-    await expect(page.locator('[data-testid="source-text-create-submit-button"]')).toBeDisabled();
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await page.fill('[data-testid="source-note-create-content-input"]', "Some content");
+    await expect(page.locator('[data-testid="source-note-create-submit-button"]')).toBeDisabled();
 
     // URL creation - button enabled, click shows warning
     await page.goto(`${FRONTEND_URL}/source/new-url`, { waitUntil: "domcontentloaded" });

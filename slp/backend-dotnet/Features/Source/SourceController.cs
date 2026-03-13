@@ -85,15 +85,15 @@ public class SourceController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("text")]
-    public async Task<IActionResult> CreateFromText([FromBody] CreateTextSourceRequest request)
+    [HttpPost("note")]
+    public async Task<IActionResult> CreateFromNote([FromBody] CreateNoteSourceRequest request)
     {
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
         try
         {
-            var source = await _sourceService.CreateSourceFromTextAsync(
+            var source = await _sourceService.CreateNoteSourceAsync(
                 CurrentUserId.Value,
                 request.Title,
                 request.Content

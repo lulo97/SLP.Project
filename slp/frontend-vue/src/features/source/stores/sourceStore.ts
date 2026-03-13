@@ -121,18 +121,18 @@ export const useSourceStore = defineStore("source", {
     },
 
     // Create a source from plain text
-    async createSourceFromText(payload: { title: string; content: string }) {
+    async createSourceFromNote(payload: { title: string; content: string }) {
       this.loading = true;
       this.error = null;
       try {
         const response = await apiClient.post<SourceDetail>(
-          "/source/text",
+          "/source/note",
           payload,
         );
         return response.data;
       } catch (err: any) {
         this.error =
-          err.response?.data?.message || "Failed to create text source";
+          err.response?.data?.message || "Failed to Create Note Source";
         return null;
       } finally {
         this.loading = false;

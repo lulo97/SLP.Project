@@ -1,14 +1,14 @@
 <template>
-  <MobileLayout title="Create Text Source">
-    <a-card class="shadow-sm" data-testid="source-text-create-card">
-      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical" data-testid="source-text-create-form">
+  <MobileLayout title="Create Note Source">
+    <a-card class="shadow-sm" data-testid="source-note-create-card">
+      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical" data-testid="source-note-create-form">
         <a-form-item label="Title" required>
           <a-input
             v-model:value="form.title"
             placeholder="Enter a descriptive title"
             :maxlength="255"
             show-count
-            data-testid="source-text-create-title-input"
+            data-testid="source-note-create-title-input"
           />
         </a-form-item>
 
@@ -19,7 +19,7 @@
             :rows="8"
             :maxlength="10000"
             show-count
-            data-testid="source-text-create-content-input"
+            data-testid="source-note-create-content-input"
           />
         </a-form-item>
 
@@ -30,7 +30,7 @@
             :loading="sourceStore.loading"
             :disabled="!form.title.trim() || !form.content.trim()"
             block
-            data-testid="source-text-create-submit-button"
+            data-testid="source-note-create-submit-button"
           >
             Create Source
           </a-button>
@@ -45,7 +45,7 @@
         closable
         @close="sourceStore.clearError"
         class="mt-4"
-        data-testid="source-text-create-error"
+        data-testid="source-note-create-error"
       />
     </a-card>
   </MobileLayout>
@@ -72,7 +72,7 @@ const handleSubmit = async () => {
     return;
   }
 
-  const created = await sourceStore.createSourceFromText({
+  const created = await sourceStore.createSourceFromNote({
     title: form.title,
     content: form.content,
   });

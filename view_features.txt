@@ -1,0 +1,1946 @@
+
+
+====================
+FILE: D:\SLP.Project\database\tables\quiz_source.sql
+====================
+CREATE TABLE public.quiz_source (
+    quiz_id integer NOT NULL,
+    source_id integer NOT NULL
+);
+
+ALTER TABLE ONLY public.quiz_source
+    ADD CONSTRAINT quiz_source_pkey PRIMARY KEY (quiz_id, source_id);
+
+CREATE INDEX idx_quiz_source_source ON public.quiz_source USING btree (source_id);
+
+ALTER TABLE ONLY public.quiz_source
+    ADD CONSTRAINT quiz_source_quiz_id_fkey FOREIGN KEY (quiz_id) REFERENCES public.quiz(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.quiz_source
+    ADD CONSTRAINT quiz_source_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.source(id) ON DELETE CASCADE;
+
+
+====================
+FILE: D:\SLP.Project\database\tables\source.sql
+====================
+CREATE TABLE public.source (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    type character varying(20) NOT NULL,
+    title character varying(255) NOT NULL,
+    url text,
+    content jsonb,
+    raw_html text,
+    raw_text text,
+    file_path text,
+    metadata jsonb,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT source_type_check CHECK (((type)::text = ANY ((ARRAY['book'::character varying, 'link'::character varying, 'note'::character varying, 'pdf'::character varying, 'txt'::character varying])::text[])))
+);
+
+CREATE SEQUENCE public.source_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.source_id_seq OWNED BY public.source.id;
+
+ALTER TABLE ONLY public.source ALTER COLUMN id SET DEFAULT nextval('public.source_id_seq'::regclass);
+
+ALTER TABLE ONLY public.source
+    ADD CONSTRAINT source_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_source_deleted ON public.source USING btree (deleted_at) WHERE (deleted_at IS NULL);
+
+CREATE INDEX idx_source_fts ON public.source USING gin (to_tsvector('english'::regconfig, raw_text));
+
+CREATE INDEX idx_source_metadata ON public.source USING gin (metadata);
+
+CREATE INDEX idx_source_type ON public.source USING btree (type);
+
+CREATE INDEX idx_source_user ON public.source USING btree (user_id);
+
+ALTER TABLE ONLY public.source
+    ADD CONSTRAINT source_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+====================
+FILE: D:\SLP.Project\database\tables\user_source_progress.sql
+====================
+CREATE TABLE public.user_source_progress (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    source_id integer NOT NULL,
+    last_position text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.user_source_progress_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.user_source_progress_id_seq OWNED BY public.user_source_progress.id;
+
+ALTER TABLE ONLY public.user_source_progress ALTER COLUMN id SET DEFAULT nextval('public.user_source_progress_id_seq'::regclass);
+
+ALTER TABLE ONLY public.user_source_progress
+    ADD CONSTRAINT user_source_progress_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.user_source_progress
+    ADD CONSTRAINT user_source_progress_user_id_source_id_key UNIQUE (user_id, source_id);
+
+CREATE INDEX idx_progress_source ON public.user_source_progress USING btree (source_id);
+
+CREATE INDEX idx_progress_user ON public.user_source_progress USING btree (user_id);
+
+ALTER TABLE ONLY public.user_source_progress
+    ADD CONSTRAINT user_source_progress_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.source(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_source_progress
+    ADD CONSTRAINT user_source_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-error.spec.js
+====================
+import { test, expect } from "@playwright/test";
+import {
+  FRONTEND_URL,
+  authenticate,
+  createAuthenticatedPage,
+} from "./source-helpers.js";
+
+test.describe("Source Error Handling", () => {
+  let authToken;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await authenticate(request);
+  });
+
+  test("Show validation feedback when fields are missing", async ({ browser }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+
+    // Text creation - button disabled when title missing
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await page.fill('[data-testid="source-note-create-content-input"]', "Some content");
+    await expect(page.locator('[data-testid="source-note-create-submit-button"]')).toBeDisabled();
+
+    // URL creation - button enabled, click shows warning
+    await page.goto(`${FRONTEND_URL}/source/new-url`, { waitUntil: "domcontentloaded" });
+    await page.fill('[data-testid="source-url-create-title-input"]', "Title");
+    await page.click('[data-testid="source-url-create-submit-button"]');
+    await expect(
+      page.locator('.ant-message-warning:has-text("Title and URL are required")')
+    ).toBeVisible();
+
+    // Upload - button disabled when no file
+    await page.goto(`${FRONTEND_URL}/source/upload`, { waitUntil: "domcontentloaded" });
+    await page.fill('[data-testid="source-upload-title-input"]', "Title");
+    await expect(page.locator('[data-testid="source-upload-submit-button"]')).toBeDisabled();
+
+    await page.close();
+  });
+
+  test("Show error on API failure", async ({ browser }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    await page.goto(`${FRONTEND_URL}/source/999999`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-detail-error"]')).toBeVisible();
+    await page.close();
+  });
+});
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-helpers.js
+====================
+import { expect } from "@playwright/test";
+
+export const FRONTEND_URL = "http://localhost:4000";
+export const API_BASE_URL = "http://localhost:3001/api";
+
+export const adminUser = {
+  username: "admin",
+  password: "123",
+};
+
+export function generateUniqueSource(base) {
+  const id = Date.now() + Math.floor(Math.random() * 10000);
+  return {
+    title: `${base} ${id}`,
+    content: `This is the content for ${base} ${id}. It contains some text.`,
+    url: `https://example.com/${id}`,
+  };
+}
+
+export async function authenticate(request) {
+  const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+    data: {
+      username: adminUser.username,
+      password: adminUser.password,
+    },
+  });
+  expect(loginRes.status()).toBe(200);
+  const loginBody = await loginRes.json();
+  return loginBody.token; // session token
+}
+
+export async function createAuthenticatedPage(browser, token) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.addInitScript((token) => {
+    localStorage.setItem("session_token", token);
+  }, token);
+
+  await page.goto(`${FRONTEND_URL}/source`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-testid="source-list"]')).toBeVisible({ timeout: 10000 });
+  return page;
+}
+
+export async function deleteSource(page, id) {
+  await page.goto(`${FRONTEND_URL}/source/${id}`, { waitUntil: "domcontentloaded" });
+  await page.locator('[data-testid="source-detail-delete-button"]').waitFor();
+  await page.click('[data-testid="source-detail-delete-button"]');
+  await page.click('.ant-popconfirm-buttons .ant-btn-primary');
+  await expect(page.locator('.ant-message-success:has-text("Source deleted")')).toBeVisible();
+  await page.waitForURL("**/source");
+}
+
+export async function verifySourceDeletedViaApi(playwrightRequest, id, token) {
+  const response = await playwrightRequest.get(`${API_BASE_URL}/source/${id}`, {
+    headers: { "X-Session-Token": token }, // Backend expects this header
+  });
+  expect(response.status()).toBe(404);
+}
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-list.spec.js
+====================
+import { test, expect } from "@playwright/test";
+import {
+  FRONTEND_URL,
+  authenticate,
+  generateUniqueSource,
+  createAuthenticatedPage,
+  deleteSource,
+  verifySourceDeletedViaApi,
+} from "./source-helpers.js";
+
+test.describe("Source List Interactions", () => {
+  let authToken;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await authenticate(request);
+  });
+
+  test("View and delete from list", async ({ browser, request }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    const unique = generateUniqueSource("ListTest");
+
+    // Create a text source first
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-note-create-card"]')).toBeVisible();
+    await page.fill('[data-testid="source-note-create-title-input"]', unique.title);
+    await page.fill('[data-testid="source-note-create-content-input"]', unique.content);
+    await page.click('[data-testid="source-note-create-submit-button"]');
+    await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
+    const url = page.url();
+    const id = parseInt(url.split("/").pop(), 10);
+
+    // Go back to list
+    await page.goto(`${FRONTEND_URL}/source`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(`[data-testid="source-list-item-${id}"]`)).toBeVisible();
+
+    // Click view button
+    await page.click(`[data-testid="source-list-view-${id}"]`);
+    await page.waitForURL(`**/source/${id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
+
+    // Go back and delete from list
+    await page.goto(`${FRONTEND_URL}/source`, { waitUntil: "domcontentloaded" });
+    await page.click(`[data-testid="source-list-delete-${id}"]`);
+    await page.click('.ant-popconfirm-buttons .ant-btn-primary');
+    await expect(page.locator('.ant-message-success:has-text("Source deleted")')).toBeVisible();
+
+    await expect(page.locator(`[data-testid="source-list-item-${id}"]`)).toHaveCount(0);
+    await verifySourceDeletedViaApi(request, id, authToken);
+    await page.close();
+  });
+});
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-text.spec.js
+====================
+import { test, expect } from "@playwright/test";
+import {
+  FRONTEND_URL,
+  authenticate,
+  generateUniqueSource,
+  createAuthenticatedPage,
+  deleteSource,
+  verifySourceDeletedViaApi,
+} from "./source-helpers.js";
+
+test.describe("Source Text Creation", () => {
+  let authToken;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await authenticate(request);
+  });
+
+  test("Create Note Source", async ({ browser, request }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    const unique = generateUniqueSource("Text");
+
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-note-create-card"]')).toBeVisible();
+
+    await page.fill('[data-testid="source-note-create-title-input"]', unique.title);
+    await page.fill('[data-testid="source-note-create-content-input"]', unique.content);
+    await page.click('[data-testid="source-note-create-submit-button"]');
+
+    await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
+    await expect(page.locator('[data-testid="source-detail-type"]')).toHaveText("Note");
+    await expect(page.locator('[data-testid="source-detail-content-preview"]')).toContainText(unique.content.substring(0, 50));
+
+    const url = page.url();
+    const id = parseInt(url.split("/").pop(), 10);
+    await deleteSource(page, id);
+    await verifySourceDeletedViaApi(request, id, authToken);
+    await page.close();
+  });
+});
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-upload.spec.js
+====================
+import { test, expect } from "@playwright/test";
+import {
+  FRONTEND_URL,
+  authenticate,
+  generateUniqueSource,
+  createAuthenticatedPage,
+  deleteSource,
+  verifySourceDeletedViaApi,
+} from "./source-helpers.js";
+
+test.describe("Source Upload", () => {
+  let authToken;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await authenticate(request);
+  });
+
+  test("Upload file source", async ({ browser, request }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    const unique = generateUniqueSource("Upload");
+
+    await page.goto(`${FRONTEND_URL}/source/upload`, { waitUntil: "domcontentloaded" });
+
+    await page.fill('[data-testid="source-upload-title-input"]', unique.title);
+
+    const fileContent = "This is a test file content.";
+    const file = {
+      name: "test.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from(fileContent),
+    };
+    await page.setInputFiles('[data-testid="source-upload-dragger"] input[type="file"]', file);
+
+    await page.click('[data-testid="source-upload-submit-button"]');
+
+    await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-detail-info-card"]')).toBeVisible();
+
+    await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
+    await expect(page.locator('[data-testid="source-detail-type"]')).toHaveText("Text");
+    await expect(page.locator('[data-testid="source-detail-content-preview"]')).toContainText(fileContent);
+
+    const url = page.url();
+    const id = parseInt(url.split("/").pop(), 10);
+    await deleteSource(page, id);
+    await verifySourceDeletedViaApi(request, id, authToken);
+    await page.close();
+  });
+});
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\frontend\source-url.spec.js
+====================
+import { test, expect } from "@playwright/test";
+import {
+  FRONTEND_URL,
+  authenticate,
+  generateUniqueSource,
+  createAuthenticatedPage,
+  deleteSource,
+  verifySourceDeletedViaApi,
+} from "./source-helpers.js";
+
+test.describe("Source URL Creation", () => {
+  let authToken;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await authenticate(request);
+  });
+
+  test("Create URL source", async ({ browser, request }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    const unique = generateUniqueSource("URL");
+
+    await page.goto(`${FRONTEND_URL}/source/new-url`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-url-create-card"]')).toBeVisible();
+
+    await page.fill('[data-testid="source-url-create-title-input"]', unique.title);
+    await page.fill('[data-testid="source-url-create-url-input"]', unique.url);
+    await page.click('[data-testid="source-url-create-submit-button"]');
+
+    await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
+    await expect(page.locator('[data-testid="source-detail-type"]')).toHaveText("Link");
+    await expect(page.locator('[data-testid="source-detail-url"]')).toHaveText(unique.url);
+
+    const url = page.url();
+    const id = parseInt(url.split("/").pop(), 10);
+    await deleteSource(page, id);
+    await verifySourceDeletedViaApi(request, id, authToken);
+    await page.close();
+  });
+});
+
+====================
+FILE: D:\SLP.Project\e2e_tests\tests\source\source.api.spec.js
+====================
+import { test, expect } from "@playwright/test";
+
+const API_BASE_URL = "http://localhost:5140/api";
+
+const adminUser = {
+  username: "admin",
+  password: "123",
+};
+
+// Allowed DB source types
+const SOURCE_TYPES = ["book", "link", "note", "pdf", "txt"];
+
+function generateSource() {
+  const id = Date.now() + Math.floor(Math.random() * 10000);
+  return {
+    url: `https://example.com/playwright-${id}`,
+    title: `Playwright Source ${id}`,
+    content: `This is a test note ${id}`,
+  };
+}
+
+test.describe("Source API Comprehensive Tests", () => {
+  let adminToken;
+
+  test.beforeAll(async ({ request }) => {
+    // Login once and store token for all tests
+    const loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: {
+        username: adminUser.username,
+        password: adminUser.password,
+      },
+    });
+    expect(loginRes.status()).toBe(200);
+    const loginBody = await loginRes.json();
+    adminToken = loginBody.token;
+  });
+
+  test.describe("Authentication & Authorization", () => {
+    test("should return 401 for unauthenticated requests", async ({
+      request,
+    }) => {
+      const endpoints = [
+        { method: "get", url: "/source" },
+        { method: "get", url: "/source/1" },
+        {
+          method: "post",
+          url: "/source/url",
+          data: { url: "http://example.com" },
+        },
+        {
+          method: "post",
+          url: "/source/note",
+          data: { title: "x", content: "y" },
+        },
+        {
+          method: "post",
+          url: "/source/upload",
+          multipart: {
+            file: {
+              name: "dummy.txt",
+              mimeType: "text/plain",
+              buffer: Buffer.from("test"),
+            },
+            title: "Test Title",
+          },
+        },
+        { method: "delete", url: "/source/1" },
+      ];
+
+      for (const ep of endpoints) {
+        let res;
+        if (ep.method === "get") {
+          res = await request.get(`${API_BASE_URL}${ep.url}`);
+        } else if (ep.method === "post") {
+          if (ep.multipart) {
+            res = await request.post(`${API_BASE_URL}${ep.url}`, {
+              multipart: ep.multipart,
+            });
+          } else {
+            res = await request.post(`${API_BASE_URL}${ep.url}`, {
+              data: ep.data,
+            });
+          }
+        } else if (ep.method === "delete") {
+          res = await request.delete(`${API_BASE_URL}${ep.url}`);
+        }
+        expect(
+          res.status(),
+          `Endpoint ${ep.method} ${ep.url} should return 401`,
+        ).toBe(401);
+      }
+    });
+  });
+
+  test.describe("Create and validate source types", () => {
+    test("should create a link source via /url", async ({ request }) => {
+      const source = generateSource();
+      const createRes = await request.post(`${API_BASE_URL}/source/url`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { url: source.url, title: source.title },
+      });
+      expect(createRes.status()).toBe(201);
+      const created = await createRes.json();
+      expect(created.id).toBeTruthy();
+      expect(created.type).toBe("link");
+      expect(created.title).toBe(source.title);
+      expect(created.url).toBe(source.url);
+      expect(SOURCE_TYPES).toContain(created.type);
+
+      // Clean up
+      await request.delete(`${API_BASE_URL}/source/${created.id}`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+    });
+
+    test("should create a text note source via /text", async ({ request }) => {
+      const source = generateSource();
+      const createRes = await request.post(`${API_BASE_URL}/source/note`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { title: source.title, content: source.content },
+      });
+      expect(createRes.status()).toBe(201);
+      const created = await createRes.json();
+      expect(created.id).toBeTruthy();
+      expect(created.type).toBe("note");
+      expect(created.title).toBe(source.title);
+      expect(created.rawText).toBe(source.content);
+      expect(SOURCE_TYPES).toContain(created.type);
+
+      // Clean up
+      await request.delete(`${API_BASE_URL}/source/${created.id}`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+    });
+
+    test("should upload a txt file source via /upload", async ({ request }) => {
+      const title = `Playwright Upload ${Date.now()}`;
+      const content = "This is a test txt content.";
+      const uploadRes = await request.post(`${API_BASE_URL}/source/upload`, {
+        headers: { "X-Session-Token": adminToken },
+        multipart: {
+          file: {
+            name: "test.txt",
+            mimeType: "text/plain",
+            buffer: Buffer.from(content),
+          },
+          title: title,
+        },
+      });
+      expect(uploadRes.status()).toBe(201);
+      const uploaded = await uploadRes.json();
+      expect(uploaded.id).toBeTruthy();
+      expect(uploaded.type).toBe("txt");
+      expect(uploaded.title).toBe(title);
+      expect(uploaded.rawText).toBe(content);
+      expect(SOURCE_TYPES).toContain(uploaded.type);
+
+      // Clean up
+      await request.delete(`${API_BASE_URL}/source/${uploaded.id}`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+    });
+
+    test("should upload a pdf file source via /upload", async ({ request }) => {
+      const title = `Playwright PDF Upload ${Date.now()}`;
+      // Mock a simple PDF buffer (just a placeholder)
+      const pdfBuffer = Buffer.from("%PDF-1.4\n% fake pdf content");
+      const uploadRes = await request.post(`${API_BASE_URL}/source/upload`, {
+        headers: { "X-Session-Token": adminToken },
+        multipart: {
+          file: {
+            name: "test.pdf",
+            mimeType: "application/pdf",
+            buffer: pdfBuffer,
+          },
+          title: title,
+        },
+      });
+      expect(uploadRes.status()).toBe(201);
+      const uploaded = await uploadRes.json();
+      expect(uploaded.id).toBeTruthy();
+      expect(uploaded.type).toBe("pdf");
+      expect(uploaded.title).toBe(title);
+      expect(uploaded.rawText).toBe("[PDF content extraction placeholder]");
+      expect(SOURCE_TYPES).toContain(uploaded.type);
+
+      // Clean up
+      await request.delete(`${API_BASE_URL}/source/${uploaded.id}`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+    });
+  });
+
+  test.describe("Validation & error handling", () => {
+    test("should create a link source even when url is missing (defaults to empty string)", async ({
+      request,
+    }) => {
+      // Backend does not validate non-empty URL, so it creates a source with empty url.
+      const res = await request.post(`${API_BASE_URL}/source/url`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { title: "No URL" }, // url omitted, defaults to empty string
+      });
+      expect(res.status()).toBe(201);
+      const created = await res.json();
+      expect(created.url).toBe(""); // url is empty string
+      // Clean up
+      await request.delete(`${API_BASE_URL}/source/${created.id}`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+    });
+
+    test("should return 400 when creating text source without title", async ({
+      request,
+    }) => {
+      const res = await request.post(`${API_BASE_URL}/source/note`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { content: "some content" },
+      });
+      expect(res.status()).toBe(400);
+    });
+
+    test("should return 400 when creating text source without content", async ({
+      request,
+    }) => {
+      const res = await request.post(`${API_BASE_URL}/source/note`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { title: "No content" },
+      });
+      expect(res.status()).toBe(400);
+    });
+
+    test("should return 400 when uploading without file", async ({
+      request,
+    }) => {
+      const res = await request.post(`${API_BASE_URL}/source/upload`, {
+        headers: { "X-Session-Token": adminToken },
+        multipart: {
+          title: "No file",
+        },
+      });
+      expect(res.status()).toBe(400);
+    });
+
+    test("should return 404 when getting non-existent source", async ({
+      request,
+    }) => {
+      const res = await request.get(`${API_BASE_URL}/source/9999999`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+      expect(res.status()).toBe(404);
+    });
+
+    test("should return 404 when deleting non-existent source", async ({
+      request,
+    }) => {
+      const res = await request.delete(`${API_BASE_URL}/source/9999999`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+      expect(res.status()).toBe(404);
+    });
+  });
+
+  test.describe("Full lifecycle (create, get, list, delete, verify)", () => {
+    test("should handle complete flow for all source types", async ({
+      request,
+    }) => {
+      const sourceIds = [];
+
+      // 1. Create link source
+      const linkData = generateSource();
+      const linkRes = await request.post(`${API_BASE_URL}/source/url`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { url: linkData.url, title: linkData.title },
+      });
+      expect(linkRes.status()).toBe(201);
+      const linkSource = await linkRes.json();
+      sourceIds.push(linkSource.id);
+
+      // 2. Create Note Source
+      const textData = generateSource();
+      const textRes = await request.post(`${API_BASE_URL}/source/note`, {
+        headers: { "X-Session-Token": adminToken },
+        data: { title: textData.title, content: textData.content },
+      });
+      expect(textRes.status()).toBe(201);
+      const textSource = await textRes.json();
+      sourceIds.push(textSource.id);
+
+      // 3. Upload txt source
+      const txtTitle = `TXT Upload ${Date.now()}`;
+      const txtContent = "TXT lifecycle test content";
+      const txtRes = await request.post(`${API_BASE_URL}/source/upload`, {
+        headers: { "X-Session-Token": adminToken },
+        multipart: {
+          file: {
+            name: "lifecycle.txt",
+            mimeType: "text/plain",
+            buffer: Buffer.from(txtContent),
+          },
+          title: txtTitle,
+        },
+      });
+      expect(txtRes.status()).toBe(201);
+      const txtSource = await txtRes.json();
+      sourceIds.push(txtSource.id);
+
+      // 4. Get each source and verify
+      for (const id of sourceIds) {
+        const getRes = await request.get(`${API_BASE_URL}/source/${id}`, {
+          headers: { "X-Session-Token": adminToken },
+        });
+        expect(getRes.status()).toBe(200);
+        const source = await getRes.json();
+        expect(source.id).toBe(id);
+        expect(SOURCE_TYPES).toContain(source.type);
+      }
+
+      // 5. List all sources and verify they appear
+      const listRes = await request.get(`${API_BASE_URL}/source`, {
+        headers: { "X-Session-Token": adminToken },
+      });
+      expect(listRes.status()).toBe(200);
+      const sources = await listRes.json();
+      for (const id of sourceIds) {
+        const found = sources.find((s) => s.id === id);
+        expect(found).toBeTruthy();
+        expect(SOURCE_TYPES).toContain(found.type);
+      }
+
+      // 6. Delete each source
+      for (const id of sourceIds) {
+        const delRes = await request.delete(`${API_BASE_URL}/source/${id}`, {
+          headers: { "X-Session-Token": adminToken },
+        });
+        expect(delRes.status()).toBe(204);
+      }
+
+      // 7. Verify each is gone (404)
+      for (const id of sourceIds) {
+        const getRes = await request.get(`${API_BASE_URL}/source/${id}`, {
+          headers: { "X-Session-Token": adminToken },
+        });
+        expect(getRes.status()).toBe(404);
+      }
+    });
+  });
+});
+
+
+====================
+FILE: D:\SLP.Project\sample_project\backend\Controllers\SourcesController.cs
+====================
+
+
+====================
+FILE: D:\SLP.Project\sample_project\backend\Services\SourceService.cs
+====================
+
+
+====================
+FILE: D:\SLP.Project\sample_project\frontend\src\services\sources.js
+====================
+
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Quiz\QuizSource.cs
+====================
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend_dotnet.Features.Quiz;
+
+[Table("quiz_source")]
+public class QuizSource
+{
+    [Column("quiz_id")]
+    public int QuizId { get; set; }
+
+    [Column("source_id")]
+    public int SourceId { get; set; }
+
+    // Navigation
+    [ForeignKey(nameof(QuizId))]
+    public virtual Quiz Quiz { get; set; } = null!;
+
+    [ForeignKey(nameof(SourceId))]
+    public virtual Source.Source Source { get; set; } = null!;
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\ISourceRepository.cs
+====================
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace backend_dotnet.Features.Source;
+
+public interface ISourceRepository
+{
+    Task<Source?> GetByIdAsync(int id);
+    Task<IEnumerable<Source>> GetUserSourcesAsync(int userId, bool includeDeleted = false);
+    Task<Source> CreateAsync(Source source);
+    Task UpdateAsync(Source source);
+    Task SoftDeleteAsync(int id);
+    Task<bool> ExistsAsync(int id);
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\ISourceService.cs
+====================
+namespace backend_dotnet.Features.Source;
+
+public interface ISourceService
+{
+    Task<SourceDto?> GetSourceByIdAsync(int id, int? currentUserId);
+    Task<IEnumerable<SourceListDto>> GetUserSourcesAsync(int userId);
+    Task<SourceDto> UploadSourceAsync(int userId, IFormFile file, string? title);
+    Task<SourceDto> CreateSourceFromUrlAsync(int userId, string url, string? title);
+    Task<bool> DeleteSourceAsync(int id, int userId, bool isAdmin);
+    Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content);
+
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\Source.cs
+====================
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend_dotnet.Features.Source;
+
+[Table("source")]
+public class Source
+{
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Column("user_id")]
+    public int UserId { get; set; }
+
+    [Column("type")]
+    [MaxLength(50)]
+    public string Type { get; set; } = "pdf"; // pdf, txt, url, etc.
+
+    [Column("title")]
+    [MaxLength(255)]
+    public string Title { get; set; } = string.Empty;
+
+    [Column("url")]
+    public string? Url { get; set; }
+
+    [Column("content", TypeName = "jsonb")]
+    public string? ContentJson { get; set; } // Structured content (JSONB)
+
+    [Column("raw_html")]
+    public string? RawHtml { get; set; }
+
+    [Column("raw_text")]
+    public string? RawText { get; set; }
+
+    [Column("file_path")]
+    public string? FilePath { get; set; } // Path to uploaded file
+
+    [Column("metadata", TypeName = "jsonb")]
+    public string? MetadataJson { get; set; } // JSONB
+
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    [ForeignKey(nameof(UserId))]
+    public virtual User.User? User { get; set; }
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\SourceController.cs
+====================
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using backend_dotnet.Features.Auth;
+using System.Security.Claims;
+
+namespace backend_dotnet.Features.Source;
+
+[ApiController]
+[Route("api/[controller]")]
+public class SourceController : ControllerBase
+{
+    private readonly ISourceService _sourceService;
+    private readonly IAuthService _authService;
+
+    public SourceController(ISourceService sourceService, IAuthService authService)
+    {
+        _sourceService = sourceService;
+        _authService = authService;
+    }
+
+    private int? CurrentUserId => User.Identity?.IsAuthenticated == true
+        ? int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")
+        : null;
+
+    private bool IsAdmin => User.IsInRole("admin");
+
+    [HttpGet]
+    public async Task<IActionResult> GetMySources()
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var sources = await _sourceService.GetUserSourcesAsync(CurrentUserId.Value);
+        return Ok(sources);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetSource(int id)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var source = await _sourceService.GetSourceByIdAsync(id, CurrentUserId.Value);
+        if (source == null)
+            return NotFound();
+        return Ok(source);
+    }
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadSource([FromForm] UploadSourceRequest request)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var source = await _sourceService.UploadSourceAsync(CurrentUserId.Value, request.File, request.Title);
+            return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("url")]
+    public async Task<IActionResult> CreateFromUrl([FromBody] UrlSourceDto dto)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var source = await _sourceService.CreateSourceFromUrlAsync(CurrentUserId.Value, dto.Url, dto.Title);
+        return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteSource(int id)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var deleted = await _sourceService.DeleteSourceAsync(id, CurrentUserId.Value, IsAdmin);
+        if (!deleted)
+            return NotFound();
+        return NoContent();
+    }
+
+    [HttpPost("text")]
+    public async Task<IActionResult> CreateFromText([FromBody] CreateNoteSourceRequest request)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var source = await _sourceService.CreateNoteSourceAsync(
+                CurrentUserId.Value,
+                request.Title,
+                request.Content
+            );
+            return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+}
+
+public class UrlSourceDto
+{
+    public string Url { get; set; } = string.Empty;
+    public string? Title { get; set; }
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\SourceDTO.cs
+====================
+using System;
+
+namespace backend_dotnet.Features.Source;
+
+public class SourceDto
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? Url { get; set; }
+    public string? RawText { get; set; }
+    public string? FilePath { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public string? Metadata { get; set; }
+}
+
+public class SourceListDto
+{
+    public int Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? Url { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class UploadSourceDto
+{
+    public string? Title { get; set; }
+    // File is passed via IFormFile
+}
+
+public class UploadSourceRequest
+{
+    public required IFormFile File { get; set; }
+    public required string Title { get; set; }
+}
+
+public class CreateNoteSourceRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\SourceRepository.cs
+====================
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using backend_dotnet.Data;
+
+namespace backend_dotnet.Features.Source;
+
+public class SourceRepository : ISourceRepository
+{
+    private readonly AppDbContext _context;
+
+    public SourceRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Source?> GetByIdAsync(int id)
+    {
+        return await _context.Sources
+            .FirstOrDefaultAsync(s => s.Id == id && s.DeletedAt == null);
+    }
+
+    public async Task<IEnumerable<Source>> GetUserSourcesAsync(int userId, bool includeDeleted = false)
+    {
+        var query = _context.Sources.Where(s => s.UserId == userId);
+        if (!includeDeleted)
+            query = query.Where(s => s.DeletedAt == null);
+        return await query.OrderByDescending(s => s.CreatedAt).ToListAsync();
+    }
+
+    public async Task<Source> CreateAsync(Source source)
+    {
+        _context.Sources.Add(source);
+        await _context.SaveChangesAsync();
+        return source;
+    }
+
+    public async Task UpdateAsync(Source source)
+    {
+        source.UpdatedAt = DateTime.UtcNow;
+        _context.Sources.Update(source);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SoftDeleteAsync(int id)
+    {
+        var source = await _context.Sources.FindAsync(id);
+        if (source != null)
+        {
+            source.DeletedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Sources.AnyAsync(s => s.Id == id && s.DeletedAt == null);
+    }
+}
+
+====================
+FILE: D:\SLP.Project\slp\backend-dotnet\Features\Source\SourceService.cs
+====================
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+
+namespace backend_dotnet.Features.Source;
+
+public class SourceService : ISourceService
+{
+    private readonly ISourceRepository _sourceRepository;
+    private readonly ILogger<SourceService> _logger;
+    private readonly string _uploadPath;
+
+    public SourceService(ISourceRepository sourceRepository, ILogger<SourceService> logger, IWebHostEnvironment env)
+    {
+        _sourceRepository = sourceRepository;
+        _logger = logger;
+        _uploadPath = Path.Combine(env.WebRootPath ?? env.ContentRootPath, "uploads");
+        if (!Directory.Exists(_uploadPath))
+            Directory.CreateDirectory(_uploadPath);
+    }
+
+    public async Task<SourceDto?> GetSourceByIdAsync(int id, int? currentUserId)
+    {
+        var source = await _sourceRepository.GetByIdAsync(id);
+        if (source == null)
+            return null;
+
+        // If source is not owned by current user, we may still return if public? For now, only owner can view.
+        if (source.UserId != currentUserId)
+            return null;
+
+        return MapToDto(source);
+    }
+
+    public async Task<IEnumerable<SourceListDto>> GetUserSourcesAsync(int userId)
+    {
+        var sources = await _sourceRepository.GetUserSourcesAsync(userId);
+        return sources.Select(MapToListDto);
+    }
+
+    public async Task<SourceDto> UploadSourceAsync(int userId, IFormFile file, string? title)
+    {
+        if (file == null || file.Length == 0)
+            throw new ArgumentException("No file uploaded.");
+
+        // Generate unique filename
+        var ext = Path.GetExtension(file.FileName);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(_uploadPath, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Extract text based on file type (mock for now)
+        string? rawText = null;
+        if (ext.ToLower() == ".txt")
+        {
+            rawText = await File.ReadAllTextAsync(filePath);
+        }
+        else if (ext.ToLower() == ".pdf")
+        {
+            // Mock PDF extraction: just log
+            _logger.LogInformation("PDF extraction not implemented, storing file only.");
+            rawText = "[PDF content extraction placeholder]";
+        }
+
+        var source = new Source
+        {
+            UserId = userId,
+            Type = ext?.TrimStart('.') ?? "unknown",
+            Title = title ?? file.FileName,
+            FilePath = filePath,
+            RawText = rawText,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _sourceRepository.CreateAsync(source);
+        return MapToDto(created);
+    }
+
+    public async Task<SourceDto> CreateSourceFromUrlAsync(int userId, string url, string? title)
+    {
+        // Mock URL fetching: just store URL and metadata
+        var source = new Source
+        {
+            UserId = userId,
+            Type = "link",
+            Title = title ?? url,
+            Url = url,
+            RawText = "[Content would be fetched from URL]",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _sourceRepository.CreateAsync(source);
+        return MapToDto(created);
+    }
+
+    public async Task<bool> DeleteSourceAsync(int id, int userId, bool isAdmin)
+    {
+        var source = await _sourceRepository.GetByIdAsync(id);
+        if (source == null)
+            return false;
+
+        if (!isAdmin && source.UserId != userId)
+            return false;
+
+        await _sourceRepository.SoftDeleteAsync(id);
+
+        // Optionally delete physical file?
+        if (!string.IsNullOrEmpty(source.FilePath) && File.Exists(source.FilePath))
+        {
+            try { File.Delete(source.FilePath); } catch { /* ignore */ }
+        }
+
+        return true;
+    }
+
+    private SourceDto MapToDto(Source s)
+    {
+        return new SourceDto
+        {
+            Id = s.Id,
+            UserId = s.UserId,
+            Type = s.Type,
+            Title = s.Title,
+            Url = s.Url,
+            RawText = s.RawText,
+            FilePath = s.FilePath,
+            CreatedAt = s.CreatedAt,
+            UpdatedAt = s.UpdatedAt,
+            Metadata = s.MetadataJson
+        };
+    }
+
+    private SourceListDto MapToListDto(Source s)
+    {
+        return new SourceListDto
+        {
+            Id = s.Id,
+            Type = s.Type,
+            Title = s.Title,
+            Url = s.Url,
+            CreatedAt = s.CreatedAt,
+            UpdatedAt = s.UpdatedAt
+        };
+    }
+
+    public async Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content)
+    {
+        // Optional: validate input
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title is required.");
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Content cannot be empty.");
+
+        var source = new Source
+        {
+            UserId = userId,
+            Type = "note",                     // matches the database constraint
+            Title = title,
+            RawText = content,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _sourceRepository.CreateAsync(source);
+        return MapToDto(created);
+    }
+}
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\pages\SourceDetailPage.vue
+====================
+<template>
+  <MobileLayout :title="sourceStore.currentSource?.title || 'Source Details'">
+    <a-card v-if="sourceStore.loading" class="text-center py-8" data-testid="source-detail-loading">
+      <a-spin />
+    </a-card>
+
+    <a-alert
+      v-else-if="sourceStore.error"
+      :message="sourceStore.error"
+      type="error"
+      show-icon
+      closable
+      @close="sourceStore.clearError"
+      data-testid="source-detail-error"
+    />
+
+    <div v-else-if="sourceStore.currentSource" class="space-y-4">
+      <!-- Basic Info Card -->
+      <a-card data-testid="source-detail-info-card">
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="font-medium">Title:</span>
+            <span data-testid="source-detail-title">{{ sourceStore.currentSource.title || 'Untitled' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Type:</span>
+            <a-tag data-testid="source-detail-type">{{ formatType(sourceStore.currentSource.type) }}</a-tag>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Added:</span>
+            <span data-testid="source-detail-added">{{ formatDate(sourceStore.currentSource.createdAt) }}</span>
+          </div>
+          <div v-if="sourceStore.currentSource.url" class="flex justify-between">
+            <span class="font-medium">URL:</span>
+            <a :href="sourceStore.currentSource.url" target="_blank" class="text-blue-500 truncate max-w-[200px]" data-testid="source-detail-url">
+              {{ sourceStore.currentSource.url }}
+            </a>
+          </div>
+          <div v-if="sourceStore.currentSource.filePath" class="flex justify-between">
+            <span class="font-medium">File path:</span>
+            <span data-testid="source-detail-filepath">{{ sourceStore.currentSource.filePath }}</span>
+          </div>
+          <div v-if="sourceStore.currentSource.rawText" class="flex justify-between">
+            <span class="font-medium">Content preview:</span>
+            <div class="text-sm text-gray-600 max-h-32 overflow-auto" data-testid="source-detail-content-preview">
+              {{ sourceStore.currentSource.rawText.substring(0, 200) }}...
+            </div>
+          </div>
+        </div>
+      </a-card>
+
+      <!-- Actions Card -->
+      <a-card title="Actions" data-testid="source-detail-actions-card">
+        <div class="space-y-2">
+          <!-- Edit not implemented on backend -->
+          <a-button block disabled data-testid="source-detail-edit-button">
+            <EditOutlined /> Edit (not available)
+          </a-button>
+          <a-popconfirm
+            title="Delete this source?"
+            ok-text="Yes"
+            cancel-text="No"
+            @confirm="deleteSource"
+          >
+            <a-button block danger data-testid="source-detail-delete-button">
+              <DeleteOutlined /> Delete Source
+            </a-button>
+          </a-popconfirm>
+        </div>
+      </a-card>
+    </div>
+
+    <div v-else class="text-center py-8 text-gray-500" data-testid="source-detail-not-found">
+      Source not found.
+    </div>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import MobileLayout from '@/layouts/MobileLayout.vue';
+import { useSourceStore } from '../stores/sourceStore';
+
+const route = useRoute();
+const router = useRouter();
+const sourceStore = useSourceStore();
+const sourceId = Number(route.params.id);
+
+const formatType = (type: string) => {
+  const map: Record<string, string> = {
+    pdf: 'PDF',
+    txt: 'Text',
+    link: 'Link',
+    note: 'Note',
+    book: 'Book',
+  };
+  return map[type] || type;
+};
+
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
+
+const deleteSource = async () => {
+  const success = await sourceStore.deleteSource(sourceId);
+  if (success) {
+    message.success('Source deleted');
+    router.push('/source');
+  } else {
+    message.error('Delete failed');
+  }
+};
+
+onMounted(() => sourceStore.fetchSource(sourceId));
+</script>
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\pages\SourceListPage.vue
+====================
+<template>
+  <MobileLayout title="My Sources">
+    <template #header-extra>
+      <a-space>
+        <a-button type="primary" size="small" @click="goToUpload" data-testid="source-list-upload-button">
+          <UploadOutlined /> Upload File
+        </a-button>
+        <a-button type="primary" size="small" @click="goToUrlCreate" data-testid="source-list-add-url-button">
+          <LinkOutlined /> Add from URL
+        </a-button>
+      </a-space>
+    </template>
+
+    <!-- Loading, Error, Empty states (unchanged) -->
+    <!-- Loading -->
+    <div v-if="sourceStore.loading" class="text-center py-8" data-testid="source-list-loading">
+      <a-spin />
+      <!-- Loading spinner -->
+    </div>
+
+    <!-- Source list -->
+    <a-list
+      v-else
+      :data-source="sourceStore.sources"
+      :pagination="pagination"
+      class="source-list"
+      data-testid="source-list"
+    >
+      <template #renderItem="{ item }">
+        <a-list-item :data-testid="'source-list-item-' + item.id">
+          <a-list-item-meta>
+            <template #title>
+              <router-link :to="`/source/${item.id}`" :data-testid="'source-list-item-link-' + item.id">
+                {{ item.title || "Untitled" }}
+              </router-link>
+            </template>
+            <template #description>
+              <div class="text-xs text-gray-500">
+                <span>Type: {{ formatType(item.type) }}</span>
+                <span class="mx-2">•</span>
+                <span>Added: {{ formatDate(item.createdAt) }}</span>
+                <!-- No file size from backend -->
+              </div>
+            </template>
+          </a-list-item-meta>
+          <template #actions>
+            <a-button type="text" size="small" @click="viewSource(item.id)" :data-testid="'source-list-view-' + item.id">
+              <EyeOutlined />
+            </a-button>
+            <a-popconfirm
+              title="Delete this source?"
+              ok-text="Yes"
+              cancel-text="No"
+              @confirm="deleteSource(item.id)"
+            >
+              <a-button type="text" size="small" danger :data-testid="'source-list-delete-' + item.id">
+                <DeleteOutlined />
+              </a-button>
+            </a-popconfirm>
+          </template>
+        </a-list-item>
+      </template>
+    </a-list>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import {
+  UploadOutlined,
+  LinkOutlined,
+  FileTextOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useSourceStore } from "../stores/sourceStore";
+
+const router = useRouter();
+const sourceStore = useSourceStore();
+
+const pagination = { pageSize: 20, showSizeChanger: false };
+
+const formatType = (type: string) => {
+  const map: Record<string, string> = {
+    pdf: "PDF",
+    txt: "Text",
+    link: "Link",
+    note: "Note",
+    book: "Book",
+  };
+  return map[type] || type;
+};
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString();
+};
+
+const viewSource = (id: number) => router.push(`/source/${id}`);
+
+const deleteSource = async (id: number) => {
+  const success = await sourceStore.deleteSource(id);
+  if (success) {
+    message.success("Source deleted");
+    await sourceStore.fetchSources();
+  } else {
+    message.error("Delete failed");
+  }
+};
+
+const goToUpload = () => router.push("/source/upload");
+const goToUrlCreate = () => router.push("/source/new-url");
+
+onMounted(() => sourceStore.fetchSources());
+</script>
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\pages\SourceNoteCreatePage.vue
+====================
+<template>
+  <MobileLayout title="Create Note Source">
+    <a-card class="shadow-sm" data-testid="source-note-create-card">
+      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical" data-testid="source-note-create-form">
+        <a-form-item label="Title" required>
+          <a-input
+            v-model:value="form.title"
+            placeholder="Enter a descriptive title"
+            :maxlength="255"
+            show-count
+            data-testid="source-note-create-title-input"
+          />
+        </a-form-item>
+
+        <a-form-item label="Content" required>
+          <a-textarea
+            v-model:value="form.content"
+            placeholder="Paste or type your text here..."
+            :rows="8"
+            :maxlength="10000"
+            show-count
+            data-testid="source-note-create-content-input"
+          />
+        </a-form-item>
+
+        <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            :loading="sourceStore.loading"
+            :disabled="!form.title.trim() || !form.content.trim()"
+            block
+            data-testid="source-note-create-submit-button"
+          >
+            Create Source
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <a-alert
+        v-if="sourceStore.error"
+        :message="sourceStore.error"
+        type="error"
+        show-icon
+        closable
+        @close="sourceStore.clearError"
+        class="mt-4"
+        data-testid="source-note-create-error"
+      />
+    </a-card>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import MobileLayout from '@/layouts/MobileLayout.vue';
+import { useSourceStore } from '../stores/sourceStore';
+
+const router = useRouter();
+const sourceStore = useSourceStore();
+
+const form = reactive({
+  title: '',
+  content: '',
+});
+
+const handleSubmit = async () => {
+  if (!form.title.trim() || !form.content.trim()) {
+    message.warning('Both title and content are required');
+    return;
+  }
+
+  const created = await sourceStore.createSourceFromNote({
+    title: form.title,
+    content: form.content,
+  });
+
+  if (created) {
+    message.success('Text source created');
+    router.push(`/source/${created.id}`);
+  }
+};
+</script>
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\pages\SourceUploadPage.vue
+====================
+<template>
+  <MobileLayout title="Upload Source">
+    <a-card class="shadow-sm" data-testid="source-upload-card">
+      <a-form layout="vertical" @submit.prevent="handleUpload" data-testid="source-upload-form">
+        <a-form-item label="Title" required>
+          <a-input v-model:value="title" placeholder="Enter source title" data-testid="source-upload-title-input" />
+        </a-form-item>
+
+        <a-upload-dragger
+          v-model:file-list="fileList"
+          name="file"
+          :multiple="false"
+          :before-upload="beforeUpload"
+          @remove="handleRemove"
+          data-testid="source-upload-dragger"
+        >
+          <p class="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p class="ant-upload-text">Click or drag file to this area to upload</p>
+          <p class="ant-upload-hint">Support for PDF, TXT. Max 10MB.</p>
+        </a-upload-dragger>
+
+        <a-button
+          type="primary"
+          html-type="submit"
+          :loading="sourceStore.loading"
+          :disabled="!fileList.length || !title.trim()"
+          block
+          class="mt-4"
+          data-testid="source-upload-submit-button"
+        >
+          Upload
+        </a-button>
+      </a-form>
+
+      <a-alert
+        v-if="sourceStore.error"
+        :message="sourceStore.error"
+        type="error"
+        show-icon
+        closable
+        @close="sourceStore.clearError"
+        class="mt-4"
+        data-testid="source-upload-error"
+      />
+    </a-card>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import { InboxOutlined } from '@ant-design/icons-vue';
+import MobileLayout from '@/layouts/MobileLayout.vue';
+import { useSourceStore } from '../stores/sourceStore';
+
+const router = useRouter();
+const sourceStore = useSourceStore();
+const fileList = ref<any[]>([]);
+const title = ref('');
+
+const beforeUpload = (file: File) => {
+  const isLt10M = file.size / 1024 / 1024 < 10;
+  if (!isLt10M) {
+    message.error('File must be smaller than 10MB');
+  }
+  return isLt10M;
+};
+
+const handleRemove = () => {
+  fileList.value = [];
+};
+
+const handleUpload = async () => {
+  if (fileList.value.length === 0 || !title.value.trim()) return;
+  const file = fileList.value[0].originFileObj;
+  const result = await sourceStore.uploadSource(file, title.value);
+  if (result) {
+    message.success('File uploaded successfully');
+    fileList.value = [];
+    title.value = '';
+    router.push(`/source/${result.id}`);
+  }
+};
+</script>
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\pages\SourceUrlCreatePage.vue
+====================
+<template>
+  <MobileLayout title="Add Source from URL">
+    <a-card class="shadow-sm" data-testid="source-url-create-card">
+      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical" data-testid="source-url-create-form">
+        <a-form-item label="Title" required>
+          <a-input v-model:value="form.title" placeholder="Enter source title" data-testid="source-url-create-title-input" />
+        </a-form-item>
+
+        <a-form-item label="URL" required>
+          <a-input v-model:value="form.url" placeholder="https://example.com/document" data-testid="source-url-create-url-input" />
+        </a-form-item>
+
+        <a-form-item>
+          <a-button type="primary" html-type="submit" :loading="sourceStore.loading" block data-testid="source-url-create-submit-button">
+            Create Source
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <a-alert
+        v-if="sourceStore.error"
+        :message="sourceStore.error"
+        type="error"
+        show-icon
+        closable
+        @close="sourceStore.clearError"
+        class="mt-4"
+        data-testid="source-url-create-error"
+      />
+    </a-card>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import MobileLayout from '@/layouts/MobileLayout.vue';
+import { useSourceStore } from '../stores/sourceStore';
+
+const router = useRouter();
+const sourceStore = useSourceStore();
+
+const form = ref({
+  title: '',
+  url: '',
+});
+
+const handleSubmit = async () => {
+  if (!form.value.title.trim() || !form.value.url.trim()) {
+    message.warning('Title and URL are required');
+    return;
+  }
+
+  const created = await sourceStore.createSourceFromUrl(form.value);
+  if (created) {
+    message.success('Source created');
+    router.push(`/source/${created.id}`);
+  }
+};
+</script>
+
+====================
+FILE: D:\SLP.Project\slp\frontend-vue\src\features\source\stores\sourceStore.ts
+====================
+import { defineStore } from "pinia";
+import apiClient from "@/lib/api/client";
+
+// Allowed source types (mirroring backend)
+export type SourceType = "pdf" | "txt" | "link" | "note" | "book" | string;
+
+// DTO for list view (matches backend's SourceListDto)
+export interface SourceListItem {
+  id: number;
+  type: SourceType;
+  title: string;
+  url?: string;
+  createdAt: string; // from backend CreatedAt
+  updatedAt: string; // from backend UpdatedAt
+}
+
+// DTO for detail view (matches backend's SourceDto)
+export interface SourceDetail extends SourceListItem {
+  userId: number;
+  rawText?: string; // from backend RawText
+  filePath?: string; // from backend FilePath
+  metadata?: string; // from backend MetadataJson
+}
+
+export const useSourceStore = defineStore("source", {
+  state: () => ({
+    sources: [] as SourceListItem[],
+    currentSource: null as SourceDetail | null,
+    loading: false,
+    error: null as string | null,
+  }),
+
+  actions: {
+    clearError() {
+      this.error = null;
+    },
+
+    // Fetch all sources for the current user
+    async fetchSources() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get<SourceListItem[]>("/source");
+        this.sources = response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to fetch sources";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Fetch a single source by ID
+    async fetchSource(id: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get<SourceDetail>(`/source/${id}`);
+        this.currentSource = response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to fetch source";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Create a source from URL
+    async createSourceFromUrl(payload: { url: string; title: string }) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post<SourceDetail>(
+          "/source/url",
+          payload,
+        );
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to create source";
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Upload a file source (requires title)
+    async uploadSource(file: File, title: string) {
+      this.loading = true;
+      this.error = null;
+      const formData = new FormData();
+      formData.append("File", file); // must match backend parameter name 'File'
+      formData.append("Title", title); // required by backend
+      try {
+        const response = await apiClient.post<SourceDetail>(
+          "/source/upload",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          },
+        );
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Upload failed";
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Delete source
+    async deleteSource(id: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/source/${id}`);
+        return true;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Delete failed";
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Create a source from plain text
+    async createSourceFromNote(payload: { title: string; content: string }) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post<SourceDetail>(
+          "/source/note",
+          payload,
+        );
+        return response.data;
+      } catch (err: any) {
+        this.error =
+          err.response?.data?.message || "Failed to Create Note Source";
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+});

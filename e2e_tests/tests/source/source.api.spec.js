@@ -49,7 +49,7 @@ test.describe("Source API Comprehensive Tests", () => {
         },
         {
           method: "post",
-          url: "/source/text",
+          url: "/source/note",
           data: { title: "x", content: "y" },
         },
         {
@@ -115,7 +115,7 @@ test.describe("Source API Comprehensive Tests", () => {
 
     test("should create a text note source via /text", async ({ request }) => {
       const source = generateSource();
-      const createRes = await request.post(`${API_BASE_URL}/source/text`, {
+      const createRes = await request.post(`${API_BASE_URL}/source/note`, {
         headers: { "X-Session-Token": adminToken },
         data: { title: source.title, content: source.content },
       });
@@ -212,7 +212,7 @@ test.describe("Source API Comprehensive Tests", () => {
     test("should return 400 when creating text source without title", async ({
       request,
     }) => {
-      const res = await request.post(`${API_BASE_URL}/source/text`, {
+      const res = await request.post(`${API_BASE_URL}/source/note`, {
         headers: { "X-Session-Token": adminToken },
         data: { content: "some content" },
       });
@@ -222,7 +222,7 @@ test.describe("Source API Comprehensive Tests", () => {
     test("should return 400 when creating text source without content", async ({
       request,
     }) => {
-      const res = await request.post(`${API_BASE_URL}/source/text`, {
+      const res = await request.post(`${API_BASE_URL}/source/note`, {
         headers: { "X-Session-Token": adminToken },
         data: { title: "No content" },
       });
@@ -276,9 +276,9 @@ test.describe("Source API Comprehensive Tests", () => {
       const linkSource = await linkRes.json();
       sourceIds.push(linkSource.id);
 
-      // 2. Create text source
+      // 2. Create Note Source
       const textData = generateSource();
-      const textRes = await request.post(`${API_BASE_URL}/source/text`, {
+      const textRes = await request.post(`${API_BASE_URL}/source/note`, {
         headers: { "X-Session-Token": adminToken },
         data: { title: textData.title, content: textData.content },
       });

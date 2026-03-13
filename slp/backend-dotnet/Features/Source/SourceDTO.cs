@@ -38,7 +38,7 @@ public class UploadSourceRequest
     public required string Title { get; set; }
 }
 
-public class CreateTextSourceRequest
+public class CreateNoteSourceRequest
 {
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;

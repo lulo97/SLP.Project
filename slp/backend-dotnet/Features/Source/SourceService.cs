@@ -153,7 +153,7 @@ public class SourceService : ISourceService
         };
     }
 
-    public async Task<SourceDto> CreateSourceFromTextAsync(int userId, string title, string content)
+    public async Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content)
     {
         // Optional: validate input
         if (string.IsNullOrWhiteSpace(title))

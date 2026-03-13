@@ -106,10 +106,10 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: "/source/new-text",
+      path: "/source/new-note",
       name: "SourceTextCreate",
       component: () =>
-        import("@/features/source/pages/SourceTextCreatePage.vue"),
+        import("@/features/source/pages/SourceNoteCreatePage.vue"),
       meta: { requiresAuth: true },
     },
   ],

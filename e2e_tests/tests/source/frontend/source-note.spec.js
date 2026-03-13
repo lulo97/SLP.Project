@@ -8,23 +8,23 @@ import {
   verifySourceDeletedViaApi,
 } from "./source-helpers.js";
 
-test.describe("Source Text Creation", () => {
+test.describe("Source Note Creation", () => {
   let authToken;
 
   test.beforeAll(async ({ request }) => {
     authToken = await authenticate(request);
   });
 
-  test("Create text source", async ({ browser, request }) => {
+  test("Create Note Source", async ({ browser, request }) => {
     const page = await createAuthenticatedPage(browser, authToken);
     const unique = generateUniqueSource("Text");
 
-    await page.goto(`${FRONTEND_URL}/source/new-text`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator('[data-testid="source-text-create-card"]')).toBeVisible();
+    await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="source-note-create-card"]')).toBeVisible();
 
-    await page.fill('[data-testid="source-text-create-title-input"]', unique.title);
-    await page.fill('[data-testid="source-text-create-content-input"]', unique.content);
-    await page.click('[data-testid="source-text-create-submit-button"]');
+    await page.fill('[data-testid="source-note-create-title-input"]', unique.title);
+    await page.fill('[data-testid="source-note-create-content-input"]', unique.content);
+    await page.click('[data-testid="source-note-create-submit-button"]');
 
     await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
