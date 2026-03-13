@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia';
-import apiClient from '@/lib/api/client';
+import { defineStore } from "pinia";
+import apiClient from "@/lib/api/client";
 
 export interface QuizListDto {
   id: number;
   title: string;
   description?: string;
-  visibility: 'private' | 'public' | 'unlisted';
+  visibility: "private" | "public" | "unlisted";
   createdAt: string;
   updatedAt: string;
   tags: string[];
@@ -20,18 +20,18 @@ export interface QuizDto extends QuizListDto {
 export interface CreateQuizPayload {
   title: string;
   description?: string;
-  visibility?: 'private' | 'public' | 'unlisted';
+  visibility?: "private" | "public" | "unlisted";
   tagNames?: string[];
 }
 
 export interface UpdateQuizPayload {
   title?: string;
   description?: string;
-  visibility?: 'private' | 'public' | 'unlisted';
+  visibility?: "private" | "public" | "unlisted";
   tagNames?: string[];
 }
 
-export const useQuizStore = defineStore('quiz', {
+export const useQuizStore = defineStore("quiz", {
   state: () => ({
     quizzes: [] as QuizListDto[],
     currentQuiz: null as QuizDto | null,
@@ -44,10 +44,11 @@ export const useQuizStore = defineStore('quiz', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await apiClient.get<QuizListDto[]>('/quiz?mine=true');
+        const response = await apiClient.get<QuizListDto[]>("/quiz?mine=true");
         this.quizzes = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to fetch your quizzes';
+        this.error =
+          err.response?.data?.message || "Failed to fetch your quizzes";
       } finally {
         this.loading = false;
       }
@@ -57,11 +58,12 @@ export const useQuizStore = defineStore('quiz', {
       this.loading = true;
       this.error = null;
       try {
-        const url = visibility ? `/quiz?visibility=${visibility}` : '/quiz';
+        const url = visibility ? `/quiz?visibility=${visibility}` : "/quiz";
         const response = await apiClient.get<QuizListDto[]>(url);
         this.quizzes = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to fetch public quizzes';
+        this.error =
+          err.response?.data?.message || "Failed to fetch public quizzes";
       } finally {
         this.loading = false;
       }
@@ -71,10 +73,12 @@ export const useQuizStore = defineStore('quiz', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await apiClient.get<QuizListDto[]>(`/quiz?search=${encodeURIComponent(searchTerm)}`);
+        const response = await apiClient.get<QuizListDto[]>(
+          `/quiz?search=${encodeURIComponent(searchTerm)}`,
+        );
         this.quizzes = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Search failed';
+        this.error = err.response?.data?.message || "Search failed";
       } finally {
         this.loading = false;
       }
@@ -87,7 +91,7 @@ export const useQuizStore = defineStore('quiz', {
         const response = await apiClient.get<QuizDto>(`/quiz/${id}`);
         this.currentQuiz = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to fetch quiz';
+        this.error = err.response?.data?.message || "Failed to fetch quiz";
       } finally {
         this.loading = false;
       }
@@ -97,10 +101,10 @@ export const useQuizStore = defineStore('quiz', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await apiClient.post<QuizDto>('/quiz', payload);
+        const response = await apiClient.post<QuizDto>("/quiz", payload);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to create quiz';
+        this.error = err.response?.data?.message || "Failed to create quiz";
         return null;
       } finally {
         this.loading = false;
@@ -114,7 +118,7 @@ export const useQuizStore = defineStore('quiz', {
         const response = await apiClient.put<QuizDto>(`/quiz/${id}`, payload);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to update quiz';
+        this.error = err.response?.data?.message || "Failed to update quiz";
         return null;
       } finally {
         this.loading = false;
@@ -128,7 +132,7 @@ export const useQuizStore = defineStore('quiz', {
         await apiClient.delete(`/quiz/${id}`);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to delete quiz';
+        this.error = err.response?.data?.message || "Failed to delete quiz";
         return false;
       } finally {
         this.loading = false;
@@ -142,7 +146,7 @@ export const useQuizStore = defineStore('quiz', {
         const response = await apiClient.post<QuizDto>(`/quiz/${id}/duplicate`);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || 'Failed to duplicate quiz';
+        this.error = err.response?.data?.message || "Failed to duplicate quiz";
         return null;
       } finally {
         this.loading = false;
@@ -151,6 +155,77 @@ export const useQuizStore = defineStore('quiz', {
 
     clearError() {
       this.error = null;
+    },
+
+    async fetchQuizQuestions(quizId: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get(`/quiz/${quizId}/questions`);
+        return response.data; // array of QuizQuestionDto
+      } catch (err: any) {
+        this.error =
+          err.response?.data?.message || "Failed to fetch quiz questions";
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async createQuizQuestion(
+      quizId: number,
+      snapshotJson: string,
+      displayOrder: number,
+    ) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post(`/quiz/${quizId}/questions`, {
+          questionSnapshotJson: snapshotJson,
+          displayOrder,
+        });
+        return response.data; // QuizQuestionDto
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to create question";
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateQuizQuestion(
+      questionId: number,
+      snapshotJson: string,
+      displayOrder: number,
+    ) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.put(`/quiz/questions/${questionId}`, {
+          questionSnapshotJson: snapshotJson,
+          displayOrder,
+        });
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to update question";
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async deleteQuizQuestion(questionId: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/quiz/questions/${questionId}`);
+        return true;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to delete question";
+        return false;
+      } finally {
+        this.loading = false;
+      }
     },
   },
 });
