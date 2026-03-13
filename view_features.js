@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 // keywords to search in filenames (case-insensitive)
-const keywords = ["source"];
+const keywords = ["quiz", "note"];
 
 // folders/files to exclude
 const exclude = new Set([

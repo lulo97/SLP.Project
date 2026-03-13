@@ -138,3 +138,5 @@ coverage/
 *.diff
 
 slp/backend-dotnet/logs
+
+view_features.txt
