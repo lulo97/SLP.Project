@@ -37,23 +37,40 @@
         </div>
       </a-card>
 
-      <!-- Notes Section (frontend only) -->
+      <!-- Notes Section -->
       <a-card title="My Notes" class="shadow-sm">
-        <div class="space-y-2">
-          <div
-            v-for="(note, idx) in notes"
-            :key="idx"
-            class="flex items-start gap-2"
-          >
-            <a-textarea v-model:value="notes[idx]" :rows="2" class="flex-1" />
-            <a-button @click="removeNote(idx)" type="text" danger size="small">
-              <DeleteOutlined />
-            </a-button>
-          </div>
-          <a-button @click="addNote" block type="dashed">
-            <PlusOutlined /> Add Note
-          </a-button>
+        <div v-if="quizStore.notesLoading" class="text-center py-4">
+          <a-spin size="small" />
         </div>
+        <div v-else-if="notes.length === 0" class="text-gray-400 text-sm py-2">
+          No notes yet.
+        </div>
+        <div v-else class="space-y-3">
+          <div
+            v-for="note in notes"
+            :key="note.id"
+            class="border rounded p-3 relative"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <h4 class="font-medium">{{ note.title }}</h4>
+              <a-button
+                @click="removeNote(note.id)"
+                type="text"
+                danger
+                size="small"
+              >
+                <DeleteOutlined />
+              </a-button>
+            </div>
+            <p class="text-sm whitespace-pre-wrap">{{ note.content }}</p>
+            <div class="text-xs text-gray-400 mt-1">
+              {{ new Date(note.createdAt).toLocaleString() }}
+            </div>
+          </div>
+        </div>
+        <a-button @click="addNote" block type="dashed" class="mt-2">
+          <PlusOutlined /> Add Note
+        </a-button>
       </a-card>
 
       <!-- Sources Section (frontend only) -->
@@ -202,6 +219,23 @@
       </a-checkbox-group>
     </a-modal>
 
+    <!-- Add Note Modal -->
+    <a-modal
+      v-model:visible="showAddNoteModal"
+      title="Add Note"
+      @ok="handleAddNote"
+      ok-text="Add"
+    >
+      <a-form :model="newNoteForm" layout="vertical">
+        <a-form-item label="Title" required>
+          <a-input v-model:value="newNoteForm.title" />
+        </a-form-item>
+        <a-form-item label="Content" required>
+          <a-textarea v-model:value="newNoteForm.content" :rows="4" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
     <!-- Question Form Modal (handles snapshots) -->
     <QuestionFormModal
       v-model:visible="showQuestionModal"
@@ -240,9 +274,38 @@ const canEdit = computed(() => {
 });
 
 // Notes (frontend only)
-const notes = ref<string[]>([]);
-const addNote = () => notes.value.push("");
-const removeNote = (idx: number) => notes.value.splice(idx, 1);
+const notes = computed(() => quizStore.notes);
+const addNote = () => {
+  newNoteForm.value = { title: "", content: "" };
+  showAddNoteModal.value = true;
+}; // Handle modal submit
+const handleAddNote = async () => {
+  if (!newNoteForm.value.title.trim() || !newNoteForm.value.content.trim()) {
+    message.warning("Both title and content are required");
+    return;
+  }
+  try {
+    await quizStore.addNoteToQuiz(quizId.value, newNoteForm.value);
+    message.success("Note added");
+    await quizStore.fetchQuizNotes(quizId.value);
+    showAddNoteModal.value = false;
+  } catch (err) {
+    message.error("Failed to add note");
+  }
+};
+
+// Remove note
+const removeNote = async (noteId: number) => {
+  const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
+  if (success) {
+    message.success("Note removed");
+    await quizStore.fetchQuizNotes(quizId.value);
+  } else {
+    message.error("Failed to remove note");
+  }
+};
+const showAddNoteModal = ref(false);
+const newNoteForm = ref({ title: "", content: "" });
 
 // Sources (mock)
 interface Source {
@@ -500,29 +563,8 @@ const handleDelete = async () => {
 onMounted(async () => {
   await quizStore.fetchQuizById(quizId.value);
   await loadQuestions();
-
-  // Load notes and sources from localStorage (optional)
-  const savedNotes = localStorage.getItem(`quiz-notes-${quizId.value}`);
-  if (savedNotes) notes.value = JSON.parse(savedNotes);
-  const savedSources = localStorage.getItem(`quiz-sources-${quizId.value}`);
-  if (savedSources) attachedSources.value = JSON.parse(savedSources);
+  await quizStore.fetchQuizNotes(quizId.value); // <-- add this
 });
-
-// Save notes and sources to localStorage when they change
-watch(
-  [notes, attachedSources],
-  () => {
-    localStorage.setItem(
-      `quiz-notes-${quizId.value}`,
-      JSON.stringify(notes.value),
-    );
-    localStorage.setItem(
-      `quiz-sources-${quizId.value}`,
-      JSON.stringify(attachedSources.value),
-    );
-  },
-  { deep: true },
-);
 
 const formatQuestionType = (type: string): string => {
   if (!type) return "Unknown";

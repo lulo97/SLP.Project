@@ -45,6 +45,8 @@ export const useQuizStore = defineStore("quiz", {
     currentQuiz: null as QuizDto | null,
     loading: false,
     error: null as string | null,
+    notes: [] as NoteDto[],
+    notesLoading: false,
   }),
 
   actions: {
@@ -230,6 +232,55 @@ export const useQuizStore = defineStore("quiz", {
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to delete question";
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchQuizNotes(quizId: number) {
+      this.notesLoading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get<NoteDto[]>(
+          `/quiz/${quizId}/notes`,
+        );
+        this.notes = response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to fetch notes";
+      } finally {
+        this.notesLoading = false;
+      }
+    },
+
+    async addNoteToQuiz(
+      quizId: number,
+      payload: { title: string; content: string },
+    ) {
+      this.loading = true; // or use a separate flag
+      this.error = null;
+      try {
+        const response = await apiClient.post<NoteDto>(
+          `/quiz/${quizId}/notes`,
+          payload,
+        );
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to add note";
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async removeNoteFromQuiz(quizId: number, noteId: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/quiz/${quizId}/notes/${noteId}`);
+        return true;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to remove note";
         return false;
       } finally {
         this.loading = false;
