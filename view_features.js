@@ -6,7 +6,7 @@ const path = require("path");
 // =======================
 const config = {
   // Filenames must contain at least one of these keywords (case‑insensitive)
-  keywords: ["quiz"],
+  keywords: ["attempt"],
 
   // Which parts of the project to scan:
   // Choose from "backend", "frontend", "database", "test"

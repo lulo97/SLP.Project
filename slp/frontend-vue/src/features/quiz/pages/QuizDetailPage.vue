@@ -1,6 +1,10 @@
 <template>
   <MobileLayout :title="quizStore.currentQuiz?.title || 'Quiz Details'">
-    <div v-if="quizStore.loading" class="text-center py-8" data-testid="quiz-detail-loading">
+    <div
+      v-if="quizStore.loading"
+      class="text-center py-8"
+      data-testid="quiz-detail-loading"
+    >
       <a-spin />
     </div>
     <div v-else-if="quizStore.currentQuiz" class="space-y-4">
@@ -26,6 +30,69 @@
         @detach="handleDetachSource"
       />
 
+      <!-- Attempts Section -->
+      <a-card
+        title="Your Attempts"
+        class="shadow-sm mt-4"
+        data-testid="attempts-section"
+      >
+        <template #extra>
+          <a-button
+            type="primary"
+            size="small"
+            @click="startAttempt"
+            :loading="attemptStore.loading"
+            data-testid="start-attempt-button"
+          >
+            Start Attempt
+          </a-button>
+        </template>
+        <a-list
+          :data-source="attemptStore.userAttempts"
+          size="small"
+          data-testid="attempts-list"
+        >
+          <template #renderItem="{ item }">
+            <a-list-item :data-testid="`attempt-item-${item.id}`">
+              <a-list-item-meta>
+                <template #title>
+                  <span>Attempt #{{ item.id }}</span>
+                </template>
+                <template #description>
+                  {{ new Date(item.startTime).toLocaleString() }} -
+                  <span
+                    :class="{
+                      'text-green-600': item.status === 'completed',
+                      'text-yellow-600': item.status === 'in_progress',
+                      'text-gray-600': item.status === 'abandoned',
+                    }"
+                  >
+                    {{ item.status }}
+                  </span>
+                  <span v-if="item.score !== null">
+                    - Score: {{ item.score }}/{{ item.maxScore }}</span
+                  >
+                </template>
+              </a-list-item-meta>
+              <template #actions>
+                <span
+                  v-if="item.status === 'completed'"
+                  @click="goToReview(item.id)"
+                  data-testid="review-attempt"
+                  >Review</span
+                >
+                <span
+                  v-else-if="item.status === 'in_progress'"
+                  @click="resumeAttempt(item.id)"
+                  data-testid="resume-attempt"
+                  >Resume</span
+                >
+              </template>
+            </a-list-item>
+          </template>
+        </a-list>
+      </a-card>
+
       <QuestionsSection
         :questions="questions"
         @add="openQuestionModal('create')"
@@ -41,7 +108,13 @@
         @delete="handleDelete"
       />
     </div>
-    <div v-else class="text-center py-8 text-gray-500" data-testid="quiz-not-found">Quiz not found.</div>
+    <div
+      v-else
+      class="text-center py-8 text-gray-500"
+      data-testid="quiz-not-found"
+    >
+      Quiz not found.
+    </div>
 
     <!-- Modal – no insert-index needed -->
     <QuestionFormModal
@@ -53,25 +126,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { message } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useQuizStore } from '../stores/quizStore';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useSourceStore } from '@/features/source/stores/sourceStore';
-import { useQuizQuestions } from '../composables/useQuizQuestions';
-import type { CreateQuestionPayload } from '@/features/question/stores/questionStore';
-import type { DisplayQuestion } from '../types';
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useQuizStore } from "../stores/quizStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { useSourceStore } from "@/features/source/stores/sourceStore";
+import { useQuizQuestions } from "../composables/useQuizQuestions";
+import type { CreateQuestionPayload } from "@/features/question/stores/questionStore";
+import type { DisplayQuestion } from "../types";
 
 // Components
-import QuizInfoCard from '../components/QuizInfoCard.vue';
-import NotesSection from '../components/NotesSection.vue';
-import SourcesSection from '../components/SourcesSection.vue';
-import QuestionsSection from '../components/QuestionsSection.vue';
-import QuizActionsCard from '../components/QuizActionsCard.vue';
-import QuestionFormModal from '../components/QuestionFormModal.vue';
+import QuizInfoCard from "../components/QuizInfoCard.vue";
+import NotesSection from "../components/NotesSection.vue";
+import SourcesSection from "../components/SourcesSection.vue";
+import QuestionsSection from "../components/QuestionsSection.vue";
+import QuizActionsCard from "../components/QuizActionsCard.vue";
+import QuestionFormModal from "../components/QuestionFormModal.vue";
+import { useAttemptStore } from "@/features/quiz-attempt/stores/attemptStore";
 
+const attemptStore = useAttemptStore();
+
+const startAttempt = async () => {
+  try {
+    const result = await attemptStore.startAttempt(quizId.value);
+    router.push(`/quiz/${quizId.value}/attempt/${result.attemptId}`);
+  } catch (err) {
+    message.error("Could not start attempt");
+  }
+};
+
+const resumeAttempt = (attemptId: number) => {
+  router.push(`/quiz/${quizId.value}/attempt/${attemptId}`);
+};
+
+const goToReview = (attemptId: number) => {
+  router.push(`/quiz/attempt/${attemptId}/review`);
+};
 const route = useRoute();
 const router = useRouter();
 const quizStore = useQuizStore();
@@ -91,19 +183,19 @@ const notes = computed(() => quizStore.notes);
 const handleAddNote = async (note: { title: string; content: string }) => {
   try {
     await quizStore.addNoteToQuiz(quizId.value, note);
-    message.success('Note added');
+    message.success("Note added");
     await quizStore.fetchQuizNotes(quizId.value);
   } catch (err) {
-    message.error('Failed to add note');
+    message.error("Failed to add note");
   }
 };
 const handleRemoveNote = async (noteId: number) => {
   const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
   if (success) {
-    message.success('Note removed');
+    message.success("Note removed");
     await quizStore.fetchQuizNotes(quizId.value);
   } else {
-    message.error('Failed to remove note');
+    message.error("Failed to remove note");
   }
 };
 
@@ -114,39 +206,44 @@ const handleAttachSources = async (sourceIds: number[]) => {
     for (const sourceId of sourceIds) {
       await quizStore.addSourceToQuiz(quizId.value, sourceId);
     }
-    message.success('Sources attached');
+    message.success("Sources attached");
     await quizStore.fetchQuizSources(quizId.value);
   } catch (err) {
-    message.error('Failed to attach some sources');
+    message.error("Failed to attach some sources");
   }
 };
 const handleDetachSource = async (sourceId: number) => {
   const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
   if (success) {
-    message.success('Source detached');
+    message.success("Source detached");
     await quizStore.fetchQuizSources(quizId.value);
   } else {
-    message.error('Failed to detach source');
+    message.error("Failed to detach source");
   }
 };
 
 // Questions
-const { questions, loadQuestions, createQuestion, updateQuestion, deleteQuestion } =
-  useQuizQuestions(quizId.value);
+const {
+  questions,
+  loadQuestions,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion,
+} = useQuizQuestions(quizId.value);
 
 const showQuestionModal = ref(false);
 const editingQuestion = ref<DisplayQuestion | undefined>();
 const insertIndex = ref<number | undefined>();
 
 const openQuestionModal = (
-  action: 'create' | 'edit' | 'insert',
+  action: "create" | "edit" | "insert",
   question?: DisplayQuestion,
-  index?: number
+  index?: number,
 ) => {
-  if (action === 'edit' && question) {
+  if (action === "edit" && question) {
     editingQuestion.value = question;
     insertIndex.value = undefined;
-  } else if (action === 'insert') {
+  } else if (action === "insert") {
     editingQuestion.value = undefined;
     insertIndex.value = index;
   } else {
@@ -158,7 +255,7 @@ const openQuestionModal = (
 
 const handleQuestionSaved = async (
   payload: CreateQuestionPayload,
-  existingId?: number
+  existingId?: number,
 ) => {
   try {
     const snapshot = {
@@ -174,7 +271,7 @@ const handleQuestionSaved = async (
       const question = questions.value.find((q) => q.id === existingId);
       if (!question) return;
       await updateQuestion(existingId, snapshotJson, question.displayOrder);
-      message.success('Question updated');
+      message.success("Question updated");
     } else {
       let newOrder = 1;
       if (
@@ -184,9 +281,15 @@ const handleQuestionSaved = async (
       ) {
         newOrder = insertIndex.value + 1;
         // Shift subsequent questions
-        const toUpdate = questions.value.filter((q) => q.displayOrder >= newOrder);
+        const toUpdate = questions.value.filter(
+          (q) => q.displayOrder >= newOrder,
+        );
         for (const q of toUpdate) {
-          await updateQuestion(q.id, q.questionSnapshotJson, q.displayOrder + 1);
+          await updateQuestion(
+            q.id,
+            q.questionSnapshotJson,
+            q.displayOrder + 1,
+          );
         }
       } else {
         newOrder = questions.value.length
@@ -194,11 +297,11 @@ const handleQuestionSaved = async (
           : 1;
       }
       await createQuestion(snapshotJson, newOrder);
-      message.success('Question created');
+      message.success("Question created");
     }
     await loadQuestions();
   } catch (error) {
-    message.error('Operation failed');
+    message.error("Operation failed");
   } finally {
     showQuestionModal.value = false;
     editingQuestion.value = undefined;
@@ -214,20 +317,20 @@ const handleDeleteQuestion = async (questionId: number) => {
 const handleDuplicate = async () => {
   const duplicated = await quizStore.duplicateQuiz(quizId.value);
   if (duplicated) {
-    message.success('Quiz duplicated');
+    message.success("Quiz duplicated");
     router.push(`/quiz/${duplicated.id}/edit`);
   } else {
-    message.error('Failed to duplicate');
+    message.error("Failed to duplicate");
   }
 };
 
 const handleDelete = async () => {
   const success = await quizStore.deleteQuiz(quizId.value);
   if (success) {
-    message.success('Quiz deleted');
-    router.push('/quiz');
+    message.success("Quiz deleted");
+    router.push("/quiz");
   } else {
-    message.error('Failed to delete');
+    message.error("Failed to delete");
   }
 };
 
@@ -238,5 +341,6 @@ onMounted(async () => {
   await quizStore.fetchQuizNotes(quizId.value);
   await quizStore.fetchQuizSources(quizId.value);
   await sourceStore.fetchSources();
+  await attemptStore.fetchUserAttemptsForQuiz(quizId.value);
 });
 </script>

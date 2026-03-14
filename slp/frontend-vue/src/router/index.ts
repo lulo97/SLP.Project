@@ -112,6 +112,19 @@ const router = createRouter({
         import("@/features/source/pages/SourceNoteCreatePage.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/quiz/:quizId/attempt/:attemptId?",
+      name: "QuizPlayer",
+      component: () => import("@/features/quiz-attempt/pages/QuizPlayer.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/quiz/attempt/:attemptId/review",
+      name: "AttemptReview",
+      component: () =>
+        import("@/features/quiz-attempt/pages/AttemptReview.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
