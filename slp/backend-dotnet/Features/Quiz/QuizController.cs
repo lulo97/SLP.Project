@@ -212,4 +212,47 @@ public class QuizController : ControllerBase
             return NotFound();
         return NoContent();
     }
+
+    [HttpGet("{quizId}/sources")]
+    public async Task<IActionResult> GetQuizSources(int quizId)
+    {
+        var sources = await _quizService.GetQuizSourcesAsync(quizId, CurrentUserId);
+        return Ok(sources);
+    }
+
+    // POST /api/quiz/{quizId}/sources
+    [HttpPost("{quizId}/sources")]
+    public async Task<IActionResult> AddSourceToQuiz(int quizId, [FromBody] AddSourceToQuizDto dto)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        try
+        {
+            var source = await _quizService.AddSourceToQuizAsync(quizId, CurrentUserId.Value, dto.SourceId);
+            return Ok(source);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    // DELETE /api/quiz/{quizId}/sources/{sourceId}
+    [HttpDelete("{quizId}/sources/{sourceId}")]
+    public async Task<IActionResult> RemoveSourceFromQuiz(int quizId, int sourceId)
+    {
+        if (!CurrentUserId.HasValue)
+            return Unauthorized();
+
+        var removed = await _quizService.RemoveSourceFromQuizAsync(quizId, sourceId, CurrentUserId.Value, IsAdmin);
+        if (!removed)
+            return NotFound();
+
+        return NoContent();
+    }
 }

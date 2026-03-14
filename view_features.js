@@ -1,10 +1,28 @@
 const fs = require("fs");
 const path = require("path");
 
-// keywords to search in filenames (case-insensitive)
-const keywords = ["quiz", "note"];
+// =======================
+// CONFIGURATION
+// =======================
+const config = {
+  // Filenames must contain at least one of these keywords (case‑insensitive)
+  keywords: ["source"],
 
-// folders/files to exclude
+  // Which parts of the project to scan:
+  // Choose from "backend", "frontend", "database", "test"
+  // Leave empty or comment out to include all.
+  selectedOptions: ["backend", "frontend", "database"]   // <-- change this as needed
+};
+
+// Folder patterns for each option (using path.sep for cross‑platform compatibility)
+const optionPathPatterns = {
+  backend:  [path.sep + 'backend-dotnet'  + path.sep],
+  frontend: [path.sep + 'frontend-vue'    + path.sep],
+  database: [path.sep + 'database'        + path.sep],
+  test:     [path.sep + 'e2e_tests'       + path.sep],
+};
+
+// Folders/files to exclude entirely
 const exclude = new Set([
   "node_modules",
   "dist",
@@ -19,11 +37,35 @@ const exclude = new Set([
   "notes",
 ]);
 
-function matchKeyword(name) {
-  const lower = name.toLowerCase();
-  return keywords.some(k => lower.includes(k.toLowerCase()));
+// Determine which options are active
+const validOptions = Object.keys(optionPathPatterns);
+const selectedOptions = (config.selectedOptions && config.selectedOptions.length)
+  ? config.selectedOptions.filter(opt => validOptions.includes(opt))
+  : validOptions; // default to all if none specified
+
+// Build list of allowed path patterns (OR logic)
+let allowedPathPatterns = [];
+for (const opt of selectedOptions) {
+  allowedPathPatterns.push(...optionPathPatterns[opt]);
 }
 
+console.log(`Scanning for keywords: ${config.keywords.join(", ")}`);
+console.log(`Selected project areas: ${selectedOptions.join(", ")}`);
+console.log(`Path patterns: ${allowedPathPatterns.map(p => p.replace(/\\/g, '/')).join(", ")}`);
+
+// Helper: check if filename contains any keyword
+function matchKeyword(name) {
+  const lower = name.toLowerCase();
+  return config.keywords.some(k => lower.includes(k.toLowerCase()));
+}
+
+// Helper: check if file path matches any allowed pattern
+function matchPath(filePath) {
+  if (allowedPathPatterns.length === 0) return true; // no filter = include all
+  return allowedPathPatterns.some(pattern => filePath.includes(pattern));
+}
+
+// Recursively scan directory
 function scan(dir, results = []) {
   const items = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -35,7 +77,7 @@ function scan(dir, results = []) {
     if (item.isDirectory()) {
       scan(fullPath, results);
     } else {
-      if (matchKeyword(item.name)) {
+      if (matchKeyword(item.name) && matchPath(fullPath)) {
         results.push(fullPath);
       }
     }
@@ -44,6 +86,7 @@ function scan(dir, results = []) {
   return results;
 }
 
+// Concatenate file contents with headers
 function concatFiles(files) {
   let output = "";
 
@@ -55,6 +98,7 @@ function concatFiles(files) {
       output += `FILE: ${file}\n`;
       output += `====================\n`;
       output += content;
+
     } catch (err) {
       console.error("Cannot read:", file);
     }
@@ -66,7 +110,6 @@ function concatFiles(files) {
 const files = scan(process.cwd());
 const bigText = concatFiles(files);
 
-// save to file
 fs.writeFileSync("view_features.txt", bigText, "utf8");
 
-console.log("Saved to view_features.txt");
+console.log(`\nSaved to view_features.txt (${files.length} files)`);

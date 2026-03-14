@@ -1,4 +1,5 @@
 using backend_dotnet.Features.Note;
+using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -13,11 +14,13 @@ public class QuizService : IQuizService
 {
     private readonly IQuizRepository _quizRepository;
     private readonly ITagRepository _tagRepository;
+    private readonly ISourceRepository _sourceRepository;
 
-    public QuizService(IQuizRepository quizRepository, ITagRepository tagRepository)
+    public QuizService(IQuizRepository quizRepository, ITagRepository tagRepository, ISourceRepository sourceRepository)
     {
         _quizRepository = quizRepository;
         _tagRepository = tagRepository;
+        _sourceRepository = sourceRepository;
     }
 
     public async Task<QuizDto?> GetQuizByIdAsync(int id, int? currentUserId)
@@ -386,5 +389,67 @@ public class QuizService : IQuizService
 
         await _quizRepository.RemoveNoteFromQuizAsync(quizId, noteId);
         return true;
+    }
+
+    public async Task<IEnumerable<SourceDto>> GetQuizSourcesAsync(int quizId, int? currentUserId)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            return Enumerable.Empty<SourceDto>();
+
+        // Respect privacy: only owner can see sources of private quizzes
+        if (quiz.Visibility == "private" && quiz.UserId != currentUserId)
+            return Enumerable.Empty<SourceDto>();
+
+        var sources = await _quizRepository.GetSourcesByQuizIdAsync(quizId);
+        return sources.Select(MapSourceToDto);
+    }
+
+    public async Task<SourceDto> AddSourceToQuizAsync(int quizId, int userId, int sourceId)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            throw new ArgumentException("Quiz not found");
+
+        if (quiz.UserId != userId)
+            throw new UnauthorizedAccessException("You do not own this quiz");
+
+        var source = await _sourceRepository.GetByIdAsync(sourceId);
+        if (source == null || source.UserId != userId)
+            throw new ArgumentException("Source not found or does not belong to you");
+
+        await _quizRepository.AddSourceToQuizAsync(quizId, sourceId);
+        return MapSourceToDto(source);
+    }
+
+    public async Task<bool> RemoveSourceFromQuizAsync(int quizId, int sourceId, int userId, bool isAdmin)
+    {
+        var quiz = await _quizRepository.GetByIdAsync(quizId);
+        if (quiz == null)
+            return false;
+
+        if (!isAdmin && quiz.UserId != userId)
+            return false;
+
+        await _quizRepository.RemoveSourceFromQuizAsync(quizId, sourceId);
+        return true;
+    }
+
+    // Helper mapping method (same as in SourceService)
+    private SourceDto MapSourceToDto(Source.Source s)
+    {
+        return new SourceDto
+        {
+            Id = s.Id,
+            UserId = s.UserId,
+            Type = s.Type,
+            Title = s.Title,
+            Url = s.Url,
+            RawText = s.RawText,
+            FilePath = s.FilePath,
+            CreatedAt = s.CreatedAt,
+            UpdatedAt = s.UpdatedAt,
+            Metadata = s.MetadataJson
+        };
     }
 }

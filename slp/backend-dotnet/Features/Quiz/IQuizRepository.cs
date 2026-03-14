@@ -24,4 +24,7 @@ public interface IQuizRepository
     Task RemoveNoteFromQuizAsync(int quizId, int noteId);
     Task<Note.Note> CreateNoteAndAddToQuizAsync(int quizId, int userId, string title, string content);
     Task<Note.Note?> GetNoteByIdAndUserAsync(int noteId, int userId);
+    Task<IEnumerable<Source.Source>> GetSourcesByQuizIdAsync(int quizId);
+    Task AddSourceToQuizAsync(int quizId, int sourceId);
+    Task RemoveSourceFromQuizAsync(int quizId, int sourceId);
 }

@@ -45,3 +45,8 @@ public class UpdateQuizDto
     public string? Visibility { get; set; }
     public List<string>? TagNames { get; set; }
 }
+
+public class AddSourceToQuizDto
+{
+    public int SourceId { get; set; }
+}

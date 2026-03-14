@@ -353,7 +353,7 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
         },
       },
     );
-    expect(invalidAttachRes.status()).toBe(400); // or 404 depending on implementation – adjust if needed
+    expect(invalidAttachRes.status()).toBe(400); // or 404 depending on implementation
 
     // 13.9 Try to add a note without title/content and without noteId (should fail)
     const invalidCreateRes = await request.post(
@@ -365,11 +365,190 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
     );
     expect(invalidCreateRes.status()).toBe(400);
 
-    // 13.10 Clean up: remove the note again (optional, but not necessary as quiz will be deleted later)
+    // 13.10 Clean up: remove the note again (optional)
     // We'll keep it attached; when quiz is deleted, quiz_note entries will be cascaded.
 
     // -----------------------------
-    // 13. Change quiz visibility to public and search
+    // 14. Quiz Sources tests (new)
+    // -----------------------------
+    const sourceTitle1 = `Test Source 1 ${Date.now()}`;
+    const sourceContent1 = "Content of source 1";
+    const sourceTitle2 = `Test Source 2 ${Date.now() + 1}`;
+    const sourceContent2 = "Content of source 2";
+
+    // 14.1 Initially no sources
+    const getSourcesRes = await request.get(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(getSourcesRes.status()).toBe(200);
+    let sources = await getSourcesRes.json();
+    expect(sources).toEqual([]);
+
+    // 14.2 Create two sources via /source/note
+    const createSource1Res = await request.post(`${API_BASE_URL}/source/note`, {
+      headers: authHeaders,
+      data: {
+        title: sourceTitle1,
+        content: sourceContent1,
+      },
+    });
+    expect(createSource1Res.status()).toBe(201);
+    const source1 = await createSource1Res.json();
+    expect(source1.title).toBe(sourceTitle1);
+    const sourceId1 = source1.id;
+
+    const createSource2Res = await request.post(`${API_BASE_URL}/source/note`, {
+      headers: authHeaders,
+      data: {
+        title: sourceTitle2,
+        content: sourceContent2,
+      },
+    });
+    expect(createSource2Res.status()).toBe(201);
+    const source2 = await createSource2Res.json();
+    expect(source2.title).toBe(sourceTitle2);
+    const sourceId2 = source2.id;
+
+    // 14.3 Attach first source to quiz
+    const attachSource1Res = await request.post(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+        data: {
+          sourceId: sourceId1,
+        },
+      },
+    );
+    expect(attachSource1Res.status()).toBe(200); // Created? The controller returns Ok with source
+    const attachedSource1 = await attachSource1Res.json();
+    expect(attachedSource1.id).toBe(sourceId1);
+
+    // 14.4 Verify sources list now contains one
+    const getSourcesAfterAttach1Res = await request.get(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(getSourcesAfterAttach1Res.status()).toBe(200);
+    sources = await getSourcesAfterAttach1Res.json();
+    expect(sources.length).toBe(1);
+    expect(sources[0].id).toBe(sourceId1);
+    expect(sources[0].title).toBe(sourceTitle1);
+
+    // 14.5 Attach second source
+    const attachSource2Res = await request.post(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+        data: {
+          sourceId: sourceId2,
+        },
+      },
+    );
+    expect(attachSource2Res.status()).toBe(200);
+    const attachedSource2 = await attachSource2Res.json();
+    expect(attachedSource2.id).toBe(sourceId2);
+
+    // 14.6 Verify sources list now has two
+    const getSourcesAfterAttach2Res = await request.get(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(getSourcesAfterAttach2Res.status()).toBe(200);
+    sources = await getSourcesAfterAttach2Res.json();
+    expect(sources.length).toBe(2);
+    expect(sources.map((s) => s.id)).toEqual(
+      expect.arrayContaining([sourceId1, sourceId2]),
+    );
+
+    // 14.7 Remove first source
+    const removeSource1Res = await request.delete(
+      `${API_BASE_URL}/quiz/${quizId}/sources/${sourceId1}`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(removeSource1Res.status()).toBe(204);
+
+    // 14.8 Verify source is removed
+    const getSourcesAfterRemoveRes = await request.get(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(getSourcesAfterRemoveRes.status()).toBe(200);
+    sources = await getSourcesAfterRemoveRes.json();
+    expect(sources.length).toBe(1);
+    expect(sources[0].id).toBe(sourceId2);
+
+    // 14.9 Try to attach a non-existent source (should fail)
+    const attachInvalidRes = await request.post(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+        data: {
+          sourceId: 999999,
+        },
+      },
+    );
+    expect(attachInvalidRes.status()).toBe(400);
+
+    // 14.10 Try to attach a source that does not belong to the user (if possible)
+    // For simplicity we skip creating another user; but we can rely on the service throwing UnauthorizedAccessException.
+    // The service checks ownership via source.UserId == userId.
+    // To test this we would need another user's source; not implemented here.
+
+    // 14.11 Re-attach the first source to ensure idempotency (optional)
+    const reattachSource1Res = await request.post(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+        data: {
+          sourceId: sourceId1,
+        },
+      },
+    );
+    expect(reattachSource1Res.status()).toBe(200);
+    const reattached = await reattachSource1Res.json();
+    expect(reattached.id).toBe(sourceId1);
+
+    // 14.12 Verify now two sources again
+    const getSourcesAfterReattachRes = await request.get(
+      `${API_BASE_URL}/quiz/${quizId}/sources`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(getSourcesAfterReattachRes.status()).toBe(200);
+    sources = await getSourcesAfterReattachRes.json();
+    expect(sources.length).toBe(2);
+
+    // Clean up sources (optional) – they will be deleted when quiz is deleted? No, source deletion is separate.
+    // But we can delete them to avoid leftover data.
+    const delSource1Res = await request.delete(
+      `${API_BASE_URL}/source/${sourceId1}`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(delSource1Res.status()).toBe(204);
+    const delSource2Res = await request.delete(
+      `${API_BASE_URL}/source/${sourceId2}`,
+      {
+        headers: authHeaders,
+      },
+    );
+    expect(delSource2Res.status()).toBe(204);
+
+    // -----------------------------
+    // 15. Change quiz visibility to public and search
     // -----------------------------
     const visibilityRes = await request.put(`${API_BASE_URL}/quiz/${quizId}`, {
       headers: authHeaders,
@@ -387,7 +566,7 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
     expect(found).toBe(true);
 
     // -----------------------------
-    // 14. Get my quizzes (authenticated)
+    // 16. Get my quizzes (authenticated)
     // -----------------------------
     const myQuizzesRes = await request.get(`${API_BASE_URL}/quiz?mine=true`, {
       headers: authHeaders,
@@ -397,7 +576,7 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
     expect(myQuizzes.some((q) => q.id === quizId)).toBe(true);
 
     // -----------------------------
-    // 15. Edge case: invalid JSON when creating question (should fail)
+    // 17. Edge case: invalid JSON when creating question (should fail)
     // -----------------------------
     const invalidRes = await request.post(
       `${API_BASE_URL}/quiz/${quizId}/questions`,
@@ -412,7 +591,7 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
     expect(invalidRes.status()).toBe(400);
 
     // -----------------------------
-    // 16. Edge case: access non‑existent quiz/question
+    // 18. Edge case: access non‑existent quiz/question
     // -----------------------------
     const nonExistentQuiz = await request.get(`${API_BASE_URL}/quiz/999999`, {
       headers: authHeaders,
@@ -428,7 +607,7 @@ test.describe("Quiz & QuizQuestion API End-to-End", () => {
     expect(nonExistentQ.status()).toBe(404);
 
     // -----------------------------
-    // 17. Delete original quiz and verify everything is gone
+    // 19. Delete original quiz and verify everything is gone
     // -----------------------------
     const delQuizRes = await request.delete(`${API_BASE_URL}/quiz/${quizId}`, {
       headers: authHeaders,

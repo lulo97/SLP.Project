@@ -35,7 +35,7 @@ public class QuizRepository : IQuizRepository
             .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
-            .Include(q => q.QuizNotes).ThenInclude(qn => qn.Note)   // <-- add this
+            .Include(q => q.QuizNotes).ThenInclude(qn => qn.Note)
             .Include(q => q.User)
             .FirstOrDefaultAsync(q => q.Id == id && !q.Disabled);
 
@@ -230,5 +230,41 @@ public class QuizRepository : IQuizRepository
     {
         return await _context.Notes
             .FirstOrDefaultAsync(n => n.Id == noteId && n.UserId == userId);
+    }
+
+    public async Task<IEnumerable<Source.Source>> GetSourcesByQuizIdAsync(int quizId)
+    {
+        var quiz = await _context.Quizzes
+            .Include(q => q.QuizSources)
+                .ThenInclude(qs => qs.Source)
+            .FirstOrDefaultAsync(q => q.Id == quizId && !q.Disabled);
+
+        return quiz?.QuizSources.Select(qs => qs.Source) ?? Enumerable.Empty<Source.Source>();
+    }
+
+    public async Task AddSourceToQuizAsync(int quizId, int sourceId)
+    {
+        // Avoid duplicates
+        var exists = await _context.QuizSources
+            .AnyAsync(qs => qs.QuizId == quizId && qs.SourceId == sourceId);
+
+        if (!exists)
+        {
+            var quizSource = new QuizSource { QuizId = quizId, SourceId = sourceId };
+            _context.QuizSources.Add(quizSource);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task RemoveSourceFromQuizAsync(int quizId, int sourceId)
+    {
+        var quizSource = await _context.QuizSources
+            .FirstOrDefaultAsync(qs => qs.QuizId == quizId && qs.SourceId == sourceId);
+
+        if (quizSource != null)
+        {
+            _context.QuizSources.Remove(quizSource);
+            await _context.SaveChangesAsync();
+        }
     }
 }
