@@ -24,7 +24,7 @@ import type { CreateQuestionPayload } from '@/features/question/stores/questionS
 
 const props = defineProps<{
   visible: boolean;
-  question?: any; // the full snapshot object (if editing)
+  question?: any; // the quiz question object (DisplayQuestion) with questionSnapshotJson
 }>();
 
 const emit = defineEmits<{
@@ -32,18 +32,26 @@ const emit = defineEmits<{
   (e: 'saved', payload: CreateQuestionPayload, id?: number): void;
 }>();
 
-// Convert snapshot to the shape expected by QuestionForm
+// Convert the quiz question (which contains a snapshot JSON string) to the shape expected by QuestionForm
 const initialQuestion = computed(() => {
   if (!props.question) return null;
-  // The snapshot may contain metadataJson string; QuestionForm expects parsed fields.
-  // We'll just pass the whole object and let QuestionForm handle it.
+
+  // Parse the snapshot JSON
+  let snapshot: any = {};
+  try {
+    snapshot = JSON.parse(props.question.questionSnapshotJson || '{}');
+  } catch {
+    console.error('Failed to parse question snapshot');
+  }
+
+  // Build the object matching QuestionDto structure
   return {
     id: props.question.id,
-    content: props.question.content,
-    type: props.question.type,
-    explanation: props.question.explanation,
-    metadataJson: props.question.metadataJson,
-    tags: props.question.tags,
+    content: snapshot.content || '',
+    type: snapshot.type || '',
+    explanation: snapshot.explanation || '',
+    metadataJson: snapshot.metadata ? JSON.stringify(snapshot.metadata) : undefined,
+    tags: snapshot.tags || [],
   };
 });
 

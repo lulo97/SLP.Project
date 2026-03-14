@@ -6,6 +6,7 @@ export interface QuizListDto {
   title: string;
   description?: string;
   visibility: "private" | "public" | "unlisted";
+  disabled?: boolean;
   createdAt: string;
   updatedAt: string;
   tags: string[];

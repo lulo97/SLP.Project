@@ -44,6 +44,9 @@ test.describe("Quiz Question: Edit and Delete", () => {
     const editedTitle = `${originalTitle} EDITED`;
     await page.fill('[data-testid="question-title"]', editedTitle);
     await page.click('[data-testid="submit-question"]');
+
+    // Wait for success message and modal to close
+    await expect(page.locator('.ant-message-success:has-text("Question updated")')).toBeVisible();
     await page.waitForSelector('.ant-modal-content', { state: 'hidden' });
 
     // Verify edited title appears
