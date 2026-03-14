@@ -89,77 +89,67 @@ export async function deleteSourceViaApi(token, id) {
   expect([200, 204]).toContain(response.status); // fetch Response uses status property
 }
 
-export async function addQuestionToQuiz(
-  page,
-  questionType = "multiple_choice",
-) {
+export async function addQuestionToQuiz(page, questionType, config = {}) {
   await page.click('[data-testid="add-question-button"]');
+  await page.waitForSelector('.ant-modal-content', { state: 'visible', timeout: 10000 });
+  await page.waitForTimeout(300);
+  await expect(page.locator('[data-testid="question-title"]')).toBeVisible({ timeout: 5000 });
 
-  // Wait for modal content to appear
-  await page.waitForSelector(".ant-modal-content", {
-    state: "visible",
-    timeout: 10000,
-  });
-  await page.waitForTimeout(300); // brief pause for form rendering
-  await expect(page.locator('[data-testid="question-title"]')).toBeVisible({
-    timeout: 5000,
-  });
-
-  const questionTitle = generateUniqueName(questionType);
+  const questionTitle = config.content || generateUniqueName(questionType);
   await page.fill('[data-testid="question-title"]', questionTitle);
-  await page.fill(
-    '[data-testid="question-description"]',
-    `Description for ${questionType}`,
-  );
+  if (config.description) {
+    await page.fill('[data-testid="question-description"]', config.description);
+  }
 
   // Select question type
   await page.click('[data-testid="question-type"]');
-  await page.waitForSelector(
-    ".ant-select-dropdown:not(.ant-select-dropdown-hidden)",
-  );
+  await page.waitForSelector('.ant-select-dropdown:not(.ant-select-dropdown-hidden)');
   const typeLabel = {
-    multiple_choice: "Multiple Choice",
-    true_false: "True/False",
-    fill_blank: "Fill Blank",
-    ordering: "Ordering",
-    matching: "Matching",
+    multiple_choice: 'Multiple Choice',
+    true_false: 'True/False',
+    fill_blank: 'Fill Blank',
+    ordering: 'Ordering',
+    matching: 'Matching',
   }[questionType];
-  await page.click(
-    `.ant-select-dropdown .ant-select-item-option:has-text("${typeLabel}")`,
-  );
+  await page.click(`.ant-select-dropdown .ant-select-item-option:has-text("${typeLabel}")`);
   try {
-    await page.waitForSelector(".ant-select-dropdown", {
-      state: "hidden",
-      timeout: 2000,
-    });
+    await page.waitForSelector('.ant-select-dropdown', { state: 'hidden', timeout: 2000 });
   } catch {
-    await page.keyboard.press("Escape");
+    await page.keyboard.press('Escape');
   }
 
   // Fill type-specific fields
-  if (questionType === "multiple_choice") {
-    const options = ["Option A", "Option B", "Option C", "Option D"];
+  if (questionType === 'multiple_choice') {
+    const options = config.options || ['Option A', 'Option B', 'Option C', 'Option D'];
     for (let i = 0; i < options.length; i++) {
       await page.fill(`[data-testid="mc-option-${i}-input"]`, options[i]);
     }
-    await page.click('[data-testid="mc-option-0-checkbox"]');
-    await page.click('[data-testid="mc-option-2-checkbox"]');
-  } else if (questionType === "true_false") {
-    await page.click('[data-testid="true-false-true"]');
-  } else if (questionType === "fill_blank") {
-    const keyword = `keyword_${Date.now()}`;
+    // Select correct answers (by index)
+    const correctIndices = config.correctIndices || [0];
+    for (const idx of correctIndices) {
+      await page.click(`[data-testid="mc-option-${idx}-checkbox"]`);
+    }
+  } else if (questionType === 'true_false') {
+    const answer = config.correctAnswer === true ? 'true' : 'false';
+    if (answer === 'true') {
+      await page.click('[data-testid="true-false-true"]');
+    } else {
+      await page.click('[data-testid="true-false-false"]');
+    }
+  } else if (questionType === 'fill_blank') {
+    const keyword = config.keyword || `keyword_${Date.now()}`;
     await page.fill('[data-testid="fill-blank-keyword"]', keyword);
-  } else if (questionType === "ordering") {
-    const items = ["First", "Second", "Third", "Fourth"];
+  } else if (questionType === 'ordering') {
+    const items = config.items || ['First', 'Second', 'Third', 'Fourth'];
     for (let i = 0; i < items.length; i++) {
       await page.fill(`[data-testid="ordering-item-${i}"]`, items[i]);
     }
-  } else if (questionType === "matching") {
-    const pairs = [
-      { left: "Cat", right: "Meow" },
-      { left: "Dog", right: "Woof" },
-      { left: "Cow", right: "Moo" },
-      { left: "Sheep", right: "Baa" },
+  } else if (questionType === 'matching') {
+    const pairs = config.pairs || [
+      { left: 'Cat', right: 'Meow' },
+      { left: 'Dog', right: 'Woof' },
+      { left: 'Cow', right: 'Moo' },
+      { left: 'Sheep', right: 'Baa' },
     ];
     for (let i = 0; i < pairs.length; i++) {
       await page.fill(`[data-testid="matching-left-${i}"]`, pairs[i].left);
@@ -167,70 +157,20 @@ export async function addQuestionToQuiz(
     }
   }
 
-  // Add a tag – pressing Enter usually closes the dropdown automatically
-  await page.locator('[data-testid="question-tags"] input').fill("e2e");
-  await page.locator('[data-testid="question-tags"] input').press("Enter");
-  // Wait for tag to appear, then close the dropdown by clicking on the modal title
+  // Add a tag
+  await page.locator('[data-testid="question-tags"] input').fill('e2e');
+  await page.locator('[data-testid="question-tags"] input').press('Enter');
   await page.waitForTimeout(200);
-  // Click on the modal title to close the dropdown (safe, doesn't close modal)
-  await page.click(".ant-modal-header");
-  // Ensure dropdown is hidden
-  await page.waitForSelector(".ant-select-dropdown", {
-    state: "hidden",
-    timeout: 2000,
-  }).catch(() => {});
+  await page.click('.ant-modal-header');
+  await page.waitForSelector('.ant-select-dropdown', { state: 'hidden', timeout: 2000 }).catch(() => {});
 
-  // Ensure submit button is enabled
-  await expect(page.locator('[data-testid="submit-question"]')).toBeEnabled({
-    timeout: 5000,
-  });
-
-  // Click submit
+  await expect(page.locator('[data-testid="submit-question"]')).toBeEnabled({ timeout: 5000 });
   await page.click('[data-testid="submit-question"]');
 
-  // Wait for either modal to close or an error message to appear
-  try {
-    const result = await Promise.race([
-      page
-        .waitForSelector(".ant-modal-content", {
-          state: "hidden",
-          timeout: 15000,
-        })
-        .then(() => "hidden"),
-      page
-        .waitForSelector(".ant-message-error, .ant-message-warning", {
-          state: "visible",
-          timeout: 15000,
-        })
-        .then(async (el) => {
-          const messageType = await el.getAttribute("class");
-          const messageText = await el.textContent();
-          throw new Error(
-            `Form submission failed: ${messageType} - ${messageText}`,
-          );
-        }),
-    ]);
+  // Wait for modal to close
+  await page.waitForSelector('.ant-modal-content', { state: 'hidden', timeout: 15000 });
 
-    if (result !== "hidden") {
-      throw new Error("Unexpected race condition");
-    }
-  } catch (error) {
-    // Take a screenshot for debugging
-    await page.screenshot({
-      path: `question-submit-failure-${questionType}.png`,
-    });
-    // Log a snippet of the page content
-    const html = await page.content();
-    console.error(
-      `Page content after submit failure for ${questionType}:`,
-      html.substring(0, 1000),
-    );
-    throw error;
-  }
-
-  // Verify question appears in the list
-  await expect(
-    page.locator(`.font-medium:has-text("${questionTitle}")`),
-  ).toBeVisible({ timeout: 10000 });
+  // Verify question appears
+  await expect(page.locator(`.font-medium:has-text("${questionTitle}")`)).toBeVisible({ timeout: 10000 });
   return questionTitle;
 }

@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using backend_dotnet.Helpers;
+using backend_dotnet.Helpers;          // <-- ADDED
+using backend_dotnet.Helpers;          // <-- ADDED (if your helper is in Helpers namespace)
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -187,6 +188,7 @@ public class QuizService : IQuizService
             Title = quiz.Title,
             Description = quiz.Description,
             Visibility = quiz.Visibility,
+            Disabled = quiz.Disabled,
             CreatedAt = quiz.CreatedAt,
             UpdatedAt = quiz.UpdatedAt,
             Tags = quiz.QuizTags?.Select(qt => qt.Tag?.Name ?? "").ToList() ?? new List<string>(),
@@ -203,6 +205,7 @@ public class QuizService : IQuizService
             Title = quiz.Title,
             Description = quiz.Description,
             Visibility = quiz.Visibility,
+            Disabled = quiz.Disabled,
             CreatedAt = quiz.CreatedAt,
             UpdatedAt = quiz.UpdatedAt,
             Tags = quiz.QuizTags?.Select(qt => qt.Tag?.Name ?? "").ToList() ?? new List<string>(),
@@ -253,17 +256,10 @@ public class QuizService : IQuizService
         if (quiz.UserId != userId)
             throw new UnauthorizedAccessException("You do not own this quiz");
 
-        // Validate JSON string
+        // Validate snapshot if provided
         if (!string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
         {
-            try
-            {
-                JsonDocument.Parse(dto.QuestionSnapshotJson);
-            }
-            catch (JsonException)
-            {
-                throw new ArgumentException("Invalid JSON format in question snapshot.");
-            }
+            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);   // <-- ADDED
         }
 
         var question = new QuizQuestion
@@ -287,17 +283,10 @@ public class QuizService : IQuizService
         if (question.Quiz.UserId != userId)
             throw new UnauthorizedAccessException("You do not own this quiz");
 
-        // Validate JSON if provided
+        // Validate snapshot if provided
         if (dto.QuestionSnapshotJson != null && !string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
         {
-            try
-            {
-                JsonDocument.Parse(dto.QuestionSnapshotJson);
-            }
-            catch (JsonException)
-            {
-                throw new ArgumentException("Invalid JSON format in question snapshot.");
-            }
+            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);   // <-- ADDED
         }
 
         question.OriginalQuestionId = dto.OriginalQuestionId ?? question.OriginalQuestionId;
@@ -334,6 +323,41 @@ public class QuizService : IQuizService
             CreatedAt = qq.CreatedAt,
             UpdatedAt = qq.UpdatedAt
         };
+    }
+
+    // ------------------------------------------------------------------------
+    // NEW: Validate question snapshot using the shared helper
+    // ------------------------------------------------------------------------
+    private void ValidateQuestionSnapshot(string snapshotJson)
+    {
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(snapshotJson);
+            JsonElement root = doc.RootElement;
+
+            // Extract required fields
+            if (!root.TryGetProperty("type", out JsonElement typeElem) || typeElem.ValueKind != JsonValueKind.String)
+                throw new ArgumentException("Question snapshot must contain a 'type' field (string).");
+            string type = typeElem.GetString()!;
+
+            if (!root.TryGetProperty("content", out JsonElement contentElem) || contentElem.ValueKind != JsonValueKind.String)
+                throw new ArgumentException("Question snapshot must contain a 'content' field (string).");
+            string content = contentElem.GetString()!;
+
+            // Metadata may be an object or null; convert to JSON string for validation
+            string metadataJson = null;
+            if (root.TryGetProperty("metadata", out JsonElement metadataElem))
+            {
+                metadataJson = metadataElem.ValueKind == JsonValueKind.Null ? "null" : metadataElem.GetRawText();
+            }
+
+            // Validate using the shared helper
+            QuestionValidationHelper.ValidateQuestionMetadata(type, content, metadataJson);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("Invalid JSON format in question snapshot.", ex);
+        }
     }
 
     public async Task<IEnumerable<NoteDto>> GetQuizNotesAsync(int quizId, int? currentUserId)

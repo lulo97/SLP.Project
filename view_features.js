@@ -6,12 +6,16 @@ const path = require("path");
 // =======================
 const config = {
   // Filenames must contain at least one of these keywords (case‑insensitive)
-  keywords: ["attempt"],
+  // Leave empty to include all files (subject to excludeKeywords)
+  keywords: ["question", "quiz"],
+
+  // Filenames that contain any of these keywords will be EXCLUDED (case‑insensitive)
+  excludeKeywords: [],   // <-- add your exclude terms here
 
   // Which parts of the project to scan:
   // Choose from "backend", "frontend", "database", "test"
   // Leave empty or comment out to include all.
-  selectedOptions: ["backend", "frontend", "database"]   // <-- change this as needed
+  selectedOptions: ["backend", "database"]   // <-- change this as needed
 };
 
 // Folder patterns for each option (using path.sep for cross‑platform compatibility)
@@ -49,14 +53,23 @@ for (const opt of selectedOptions) {
   allowedPathPatterns.push(...optionPathPatterns[opt]);
 }
 
-console.log(`Scanning for keywords: ${config.keywords.join(", ")}`);
+console.log(`Include keywords: ${config.keywords.length ? config.keywords.join(", ") : "(all files)"}`);
+console.log(`Exclude keywords: ${config.excludeKeywords.length ? config.excludeKeywords.join(", ") : "(none)"}`);
 console.log(`Selected project areas: ${selectedOptions.join(", ")}`);
 console.log(`Path patterns: ${allowedPathPatterns.map(p => p.replace(/\\/g, '/')).join(", ")}`);
 
-// Helper: check if filename contains any keyword
-function matchKeyword(name) {
+// Helper: check if filename matches any include keyword (if any)
+function matchesInclude(name) {
+  if (config.keywords.length === 0) return true; // no include filter = include everything
   const lower = name.toLowerCase();
   return config.keywords.some(k => lower.includes(k.toLowerCase()));
+}
+
+// Helper: check if filename matches any exclude keyword
+function matchesExclude(name) {
+  if (config.excludeKeywords.length === 0) return false;
+  const lower = name.toLowerCase();
+  return config.excludeKeywords.some(k => lower.includes(k.toLowerCase()));
 }
 
 // Helper: check if file path matches any allowed pattern
@@ -77,7 +90,8 @@ function scan(dir, results = []) {
     if (item.isDirectory()) {
       scan(fullPath, results);
     } else {
-      if (matchKeyword(item.name) && matchPath(fullPath)) {
+      // Include if it matches include keywords (or none) AND does NOT match exclude keywords
+      if (matchesInclude(item.name) && !matchesExclude(item.name) && matchPath(fullPath)) {
         results.push(fullPath);
       }
     }
