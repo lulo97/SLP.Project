@@ -1,6 +1,7 @@
 ﻿using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
+using backend_dotnet.Features.QuizAttempt;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
@@ -30,6 +31,8 @@ public class AppDbContext : DbContext
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Note> Notes => Set<Note>();
     public DbSet<QuizNote> QuizNotes { get; set; }
+    public DbSet<QuizAttempt> QuizAttempts { get; set; }
+    public DbSet<QuizAttemptAnswer> QuizAttemptAnswers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

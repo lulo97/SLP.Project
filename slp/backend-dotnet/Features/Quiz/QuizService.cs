@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using backend_dotnet.Helpers;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -25,8 +26,13 @@ public class QuizService : IQuizService
 
     public async Task<QuizDto?> GetQuizByIdAsync(int id, int? currentUserId)
     {
-        var quiz = await _quizRepository.GetByIdAsync(id);
+        // Fetch quiz even if disabled so that owner/admin can still see it
+        var quiz = await _quizRepository.GetByIdAsync(id, includeDisabled: true);
         if (quiz == null)
+            return null;
+
+        // If disabled and not owner/admin, return null
+        if (quiz.Disabled && quiz.UserId != currentUserId && !(currentUserId.HasValue && AdminHelper.IsAdmin(currentUserId.Value)))  // IsAdmin check would need to be passed or injected
             return null;
 
         // If private and not owner, return null
@@ -73,18 +79,30 @@ public class QuizService : IQuizService
 
     public async Task<QuizDto?> UpdateQuizAsync(int id, int userId, UpdateQuizDto dto)
     {
-        var quiz = await _quizRepository.GetByIdAsync(id);
-        if (quiz == null || quiz.UserId != userId)
+        // Fetch quiz, including disabled if the user is admin
+        var includeDisabled = AdminHelper.IsAdmin(userId);
+        var quiz = await _quizRepository.GetByIdAsync(id, includeDisabled);
+        if (quiz == null)
+            return null;
+
+        // If not admin, must be owner
+        if (!AdminHelper.IsAdmin(userId) && quiz.UserId != userId)
             return null;
 
         quiz.Title = dto.Title ?? quiz.Title;
         quiz.Description = dto.Description ?? quiz.Description;
         quiz.Visibility = dto.Visibility ?? quiz.Visibility;
 
+        // Admin can change disabled status
+        if (AdminHelper.IsAdmin(userId) && dto.Disabled.HasValue)
+        {
+            quiz.Disabled = dto.Disabled.Value;
+        }
+
         // Update tags if provided
         if (dto.TagNames != null)
         {
-            // Remove existing
+            // Remove existing tags
             _tagRepository.RemoveQuizTags(quiz.Id);
             var tags = await _tagRepository.GetOrCreateTagsAsync(dto.TagNames);
             quiz.QuizTags = tags.Select(t => new QuizTag { QuizId = quiz.Id, TagId = t.Id }).ToList();

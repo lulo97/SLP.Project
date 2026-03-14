@@ -44,6 +44,7 @@ public class UpdateQuizDto
     public string? Description { get; set; }
     public string? Visibility { get; set; }
     public List<string>? TagNames { get; set; }
+    public bool? Disabled { get; set; }   // <-- added
 }
 
 public class AddSourceToQuizDto

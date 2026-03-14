@@ -3,6 +3,7 @@ using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
+using backend_dotnet.Features.QuizAttempt;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
@@ -26,6 +27,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<ISourceRepository, SourceRepository>();
         services.AddScoped<ITagRepository, TagRepository>();
+        services.AddScoped<IAttemptRepository, AttemptRepository>();
+        services.AddScoped<IAttemptService, AttemptService>();
 
         return services;
     }

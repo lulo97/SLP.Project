@@ -42,6 +42,29 @@ public class QuizRepository : IQuizRepository
         return quiz;
     }
 
+    public async Task<Quiz?> GetByIdAsync(int id, bool includeDisabled = false)
+    {
+        IQueryable<Quiz> query = _context.Quizzes
+            .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
+            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
+            .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
+            .Include(q => q.QuizNotes).ThenInclude(qn => qn.Note)
+            .Include(q => q.User);
+
+        if (includeDisabled)
+        {
+            // Bypass the global query filter to include disabled quizzes
+            query = query.IgnoreQueryFilters();
+        }
+        else
+        {
+            // Explicitly exclude disabled quizzes (global filter may also apply)
+            query = query.Where(q => !q.Disabled);
+        }
+
+        return await query.FirstOrDefaultAsync(q => q.Id == id);
+    }
+
     public async Task<IEnumerable<Quiz>> GetUserQuizzesAsync(int userId, bool includeDisabled = false)
     {
         var query = _context.Quizzes.Where(q => q.UserId == userId);
