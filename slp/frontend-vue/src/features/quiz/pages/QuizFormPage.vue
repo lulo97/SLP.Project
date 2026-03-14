@@ -3,17 +3,17 @@
     <a-card class="shadow-sm">
       <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical">
         <a-form-item label="Title" required>
-          <a-input v-model:value="form.title" placeholder="Enter quiz title" />
+          <a-input v-model:value="form.title" placeholder="Enter quiz title" data-testid="quiz-title-input" />
         </a-form-item>
 
         <a-form-item label="Description">
-          <a-textarea v-model:value="form.description" placeholder="Describe your quiz" :rows="3" />
+          <a-textarea v-model:value="form.description" placeholder="Describe your quiz" :rows="3" data-testid="quiz-description-input" />
         </a-form-item>
 
         <a-form-item label="Visibility">
-          <a-radio-group v-model:value="form.visibility">
-            <a-radio value="private">Private (only you)</a-radio>
-            <a-radio value="public">Public (visible to everyone)</a-radio>
+          <a-radio-group v-model:value="form.visibility" data-testid="quiz-visibility-radio-group">
+            <a-radio value="private" data-testid="quiz-visibility-private">Private (only you)</a-radio>
+            <a-radio value="public" data-testid="quiz-visibility-public">Public (visible to everyone)</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -23,11 +23,12 @@
             mode="tags"
             placeholder="Enter tags and press enter"
             :token-separators="[',']"
+            data-testid="quiz-tags-select"
           />
         </a-form-item>
 
         <a-form-item>
-          <a-button type="primary" html-type="submit" :loading="quizStore.loading" block>
+          <a-button type="primary" html-type="submit" :loading="quizStore.loading" block data-testid="quiz-submit-button">
             {{ isEdit ? 'Update Quiz' : 'Create Quiz' }}
           </a-button>
         </a-form-item>

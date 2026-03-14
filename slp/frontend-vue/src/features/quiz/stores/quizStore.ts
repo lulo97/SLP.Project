@@ -39,6 +39,15 @@ export interface NoteDto {
   updatedAt: string;
 }
 
+export interface SourceDto {
+  id: number;
+  type: string;
+  title: string;
+  url?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const useQuizStore = defineStore("quiz", {
   state: () => ({
     quizzes: [] as QuizListDto[],
@@ -47,6 +56,8 @@ export const useQuizStore = defineStore("quiz", {
     error: null as string | null,
     notes: [] as NoteDto[],
     notesLoading: false,
+    sources: [] as SourceDto[],
+    sourcesLoading: false,
   }),
 
   actions: {
@@ -281,6 +292,52 @@ export const useQuizStore = defineStore("quiz", {
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to remove note";
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchQuizSources(quizId: number) {
+      this.sourcesLoading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get<SourceDto[]>(
+          `/quiz/${quizId}/sources`,
+        );
+        this.sources = response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to fetch sources";
+      } finally {
+        this.sourcesLoading = false;
+      }
+    },
+
+    async addSourceToQuiz(quizId: number, sourceId: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.post<SourceDto>(
+          `/quiz/${quizId}/sources`,
+          { sourceId },
+        );
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to attach source";
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async removeSourceFromQuiz(quizId: number, sourceId: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await apiClient.delete(`/quiz/${quizId}/sources/${sourceId}`);
+        return true;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to detach source";
         return false;
       } finally {
         this.loading = false;

@@ -6,6 +6,7 @@
         :type="currentTab === 'my' ? 'primary' : 'default'"
         @click="switchTab('my')"
         block
+        data-testid="tab-my-quizzes"
       >
         My Quizzes
       </a-button>
@@ -13,6 +14,7 @@
         :type="currentTab === 'public' ? 'primary' : 'default'"
         @click="switchTab('public')"
         block
+        data-testid="tab-public-quizzes"
       >
         Public Quizzes
       </a-button>
@@ -26,6 +28,8 @@
       enter-button
       @search="handleSearch"
       class="mb-4"
+      data-testid="search-quizzes-input"
+      :searchButtonProps="{ 'data-testid': 'search-quizzes-button' }"
     />
 
     <!-- Quiz List -->
@@ -36,39 +40,39 @@
       class="quiz-list"
     >
       <template #renderItem="{ item }">
-        <a-list-item>
+        <a-list-item :data-testid="`quiz-list-item-${item.id}`">
           <a-list-item-meta>
             <template #title>
               <div class="flex items-center justify-between">
-                <router-link :to="`/quiz/${item.id}`" class="text-lg font-medium">
+                <router-link :to="`/quiz/${item.id}`" class="text-lg font-medium" :data-testid="`quiz-title-link-${item.id}`">
                   {{ item.title }}
                 </router-link>
-                <a-tag :color="item.visibility === 'public' ? 'green' : 'blue'">
+                <a-tag :color="item.visibility === 'public' ? 'green' : 'blue'" :data-testid="`quiz-visibility-${item.id}`">
                   {{ item.visibility }}
                 </a-tag>
               </div>
             </template>
             <template #description>
               <div class="text-sm text-gray-500">
-                <div class="mb-2">{{ item.description || 'No description' }}</div>
+                <div class="mb-2" :data-testid="`quiz-description-${item.id}`">{{ item.description || 'No description' }}</div>
                 <div class="flex items-center justify-between">
-                  <span>by {{ item.userName || 'Unknown' }}</span>
-                  <span>{{ item.questionCount }} questions</span>
+                  <span :data-testid="`quiz-author-${item.id}`">by {{ item.userName || 'Unknown' }}</span>
+                  <span :data-testid="`quiz-question-count-${item.id}`">{{ item.questionCount }} questions</span>
                 </div>
                 <div class="flex flex-wrap gap-1 mt-2">
-                  <a-tag v-for="tag in item.tags" :key="tag" size="small">{{ tag }}</a-tag>
+                  <a-tag v-for="tag in item.tags" :key="tag" size="small" :data-testid="`quiz-tag-${item.id}-${tag}`">{{ tag }}</a-tag>
                 </div>
               </div>
             </template>
           </a-list-item-meta>
           <template #actions>
-            <span @click="handleDuplicate(item.id)">
+            <span @click="handleDuplicate(item.id)" :data-testid="`duplicate-quiz-${item.id}`">
               <CopyOutlined /> Duplicate
             </span>
-            <span v-if="isOwnerOrAdmin(item)" @click="handleEdit(item.id)">
+            <span v-if="isOwnerOrAdmin(item)" @click="handleEdit(item.id)" :data-testid="`edit-quiz-${item.id}`">
               <EditOutlined /> Edit
             </span>
-            <span v-if="isOwnerOrAdmin(item)" @click="handleDelete(item.id)">
+            <span v-if="isOwnerOrAdmin(item)" @click="handleDelete(item.id)" :data-testid="`delete-quiz-${item.id}`">
               <DeleteOutlined /> Delete
             </span>
           </template>
@@ -78,7 +82,7 @@
 
     <!-- Floating Action Button to Create Quiz -->
     <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
-      <a-float-button @click="goToCreateQuiz">
+      <a-float-button @click="goToCreateQuiz" data-testid="create-quiz-fab">
         <template #icon><PlusOutlined /></template>
       </a-float-button>
     </a-float-button-group>

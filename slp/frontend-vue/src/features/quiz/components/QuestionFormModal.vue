@@ -7,6 +7,7 @@
     width="90%"
     :mask-closable="false"
     wrap-class-name="full-width-modal"
+    data-testid="question-form-modal"
   >
     <QuestionForm
       :initial-question="initialQuestion"
