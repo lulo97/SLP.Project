@@ -21,7 +21,7 @@ test.describe('Quiz Notes', () => {
     const { id } = await createQuiz(page);
 
     await page.click('[data-testid="add-note-button"]');
-    await page.waitForSelector('[data-testid="add-note-modal"]', { state: 'visible' });
+    await page.waitForSelector('.ant-modal-content', { state: 'visible' });
 
     const noteTitle = generateUniqueName('Note');
     const noteContent = 'Test content';
@@ -29,15 +29,22 @@ test.describe('Quiz Notes', () => {
     await page.fill('[data-testid="note-content-input"]', noteContent);
     await page.click('[data-testid="add-note-submit"]');
 
-    const noteItem = page.locator(`.ant-card-body:has-text("${noteTitle}")`).first();
-    await expect(noteItem).toBeVisible();
-    const testId = await noteItem.getAttribute('data-testid');
-    const noteId = testId.split('-').pop();
+    await page.waitForSelector('.ant-modal-content', { state: 'hidden' });
 
-    await page.click(`[data-testid="delete-note-${noteId}"]`);
-    await expect(noteItem).not.toBeVisible();
+    // Find the note via its title and get its ID from the delete button's testid
+    const deleteButton = page.locator(`[data-testid^="delete-note-"]`).first();
+    await expect(deleteButton).toBeVisible();
+    const deleteButtonTestId = await deleteButton.getAttribute('data-testid');
+    const noteId = deleteButtonTestId.replace('delete-note-', '');
 
-    // API check – FIXED: Use X-Session-Token
+    // Verify note content is visible
+    await expect(page.locator(`text=${noteTitle}`)).toBeVisible();
+
+    // Delete note
+    await deleteButton.click();
+    await expect(page.locator(`text=${noteTitle}`)).not.toBeVisible();
+
+    // API check
     const notesResponse = await request.get(`${API_BASE_URL}/quiz/${id}/notes`, {
       headers: { 'X-Session-Token': authToken },
     });

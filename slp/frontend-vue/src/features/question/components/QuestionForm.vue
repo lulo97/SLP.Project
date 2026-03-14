@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import MultipleChoice from "./MultipleChoice.vue";
 import TrueFalse from "./TrueFalse.vue";
@@ -121,7 +121,7 @@ interface QuestionForm {
   tags: string[];
 }
 
-const form = ref<QuestionForm>({
+const getDefaultForm = (): QuestionForm => ({
   title: "",
   description: "",
   type: "multiple_choice",
@@ -139,32 +139,14 @@ const form = ref<QuestionForm>({
   tags: [],
 });
 
-// Reset type-specific fields when type changes
-watch(
-  () => form.value.type,
-  (newType) => {
-    if (newType === "multiple_choice") {
-      form.value.options = ["", "", "", ""];
-      form.value.correctAnswers = [];
-      form.value.answer = "";
-    } else if (newType === "true_false") {
-      form.value.answer = "true";
-    } else if (newType === "fill_blank") {
-      form.value.answer = "[]";
-    } else if (newType === "ordering") {
-      form.value.orderingItems = ["", "", "", ""];
-    } else if (newType === "matching") {
-      form.value.matchingPairs = [
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-      ];
-    }
-  }
-);
+const form = ref<QuestionForm>(getDefaultForm());
 
-// Initialize form from initialQuestion
+// Reset form to defaults
+const resetForm = () => {
+  form.value = getDefaultForm();
+};
+
+// Initialize form from initialQuestion (edit mode)
 const initializeForm = () => {
   if (!props.initialQuestion) return;
 
@@ -223,7 +205,41 @@ const initializeForm = () => {
   }
 };
 
-onMounted(initializeForm);
+// Watch for changes in initialQuestion (modal opens)
+watch(() => props.initialQuestion, (newVal) => {
+  if (newVal) {
+    isEdit.value = true;
+    initializeForm();
+  } else {
+    isEdit.value = false;
+    resetForm();
+  }
+}, { immediate: true });
+
+// Reset type-specific fields when type changes (optional, but kept for consistency)
+watch(
+  () => form.value.type,
+  (newType) => {
+    if (newType === "multiple_choice") {
+      form.value.options = ["", "", "", ""];
+      form.value.correctAnswers = [];
+      form.value.answer = "";
+    } else if (newType === "true_false") {
+      form.value.answer = "true";
+    } else if (newType === "fill_blank") {
+      form.value.answer = "[]";
+    } else if (newType === "ordering") {
+      form.value.orderingItems = ["", "", "", ""];
+    } else if (newType === "matching") {
+      form.value.matchingPairs = [
+        { left: "", right: "" },
+        { left: "", right: "" },
+        { left: "", right: "" },
+        { left: "", right: "" },
+      ];
+    }
+  }
+);
 
 // Build metadata object according to backend expectations
 function buildMetadata(): Record<string, any> {

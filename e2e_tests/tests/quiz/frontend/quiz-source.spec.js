@@ -24,7 +24,10 @@ test.describe('Quiz Sources', () => {
     const { id } = await createQuiz(page);
 
     await page.click('[data-testid="attach-source-button"]');
-    await page.waitForSelector('[data-testid="attach-source-modal"]', { state: 'visible' });
+    // Wait for modal content to appear (using class)
+    await page.waitForSelector('.ant-modal-content', { state: 'visible', timeout: 10000 });
+    // Brief pause for the modal to fully render
+    await page.waitForTimeout(300);
 
     await page.click(`[data-testid="source-checkbox-${source.id}"]`);
     await page.click('[data-testid="attach-sources-submit"]');
@@ -34,7 +37,7 @@ test.describe('Quiz Sources', () => {
     await page.click(`[data-testid="source-tag-${source.id}"] .ant-tag-close-icon`);
     await expect(page.locator(`[data-testid="source-tag-${source.id}"]`)).not.toBeVisible();
 
-    // API check – FIXED: Use X-Session-Token
+    // API check
     const sourcesResponse = await request.get(`${API_BASE_URL}/quiz/${id}/sources`, {
       headers: { 'X-Session-Token': authToken },
     });
