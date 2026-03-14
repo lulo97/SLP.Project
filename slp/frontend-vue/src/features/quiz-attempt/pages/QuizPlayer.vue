@@ -1,8 +1,9 @@
 <template>
   <MobileLayout :title="`Quiz: ${quizTitle}`">
-    <div v-if="attemptValue" class="player-container space-y-4">
+    <div v-if="attemptValue" class="player-container space-y-4" data-testid="player-container">
+
       <!-- Header with progress and timer -->
-      <div class="flex justify-between items-center">
+      <div class="flex justify-between items-center" data-testid="player-header">
         <div>
           <span class="font-medium" data-testid="player-progress">
             Question {{ composable.currentIndex.value + 1 }} of
@@ -35,13 +36,13 @@
           :answer="composable.currentAnswer.value"
           @answer-change="composable.handleAnswerChange"
         />
-        <div v-else class="text-center py-4 text-gray-500">
+        <div v-else class="text-center py-4 text-gray-500" data-testid="question-loading">
           Loading question...
         </div>
       </div>
 
       <!-- Navigation buttons -->
-      <div class="flex justify-between items-start">
+      <div class="flex justify-between items-start" data-testid="player-navigation">
         <a-button
           @click="composable.prevQuestion"
           :disabled="composable.currentIndex.value === 0"
@@ -60,7 +61,11 @@
         </a-button>
 
         <!-- Submit area -->
-        <div v-else class="flex flex-col items-end gap-1">
+        <div
+          v-else
+          class="flex flex-col items-end gap-1"
+          data-testid="submit-area"
+        >
           <a-button
             type="primary"
             @click="openSubmitModal"
@@ -72,6 +77,7 @@
           <span
             v-if="!composable.isComplete.value"
             class="text-xs text-gray-400"
+            data-testid="answered-count"
           >
             {{ composable.answeredCount.value }}/{{ attemptValue.questionCount }} answered
           </span>
@@ -86,7 +92,7 @@
         title="Questions"
         data-testid="question-sidebar"
       >
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-3 gap-2" data-testid="sidebar-question-grid">
           <a-button
             v-for="(q, idx) in attemptValue.questions"
             :key="q.quizQuestionId"
@@ -96,6 +102,7 @@
               showSidebar = false;
             "
             :data-testid="`sidebar-question-${idx}`"
+            :data-active="idx === composable.currentIndex.value"
           >
             {{ idx + 1 }}
           </a-button>
@@ -112,8 +119,10 @@
         cancel-text="Cancel"
         data-testid="submit-modal"
       >
-        <p>Are you sure you want to submit? You cannot change your answers after submission.</p>
-        <p class="mt-2 text-sm text-gray-500">
+        <p data-testid="submit-modal-message">
+          Are you sure you want to submit? You cannot change your answers after submission.
+        </p>
+        <p class="mt-2 text-sm text-gray-500" data-testid="submit-modal-answered-count">
           Answered: {{ composable.answeredCount.value }} / {{ attemptValue.questionCount }}
         </p>
       </a-modal>

@@ -115,14 +115,17 @@ public class QuizService : IQuizService
 
     public async Task<bool> DeleteQuizAsync(int id, int userId, bool isAdmin)
     {
-        var quiz = await _quizRepository.GetByIdAsync(id);
+        // Fetch including disabled so admins can delete disabled quizzes too.
+        var quiz = await _quizRepository.GetByIdAsync(id, includeDisabled: true);
         if (quiz == null)
             return false;
 
         if (!isAdmin && quiz.UserId != userId)
             return false;
 
-        await _quizRepository.SoftDeleteAsync(id);
+        // Hard delete — removes the row and cascades to quiz_question,
+        // quiz_attempt, quiz_attempt_answer via FK ON DELETE CASCADE.
+        await _quizRepository.HardDeleteAsync(id);
         return true;
     }
 

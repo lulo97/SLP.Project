@@ -4,6 +4,7 @@
     @blur="handleBlur"
     @update:value="handleInput"
     placeholder="Type your answer"
+    data-testid="fill-blank-input"
   />
 </template>
 

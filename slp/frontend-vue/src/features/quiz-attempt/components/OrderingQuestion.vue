@@ -4,15 +4,27 @@
     handle=".drag-handle"
     @end="handleEnd"
     class="space-y-2"
+    data-testid="ordering-container"
   >
     <div
       v-for="(element, index) in localItems"
       :key="element.order_id"
       class="flex items-center gap-2 bg-gray-50 p-2 rounded border"
+      :data-testid="`ordering-item-${element.order_id}`"
+      :data-index="index"
     >
-      <span class="drag-handle cursor-move text-gray-400">☰</span>
-      <span class="flex-1">{{ element.text }}</span>
-      <span class="text-xs text-gray-400">{{ index + 1 }}</span>
+      <span
+        class="drag-handle cursor-move text-gray-400"
+        :data-testid="`ordering-drag-handle-${element.order_id}`"
+      >☰</span>
+      <span
+        class="flex-1"
+        :data-testid="`ordering-item-text-${element.order_id}`"
+      >{{ element.text }}</span>
+      <span
+        class="text-xs text-gray-400"
+        :data-testid="`ordering-item-position-${element.order_id}`"
+      >{{ index + 1 }}</span>
     </div>
   </draggable>
 </template>
@@ -30,18 +42,15 @@ const emit = defineEmits(['update:model-value']);
 
 const localItems = ref<Array<{ text: string; order_id: number }>>([]);
 
-// Initialize localItems from props.items respecting saved order if available
 watch(
   () => [props.items, props.modelValue],
   () => {
     if (props.modelValue && props.modelValue.length) {
-      // Reorder items according to saved order
       const orderMap = new Map(props.items.map(item => [item.order_id, item]));
       localItems.value = props.modelValue
         .map(id => orderMap.get(id))
         .filter(Boolean) as Array<{ text: string; order_id: number }>;
     } else {
-      // Default to original order
       localItems.value = [...props.items];
     }
   },

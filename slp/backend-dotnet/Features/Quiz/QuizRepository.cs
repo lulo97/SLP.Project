@@ -81,6 +81,7 @@ public class QuizRepository : IQuizRepository
         await _context.SaveChangesAsync();
     }
 
+    // REPLACE the existing SoftDeleteAsync:
     public async Task SoftDeleteAsync(int id)
     {
         var quiz = await _context.Quizzes.FindAsync(id);
@@ -90,6 +91,24 @@ public class QuizRepository : IQuizRepository
             quiz.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
+    }
+
+    // ADD a true hard delete — this is what DELETE /api/quiz/{id} should call:
+    public async Task HardDeleteAsync(int id)
+    {
+        // WHY raw SQL instead of _context.Quizzes.Remove():
+        //
+        // DeleteQuizAsync calls GetByIdAsync before this method, which loads the Quiz
+        // entity WITH its QuizQuestions into EF's change tracker. Calling Remove() then
+        // causes EF to sever the in-memory FK relationship before issuing the SQL DELETE.
+        // Because quiz_id is non-nullable (required relationship), EF throws:
+        //   InvalidOperationException: "association has been severed but relationship is required"
+        //
+        // Bypassing EF tracking with raw SQL avoids this entirely.
+        // Postgres ON DELETE CASCADE on quiz_question, quiz_attempt, quiz_attempt_answer,
+        // quiz_tag, quiz_note, quiz_source, quiz_view removes all child rows automatically.
+        await _context.Database.ExecuteSqlRawAsync(
+            "DELETE FROM quiz WHERE id = {0}", id);
     }
 
     public async Task<bool> ExistsAsync(int id)

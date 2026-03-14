@@ -1,11 +1,12 @@
 <template>
-  <div>
+  <div data-testid="matching-container">
     <div class="relative" ref="containerRef">
       <svg
         class="absolute inset-0 pointer-events-none"
         style="z-index: 1; overflow: visible;"
         :width="svgSize.w"
         :height="svgSize.h"
+        data-testid="matching-svg"
       >
         <path
           v-for="(line, i) in lines"
@@ -16,6 +17,7 @@
           stroke-width="2"
           stroke-linecap="round"
           opacity="0.65"
+          :data-testid="`matching-line-${line.leftId}-${line.rightId}`"
         />
         <circle
           v-for="(line, i) in lines"
@@ -35,12 +37,15 @@
 
       <div class="grid grid-cols-2 gap-6">
         <!-- Left column -->
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2" data-testid="matching-left-column">
           <div
             v-for="item in pairs"
             :key="'left-' + item.id"
             :ref="el => setRef(leftRefs, item.id, el)"
             @click="selectLeft(item.id)"
+            :data-testid="`matching-left-${item.id}`"
+            :data-matched="isMatched(item.id, 'left')"
+            :data-selected="selectedLeft === item.id"
             :class="[
               'px-3 py-2.5 rounded-xl border-2 cursor-pointer select-none transition-all text-sm relative z-10',
               selectedLeft === item.id
@@ -54,19 +59,22 @@
               <span
                 v-if="isMatched(item.id, 'left')"
                 class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-500 text-white text-[10px] shrink-0"
+                :data-testid="`matching-left-check-${item.id}`"
               >✓</span>
-              {{ item.left }}
+              <span :data-testid="`matching-left-text-${item.id}`">{{ item.left }}</span>
             </span>
           </div>
         </div>
 
         <!-- Right column -->
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2" data-testid="matching-right-column">
           <div
             v-for="item in shuffledRight"
             :key="'right-' + item.id"
             :ref="el => setRef(rightRefs, item.id, el)"
             @click="selectRight(item.id)"
+            :data-testid="`matching-right-${item.id}`"
+            :data-matched="isMatched(item.id, 'right')"
             :class="[
               'px-3 py-2.5 rounded-xl border-2 cursor-pointer select-none transition-all text-sm relative z-10',
               isMatched(item.id, 'right')
@@ -76,7 +84,7 @@
                   : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
             ]"
           >
-            {{ item.right }}
+            <span :data-testid="`matching-right-text-${item.id}`">{{ item.right }}</span>
           </div>
         </div>
       </div>
@@ -84,10 +92,17 @@
 
     <!-- Footer -->
     <div class="flex items-center justify-between mt-3">
-      <span class="text-xs text-gray-400">
+      <span class="text-xs text-gray-400" data-testid="matching-progress">
         {{ modelValue.length }} / {{ pairs.length }} matched
       </span>
-      <a-button size="small" danger ghost @click="reset" :disabled="modelValue.length === 0">
+      <a-button
+        size="small"
+        danger
+        ghost
+        @click="reset"
+        :disabled="modelValue.length === 0"
+        data-testid="matching-reset"
+      >
         Reset
       </a-button>
     </div>
@@ -95,6 +110,7 @@
     <div
       v-if="modelValue.length === pairs.length && pairs.length > 0"
       class="mt-2 text-center text-sm text-green-600 font-medium"
+      data-testid="matching-complete"
     >
       ✓ All pairs matched!
     </div>
@@ -142,7 +158,6 @@ let ro: ResizeObserver | null = null;
 onMounted(() => {
   shuffledRight.value = [...props.pairs].sort(() => Math.random() - 0.5);
 
-  // ResizeObserver handles container size changes without triggering re-render loop
   ro = new ResizeObserver(() => computeLines());
   if (containerRef.value) ro.observe(containerRef.value);
 
@@ -153,7 +168,6 @@ onBeforeUnmount(() => {
   ro?.disconnect();
 });
 
-// Only recompute lines when modelValue actually changes
 watch(
   () => props.modelValue,
   () => nextTick(computeLines),
@@ -194,7 +208,6 @@ function computeLines() {
 
   const cr = container.getBoundingClientRect();
 
-  // Only update svgSize if dimensions actually changed — avoids unnecessary reactivity
   if (svgSize.value.w !== cr.width || svgSize.value.h !== cr.height) {
     svgSize.value = { w: cr.width, h: cr.height };
   }

@@ -1,6 +1,7 @@
 <template>
-  <span class="text-xs text-gray-500">
-    <SyncOutlined v-if="saving" spin /> {{ saving ? 'Saving...' : 'Saved' }}
+  <span class="text-xs text-gray-500" data-testid="auto-save-indicator">
+    <SyncOutlined v-if="saving" spin data-testid="saving-icon" />
+    <span data-testid="auto-save-label">{{ saving ? 'Saving...' : 'Saved' }}</span>
   </span>
 </template>
 

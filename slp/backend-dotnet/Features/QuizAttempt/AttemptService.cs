@@ -14,39 +14,24 @@ public class AttemptService : IAttemptService
         _quizRepository = quizRepository;
     }
 
+    // ── Start ─────────────────────────────────────────────────────────────────
+
     public async Task<StartAttemptResponseDto> StartAttemptAsync(int quizId, int userId)
     {
-        // Fetch quiz even if disabled so we can check ownership and disabled state
-        var quiz = await _quizRepository.GetByIdAsync(quizId, includeDisabled: true);   // <-- FIXED
+        var quiz = await _quizRepository.GetByIdAsync(quizId, includeDisabled: true);
         if (quiz == null)
             throw new ArgumentException("Quiz not found");
 
-        // Check visibility and ownership
         if (quiz.Visibility == "private" && quiz.UserId != userId)
             throw new UnauthorizedAccessException("You cannot attempt this private quiz");
 
-        // Check if quiz is disabled (admin‑disabled)
         if (quiz.Disabled)
             throw new InvalidOperationException("This quiz is disabled and cannot be attempted");
 
-        // Calculate max score (skip flashcards)
-        int maxScore = 0;
         var questions = quiz.QuizQuestions?.OrderBy(q => q.DisplayOrder).ToList() ?? new();
-        foreach (var q in questions)
-        {
-            try
-            {
-                var snapshot = JsonDocument.Parse(q.QuestionSnapshotJson ?? "{}").RootElement;
-                string type = snapshot.GetProperty("type").GetString() ?? "";
-                if (type != "flashcard")
-                    maxScore++;
-            }
-            catch
-            {
-                // If we can't parse, assume it's a scored question
-                maxScore++;
-            }
-        }
+
+        // Flashcards are not scored
+        int maxScore = questions.Count(q => !IsFlashcard(q.QuestionSnapshotJson));
 
         var attempt = new QuizAttempt
         {
@@ -57,23 +42,21 @@ public class AttemptService : IAttemptService
             MaxScore = maxScore,
             QuestionCount = questions.Count,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
         attempt = await _attemptRepository.CreateAttemptAsync(attempt);
 
-        // Create answer records with snapshots
         foreach (var q in questions)
         {
-            var answer = new QuizAttemptAnswer
+            await _attemptRepository.AddAnswerAsync(new QuizAttemptAnswer
             {
                 AttemptId = attempt.Id,
                 QuizQuestionId = q.Id,
                 QuestionSnapshotJson = q.QuestionSnapshotJson ?? "{}",
                 AnswerJson = "{}",
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            await _attemptRepository.AddAnswerAsync(answer);
+                UpdatedAt = DateTime.UtcNow,
+            });
         }
 
         return new StartAttemptResponseDto
@@ -86,10 +69,12 @@ public class AttemptService : IAttemptService
             {
                 QuizQuestionId = q.Id,
                 DisplayOrder = q.DisplayOrder,
-                QuestionSnapshotJson = q.QuestionSnapshotJson ?? "{}"
-            }).ToList()
+                QuestionSnapshotJson = q.QuestionSnapshotJson ?? "{}",
+            }).ToList(),
         };
     }
+
+    // ── Get ───────────────────────────────────────────────────────────────────
 
     public async Task<AttemptDto?> GetAttemptAsync(int attemptId, int userId, bool isAdmin)
     {
@@ -100,7 +85,7 @@ public class AttemptService : IAttemptService
         if (!isAdmin && attempt.UserId != userId)
             return null;
 
-        // Auto‑abandon after 24 hours
+        // Auto-abandon after 24 hours
         if (attempt.Status == "in_progress" && attempt.StartTime < DateTime.UtcNow.AddHours(-24))
         {
             attempt.Status = "abandoned";
@@ -109,6 +94,8 @@ public class AttemptService : IAttemptService
 
         return MapToDto(attempt);
     }
+
+    // ── Submit answer ─────────────────────────────────────────────────────────
 
     public async Task SubmitAnswerAsync(int attemptId, int userId, SubmitAnswerDto dto)
     {
@@ -124,13 +111,15 @@ public class AttemptService : IAttemptService
         if (answer == null)
             throw new ArgumentException("Question not part of this attempt");
 
-        // Validate JSON
-        try { JsonDocument.Parse(dto.AnswerJson); } catch { throw new ArgumentException("Invalid answer JSON"); }
+        try { JsonDocument.Parse(dto.AnswerJson); }
+        catch { throw new ArgumentException("Invalid answer JSON"); }
 
         answer.AnswerJson = dto.AnswerJson;
         answer.UpdatedAt = DateTime.UtcNow;
         await _attemptRepository.UpdateAnswerAsync(answer);
     }
+
+    // ── Submit attempt ────────────────────────────────────────────────────────
 
     public async Task<AttemptDto> SubmitAttemptAsync(int attemptId, int userId)
     {
@@ -147,26 +136,16 @@ public class AttemptService : IAttemptService
 
         foreach (var ans in answers)
         {
-            // Determine if question is a flashcard (unscored)
-            bool isScored = true;
-            try
+            if (IsFlashcard(ans.QuestionSnapshotJson))
             {
-                var snapshot = JsonDocument.Parse(ans.QuestionSnapshotJson).RootElement;
-                string type = snapshot.GetProperty("type").GetString() ?? "";
-                if (type == "flashcard")
-                    isScored = false;
+                // Flashcards are informational — never scored, always null
+                ans.IsCorrect = null;
             }
-            catch { /* treat as scored */ }
-
-            if (isScored)
+            else
             {
                 bool correct = EvaluateAnswer(ans.QuestionSnapshotJson, ans.AnswerJson);
                 ans.IsCorrect = correct;
                 if (correct) score++;
-            }
-            else
-            {
-                ans.IsCorrect = null; // flashcard: no correctness
             }
 
             ans.UpdatedAt = DateTime.UtcNow;
@@ -181,6 +160,8 @@ public class AttemptService : IAttemptService
         return MapToDto(attempt);
     }
 
+    // ── Review ────────────────────────────────────────────────────────────────
+
     public async Task<AttemptReviewDto?> GetAttemptReviewAsync(int attemptId, int userId, bool isAdmin)
     {
         var attempt = await _attemptRepository.GetByIdAsync(attemptId);
@@ -189,32 +170,35 @@ public class AttemptService : IAttemptService
         if (!isAdmin && attempt.UserId != userId)
             return null;
 
-        var quiz = attempt.Quiz;
-        var answers = attempt.Answers.ToList();
+        // Review only available for completed attempts
+        if (attempt.Status != "completed")
+            return null;
 
         return new AttemptReviewDto
         {
             Id = attempt.Id,
             UserId = attempt.UserId,
             QuizId = attempt.QuizId,
-            QuizTitle = quiz?.Title ?? "",
+            QuizTitle = attempt.Quiz?.Title ?? "",
             StartTime = attempt.StartTime,
             EndTime = attempt.EndTime,
             Score = attempt.Score,
             MaxScore = attempt.MaxScore,
             QuestionCount = attempt.QuestionCount,
             Status = attempt.Status,
-            AnswerReview = answers.Select(a => new AttemptAnswerReviewDto
+            AnswerReview = attempt.Answers.Select(a => new AttemptAnswerReviewDto
             {
                 Id = a.Id,
                 AttemptId = a.AttemptId,
                 QuizQuestionId = a.QuizQuestionId,
                 QuestionSnapshotJson = a.QuestionSnapshotJson,
                 AnswerJson = a.AnswerJson,
-                IsCorrect = a.IsCorrect ?? false
-            }).ToList()
+                IsCorrect = a.IsCorrect ?? false,
+            }).ToList(),
         };
     }
+
+    // ── User attempts list ────────────────────────────────────────────────────
 
     public async Task<IEnumerable<AttemptDto>> GetUserAttemptsForQuizAsync(int quizId, int userId)
     {
@@ -222,36 +206,48 @@ public class AttemptService : IAttemptService
         return attempts.Select(MapToDto);
     }
 
-    private AttemptDto MapToDto(QuizAttempt attempt)
+    // ── Mapping ───────────────────────────────────────────────────────────────
+
+    private static AttemptDto MapToDto(QuizAttempt attempt) => new()
     {
-        return new AttemptDto
+        Id = attempt.Id,
+        UserId = attempt.UserId,
+        QuizId = attempt.QuizId,
+        StartTime = attempt.StartTime,
+        EndTime = attempt.EndTime,
+        Score = attempt.Score,
+        MaxScore = attempt.MaxScore,
+        QuestionCount = attempt.QuestionCount,
+        Status = attempt.Status,
+        Answers = attempt.Answers?.Select(a => new AttemptAnswerDto
         {
-            Id = attempt.Id,
-            UserId = attempt.UserId,
-            QuizId = attempt.QuizId,
-            StartTime = attempt.StartTime,
-            EndTime = attempt.EndTime,
-            Score = attempt.Score,
-            MaxScore = attempt.MaxScore,
-            QuestionCount = attempt.QuestionCount,
-            Status = attempt.Status,
-            Answers = attempt.Answers?.Select(a => new AttemptAnswerDto
-            {
-                Id = a.Id,
-                AttemptId = a.AttemptId,
-                QuizQuestionId = a.QuizQuestionId,
-                QuestionSnapshotJson = a.QuestionSnapshotJson,
-                AnswerJson = a.AnswerJson,
-                IsCorrect = a.IsCorrect
-            }).ToList()
-        };
+            Id = a.Id,
+            AttemptId = a.AttemptId,
+            QuizQuestionId = a.QuizQuestionId,
+            QuestionSnapshotJson = a.QuestionSnapshotJson,
+            AnswerJson = a.AnswerJson,
+            IsCorrect = a.IsCorrect,
+        }).ToList(),
+    };
+
+    // ── Evaluation ────────────────────────────────────────────────────────────
+
+    private static bool IsFlashcard(string? snapshotJson)
+    {
+        if (string.IsNullOrWhiteSpace(snapshotJson)) return false;
+        try
+        {
+            var root = JsonDocument.Parse(snapshotJson).RootElement;
+            return root.TryGetProperty("type", out var t) && t.GetString() == "flashcard";
+        }
+        catch { return false; }
     }
 
-    private bool EvaluateAnswer(string questionSnapshotJson, string answerJson)
+    private static bool EvaluateAnswer(string snapshotJson, string answerJson)
     {
         try
         {
-            using var qDoc = JsonDocument.Parse(questionSnapshotJson);
+            using var qDoc = JsonDocument.Parse(snapshotJson);
             using var aDoc = JsonDocument.Parse(answerJson);
             var q = qDoc.RootElement;
             var a = aDoc.RootElement;
@@ -265,8 +261,7 @@ public class AttemptService : IAttemptService
                 "fill_blank" => EvaluateFillBlank(q, a),
                 "ordering" => EvaluateOrdering(q, a),
                 "matching" => EvaluateMatching(q, a),
-                "flashcard" => false, // should not be called
-                _ => false
+                _ => false,
             };
         }
         catch
@@ -275,135 +270,142 @@ public class AttemptService : IAttemptService
         }
     }
 
-    private bool EvaluateMultipleChoice(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical field: metadata.correctAnswers (string[])
+    /// Answer field:    selected (string[])
+    /// Graded:          exact set equality
+    /// </summary>
+    private static bool EvaluateMultipleChoice(JsonElement q, JsonElement a)
     {
-        var metadata = q.GetProperty("metadata");
-
-        // Support both "correctAnswers" and legacy "correct"
-        JsonElement correctEl;
-        if (!metadata.TryGetProperty("correctAnswers", out correctEl))
-            correctEl = metadata.GetProperty("correct");
-
-        // IDs are stored as strings in this quiz format ("0", "1", "2"...)
-        var correctIds = correctEl.EnumerateArray()
-            .Select(x => x.ValueKind == JsonValueKind.String
-                ? x.GetString() ?? ""
-                : x.GetInt32().ToString())
+        var meta = q.GetProperty("metadata");
+        var correctIds = meta.GetProperty("correctAnswers")
+            .EnumerateArray()
+            .Select(x => x.GetString() ?? "")
             .ToHashSet();
 
-        var selectedIds = a.GetProperty("selected").EnumerateArray()
-            .Select(x => x.ValueKind == JsonValueKind.String
-                ? x.GetString() ?? ""
-                : x.GetInt32().ToString())
+        if (!a.TryGetProperty("selected", out var selectedEl) ||
+            selectedEl.ValueKind != JsonValueKind.Array)
+            return false;
+
+        var selectedIds = selectedEl.EnumerateArray()
+            .Select(x => x.GetString() ?? "")
             .ToHashSet();
 
         return correctIds.SetEquals(selectedIds);
     }
 
-    private bool EvaluateSingleChoice(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical field: metadata.correctAnswers (string[] with exactly 1 element)
+    /// Answer field:    selected (string — single id)
+    /// Graded:          exact string equality
+    /// </summary>
+    private static bool EvaluateSingleChoice(JsonElement q, JsonElement a)
     {
-        var metadata = q.GetProperty("metadata");
+        var meta = q.GetProperty("metadata");
+        var correctId = meta.GetProperty("correctAnswers")
+            .EnumerateArray()
+            .Select(x => x.GetString() ?? "")
+            .First();
 
-        JsonElement correctEl;
-        if (!metadata.TryGetProperty("correctAnswers", out correctEl))
-            correctEl = metadata.GetProperty("correct");
+        if (!a.TryGetProperty("selected", out var selectedEl) ||
+            selectedEl.ValueKind != JsonValueKind.String)
+            return false;
 
-        var correctId = correctEl[0].ValueKind == JsonValueKind.String
-            ? correctEl[0].GetString() ?? ""
-            : correctEl[0].GetInt32().ToString();
-
-        var selectedId = a.GetProperty("selected").ValueKind == JsonValueKind.String
-            ? a.GetProperty("selected").GetString() ?? ""
-            : a.GetProperty("selected").GetInt32().ToString();
-
-        return correctId == selectedId;
+        return correctId == (selectedEl.GetString() ?? "");
     }
 
-    private bool EvaluateTrueFalse(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical field: metadata.correctAnswer (boolean)
+    /// Answer field:    selected (boolean)
+    /// Graded:          exact boolean equality
+    /// </summary>
+    private static bool EvaluateTrueFalse(JsonElement q, JsonElement a)
     {
-        var metadata = q.GetProperty("metadata");
+        var correctAnswer = q.GetProperty("metadata")
+            .GetProperty("correctAnswer")
+            .GetBoolean();
 
-        // Support both "correctAnswer" (singular) and legacy "correct"
-        JsonElement correctEl;
-        if (!metadata.TryGetProperty("correctAnswer", out correctEl))
-            correctEl = metadata.GetProperty("correct");
+        if (!a.TryGetProperty("selected", out var selectedEl))
+            return false;
 
-        var correct = correctEl.GetBoolean();
+        bool selected = selectedEl.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => false, // malformed — treat as wrong
+        };
 
-        // Answer "selected" can be boolean true/false or string "true"/"false"
-        var selectedEl = a.GetProperty("selected");
-        bool selected = selectedEl.ValueKind == JsonValueKind.True ? true
-                      : selectedEl.ValueKind == JsonValueKind.False ? false
-                      : bool.Parse(selectedEl.GetString() ?? "false");
-
-        return correct == selected;
+        return correctAnswer == selected;
     }
 
-    private bool EvaluateFillBlank(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical fields: metadata.keywords (display only), metadata.answers (grading)
+    /// Answer field:     answer (string)
+    /// Graded:           user answer (trimmed, lower) ∈ answers set (trimmed, lower)
+    /// </summary>
+    private static bool EvaluateFillBlank(JsonElement q, JsonElement a)
     {
-        var metadata = q.GetProperty("metadata");
-
-        // Support both "keywords" (current) and legacy "answers"
-        JsonElement answersEl;
-        if (!metadata.TryGetProperty("keywords", out answersEl))
-            answersEl = metadata.GetProperty("answers");
-
-        var correctAnswers = answersEl.EnumerateArray()
+        var acceptedAnswers = q.GetProperty("metadata")
+            .GetProperty("answers")                  // strictly "answers" — not "keywords"
+            .EnumerateArray()
             .Select(x => x.GetString()?.Trim().ToLowerInvariant() ?? "")
             .ToHashSet();
 
-        var userAnswer = a.GetProperty("answer").GetString()?.Trim().ToLowerInvariant() ?? "";
+        if (!a.TryGetProperty("answer", out var answerEl) ||
+            answerEl.ValueKind != JsonValueKind.String)
+            return false;
 
-        return correctAnswers.Contains(userAnswer);
+        var userAnswer = answerEl.GetString()?.Trim().ToLowerInvariant() ?? "";
+        return acceptedAnswers.Contains(userAnswer);
     }
 
-    private bool EvaluateOrdering(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical field: metadata.items (Array of { order_id: int, text: string })
+    /// Correct order:   items sorted by order_id ascending (no separate correctOrder field)
+    /// Answer field:    order (int[]) — array of order_id in user-chosen sequence
+    /// Graded:          user sequence exactly matches items sorted by order_id asc
+    /// </summary>
+    private static bool EvaluateOrdering(JsonElement q, JsonElement a)
     {
-        var metadata = q.GetProperty("metadata");
+        var correctOrder = q.GetProperty("metadata")
+            .GetProperty("items")
+            .EnumerateArray()
+            .OrderBy(item => item.GetProperty("order_id").GetInt32())
+            .Select(item => item.GetProperty("order_id").GetInt32())
+            .ToList();
 
-        // If no correct_order, correct order = items sorted by order_id ascending
-        List<int> correctOrder;
-        if (metadata.TryGetProperty("correct_order", out JsonElement correctOrderEl))
-        {
-            correctOrder = correctOrderEl.EnumerateArray()
-                .Select(x => x.GetInt32()).ToList();
-        }
-        else
-        {
-            // Build correct order from items sorted by order_id
-            correctOrder = metadata.GetProperty("items").EnumerateArray()
-                .OrderBy(item => item.GetProperty("order_id").GetInt32())
-                .Select(item => item.GetProperty("order_id").GetInt32())
-                .ToList();
-        }
+        if (!a.TryGetProperty("order", out var orderEl) ||
+            orderEl.ValueKind != JsonValueKind.Array)
+            return false;
 
-        var userOrder = a.GetProperty("order").EnumerateArray()
-            .Select(x => x.GetInt32()).ToList();
+        var userOrder = orderEl.EnumerateArray()
+            .Select(x => x.GetInt32())
+            .ToList();
 
         return correctOrder.SequenceEqual(userOrder);
     }
 
-    private bool EvaluateMatching(JsonElement q, JsonElement a)
+    /// <summary>
+    /// Canonical field: metadata.pairs (Array of { id: int, left: string, right: string })
+    /// Answer field:    matches (Array of { leftId: int, rightId: int })
+    /// Graded:          all pairs matched AND every match has leftId == rightId
+    /// </summary>
+    private static bool EvaluateMatching(JsonElement q, JsonElement a)
     {
-        // Snapshot: { "metadata": { "pairs": [{ "id": 1, "left": "HTTP", "right": "80" }] } }
-        // Answer:   { "matches": [{ "leftId": 1, "rightId": 1 }] }
-        // A match is correct when leftId == rightId (same pair id)
+        var totalPairs = q.GetProperty("metadata")
+            .GetProperty("pairs")
+            .EnumerateArray()
+            .Count();
 
-        var pairs = q.GetProperty("metadata").GetProperty("pairs").EnumerateArray().ToList();
-        var totalPairs = pairs.Count;
+        if (!a.TryGetProperty("matches", out var matchesEl) ||
+            matchesEl.ValueKind != JsonValueKind.Array)
+            return false;
 
-        var matches = a.GetProperty("matches").EnumerateArray().ToList();
-        if (matches.Count != totalPairs) return false;
+        var matches = matchesEl.EnumerateArray().ToList();
+        if (matches.Count != totalPairs)
+            return false;
 
-        int correctCount = 0;
-        foreach (var match in matches)
-        {
-            var leftId = match.GetProperty("leftId").GetInt32();
-            var rightId = match.GetProperty("rightId").GetInt32();
-            // Correct when left and right refer to the same pair
-            if (leftId == rightId) correctCount++;
-        }
-
-        return correctCount == totalPairs;
+        return matches.All(m =>
+            m.GetProperty("leftId").GetInt32() == m.GetProperty("rightId").GetInt32());
     }
 }

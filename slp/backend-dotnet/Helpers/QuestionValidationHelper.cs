@@ -1,233 +1,294 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Linq;
+using System.Text.Json;
 
 namespace backend_dotnet.Helpers;
 
+/// <summary>
+/// Validates a question snapshot against the canonical schema.
+/// No legacy field aliases are accepted — all field names are strict.
+/// See QUESTION_SCHEMA.md for the full specification.
+/// </summary>
 public static class QuestionValidationHelper
 {
-    public static void ValidateQuestionMetadata(string type, string content, string metadataJson)
+    private static readonly HashSet<string> SupportedTypes = new()
     {
-        if (string.IsNullOrWhiteSpace(metadataJson))
-            throw new ArgumentException($"Metadata is required for question type '{type}'.");
+        "multiple_choice",
+        "single_choice",
+        "true_false",
+        "fill_blank",
+        "ordering",
+        "matching",
+        "flashcard",
+    };
 
+    /// <summary>
+    /// Validates the full snapshot JSON string.
+    /// Throws <see cref="ArgumentException"/> with a descriptive message on any violation.
+    /// </summary>
+    public static void ValidateSnapshot(string snapshotJson)
+    {
+        JsonElement root;
         try
         {
-            using JsonDocument doc = JsonDocument.Parse(metadataJson);
-            JsonElement root = doc.RootElement;
-
-            switch (type.ToLower())
-            {
-                case "multiple_choice":
-                    ValidateMultipleChoice(root, content);
-                    break;
-                case "true_false":
-                    ValidateTrueFalse(root, content);
-                    break;
-                case "fill_blank":
-                    ValidateFillInBlank(root, content);
-                    break;
-                case "matching":
-                    ValidateMatching(root);
-                    break;
-                case "ordering":
-                    ValidateOrdering(root);
-                    break;
-                default:
-                    throw new ArgumentException($"Unsupported question type: '{type}'.");
-            }
+            root = JsonDocument.Parse(snapshotJson).RootElement;
         }
         catch (JsonException ex)
         {
-            throw new ArgumentException("Invalid JSON format in metadata.", ex);
+            throw new ArgumentException("Question snapshot is not valid JSON.", ex);
         }
-    }
 
-    // ------------------------------------------------------------------------
-    // Private validation methods (copied from original QuestionService)
-    // ------------------------------------------------------------------------
-    private static void ValidateMultipleChoice(JsonElement root, string content)
-    {
+        // ── type ────────────────────────────────────────────────────────────
+        if (!root.TryGetProperty("type", out var typeEl) || typeEl.ValueKind != JsonValueKind.String)
+            throw new ArgumentException("Question snapshot must contain a string 'type' field.");
+
+        var type = typeEl.GetString()!;
+        if (!SupportedTypes.Contains(type))
+            throw new ArgumentException(
+                $"Unsupported question type: '{type}'. " +
+                $"Supported types: {string.Join(", ", SupportedTypes)}.");
+
+        // ── content ─────────────────────────────────────────────────────────
+        if (!root.TryGetProperty("content", out var contentEl) || contentEl.ValueKind != JsonValueKind.String)
+            throw new ArgumentException("Question snapshot must contain a string 'content' field.");
+
+        var content = contentEl.GetString()!;
         if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("Multiple choice question must have content.");
+            throw new ArgumentException("Question snapshot 'content' must not be empty.");
 
-        if (!root.TryGetProperty("options", out JsonElement options) || options.ValueKind != JsonValueKind.Array)
-            throw new ArgumentException("Multiple choice question must have an 'options' array.");
+        // ── metadata ────────────────────────────────────────────────────────
+        if (!root.TryGetProperty("metadata", out var metaEl) || metaEl.ValueKind != JsonValueKind.Object)
+            throw new ArgumentException("Question snapshot must contain a 'metadata' object.");
 
-        if (options.GetArrayLength() < 2)
-            throw new ArgumentException("Multiple choice question must have at least 2 options.");
-
-        var optionIds = new HashSet<string>();
-        foreach (JsonElement opt in options.EnumerateArray())
+        // ── type-specific validation ─────────────────────────────────────────
+        switch (type)
         {
-            if (!opt.TryGetProperty("id", out JsonElement idProp) || idProp.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each option must have a string 'id' field.");
-
-            string id = idProp.GetString()!;
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("Option 'id' cannot be empty.");
-
-            if (!optionIds.Add(id))
-                throw new ArgumentException($"Duplicate option id '{id}' found.");
-
-            if (!opt.TryGetProperty("text", out JsonElement textProp) || textProp.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each option must have a string 'text' field.");
-
-            if (string.IsNullOrWhiteSpace(textProp.GetString()))
-                throw new ArgumentException("Option text cannot be empty.");
-        }
-
-        if (!root.TryGetProperty("correctAnswers", out JsonElement correctAnswers) || correctAnswers.ValueKind != JsonValueKind.Array)
-            throw new ArgumentException("Multiple choice question must have a 'correctAnswers' array.");
-
-        if (correctAnswers.GetArrayLength() < 1)
-            throw new ArgumentException("Multiple choice question must have at least one correct answer.");
-
-        foreach (JsonElement ans in correctAnswers.EnumerateArray())
-        {
-            if (ans.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each correct answer must be a string (option id).");
-
-            string ansId = ans.GetString()!;
-            if (!optionIds.Contains(ansId))
-                throw new ArgumentException($"Correct answer id '{ansId}' does not match any option id.");
+            case "multiple_choice": ValidateMultipleChoice(metaEl); break;
+            case "single_choice": ValidateSingleChoice(metaEl); break;
+            case "true_false": ValidateTrueFalse(metaEl); break;
+            case "fill_blank": ValidateFillBlank(metaEl, content); break;
+            case "ordering": ValidateOrdering(metaEl); break;
+            case "matching": ValidateMatching(metaEl); break;
+            case "flashcard": ValidateFlashcard(metaEl); break;
         }
     }
 
-    private static void ValidateTrueFalse(JsonElement root, string content)
+    // Kept for backward-compat call sites that pass type+content+metadataJson separately.
+    public static void ValidateQuestionMetadata(string type, string content, string? metadataJson)
     {
-        if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("True/false question must have content.");
+        // Re-assemble a minimal snapshot and delegate to the unified validator.
+        var assembled = metadataJson == null || metadataJson == "null"
+            ? $@"{{""type"":""{type}"",""content"":""{EscapeJson(content)}"",""metadata"":""{{}}""}}"
+            : $@"{{""type"":""{type}"",""content"":""{EscapeJson(content)}"",""metadata"":{metadataJson}}}";
 
-        if (!root.TryGetProperty("correctAnswer", out JsonElement ans) ||
-            (ans.ValueKind != JsonValueKind.True && ans.ValueKind != JsonValueKind.False))
+        ValidateSnapshot(assembled);
+    }
+
+    // ── Validators ────────────────────────────────────────────────────────────
+
+    private static void ValidateMultipleChoice(JsonElement meta)
+    {
+        var options = RequireNonEmptyArray(meta, "options", "Multiple choice");
+        var optionIds = ValidateOptions(options, "Multiple choice");
+
+        var correctAnswers = RequireNonEmptyArray(meta, "correctAnswers", "Multiple choice");
+        ValidateAnswerIdsExist(correctAnswers, optionIds, "correctAnswers", "Multiple choice");
+    }
+
+    private static void ValidateSingleChoice(JsonElement meta)
+    {
+        var options = RequireNonEmptyArray(meta, "options", "Single choice");
+        var optionIds = ValidateOptions(options, "Single choice");
+
+        var correctAnswers = RequireNonEmptyArray(meta, "correctAnswers", "Single choice");
+        if (correctAnswers.Count != 1)
+            throw new ArgumentException("Single choice question 'correctAnswers' must contain exactly one id.");
+
+        ValidateAnswerIdsExist(correctAnswers, optionIds, "correctAnswers", "Single choice");
+    }
+
+    private static void ValidateTrueFalse(JsonElement meta)
+    {
+        if (!meta.TryGetProperty("correctAnswer", out var el) ||
+            (el.ValueKind != JsonValueKind.True && el.ValueKind != JsonValueKind.False))
+            throw new ArgumentException(
+                "True/false question must have a boolean 'correctAnswer' field.");
+    }
+
+    private static void ValidateFillBlank(JsonElement meta, string content)
+    {
+        // keywords — words to blank out in display; must appear in content
+        var keywords = RequireNonEmptyStringArray(meta, "keywords", "Fill blank");
+        foreach (var kw in keywords)
         {
-            throw new ArgumentException("True/false question must have a 'correctAnswer' field with a boolean value (true or false).");
+            if (!content.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException(
+                    $"Fill blank 'keywords' entry \"{kw}\" was not found in the question content.");
         }
+
+        // answers — grading values; must be a non-empty string array
+        RequireNonEmptyStringArray(meta, "answers", "Fill blank");
     }
 
-    private static void ValidateFillInBlank(JsonElement root, string content)
+    private static void ValidateOrdering(JsonElement meta)
     {
-        if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("Fill-in-the-blank question must have content.");
-
-        if (!root.TryGetProperty("keywords", out JsonElement keywords) || keywords.ValueKind != JsonValueKind.Array)
-            throw new ArgumentException("Fill-in-the-blank question must have a 'keywords' array.");
-
-        if (keywords.GetArrayLength() != 1)
-            throw new ArgumentException("Fill-in-the-blank question must have exactly one keyword (single word).");
-
-        var keywordElem = keywords[0];
-        if (keywordElem.ValueKind != JsonValueKind.String)
-            throw new ArgumentException("Keyword must be a string.");
-
-        string keyword = keywordElem.GetString()!;
-        if (string.IsNullOrWhiteSpace(keyword))
-            throw new ArgumentException("Keyword cannot be empty.");
-
-        if (keyword.Contains(' '))
-            throw new ArgumentException("Keyword must be a single word (no spaces).");
-
-        if (!content.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"Keyword '{keyword}' must appear in the question content.");
-    }
-
-    private static void ValidateMatching(JsonElement root)
-    {
-        if (!root.TryGetProperty("pairs", out JsonElement pairs) || pairs.ValueKind != JsonValueKind.Array)
-            throw new ArgumentException("Matching question must have a 'pairs' array.");
-
-        if (pairs.GetArrayLength() < 2)
-            throw new ArgumentException("Matching question must have at least 2 pairs.");
-
-        var pairIds = new HashSet<int>();
-        foreach (JsonElement pair in pairs.EnumerateArray())
-        {
-            if (!pair.TryGetProperty("id", out JsonElement idProp))
-                throw new ArgumentException("Each matching pair must have an 'id' field.");
-
-            int id;
-            if (idProp.ValueKind == JsonValueKind.Number)
-            {
-                id = idProp.GetInt32();
-            }
-            else if (idProp.ValueKind == JsonValueKind.String)
-            {
-                if (!int.TryParse(idProp.GetString(), out id))
-                    throw new ArgumentException("Pair id must be a valid integer.");
-            }
-            else
-            {
-                throw new ArgumentException("Pair id must be a number or a numeric string.");
-            }
-
-            if (!pairIds.Add(id))
-                throw new ArgumentException($"Duplicate pair id '{id}' found.");
-
-            if (!pair.TryGetProperty("left", out JsonElement leftProp) || leftProp.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each matching pair must have a string 'left' field.");
-
-            if (string.IsNullOrWhiteSpace(leftProp.GetString()))
-                throw new ArgumentException("Left side text cannot be empty.");
-
-            if (!pair.TryGetProperty("right", out JsonElement rightProp) || rightProp.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each matching pair must have a string 'right' field.");
-
-            if (string.IsNullOrWhiteSpace(rightProp.GetString()))
-                throw new ArgumentException("Right side text cannot be empty.");
-        }
-    }
-
-    private static void ValidateOrdering(JsonElement root)
-    {
-        if (!root.TryGetProperty("items", out JsonElement items) || items.ValueKind != JsonValueKind.Array)
+        if (!meta.TryGetProperty("items", out var itemsEl) || itemsEl.ValueKind != JsonValueKind.Array)
             throw new ArgumentException("Ordering question must have an 'items' array.");
 
-        int count = items.GetArrayLength();
-        if (count < 3)
-            throw new ArgumentException("Ordering question must have at least 3 items.");
+        var items = itemsEl.EnumerateArray().ToList();
+        if (items.Count == 0)
+            throw new ArgumentException("Ordering question 'items' must not be empty.");
 
         var orderIds = new HashSet<int>();
-        for (int i = 0; i < count; i++)
+        foreach (var (item, idx) in items.Select((x, i) => (x, i)))
         {
-            JsonElement item = items[i];
+            if (item.ValueKind != JsonValueKind.Object)
+                throw new ArgumentException($"Ordering 'items[{idx}]' must be an object.");
 
-            if (!item.TryGetProperty("order_id", out JsonElement orderProp))
-                throw new ArgumentException("Each ordering item must have an 'order_id' field.");
-
-            int orderId;
-            if (orderProp.ValueKind == JsonValueKind.Number)
-            {
-                orderId = orderProp.GetInt32();
-            }
-            else if (orderProp.ValueKind == JsonValueKind.String)
-            {
-                if (!int.TryParse(orderProp.GetString(), out orderId))
-                    throw new ArgumentException("order_id must be a valid integer.");
-            }
-            else
-            {
-                throw new ArgumentException("order_id must be a number or a numeric string.");
-            }
-
-            if (orderId < 1 || orderId > count)
-                throw new ArgumentException($"Order_id must be between 1 and {count}.");
+            if (!item.TryGetProperty("order_id", out var orderIdEl) ||
+                orderIdEl.ValueKind != JsonValueKind.Number ||
+                !orderIdEl.TryGetInt32(out var orderId) || orderId < 1)
+                throw new ArgumentException(
+                    $"Ordering 'items[{idx}]' must have an integer 'order_id' ≥ 1.");
 
             if (!orderIds.Add(orderId))
-                throw new ArgumentException($"Duplicate order_id '{orderId}' found.");
+                throw new ArgumentException(
+                    $"Ordering 'items' contains duplicate order_id: {orderId}.");
 
-            if (!item.TryGetProperty("text", out JsonElement textProp) || textProp.ValueKind != JsonValueKind.String)
-                throw new ArgumentException("Each ordering item must have a string 'text' field.");
-
-            if (string.IsNullOrWhiteSpace(textProp.GetString()))
-                throw new ArgumentException("Item text cannot be empty.");
-        }
-
-        for (int i = 1; i <= count; i++)
-        {
-            if (!orderIds.Contains(i))
-                throw new ArgumentException($"Missing order_id {i}. Order_ids must be consecutive starting from 1.");
+            if (!item.TryGetProperty("text", out var textEl) || textEl.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(textEl.GetString()))
+                throw new ArgumentException($"Ordering 'items[{idx}]' must have a non-empty string 'text'.");
         }
     }
+
+    private static void ValidateMatching(JsonElement meta)
+    {
+        if (!meta.TryGetProperty("pairs", out var pairsEl) || pairsEl.ValueKind != JsonValueKind.Array)
+            throw new ArgumentException("Matching question must have a 'pairs' array.");
+
+        var pairs = pairsEl.EnumerateArray().ToList();
+        if (pairs.Count == 0)
+            throw new ArgumentException("Matching question 'pairs' must not be empty.");
+
+        var ids = new HashSet<int>();
+        foreach (var (pair, idx) in pairs.Select((x, i) => (x, i)))
+        {
+            if (pair.ValueKind != JsonValueKind.Object)
+                throw new ArgumentException($"Matching 'pairs[{idx}]' must be an object.");
+
+            if (!pair.TryGetProperty("id", out var idEl) ||
+                idEl.ValueKind != JsonValueKind.Number ||
+                !idEl.TryGetInt32(out var id) || id < 1)
+                throw new ArgumentException(
+                    $"Matching 'pairs[{idx}]' must have an integer 'id' ≥ 1.");
+
+            if (!ids.Add(id))
+                throw new ArgumentException(
+                    $"Matching 'pairs' contains duplicate id: {id}.");
+
+            foreach (var field in new[] { "left", "right" })
+            {
+                if (!pair.TryGetProperty(field, out var fieldEl) ||
+                    fieldEl.ValueKind != JsonValueKind.String ||
+                    string.IsNullOrWhiteSpace(fieldEl.GetString()))
+                    throw new ArgumentException(
+                        $"Matching 'pairs[{idx}]' must have a non-empty string '{field}'.");
+            }
+        }
+    }
+
+    private static void ValidateFlashcard(JsonElement meta)
+    {
+        foreach (var field in new[] { "front", "back" })
+        {
+            if (!meta.TryGetProperty(field, out var el) ||
+                el.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(el.GetString()))
+                throw new ArgumentException(
+                    $"Flashcard must have a non-empty string '{field}' in metadata.");
+        }
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private static List<JsonElement> RequireNonEmptyArray(JsonElement meta, string field, string label)
+    {
+        if (!meta.TryGetProperty(field, out var el) || el.ValueKind != JsonValueKind.Array)
+            throw new ArgumentException($"{label} question must have a '{field}' array.");
+
+        var list = el.EnumerateArray().ToList();
+        if (list.Count == 0)
+            throw new ArgumentException($"{label} question '{field}' must not be empty.");
+
+        return list;
+    }
+
+    /// <summary>Validates options shape and returns the set of option ids.</summary>
+    private static HashSet<string> ValidateOptions(List<JsonElement> options, string label)
+    {
+        var ids = new HashSet<string>();
+        foreach (var (opt, idx) in options.Select((x, i) => (x, i)))
+        {
+            if (opt.ValueKind != JsonValueKind.Object)
+                throw new ArgumentException($"{label} 'options[{idx}]' must be an object.");
+
+            if (!opt.TryGetProperty("id", out var idEl) || idEl.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(idEl.GetString()))
+                throw new ArgumentException(
+                    $"{label} 'options[{idx}]' must have a non-empty string 'id' field.");
+
+            var id = idEl.GetString()!;
+            if (!ids.Add(id))
+                throw new ArgumentException($"{label} 'options' contains duplicate id: \"{id}\".");
+
+            if (!opt.TryGetProperty("text", out var textEl) || textEl.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(textEl.GetString()))
+                throw new ArgumentException(
+                    $"{label} 'options[{idx}]' must have a non-empty string 'text' field.");
+        }
+        return ids;
+    }
+
+    private static void ValidateAnswerIdsExist(
+        List<JsonElement> correctAnswers,
+        HashSet<string> optionIds,
+        string field,
+        string label)
+    {
+        foreach (var (el, idx) in correctAnswers.Select((x, i) => (x, i)))
+        {
+            if (el.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(el.GetString()))
+                throw new ArgumentException(
+                    $"{label} '{field}[{idx}]' must be a non-empty string.");
+
+            var id = el.GetString()!;
+            if (!optionIds.Contains(id))
+                throw new ArgumentException(
+                    $"{label} '{field}' references id \"{id}\" which does not exist in 'options'.");
+        }
+    }
+
+    private static List<string> RequireNonEmptyStringArray(JsonElement meta, string field, string label)
+    {
+        if (!meta.TryGetProperty(field, out var el) || el.ValueKind != JsonValueKind.Array)
+            throw new ArgumentException($"{label} question must have a '{field}' array.");
+
+        var list = el.EnumerateArray().ToList();
+        if (list.Count == 0)
+            throw new ArgumentException($"{label} question '{field}' must not be empty.");
+
+        var result = new List<string>();
+        foreach (var (item, idx) in list.Select((x, i) => (x, i)))
+        {
+            if (item.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(item.GetString()))
+                throw new ArgumentException(
+                    $"{label} '{field}[{idx}]' must be a non-empty string.");
+            result.Add(item.GetString()!);
+        }
+        return result;
+    }
+
+    private static string EscapeJson(string s) =>
+        s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 }

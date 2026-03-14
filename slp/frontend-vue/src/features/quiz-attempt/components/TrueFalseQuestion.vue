@@ -1,7 +1,11 @@
 <template>
-  <a-radio-group :value="modelValue" @change="handleChange">
-    <a-radio :value="true">True</a-radio>
-    <a-radio :value="false">False</a-radio>
+  <a-radio-group
+    :value="modelValue"
+    @change="handleChange"
+    data-testid="true-false-group"
+  >
+    <a-radio :value="true" data-testid="true-false-option-true">True</a-radio>
+    <a-radio :value="false" data-testid="true-false-option-false">False</a-radio>
   </a-radio-group>
 </template>
 

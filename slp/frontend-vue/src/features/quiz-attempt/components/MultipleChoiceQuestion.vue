@@ -1,9 +1,14 @@
 <template>
-  <a-checkbox-group :value="modelValue" @change="handleChange">
+  <a-checkbox-group
+    :value="modelValue"
+    @change="handleChange"
+    data-testid="multiple-choice-group"
+  >
     <a-checkbox
       v-for="opt in options"
       :key="opt.id"
       :value="opt.id"
+      :data-testid="`multiple-choice-option-${opt.id}`"
     >
       {{ opt.text }}
     </a-checkbox>

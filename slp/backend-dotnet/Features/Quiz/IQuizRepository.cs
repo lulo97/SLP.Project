@@ -11,6 +11,7 @@ public interface IQuizRepository
     Task<Quiz> CreateAsync(Quiz quiz);
     Task UpdateAsync(Quiz quiz);
     Task SoftDeleteAsync(int id);
+    Task HardDeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
     Task<IEnumerable<Quiz>> SearchAsync(string? searchTerm, int? userId, bool publicOnly = true);
     Task<IEnumerable<QuizQuestion>> GetQuestionsByQuizIdAsync(int quizId);
