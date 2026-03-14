@@ -1,9 +1,5 @@
 using backend_dotnet.Data;
-using backend_dotnet.Features.Note;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -14,32 +10,6 @@ public class QuizRepository : IQuizRepository
     public QuizRepository(AppDbContext context)
     {
         _context = context;
-    }
-
-    public async Task<Quiz?> GetByIdAsync(int id)
-    {
-        // First, check if the quiz exists at all (even disabled)
-        var anyQuiz = await _context.Quizzes
-            .IgnoreQueryFilters()
-            .Where(q => q.Id == id)
-            .Select(q => new { q.Id, q.Title, q.Disabled })
-            .FirstOrDefaultAsync();
-
-        if (anyQuiz == null)
-            return null;
-
-        if (anyQuiz.Disabled)
-            return null;
-
-        var quiz = await _context.Quizzes
-            .Include(q => q.QuizQuestions.OrderBy(qq => qq.DisplayOrder))
-            .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
-            .Include(q => q.QuizSources).ThenInclude(qs => qs.Source)
-            .Include(q => q.QuizNotes).ThenInclude(qn => qn.Note)
-            .Include(q => q.User)
-            .FirstOrDefaultAsync(q => q.Id == id && !q.Disabled);
-
-        return quiz;
     }
 
     public async Task<Quiz?> GetByIdAsync(int id, bool includeDisabled = false)
@@ -71,6 +41,8 @@ public class QuizRepository : IQuizRepository
         if (!includeDisabled)
             query = query.Where(q => !q.Disabled);
         return await query
+            .Include(q => q.User)                   // ← ADD THIS
+            .Include(q => q.QuizQuestions)          // ← ADD THIS
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .OrderByDescending(q => q.UpdatedAt)
             .ToListAsync();
@@ -89,6 +61,7 @@ public class QuizRepository : IQuizRepository
 
         return await query
             .Include(q => q.User)
+            .Include(q => q.QuizQuestions)          // ← ADD THIS
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
@@ -139,6 +112,7 @@ public class QuizRepository : IQuizRepository
         }
         return await query
             .Include(q => q.User)
+            .Include(q => q.QuizQuestions)          // ← ADD THIS
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
             .OrderByDescending(q => q.UpdatedAt)
             .ToListAsync();
