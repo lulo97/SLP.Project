@@ -1,9 +1,6 @@
 <template>
   <MobileLayout :title="`Review: ${review?.quizTitle || 'Attempt'}`">
-    <div v-if="loading || attemptStore.loading" class="text-center py-8">
-      <a-spin data-testid="review-loading" />
-    </div>
-    <div v-else-if="review" class="space-y-4">
+    <div v-if="review" class="space-y-4">
       <!-- Score card -->
       <a-card class="shadow-sm" data-testid="score-card">
         <div class="text-center">

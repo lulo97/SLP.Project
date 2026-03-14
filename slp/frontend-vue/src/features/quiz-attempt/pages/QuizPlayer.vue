@@ -1,9 +1,6 @@
 <template>
   <MobileLayout :title="`Quiz: ${quizTitle}`">
-    <div v-if="loading || attemptStore.loading" class="text-center py-8">
-      <a-spin data-testid="player-loading" />
-    </div>
-    <div v-else-if="attemptValue" class="player-container space-y-4">
+    <div v-if="attemptValue" class="player-container space-y-4">
       <!-- Header with progress and timer -->
       <div class="flex justify-between items-center">
         <div>
