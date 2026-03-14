@@ -12,7 +12,7 @@ defineProps<{
 
 const emit = defineEmits(['update:model-value']);
 
-function handleChange(value: any) {
-  emit('update:model-value', value);
+function handleChange(e: any) {
+  emit('update:model-value', e.target.value);
 }
 </script>

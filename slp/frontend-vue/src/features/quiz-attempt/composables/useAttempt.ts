@@ -319,6 +319,65 @@ export function useAttempt(quizId: number) {
     }
   };
 
+  const isComplete = computed(() => {
+    if (!attempt.value) return false;
+    return attempt.value.questions.every((q) => {
+      const snapshot = JSON.parse(q.questionSnapshotJson);
+      // Flashcards are informational — never block submission
+      if (snapshot.type === "flashcard") return true;
+
+      const ans = answers.value[q.quizQuestionId];
+      if (!ans) return false;
+
+      switch (snapshot.type) {
+        case "multiple_choice":
+          return Array.isArray(ans.selected) && ans.selected.length > 0;
+        case "single_choice":
+          return ans.selected !== null && ans.selected !== undefined;
+        case "true_false":
+          return ans.selected !== null && ans.selected !== undefined;
+        case "fill_blank":
+          return typeof ans.answer === "string" && ans.answer.trim() !== "";
+        case "ordering":
+          return Array.isArray(ans.order) && ans.order.length > 0;
+        case "matching":
+          return (
+            Array.isArray(ans.matches) &&
+            ans.matches.length === snapshot.metadata?.pairs?.length
+          );
+        default:
+          return true;
+      }
+    });
+  });
+
+  // also add answeredCount for the progress indicator
+  const answeredCount = computed(() => {
+    if (!attempt.value) return 0;
+    return attempt.value.questions.filter((q) => {
+      const snapshot = JSON.parse(q.questionSnapshotJson);
+      if (snapshot.type === "flashcard") return true;
+      const ans = answers.value[q.quizQuestionId];
+      if (!ans) return false;
+      switch (snapshot.type) {
+        case "multiple_choice":
+          return Array.isArray(ans.selected) && ans.selected.length > 0;
+        case "single_choice":
+          return ans.selected !== null && ans.selected !== undefined;
+        case "true_false":
+          return ans.selected !== null && ans.selected !== undefined;
+        case "fill_blank":
+          return typeof ans.answer === "string" && ans.answer.trim() !== "";
+        case "ordering":
+          return Array.isArray(ans.order) && ans.order.length > 0;
+        case "matching":
+          return Array.isArray(ans.matches) && ans.matches.length > 0;
+        default:
+          return true;
+      }
+    }).length;
+  });
+
   return {
     attempt,
     loading,
@@ -332,5 +391,7 @@ export function useAttempt(quizId: number) {
     prevQuestion,
     goToQuestion,
     submitAttempt,
+    isComplete,
+    answeredCount,
   };
 }

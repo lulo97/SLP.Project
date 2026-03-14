@@ -1,9 +1,5 @@
 ﻿using backend_dotnet.Features.Quiz;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.QuizAttempt;
 
@@ -281,80 +277,133 @@ public class AttemptService : IAttemptService
 
     private bool EvaluateMultipleChoice(JsonElement q, JsonElement a)
     {
-        // Expected snapshot: { "metadata": { "correct": [id1, id2] } }
-        // Answer format: { "selected": [id1, id2] }  (array of selected option ids)
-        var correctIds = q.GetProperty("metadata").GetProperty("correct").EnumerateArray()
-            .Select(x => x.GetInt32()).ToHashSet();
+        var metadata = q.GetProperty("metadata");
+
+        // Support both "correctAnswers" and legacy "correct"
+        JsonElement correctEl;
+        if (!metadata.TryGetProperty("correctAnswers", out correctEl))
+            correctEl = metadata.GetProperty("correct");
+
+        // IDs are stored as strings in this quiz format ("0", "1", "2"...)
+        var correctIds = correctEl.EnumerateArray()
+            .Select(x => x.ValueKind == JsonValueKind.String
+                ? x.GetString() ?? ""
+                : x.GetInt32().ToString())
+            .ToHashSet();
+
         var selectedIds = a.GetProperty("selected").EnumerateArray()
-            .Select(x => x.GetInt32()).ToHashSet();
+            .Select(x => x.ValueKind == JsonValueKind.String
+                ? x.GetString() ?? ""
+                : x.GetInt32().ToString())
+            .ToHashSet();
+
         return correctIds.SetEquals(selectedIds);
     }
 
     private bool EvaluateSingleChoice(JsonElement q, JsonElement a)
     {
-        // Expected snapshot: { "metadata": { "correct": [id] } } (array with one id)
-        // Answer format: { "selected": id } (single integer)
-        var correctId = q.GetProperty("metadata").GetProperty("correct")[0].GetInt32();
-        var selectedId = a.GetProperty("selected").GetInt32();
+        var metadata = q.GetProperty("metadata");
+
+        JsonElement correctEl;
+        if (!metadata.TryGetProperty("correctAnswers", out correctEl))
+            correctEl = metadata.GetProperty("correct");
+
+        var correctId = correctEl[0].ValueKind == JsonValueKind.String
+            ? correctEl[0].GetString() ?? ""
+            : correctEl[0].GetInt32().ToString();
+
+        var selectedId = a.GetProperty("selected").ValueKind == JsonValueKind.String
+            ? a.GetProperty("selected").GetString() ?? ""
+            : a.GetProperty("selected").GetInt32().ToString();
+
         return correctId == selectedId;
     }
 
     private bool EvaluateTrueFalse(JsonElement q, JsonElement a)
     {
-        // Snapshot: { "metadata": { "correct": true } }
-        // Answer: { "selected": true }
-        var correct = q.GetProperty("metadata").GetProperty("correct").GetBoolean();
-        var selected = a.GetProperty("selected").GetBoolean();
+        var metadata = q.GetProperty("metadata");
+
+        // Support both "correctAnswer" (singular) and legacy "correct"
+        JsonElement correctEl;
+        if (!metadata.TryGetProperty("correctAnswer", out correctEl))
+            correctEl = metadata.GetProperty("correct");
+
+        var correct = correctEl.GetBoolean();
+
+        // Answer "selected" can be boolean true/false or string "true"/"false"
+        var selectedEl = a.GetProperty("selected");
+        bool selected = selectedEl.ValueKind == JsonValueKind.True ? true
+                      : selectedEl.ValueKind == JsonValueKind.False ? false
+                      : bool.Parse(selectedEl.GetString() ?? "false");
+
         return correct == selected;
     }
 
     private bool EvaluateFillBlank(JsonElement q, JsonElement a)
     {
-        // Snapshot: { "metadata": { "answers": ["answer1", "answer2"] } } (case‑insensitive)
-        // Answer: { "answer": "user input" }
-        var correctAnswers = q.GetProperty("metadata").GetProperty("answers").EnumerateArray()
-            .Select(x => x.GetString()?.Trim().ToLowerInvariant() ?? "").ToHashSet();
+        var metadata = q.GetProperty("metadata");
+
+        // Support both "keywords" (current) and legacy "answers"
+        JsonElement answersEl;
+        if (!metadata.TryGetProperty("keywords", out answersEl))
+            answersEl = metadata.GetProperty("answers");
+
+        var correctAnswers = answersEl.EnumerateArray()
+            .Select(x => x.GetString()?.Trim().ToLowerInvariant() ?? "")
+            .ToHashSet();
+
         var userAnswer = a.GetProperty("answer").GetString()?.Trim().ToLowerInvariant() ?? "";
+
         return correctAnswers.Contains(userAnswer);
     }
 
     private bool EvaluateOrdering(JsonElement q, JsonElement a)
     {
-        // Snapshot: { "metadata": { "correct_order": [2,1,3] } } (list of item indices in correct order)
-        // Answer: { "order": [2,1,3] }
-        var correctOrder = q.GetProperty("metadata").GetProperty("correct_order").EnumerateArray()
-            .Select(x => x.GetInt32()).ToList();
+        var metadata = q.GetProperty("metadata");
+
+        // If no correct_order, correct order = items sorted by order_id ascending
+        List<int> correctOrder;
+        if (metadata.TryGetProperty("correct_order", out JsonElement correctOrderEl))
+        {
+            correctOrder = correctOrderEl.EnumerateArray()
+                .Select(x => x.GetInt32()).ToList();
+        }
+        else
+        {
+            // Build correct order from items sorted by order_id
+            correctOrder = metadata.GetProperty("items").EnumerateArray()
+                .OrderBy(item => item.GetProperty("order_id").GetInt32())
+                .Select(item => item.GetProperty("order_id").GetInt32())
+                .ToList();
+        }
+
         var userOrder = a.GetProperty("order").EnumerateArray()
             .Select(x => x.GetInt32()).ToList();
+
         return correctOrder.SequenceEqual(userOrder);
     }
 
     private bool EvaluateMatching(JsonElement q, JsonElement a)
     {
-        // Snapshot: { "metadata": { "pairs": [{ "left": "A", "right": "1" }] } }
-        // Answer: { "matches": { "0": 2, "1": 0 } }  (left index -> right index)
-        // We'll assume each left has exactly one correct right index.
+        // Snapshot: { "metadata": { "pairs": [{ "id": 1, "left": "HTTP", "right": "80" }] } }
+        // Answer:   { "matches": [{ "leftId": 1, "rightId": 1 }] }
+        // A match is correct when leftId == rightId (same pair id)
+
         var pairs = q.GetProperty("metadata").GetProperty("pairs").EnumerateArray().ToList();
-        var correctMap = new Dictionary<int, int>();
-        for (int i = 0; i < pairs.Count; i++)
+        var totalPairs = pairs.Count;
+
+        var matches = a.GetProperty("matches").EnumerateArray().ToList();
+        if (matches.Count != totalPairs) return false;
+
+        int correctCount = 0;
+        foreach (var match in matches)
         {
-            // The correct right index is the index of the matching right item.
-            // For simplicity, we assume the right items are in the same order as they appear in the pairs.
-            // The correct mapping is left index i to right index i (if order matches). But the design may allow shuffling.
-            // Here we'll use the order in the pairs array: left i matches right i.
-            correctMap[i] = i;
+            var leftId = match.GetProperty("leftId").GetInt32();
+            var rightId = match.GetProperty("rightId").GetInt32();
+            // Correct when left and right refer to the same pair
+            if (leftId == rightId) correctCount++;
         }
 
-        var userMatches = a.GetProperty("matches").EnumerateObject()
-            .ToDictionary(p => int.Parse(p.Name), p => p.Value.GetInt32());
-
-        if (userMatches.Count != correctMap.Count) return false;
-
-        foreach (var kv in correctMap)
-        {
-            if (!userMatches.TryGetValue(kv.Key, out int userRight) || userRight != kv.Value)
-                return false;
-        }
-        return true;
+        return correctCount == totalPairs;
     }
 }

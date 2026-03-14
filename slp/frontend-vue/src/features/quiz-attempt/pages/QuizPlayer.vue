@@ -41,7 +41,7 @@
       </div>
 
       <!-- Navigation buttons -->
-      <div class="flex justify-between">
+      <div class="flex justify-between items-start">
         <a-button
           @click="composable.prevQuestion"
           :disabled="composable.currentIndex.value === 0"
@@ -49,6 +49,7 @@
         >
           Previous
         </a-button>
+
         <a-button
           v-if="composable.currentIndex.value < attemptValue.questionCount - 1"
           type="primary"
@@ -57,14 +58,24 @@
         >
           Next
         </a-button>
-        <a-button
-          v-else
-          type="primary"
-          @click="openSubmitModal"
-          data-testid="submit-attempt"
-        >
-          Submit
-        </a-button>
+
+        <!-- Submit area -->
+        <div v-else class="flex flex-col items-end gap-1">
+          <a-button
+            type="primary"
+            @click="openSubmitModal"
+            :disabled="!composable.isComplete.value"
+            data-testid="submit-attempt"
+          >
+            Submit
+          </a-button>
+          <span
+            v-if="!composable.isComplete.value"
+            class="text-xs text-gray-400"
+          >
+            {{ composable.answeredCount.value }}/{{ attemptValue.questionCount }} answered
+          </span>
+        </div>
       </div>
 
       <!-- Sidebar drawer for question navigation -->
@@ -79,9 +90,7 @@
           <a-button
             v-for="(q, idx) in attemptValue.questions"
             :key="q.quizQuestionId"
-            :type="
-              idx === composable.currentIndex.value ? 'primary' : 'default'
-            "
+            :type="idx === composable.currentIndex.value ? 'primary' : 'default'"
             @click="
               composable.goToQuestion(idx);
               showSidebar = false;
@@ -103,12 +112,13 @@
         cancel-text="Cancel"
         data-testid="submit-modal"
       >
-        <p>
-          Are you sure you want to submit? You cannot change your answers after
-          submission.
+        <p>Are you sure you want to submit? You cannot change your answers after submission.</p>
+        <p class="mt-2 text-sm text-gray-500">
+          Answered: {{ composable.answeredCount.value }} / {{ attemptValue.questionCount }}
         </p>
       </a-modal>
     </div>
+
     <div
       v-else
       class="text-center py-8 text-gray-500"
@@ -147,27 +157,13 @@ const quizTitle = ref("");
 
 const composable = useAttempt(quizId.value);
 
-console.log("[QuizPlayer] composable created", { composable });
-
 const attemptValue = computed(() => {
   const val = composable.attempt?.value ?? null;
   if (val) {
     if (!val.questions || !Array.isArray(val.questions)) {
-      console.error(
-        "[QuizPlayer] attemptValue: questions is missing or not an array",
-        val,
-      );
+      console.error("[QuizPlayer] attemptValue: questions is missing or not an array", val);
     } else if (val.questions.length === 0) {
       console.error("[QuizPlayer] attemptValue: questions array is empty", val);
-    } else {
-      console.log("[QuizPlayer] attemptValue:", {
-        attemptId: val.attemptId,
-        questionCount: val.questionCount,
-        firstQuestionSnapshot: val.questions[0]?.questionSnapshotJson?.slice(
-          0,
-          50,
-        ),
-      });
     }
   }
   return val;
