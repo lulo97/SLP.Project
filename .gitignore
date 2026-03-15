@@ -140,3 +140,5 @@ coverage/
 slp/backend-dotnet/logs
 
 view_features.txt
+
+*.gguf
