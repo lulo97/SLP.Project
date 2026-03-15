@@ -1,6 +1,10 @@
 using backend_dotnet.Data;
 using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Email;
+using backend_dotnet.Features.Explanation;
+using backend_dotnet.Features.Favorite;
+using backend_dotnet.Features.Llm;
+using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
@@ -10,9 +14,6 @@ using backend_dotnet.Features.Tag;
 using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using backend_dotnet.Features.Explanation;
-using backend_dotnet.Features.Progress;
-using backend_dotnet.Features.Favorite;
 
 namespace backend_dotnet.Extensions;
 
@@ -38,7 +39,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IFavoriteService, FavoriteService>();
-        
+        services.AddHttpClient<ILlmService, LlmService>();
+        services.AddScoped<ILlmLogRepository, LlmLogRepository>();
+        services.AddScoped<ILlmService, LlmService>();
+
         return services;
     }
 

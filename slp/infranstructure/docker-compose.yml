@@ -57,6 +57,20 @@ services:
     depends_on:
       - backend-dotnet-img
    
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: llama-container
+    ports:
+      - "${LLAMA_PORT}:${LLAMA_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - "${LLAMA_MODEL_VOLUME_PATH}:/models"
+    command: >
+      -m /models/${LLAMA_MODEL_NAME}
+      --host 0.0.0.0
+      --port ${LLAMA_PORT}
+
 volumes:
   redis_data:
   kafka_data:

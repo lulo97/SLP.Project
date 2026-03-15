@@ -1,43 +1,59 @@
-﻿namespace backend_dotnet.Features.Llm;
+﻿using System.Collections.Generic;
 
-// ── Requests ─────────────────────────────────────────────────────────────────
+namespace backend_dotnet.Features.Llm;
 
+// ─── Requests from client ───────────────────────────────────────────────────
 public class LlmExplainRequest
 {
-    /// <summary>The source document the selected text belongs to.</summary>
     public int SourceId { get; set; }
-
-    /// <summary>The user-highlighted text to be explained by the LLM.</summary>
     public string SelectedText { get; set; } = string.Empty;
-
-    /// <summary>Optional surrounding context sent to the model for better accuracy.</summary>
     public string? Context { get; set; }
 }
 
 public class LlmGrammarRequest
 {
-    /// <summary>The text to grammar-check.</summary>
     public string Text { get; set; } = string.Empty;
 }
 
 public class LlmTtsRequest
 {
-    /// <summary>The text to convert to speech (max 500 characters).</summary>
     public string Text { get; set; } = string.Empty;
-
-    /// <summary>Optional voice/language hint forwarded to the TTS worker.</summary>
     public string? Voice { get; set; }
 }
 
-// ── Responses ────────────────────────────────────────────────────────────────
-
-public class LlmQueuedResponse
+// ─── LLM API DTOs ───────────────────────────────────────────────────────────
+public class LlmApiMessage
 {
-    /// <summary>Always "queued" while the Kafka producer is in place.</summary>
-    public string Status { get; set; } = "queued";
+    public string Role { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}
 
-    /// <summary>Unique job identifier the client can use to poll for results.</summary>
-    public string JobId { get; set; } = string.Empty;
+public class LlmApiRequest
+{
+    public List<LlmApiMessage> Messages { get; set; } = new();
+    public bool Stream { get; set; } = false;
+    public double Temperature { get; set; } = 0.8;
+    public int MaxTokens { get; set; } = -1;
+    // Add other parameters if needed (top_p, etc.)
+}
 
-    public string Message { get; set; } = string.Empty;
+public class LlmApiChoice
+{
+    public LlmApiMessage Message { get; set; } = new();
+}
+
+public class LlmApiResponse
+{
+    public List<LlmApiChoice> Choices { get; set; } = new();
+}
+
+// ─── Final responses to client ──────────────────────────────────────────────
+public class LlmExplainResponse
+{
+    public string Explanation { get; set; } = string.Empty;
+}
+
+public class LlmGrammarResponse
+{
+    public string CorrectedText { get; set; } = string.Empty;
 }

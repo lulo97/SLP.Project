@@ -1,4 +1,5 @@
 ﻿using backend_dotnet.Features.Explanation;
+using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
@@ -37,6 +38,7 @@ public class AppDbContext : DbContext
     public DbSet<Explanation> Explanations => Set<Explanation>();
     public DbSet<Features.Progress.UserSourceProgress> UserSourceProgresses => Set<Features.Progress.UserSourceProgress>();
     public DbSet<Features.Favorite.FavoriteItem> FavoriteItems => Set<Features.Favorite.FavoriteItem>();
+    public DbSet<LlmLog> LlmLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
