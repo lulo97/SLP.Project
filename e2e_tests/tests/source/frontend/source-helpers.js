@@ -159,28 +159,54 @@ export async function selectTextInArticle(page, selector, charCount = 30) {
   await page.evaluate(
     ({ sel, chars }) => {
       const el = document.querySelector(sel);
-      if (!el) return;
+      if (!el) throw new Error(`Element ${sel} not found`);
 
-      // Find a text node
+      // Collect all text nodes and their start offsets
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      const textNode = walker.nextNode();
-      if (!textNode || !textNode.textContent) return;
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node.textContent.trim().length > 0) {
+          textNodes.push(node);
+        }
+      }
+      if (textNodes.length === 0) return;
 
-      const length = Math.min(chars, textNode.textContent.length);
-      const range  = document.createRange();
-      range.setStart(textNode, 0);
-      range.setEnd(textNode, length);
+      // Determine which text node contains the Nth character
+      let remaining = chars;
+      let targetNode = null;
+      let offset = 0;
+      for (const node of textNodes) {
+        const len = node.textContent.length;
+        if (remaining <= len) {
+          targetNode = node;
+          offset = remaining;
+          break;
+        }
+        remaining -= len;
+      }
+      if (!targetNode) {
+        // Select all text
+        targetNode = textNodes[textNodes.length - 1];
+        offset = targetNode.textContent.length;
+      }
+
+      const range = document.createRange();
+      range.setStart(targetNode, 0);
+      range.setEnd(targetNode, offset);
 
       const sel2 = window.getSelection();
       sel2.removeAllRanges();
       sel2.addRange(range);
 
-      // Dispatch mouseup so the bubble listener fires
+      // Dispatch both mouseup and selectionchange to be safe
       document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      document.dispatchEvent(new Event("selectionchange"));
     },
     { sel: selector, chars: charCount }
   );
 
+  // Wait for bubble
   await page.locator('[data-testid="selection-bubble"]').waitFor({ timeout: 4_000 });
 }
 

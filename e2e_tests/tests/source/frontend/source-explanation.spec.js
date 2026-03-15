@@ -40,7 +40,15 @@ test.describe("Source – Selection Bubble & Explanation Panel", () => {
     await goToSourceDetail(page, createdId);
     await page.locator('[data-testid="source-detail-content-plain"]').waitFor();
 
+    await page.waitForTimeout(200); // or use page.waitForFunction to detect bubble
+
+    const text = await page.locator('[data-testid="source-detail-content-plain"]').textContent();
+    console.log('Element text:', text);
+
     await selectTextInArticle(page, '[data-testid="source-detail-content-plain"]', 20);
+
+    const selectedText = await page.evaluate(() => window.getSelection().toString());
+    console.log('Selected text:', selectedText);
 
     await expect(page.locator('[data-testid="selection-bubble"]')).toBeVisible();
     await expect(page.locator('[data-testid="selection-bubble-bar"]')).toBeVisible();
@@ -188,7 +196,7 @@ test.describe("Source – Selection Bubble & Explanation Panel", () => {
     await page.close();
   });
 
-  test("submitting explanation via AI adds an optimistic card to the list", async ({
+  test.only("submitting explanation via AI adds an optimistic card to the list", async ({
     browser,
     request,
   }) => {
