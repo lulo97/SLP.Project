@@ -10,6 +10,9 @@ using backend_dotnet.Features.Tag;
 using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using backend_dotnet.Features.Explanation;
+using backend_dotnet.Features.Progress;
+using backend_dotnet.Features.Favorite;
 
 namespace backend_dotnet.Extensions;
 
@@ -29,7 +32,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<IAttemptRepository, AttemptRepository>();
         services.AddScoped<IAttemptService, AttemptService>();
-
+        services.AddScoped<IExplanationRepository, ExplanationRepository>();
+        services.AddScoped<IExplanationService, ExplanationService>();
+        services.AddScoped<IProgressRepository, ProgressRepository>();
+        services.AddScoped<IProgressService, ProgressService>();
+        services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
+        
         return services;
     }
 

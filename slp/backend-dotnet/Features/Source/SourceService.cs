@@ -133,6 +133,7 @@ public class SourceService : ISourceService
             Title = s.Title,
             Url = s.Url,
             RawText = s.RawText,
+            ContentJson = s.ContentJson,   // ← ADD THIS LINE
             FilePath = s.FilePath,
             CreatedAt = s.CreatedAt,
             UpdatedAt = s.UpdatedAt,

@@ -7,7 +7,7 @@ const path = require("path");
 const config = {
   // Filenames must contain at least one of these keywords (case‑insensitive)
   // Leave empty to include all files (subject to excludeKeywords)
-  keywords: ["quiz", "attempt"],
+  keywords: ["source", "explanation", "favorite"],
 
   // Filenames that contain any of these keywords will be EXCLUDED (case‑insensitive)
   excludeKeywords: [],   // <-- add your exclude terms here
@@ -15,7 +15,7 @@ const config = {
   // Which parts of the project to scan:
   // Choose from "backend", "frontend", "database", "test"
   // Leave empty or comment out to include all.
-  selectedOptions: ["backend", "database", "frontend", "test"]   // <-- change this as needed
+  selectedOptions: ["backend", "database", "frontend"]   // <-- change this as needed
 };
 
 // Folder patterns for each option (using path.sep for cross‑platform compatibility)

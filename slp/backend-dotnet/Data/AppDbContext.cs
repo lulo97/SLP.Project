@@ -1,4 +1,5 @@
-﻿using backend_dotnet.Features.Note;
+﻿using backend_dotnet.Features.Explanation;
+using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
@@ -33,6 +34,9 @@ public class AppDbContext : DbContext
     public DbSet<QuizNote> QuizNotes { get; set; }
     public DbSet<QuizAttempt> QuizAttempts { get; set; }
     public DbSet<QuizAttemptAnswer> QuizAttemptAnswers { get; set; }
+    public DbSet<Explanation> Explanations => Set<Explanation>();
+    public DbSet<Features.Progress.UserSourceProgress> UserSourceProgresses => Set<Features.Progress.UserSourceProgress>();
+    public DbSet<Features.Favorite.FavoriteItem> FavoriteItems => Set<Features.Favorite.FavoriteItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,7 +101,7 @@ public class AppDbContext : DbContext
                   .HasForeignKey(qt => qt.TagId);
         });
 
-        // QuizSource (composite key) - FIXED: Made Source relationship optional
+        // QuizSource (composite key)
         modelBuilder.Entity<QuizSource>(entity =>
         {
             entity.HasKey(qs => new { qs.QuizId, qs.SourceId });
@@ -106,9 +110,9 @@ public class AppDbContext : DbContext
                   .HasForeignKey(qs => qs.QuizId)
                   .IsRequired(false);
             entity.HasOne(qs => qs.Source)
-                  .WithMany() // Source may not have collection back
+                  .WithMany()
                   .HasForeignKey(qs => qs.SourceId)
-                  .IsRequired(false); // 👈 Added this line to fix Source warning
+                  .IsRequired(false);
         });
 
         // Question configuration
@@ -118,7 +122,6 @@ public class AppDbContext : DbContext
             entity.HasOne(q => q.User)
                   .WithMany()
                   .HasForeignKey(q => q.UserId);
-            // If you add soft delete later, add query filter here
         });
 
         // QuestionTag (composite key)
@@ -160,10 +163,73 @@ public class AppDbContext : DbContext
             entity.HasIndex(n => n.UserId);
         });
 
-        modelBuilder.Entity<QuizNote>()
-            .HasKey(qn => new { qn.QuizId, qn.NoteId });
+        // QuizNote (composite key) — FIX: Quiz has a query filter so the
+        // relationship must be optional to suppress EF Core WRN warning.
+        modelBuilder.Entity<QuizNote>(entity =>
+        {
+            entity.HasKey(qn => new { qn.QuizId, qn.NoteId });
+            entity.HasOne(qn => qn.Quiz)
+                  .WithMany(q => q.QuizNotes)   // ← name the collection so EF doesn't create a shadow FK
+                  .HasForeignKey(qn => qn.QuizId)
+                  .IsRequired(false); // ← suppresses WRN: Quiz has query filter
+        });
 
-        modelBuilder.Entity<QuizNote>()
-            .HasKey(qn => new { qn.QuizId, qn.NoteId });
+        // QuizAttempt — FIX: Quiz has a query filter so mark FK optional.
+        modelBuilder.Entity<QuizAttempt>(entity =>
+        {
+            entity.HasOne(a => a.Quiz)
+                  .WithMany(q => q.Attempts)    // ← name the collection so EF doesn't create a shadow FK
+                  .HasForeignKey(a => a.QuizId)
+                  .IsRequired(false); // ← suppresses WRN: Quiz has query filter
+        });
+
+        // ── Explanation ────────────────────────────────────────────────────────
+        // FIX: Source has a soft-delete query filter; make the FK optional.
+        modelBuilder.Entity<Explanation>(b =>
+        {
+            b.ToTable("explanation");
+            b.HasOne(e => e.User)
+             .WithMany()
+             .HasForeignKey(e => e.UserId)
+             .OnDelete(DeleteBehavior.SetNull);
+            b.HasOne(e => e.Source)
+             .WithMany()
+             .HasForeignKey(e => e.SourceId)
+             .IsRequired(false)              // ← suppresses WRN: Source has query filter
+             .OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.AuthorType)
+             .HasConversion<string>()
+             .HasMaxLength(10);
+        });
+
+        // ── UserSourceProgress ─────────────────────────────────────────────────
+        // FIX: Source has a soft-delete query filter; make the FK optional.
+        modelBuilder.Entity<Features.Progress.UserSourceProgress>(b =>
+        {
+            b.ToTable("user_source_progress");
+            b.HasIndex(p => new { p.UserId, p.SourceId }).IsUnique();
+            b.HasOne(p => p.User)
+             .WithMany()
+             .HasForeignKey(p => p.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(p => p.Source)
+             .WithMany()
+             .HasForeignKey(p => p.SourceId)
+             .IsRequired(false)              // ← suppresses WRN: Source has query filter
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── FavoriteItem ───────────────────────────────────────────────────────
+        modelBuilder.Entity<Features.Favorite.FavoriteItem>(b =>
+        {
+            b.ToTable("favorite_item");
+            b.HasOne(f => f.User)
+             .WithMany()
+             .HasForeignKey(f => f.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.Property(f => f.Type)
+             .HasMaxLength(20)
+             .HasDefaultValue("word");
+        });
     }
 }

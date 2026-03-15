@@ -10,6 +10,13 @@ public class SourceDto
     public string Title { get; set; } = string.Empty;
     public string? Url { get; set; }
     public string? RawText { get; set; }
+
+    /// <summary>
+    /// TipTap JSON (stored as raw string so frontend can parse directly).
+    /// Null if the source has no rich-text content.
+    /// </summary>
+    public string? ContentJson { get; set; }
+
     public string? FilePath { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -24,12 +31,6 @@ public class SourceListDto
     public string? Url { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-}
-
-public class UploadSourceDto
-{
-    public string? Title { get; set; }
-    // File is passed via IFormFile
 }
 
 public class UploadSourceRequest

@@ -1,1 +1,1 @@
-npx playwright test tests/quiz_attempt/frontend/quiz_attempt_question_types.spec.js --headed
+npx playwright test tests/favourite/favourite.spec.js --headed
