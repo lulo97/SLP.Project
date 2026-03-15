@@ -6,4 +6,7 @@ public interface ILlmLogRepository
 {
     Task<LlmLog?> GetCachedResponseAsync(int userId, string requestType, string prompt);
     Task AddAsync(LlmLog log);
+    // New methods for queuing
+    Task<LlmLog?> GetByJobIdAsync(string jobId);
+    Task UpdateJobStatusAsync(string jobId, string status, string? response = null);
 }

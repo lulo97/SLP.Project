@@ -57,3 +57,19 @@ public class LlmGrammarResponse
 {
     public string CorrectedText { get; set; } = string.Empty;
 }
+
+public class LlmJobResponse
+{
+    public string JobId { get; set; } = string.Empty;
+    public string Status { get; set; } = "Pending";
+}
+
+// Job status response
+public class LlmJobStatusResponse
+{
+    public string JobId { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? Result { get; set; } // the LLM response if completed
+    public DateTime? CreatedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
+}

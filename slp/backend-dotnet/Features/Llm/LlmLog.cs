@@ -30,7 +30,19 @@ public class LlmLog
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation property (optional)
+    // New fields for queuing
+    [Column("job_id")]
+    [MaxLength(50)]
+    public string? JobId { get; set; }
+
+    [Column("status")]
+    [MaxLength(20)]
+    public string? Status { get; set; } // Pending, Processing, Completed, Failed
+
+    [Column("completed_at")]
+    public DateTime? CompletedAt { get; set; }
+
+    // Navigation property
     [ForeignKey(nameof(UserId))]
     public virtual User.User? User { get; set; }
 }

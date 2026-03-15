@@ -6,6 +6,7 @@ using backend_dotnet.Features.Favorite;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
+using backend_dotnet.Features.Queue;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
 using backend_dotnet.Features.Session;
@@ -14,6 +15,7 @@ using backend_dotnet.Features.Tag;
 using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace backend_dotnet.Extensions;
 
@@ -39,9 +41,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+
+        // LLM – use AddHttpClient to register ILlmService (transient) with HttpClient
         services.AddHttpClient<ILlmService, LlmService>();
         services.AddScoped<ILlmLogRepository, LlmLogRepository>();
-        services.AddScoped<ILlmService, LlmService>();
 
         return services;
     }
@@ -67,13 +70,27 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCaching(this IServiceCollection services, IConfiguration configuration)
     {
+        // Redis queue (only if enabled)
+        if (configuration.GetValue<bool>("Queue:Enabled"))
+        {
+            var redisConnectionString = configuration["ConnectionStrings:Redis"];
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+                ConnectionMultiplexer.Connect(redisConnectionString));
+            services.AddSingleton<IQueueService, RedisQueueService>();
+            services.AddHostedService<BackgroundJobProcessor>();
+        }
+        else
+        {
+            // No-op queue service when disabled
+            services.AddSingleton<IQueueService, NullQueueService>();
+        }
+
+        // Distributed cache (optional – uses Redis as cache)
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = configuration.GetConnectionString("Redis");
             options.InstanceName = "SampleApp";
         });
-
-        // Optional: Add IDistributedCache or custom cache services here
 
         return services;
     }
