@@ -196,7 +196,7 @@ test.describe("Source – Selection Bubble & Explanation Panel", () => {
     await page.close();
   });
 
-  test.only("submitting explanation via AI adds an optimistic card to the list", async ({
+  test("submitting explanation via AI adds an optimistic card to the list", async ({
     browser,
     request,
   }) => {
