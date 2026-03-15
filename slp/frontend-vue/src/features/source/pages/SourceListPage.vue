@@ -2,23 +2,47 @@
   <MobileLayout title="My Sources">
     <template #header-extra>
       <a-space>
-        <a-button type="primary" size="small" @click="goToUpload" data-testid="source-list-upload-button">
+        <a-button
+          type="primary"
+          size="small"
+          @click="goToUpload"
+          data-testid="source-list-upload-btn"
+        >
           <UploadOutlined /> Upload File
         </a-button>
-        <a-button type="primary" size="small" @click="goToUrlCreate" data-testid="source-list-add-url-button">
+        <a-button
+          type="primary"
+          size="small"
+          @click="goToUrlCreate"
+          data-testid="source-list-add-url-btn"
+        >
           <LinkOutlined /> Add from URL
+        </a-button>
+        <a-button
+          size="small"
+          @click="router.push('/source/new-note')"
+          data-testid="source-list-add-note-btn"
+        >
+          Add Note
         </a-button>
       </a-space>
     </template>
 
-    <!-- Loading, Error, Empty states (unchanged) -->
     <!-- Loading -->
     <div v-if="sourceStore.loading" class="text-center py-8" data-testid="source-list-loading">
       <a-spin />
-      <!-- Loading spinner -->
     </div>
 
-    <!-- Source list -->
+    <!-- Empty -->
+    <div
+      v-else-if="!sourceStore.sources.length"
+      class="text-center py-12 text-gray-400"
+      data-testid="source-list-empty"
+    >
+      No sources yet. Upload a file, add a URL, or create a note to get started.
+    </div>
+
+    <!-- List -->
     <a-list
       v-else
       :data-source="sourceStore.sources"
@@ -27,24 +51,34 @@
       data-testid="source-list"
     >
       <template #renderItem="{ item }">
-        <a-list-item :data-testid="'source-list-item-' + item.id">
+        <a-list-item :data-testid="`source-list-item-${item.id}`">
           <a-list-item-meta>
             <template #title>
-              <router-link :to="`/source/${item.id}`" :data-testid="'source-list-item-link-' + item.id">
+              <router-link
+                :to="`/source/${item.id}`"
+                :data-testid="`source-list-item-link-${item.id}`"
+              >
                 {{ item.title || "Untitled" }}
               </router-link>
             </template>
             <template #description>
-              <div class="text-xs text-gray-500">
-                <span>Type: {{ formatType(item.type) }}</span>
+              <div
+                class="text-xs text-gray-500"
+                :data-testid="`source-list-item-meta-${item.id}`"
+              >
+                <span :data-testid="`source-list-item-type-${item.id}`">Type: {{ formatType(item.type) }}</span>
                 <span class="mx-2">•</span>
-                <span>Added: {{ formatDate(item.createdAt) }}</span>
-                <!-- No file size from backend -->
+                <span :data-testid="`source-list-item-date-${item.id}`">Added: {{ formatDate(item.createdAt) }}</span>
               </div>
             </template>
           </a-list-item-meta>
           <template #actions>
-            <a-button type="text" size="small" @click="viewSource(item.id)" :data-testid="'source-list-view-' + item.id">
+            <a-button
+              type="text"
+              size="small"
+              @click="viewSource(item.id)"
+              :data-testid="`source-list-view-btn-${item.id}`"
+            >
               <EyeOutlined />
             </a-button>
             <a-popconfirm
@@ -52,8 +86,14 @@
               ok-text="Yes"
               cancel-text="No"
               @confirm="deleteSource(item.id)"
+              :data-testid="`source-list-delete-confirm-${item.id}`"
             >
-              <a-button type="text" size="small" danger :data-testid="'source-list-delete-' + item.id">
+              <a-button
+                type="text"
+                size="small"
+                danger
+                :data-testid="`source-list-delete-btn-${item.id}`"
+              >
                 <DeleteOutlined />
               </a-button>
             </a-popconfirm>
@@ -71,7 +111,6 @@ import { message } from "ant-design-vue";
 import {
   UploadOutlined,
   LinkOutlined,
-  FileTextOutlined,
   EyeOutlined,
   DeleteOutlined,
 } from "@ant-design/icons-vue";
@@ -85,20 +124,16 @@ const pagination = { pageSize: 20, showSizeChanger: false };
 
 const formatType = (type: string) => {
   const map: Record<string, string> = {
-    pdf: "PDF",
-    txt: "Text",
-    link: "Link",
-    note: "Note",
-    book: "Book",
+    pdf: "PDF", txt: "Text", link: "Link", note: "Note", book: "Book",
   };
   return map[type] || type;
 };
 
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString();
-};
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
-const viewSource = (id: number) => router.push(`/source/${id}`);
+const viewSource  = (id: number) => router.push(`/source/${id}`);
+const goToUpload  = () => router.push("/source/upload");
+const goToUrlCreate = () => router.push("/source/new-url");
 
 const deleteSource = async (id: number) => {
   const success = await sourceStore.deleteSource(id);
@@ -109,9 +144,6 @@ const deleteSource = async (id: number) => {
     message.error("Delete failed");
   }
 };
-
-const goToUpload = () => router.push("/source/upload");
-const goToUrlCreate = () => router.push("/source/new-url");
 
 onMounted(() => sourceStore.fetchSources());
 </script>

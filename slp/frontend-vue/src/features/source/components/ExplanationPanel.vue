@@ -1,70 +1,155 @@
 <template>
-  <div class="explanation-panel" :class="{ 'is-open': isOpen }">
+  <div
+    class="fixed top-0 right-0 h-screen w-[320px] bg-[#faf9f6] border-l border-[#e8e4dc]
+           shadow-[-4px_0_24px_rgba(0,0,0,0.06)] z-[200] flex flex-col
+           transition-transform duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+    :class="isOpen ? 'translate-x-0' : 'translate-x-full'"
+    data-testid="explanation-panel"
+  >
     <!-- Toggle handle -->
-    <button class="panel-toggle" @click="$emit('close')">
+    <button
+      class="absolute left-[-32px] top-1/2 -translate-y-1/2 w-8 h-12
+             bg-[#faf9f6] border border-[#e8e4dc] border-r-0 rounded-l-[8px]
+             cursor-pointer flex items-center justify-center
+             text-gray-400 transition-colors hover:text-gray-700"
+      @click="$emit('close')"
+      data-testid="explanation-panel-toggle-btn"
+    >
       <ChevronRight :size="16" />
     </button>
 
-    <div class="panel-inner">
-      <div class="panel-header">
-        <div class="panel-title-row">
-          <Sparkles :size="16" class="panel-icon" />
-          <h3 class="panel-title">Explanations</h3>
+    <!-- Scrollable inner -->
+    <div class="flex-1 overflow-y-auto flex flex-col">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-[#e8e4dc]">
+        <div class="flex items-center gap-2">
+          <Sparkles :size="16" class="text-[#7c6af5]" />
+          <h3 class="text-sm font-semibold text-[#1a1a2e] m-0 tracking-[-0.01em]">Explanations</h3>
         </div>
-        <button class="panel-close" @click="$emit('close')">
+        <button
+          class="bg-transparent border-0 text-gray-400 cursor-pointer p-1 rounded
+                 transition-all hover:text-gray-700 hover:bg-gray-100"
+          @click="$emit('close')"
+          data-testid="explanation-panel-close-btn"
+        >
           <X :size="16" />
         </button>
       </div>
 
       <!-- Selected text preview -->
-      <div v-if="pendingText" class="selected-preview">
-        <p class="preview-label">Selected text</p>
-        <blockquote class="preview-text">{{ truncate(pendingText, 120) }}</blockquote>
-        <div class="preview-actions">
-          <button class="action-btn action-btn--primary" @click="$emit('request-explain', pendingText)">
+      <div
+        v-if="pendingText"
+        class="m-4 p-[14px] bg-white border border-[#e8e4dc] rounded-[10px]"
+        data-testid="explanation-panel-preview"
+      >
+        <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400 mt-0 mb-2">
+          Selected text
+        </p>
+        <blockquote
+          class="text-[13px] text-gray-700 italic border-l-[3px] border-[#7c6af5]
+                 pl-[10px] mt-0 mb-3 leading-[1.5]"
+          data-testid="explanation-panel-preview-text"
+        >
+          {{ truncate(pendingText, 120) }}
+        </blockquote>
+        <div class="flex gap-2">
+          <button
+            class="flex items-center gap-[5px] px-3 py-1.5 rounded-[7px] text-xs font-medium
+                   cursor-pointer border-0 bg-[#7c6af5] text-white font-[inherit]
+                   transition-all hover:bg-[#6c5ce7]"
+            @click="$emit('request-explain', pendingText)"
+            data-testid="explanation-panel-explain-btn"
+          >
             <Sparkles :size="13" />
             Explain with AI
           </button>
-          <button class="action-btn" @click="$emit('clear-pending')">
+          <button
+            class="flex items-center gap-[5px] px-3 py-1.5 rounded-[7px] text-xs font-medium
+                   cursor-pointer border border-[#e8e4dc] bg-white text-gray-700 font-[inherit]
+                   transition-all hover:bg-gray-50 hover:border-gray-300"
+            @click="$emit('clear-pending')"
+            data-testid="explanation-panel-clear-btn"
+          >
             <X :size="13" />
             Clear
           </button>
         </div>
       </div>
 
-      <!-- Explanations list -->
-      <div v-if="loading" class="panel-loading">
+      <!-- Loading -->
+      <div
+        v-if="loading"
+        class="flex flex-col items-center justify-center gap-3 px-5 py-10
+               text-gray-400 text-[13px] text-center flex-1"
+        data-testid="explanation-panel-loading"
+      >
         <a-spin size="small" />
         <span>Loading...</span>
       </div>
 
-      <div v-else-if="explanations.length === 0 && !pendingText" class="panel-empty">
-        <BookOpen :size="32" class="empty-icon" />
+      <!-- Empty -->
+      <div
+        v-else-if="explanations.length === 0 && !pendingText"
+        class="flex flex-col items-center justify-center gap-3 px-5 py-10
+               text-gray-400 text-[13px] text-center flex-1"
+        data-testid="explanation-panel-empty"
+      >
+        <BookOpen :size="32" class="text-gray-300" />
         <p>Select text in the article to get AI explanations.</p>
       </div>
 
-      <div v-else class="explanations-list">
+      <!-- List -->
+      <div
+        v-else
+        class="py-3 px-4 flex flex-col gap-3"
+        data-testid="explanation-panel-list"
+      >
         <div
           v-for="exp in explanations"
           :key="exp.id"
-          class="explanation-card"
+          class="bg-white border border-[#e8e4dc] rounded-[10px] p-[14px]
+                 transition-shadow hover:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+          :data-testid="`explanation-panel-card-${exp.id}`"
         >
-          <div class="exp-quote">
-            <span class="quote-mark">"</span>
+          <!-- Quote -->
+          <div
+            class="text-xs text-gray-500 italic mb-2 leading-[1.4]"
+            :data-testid="`explanation-panel-card-quote-${exp.id}`"
+          >
+            <span class="text-lg text-[#7c6af5] leading-none align-[-4px] mr-0.5">"</span>
             {{ truncate(exp.textRange?.text ?? '', 80) }}
           </div>
-          <div v-if="exp.content" class="exp-body">
+
+          <!-- Content -->
+          <div
+            v-if="exp.content"
+            class="text-[13px] text-gray-700 leading-[1.6]"
+            :data-testid="`explanation-panel-card-content-${exp.id}`"
+          >
             {{ exp.content }}
           </div>
-          <div v-else class="exp-pending">
+
+          <!-- Pending -->
+          <div
+            v-else
+            class="flex items-center gap-2 text-xs text-gray-400"
+            :data-testid="`explanation-panel-card-pending-${exp.id}`"
+          >
             <a-spin size="small" />
             <span>Generating explanation…</span>
           </div>
-          <div class="exp-meta">
+
+          <!-- Meta -->
+          <div
+            class="text-[11px] text-[#c4bfb5] mt-2"
+            :data-testid="`explanation-panel-card-meta-${exp.id}`"
+          >
             {{ formatDate(exp.createdAt) }}
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -77,9 +162,7 @@ export interface ExplanationItem {
   id: number;
   userId?: number;
   sourceId?: number;
-  /** JSON object stored by backend — we put { text: "..." } here */
   textRange?: { text?: string; [key: string]: any } | null;
-  /** The explanation body (AI-generated or user-written). Empty while pending. */
   content: string;
   authorType?: string;
   editable?: boolean;
@@ -113,233 +196,3 @@ function formatDate(iso: string) {
   });
 }
 </script>
-
-<style scoped>
-.explanation-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 320px;
-  background: #faf9f6;
-  border-left: 1px solid #e8e4dc;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.06);
-  transform: translateX(100%);
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-}
-
-.explanation-panel.is-open {
-  transform: translateX(0);
-}
-
-.panel-toggle {
-  position: absolute;
-  left: -32px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 48px;
-  background: #faf9f6;
-  border: 1px solid #e8e4dc;
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  transition: color 0.15s;
-}
-
-.panel-toggle:hover {
-  color: #374151;
-}
-
-.panel-inner {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid #e8e4dc;
-}
-
-.panel-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.panel-icon {
-  color: #7c6af5;
-}
-
-.panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.panel-close {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
-}
-
-.panel-close:hover {
-  color: #374151;
-  background: #f3f4f6;
-}
-
-.selected-preview {
-  margin: 16px;
-  padding: 14px;
-  background: #fff;
-  border: 1px solid #e8e4dc;
-  border-radius: 10px;
-}
-
-.preview-label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #9ca3af;
-  margin: 0 0 8px;
-}
-
-.preview-text {
-  font-size: 13px;
-  color: #374151;
-  font-style: italic;
-  border-left: 3px solid #7c6af5;
-  padding-left: 10px;
-  margin: 0 0 12px;
-  line-height: 1.5;
-}
-
-.preview-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid #e8e4dc;
-  background: #fff;
-  color: #374151;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-
-.action-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.action-btn--primary {
-  background: #7c6af5;
-  border-color: #7c6af5;
-  color: #fff;
-}
-
-.action-btn--primary:hover {
-  background: #6c5ce7;
-  border-color: #6c5ce7;
-}
-
-.panel-loading,
-.panel-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  color: #9ca3af;
-  font-size: 13px;
-  text-align: center;
-  flex: 1;
-}
-
-.empty-icon {
-  color: #d1d5db;
-}
-
-.explanations-list {
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.explanation-card {
-  background: #fff;
-  border: 1px solid #e8e4dc;
-  border-radius: 10px;
-  padding: 14px;
-  transition: box-shadow 0.15s;
-}
-
-.explanation-card:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-.exp-quote {
-  font-size: 12px;
-  color: #6b7280;
-  font-style: italic;
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.quote-mark {
-  font-size: 18px;
-  color: #7c6af5;
-  line-height: 0;
-  vertical-align: -4px;
-  margin-right: 2px;
-}
-
-.exp-body {
-  font-size: 13px;
-  color: #374151;
-  line-height: 1.6;
-}
-
-.exp-pending {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.exp-meta {
-  font-size: 11px;
-  color: #c4bfb5;
-  margin-top: 8px;
-}
-</style>

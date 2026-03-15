@@ -1,7 +1,12 @@
 <template>
   <MobileLayout title="Create Note Source">
     <a-card class="shadow-sm" data-testid="source-note-create-card">
-      <a-form :model="form" @submit.prevent="handleSubmit" layout="vertical" data-testid="source-note-create-form">
+      <a-form
+        :model="form"
+        @submit.prevent="handleSubmit"
+        layout="vertical"
+        data-testid="source-note-create-form"
+      >
         <a-form-item label="Title" required>
           <a-input
             v-model:value="form.title"
@@ -30,7 +35,7 @@
             :loading="sourceStore.loading"
             :disabled="!form.title.trim() || !form.content.trim()"
             block
-            data-testid="source-note-create-submit-button"
+            data-testid="source-note-create-submit-btn"
           >
             Create Source
           </a-button>
@@ -52,33 +57,28 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { message } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useSourceStore } from '../stores/sourceStore';
+import { reactive } from "vue";
+import { useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useSourceStore } from "../stores/sourceStore";
 
 const router = useRouter();
 const sourceStore = useSourceStore();
 
-const form = reactive({
-  title: '',
-  content: '',
-});
+const form = reactive({ title: "", content: "" });
 
 const handleSubmit = async () => {
   if (!form.title.trim() || !form.content.trim()) {
-    message.warning('Both title and content are required');
+    message.warning("Both title and content are required");
     return;
   }
-
   const created = await sourceStore.createSourceFromNote({
     title: form.title,
     content: form.content,
   });
-
   if (created) {
-    message.success('Text source created');
+    message.success("Text source created");
     router.push(`/source/${created.id}`);
   }
 };

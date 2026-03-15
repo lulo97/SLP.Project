@@ -4,28 +4,67 @@
       <div
         v-if="visible"
         ref="bubbleRef"
-        class="selection-bubble"
+        class="absolute z-[9999] w-[296px] pointer-events-auto
+               [filter:drop-shadow(0_4px_16px_rgba(0,0,0,0.12))]"
         :style="bubbleStyle"
         @mousedown.prevent
+        data-testid="selection-bubble"
       >
-        <div class="bubble-bar">
-          <button class="bubble-btn" @click="emit('explain', selectedText)">
+        <!-- Actions bar -->
+        <div
+          class="flex items-center bg-white border border-[#e5e7eb] rounded-[10px] p-1 gap-0.5"
+          data-testid="selection-bubble-bar"
+        >
+          <button
+            class="flex items-center gap-[5px] flex-1 justify-center px-2 py-1.5
+                   border-0 bg-transparent text-gray-700 rounded-[7px] cursor-pointer
+                   text-xs font-medium whitespace-nowrap font-[inherit]
+                   transition-all duration-[120ms] hover:bg-[#f3f4f6] hover:text-gray-900"
+            @click="emit('explain', selectedText)"
+            data-testid="selection-bubble-explain-btn"
+          >
             <Sparkles :size="13" />
             Explain
           </button>
-          <button class="bubble-btn" @click="emit('grammar', selectedText)">
+
+          <button
+            class="flex items-center gap-[5px] flex-1 justify-center px-2 py-1.5
+                   border-0 bg-transparent text-gray-700 rounded-[7px] cursor-pointer
+                   text-xs font-medium whitespace-nowrap font-[inherit]
+                   transition-all duration-[120ms] hover:bg-[#f3f4f6] hover:text-gray-900"
+            @click="emit('grammar', selectedText)"
+            data-testid="selection-bubble-grammar-btn"
+          >
             <SpellCheck :size="13" />
             Grammar
           </button>
-          <button class="bubble-btn" @click="emit('tts', selectedText)">
+
+          <button
+            class="flex items-center gap-[5px] flex-1 justify-center px-2 py-1.5
+                   border-0 bg-transparent text-gray-700 rounded-[7px] cursor-pointer
+                   text-xs font-medium whitespace-nowrap font-[inherit]
+                   transition-all duration-[120ms] hover:bg-[#f3f4f6] hover:text-gray-900"
+            @click="emit('tts', selectedText)"
+            data-testid="selection-bubble-listen-btn"
+          >
             <Volume2 :size="13" />
             Listen
           </button>
-          <button class="bubble-btn" @click="emit('favorite', selectedText)">
+
+          <button
+            class="flex items-center gap-[5px] flex-1 justify-center px-2 py-1.5
+                   border-0 bg-transparent text-gray-700 rounded-[7px] cursor-pointer
+                   text-xs font-medium whitespace-nowrap font-[inherit]
+                   transition-all duration-[120ms] hover:bg-[#f3f4f6] hover:text-gray-900"
+            @click="emit('favorite', selectedText)"
+            data-testid="selection-bubble-save-btn"
+          >
             <Bookmark :size="13" />
             Save
           </button>
         </div>
+
+        <!-- Arrow (::after pseudo-element requires CSS) -->
         <div class="bubble-arrow" />
       </div>
     </Transition>
@@ -37,20 +76,20 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Sparkles, SpellCheck, Volume2, Bookmark } from "lucide-vue-next";
 
 const emit = defineEmits<{
-  explain: [text: string];
-  grammar: [text: string];
-  tts:     [text: string];
-  favorite:[text: string];
+  explain:  [text: string];
+  grammar:  [text: string];
+  tts:      [text: string];
+  favorite: [text: string];
 }>();
 
 const props = defineProps<{
   containerRef?: HTMLElement | null;
 }>();
 
-const bubbleRef   = ref<HTMLElement | null>(null);
-const visible     = ref(false);
+const bubbleRef    = ref<HTMLElement | null>(null);
+const visible      = ref(false);
 const selectedText = ref("");
-const position    = ref({ x: 0, y: 0 });
+const position     = ref({ x: 0, y: 0 });
 
 const BUBBLE_WIDTH  = 296;
 const BUBBLE_HEIGHT = 40;
@@ -77,8 +116,8 @@ function handleSelectionChange() {
     }
   }
 
-  const range = selection.getRangeAt(0);
-  const rect  = range.getBoundingClientRect();
+  const range   = selection.getRangeAt(0);
+  const rect    = range.getBoundingClientRect();
   const scrollX = window.scrollX || window.pageXOffset;
   const scrollY = window.scrollY || window.pageYOffset;
 
@@ -93,18 +132,18 @@ function handleSelectionChange() {
   visible.value  = true;
 }
 
-const handleMouseUp  = () => setTimeout(handleSelectionChange, 10);
+const handleMouseUp   = () => setTimeout(handleSelectionChange, 10);
 const handleMouseDown = (e: MouseEvent) => { if (bubbleRef.value?.contains(e.target as Node)) return; };
-const handleKeyUp = (e: KeyboardEvent) => {
+const handleKeyUp     = (e: KeyboardEvent) => {
   if (e.key === "Escape") { visible.value = false; window.getSelection()?.removeAllRanges(); }
   else setTimeout(handleSelectionChange, 10);
 };
 
 onMounted(() => {
-  document.addEventListener("mouseup",   handleMouseUp);
-  document.addEventListener("mousedown", handleMouseDown);
-  document.addEventListener("keyup",     handleKeyUp);
-  document.addEventListener("selectionchange", () => {
+  document.addEventListener("mouseup",          handleMouseUp);
+  document.addEventListener("mousedown",        handleMouseDown);
+  document.addEventListener("keyup",            handleKeyUp);
+  document.addEventListener("selectionchange",  () => {
     const s = window.getSelection();
     if (!s || s.isCollapsed) visible.value = false;
   });
@@ -118,47 +157,11 @@ onUnmounted(() => {
 </script>
 
 <style>
-.selection-bubble {
-  position: absolute;
-  z-index: 9999;
-  width: 296px;
-  pointer-events: all;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
-}
-
-.bubble-bar {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 4px;
-  gap: 2px;
-}
-
-.bubble-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex: 1;
-  justify-content: center;
-  padding: 6px 8px;
-  border: none;
-  background: transparent;
-  color: #374151;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  font-family: inherit;
-  transition: background 0.12s, color 0.12s;
-}
-
-.bubble-btn:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
+/*
+ * Only things that cannot be expressed in Tailwind:
+ *   1. ::after pseudo-element for the two-layer CSS arrow
+ *   2. @keyframes for the enter/leave animations
+ */
 
 .bubble-arrow {
   position: absolute;
@@ -184,17 +187,12 @@ onUnmounted(() => {
   border-top: 5px solid #ffffff;
 }
 
-/* Animations */
-.bubble-enter-active {
-  animation: bubblePop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-.bubble-leave-active {
-  animation: bubbleFade 0.1s ease forwards;
-}
+.bubble-enter-active { animation: bubblePop  0.15s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.bubble-leave-active { animation: bubbleFade 0.1s  ease forwards; }
 
 @keyframes bubblePop {
-  from { opacity: 0; transform: translateY(6px) scale(0.94); }
-  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+  from { opacity: 0; transform: translateY(6px)  scale(0.94); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
 }
 @keyframes bubbleFade {
   to   { opacity: 0; transform: translateY(-3px) scale(0.97); }
