@@ -1,1 +1,1 @@
-npx playwright test tests/source/frontend/source-explanation.spec.js --headed
+npx playwright test tests/source/frontend/source-favourite.spec.js --headed

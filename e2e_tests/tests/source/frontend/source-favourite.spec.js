@@ -197,7 +197,7 @@ test.describe("Source – Favorites via Selection Bubble", () => {
     await page.close();
   });
 
-  test("saving with type=phrase stores the correct type in API", async ({ browser, request }) => {
+  test.only("saving with type=phrase stores the correct type in API", async ({ browser, request }) => {
     const source = makeNoteSource("FavPhrase");
     source.content = "Break a leg is a common theatrical idiom for good luck.";
     const dto = await createNoteSourceViaApi(request, authToken, source);

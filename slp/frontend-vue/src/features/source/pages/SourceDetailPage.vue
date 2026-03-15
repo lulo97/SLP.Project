@@ -303,9 +303,8 @@
       :confirm-loading="savingFavorite"
       @ok="submitFavorite"
       @cancel="favoriteModalOpen = false"
-      data-testid="source-detail-favorite-modal"
     >
-      <div class="flex flex-col gap-1.5">
+      <div data-testid="source-detail-favorite-modal" class="flex flex-col gap-1.5">
         <div class="text-xs font-semibold text-gray-500">Selected text</div>
         <a-textarea
           v-model:value="favoriteText"
