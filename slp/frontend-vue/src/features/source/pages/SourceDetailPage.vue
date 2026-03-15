@@ -471,13 +471,14 @@ function renderNode(node: any): string {
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadSource() {
   loading.value = true;
-  error.value   = null;
+  error.value = null;
   try {
     await sourceStore.fetchSource(sourceId.value);
     await loadProgress();
     await loadExplanations();
   } catch {
-    error.value = "Could not load this source.";
+    // Use the specific error message set by the store
+    error.value = sourceStore.error || "Could not load this source.";
   } finally {
     loading.value = false;
   }

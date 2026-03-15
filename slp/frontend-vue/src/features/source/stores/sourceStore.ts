@@ -73,7 +73,7 @@ export const useSourceStore = defineStore("source", () => {
       return res.data;
     } catch (e: any) {
       error.value = e.response?.data || "Failed to load source";
-      return null;
+      throw e; 
     } finally {
       loading.value = false;
     }

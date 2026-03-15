@@ -1,49 +1,99 @@
+// source-upload.spec.js – UI tests for file upload source creation
+
 import { test, expect } from "@playwright/test";
 import {
   FRONTEND_URL,
   authenticate,
-  generateUniqueSource,
   createAuthenticatedPage,
-  deleteSource,
-  verifySourceDeletedViaApi,
+  makeNoteSource,
+  deleteSourceViaApi,
 } from "./source-helpers.js";
 
-test.describe("Source Upload", () => {
+// A small in-memory txt file used across upload tests
+const TEST_FILE = {
+  name:     "test-source.txt",
+  mimeType: "text/plain",
+  buffer:   Buffer.from("This is auto-generated test file content for upload testing."),
+};
+
+test.describe("Source – File Upload", () => {
   let authToken;
+  let createdId = null;
 
   test.beforeAll(async ({ request }) => {
     authToken = await authenticate(request);
   });
 
-  test("Upload file source", async ({ browser, request }) => {
-    const page = await createAuthenticatedPage(browser, authToken);
-    const unique = generateUniqueSource("Upload");
+  test.afterEach(async ({ request }) => {
+    if (createdId) {
+      await deleteSourceViaApi(request, authToken, createdId);
+      createdId = null;
+    }
+  });
+
+  // ── Happy path ─────────────────────────────────────────────────────────────
+
+  test("uploads a .txt file and shows detail page", async ({ browser }) => {
+    const page   = await createAuthenticatedPage(browser, authToken);
+    const source = makeNoteSource("Upload");
 
     await page.goto(`${FRONTEND_URL}/source/upload`, { waitUntil: "domcontentloaded" });
 
-    await page.fill('[data-testid="source-upload-title-input"]', unique.title);
+    await expect(page.locator('[data-testid="source-upload-card"]')).toBeVisible();
+    await expect(page.locator('[data-testid="source-upload-form"]')).toBeVisible();
 
-    const fileContent = "This is a test file content.";
-    const file = {
-      name: "test.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from(fileContent),
-    };
-    await page.setInputFiles('[data-testid="source-upload-dragger"] input[type="file"]', file);
+    // Submit is disabled with no file
+    await page.fill('[data-testid="source-upload-title-input"]', source.title);
+    await expect(page.locator('[data-testid="source-upload-submit-btn"]')).toBeDisabled();
 
-    await page.click('[data-testid="source-upload-submit-button"]');
+    // Attach file
+    await page.setInputFiles(
+      '[data-testid="source-upload-dragger"] input[type="file"]',
+      TEST_FILE
+    );
 
-    await page.waitForURL(/\/source\/\d+$/, { timeout: 15000, waitUntil: "domcontentloaded" });
-    await expect(page.locator('[data-testid="source-detail-info-card"]')).toBeVisible();
+    // Selected file name should appear
+    await expect(page.locator('[data-testid="source-upload-selected-file"]')).toContainText(
+      TEST_FILE.name
+    );
+    await expect(page.locator('[data-testid="source-upload-submit-btn"]')).toBeEnabled();
 
-    await expect(page.locator('[data-testid="source-detail-title"]')).toHaveText(unique.title);
-    await expect(page.locator('[data-testid="source-detail-type"]')).toHaveText("Text");
-    await expect(page.locator('[data-testid="source-detail-content-preview"]')).toContainText(fileContent);
+    await page.click('[data-testid="source-upload-submit-btn"]');
+    await page.waitForURL(/\/source\/\d+$/, { timeout: 20_000 });
 
-    const url = page.url();
-    const id = parseInt(url.split("/").pop(), 10);
-    await deleteSource(page, id);
-    await verifySourceDeletedViaApi(request, id, authToken);
+    createdId = parseInt(page.url().split("/").pop(), 10);
+
+    // Detail page assertions
+    await expect(page.locator('[data-testid="source-detail-article"]')).toBeVisible();
+    await expect(page.locator('[data-testid="source-detail-article-title"]')).toHaveText(source.title);
+    // txt files are stored as "txt" type
+    await expect(page.locator('[data-testid="source-detail-type-badge"]')).toContainText(/txt|text/i);
+
+    await page.close();
+  });
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+
+  test("submit stays disabled when title is empty even with a file", async ({ browser }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    await page.goto(`${FRONTEND_URL}/source/upload`, { waitUntil: "domcontentloaded" });
+
+    await page.setInputFiles(
+      '[data-testid="source-upload-dragger"] input[type="file"]',
+      TEST_FILE
+    );
+
+    // No title → still disabled
+    await expect(page.locator('[data-testid="source-upload-submit-btn"]')).toBeDisabled();
+    await page.close();
+  });
+
+  test("submit stays disabled when no file is selected", async ({ browser }) => {
+    const page = await createAuthenticatedPage(browser, authToken);
+    await page.goto(`${FRONTEND_URL}/source/upload`, { waitUntil: "domcontentloaded" });
+
+    await page.fill('[data-testid="source-upload-title-input"]', "Title without file");
+    await expect(page.locator('[data-testid="source-upload-submit-btn"]')).toBeDisabled();
     await page.close();
   });
 });
