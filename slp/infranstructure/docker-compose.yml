@@ -69,12 +69,10 @@ services:
     volumes:
       - ${GATEWAY_APP_PATH}:/app
     command: >
-      bash -c "pip install fastapi uvicorn wyoming &&
+      bash -c "pip install fastapi uvicorn wyoming redis &&
       uvicorn server:app --host ${GATEWAY_HOST} --port ${GATEWAY_INTERNAL_PORT}"
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_INTERNAL_PORT}"
-    depends_on:
-      - ${PIPER_CONTAINER}
 
 volumes:
   redis_data:

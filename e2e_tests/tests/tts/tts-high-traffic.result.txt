@@ -1,47 +1,111 @@
+Microsoft Windows [Version 10.0.26200.8037]
+(c) Microsoft Corporation. All rights reserved.
+
+D:\SLP.Project\e2e_tests>test.bat
+
 D:\SLP.Project\e2e_tests>npx playwright test tests/tts/tts-high-traffic.spec.js --headed
 
 Running 1 test using 1 worker
-[chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
-Batch 1: requests 1 to 50
-Batch 2: requests 51 to 100
-Batch 3: requests 101 to 150
-Batch 4: requests 151 to 200
+[chromium] › tests\tts\tts-high-traffic.spec.js:28:3 › TTS natural spike test (no queue, no retry) › overwhelm Piper and observe natural failures        
 
-=== SPIKE TEST SUMMARY ===
-Total requests:    200                                                                                                                                   
-Succeeded:         41 (20.50%)                                                                                                                           
-Failed:            159                                                                                                                                   
-Total time:        31.19 s                                                                                                                               
-Avg response time: 1677 ms                                                                                                                               
+--- Batch 1: requests 1–100 starting at 0.00s ---
+[1.00s] Progress: Total: 0, Success: 0 (0.00%), Fail: 0
+[2.01s] Progress: Total: 0, Success: 0 (0.00%), Fail: 0
+[3.01s] Progress: Total: 0, Success: 0 (0.00%), Fail: 0
+[4.01s] Progress: Total: 0, Success: 0 (0.00%), Fail: 0
+[5.02s] Progress: Total: 1, Success: 1 (100.00%), Fail: 0
+[6.03s] Progress: Total: 3, Success: 3 (100.00%), Fail: 0
+[7.03s] Progress: Total: 5, Success: 5 (100.00%), Fail: 0
+[8.04s] Progress: Total: 7, Success: 7 (100.00%), Fail: 0
+[9.04s] Progress: Total: 9, Success: 9 (100.00%), Fail: 0
+[10.06s] Progress: Total: 11, Success: 11 (100.00%), Fail: 0
+[11.06s] Progress: Total: 14, Success: 14 (100.00%), Fail: 0
+[12.06s] Progress: Total: 16, Success: 16 (100.00%), Fail: 0
+[13.06s] Progress: Total: 18, Success: 18 (100.00%), Fail: 0
+[14.06s] Progress: Total: 20, Success: 20 (100.00%), Fail: 0
+[15.07s] Progress: Total: 23, Success: 23 (100.00%), Fail: 0
+[15.28s] Batch 1 completed. Total: 100, Success: 23 (23.00%), Fail: 77
                                                                                                                                                          
-First 10 failures:
-  1. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  2. Status: 503, Time: 157 ms, Error: -                                                                                                                 
-  3. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  4. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  5. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  6. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  7. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  8. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  9. Status: 503, Time: 156 ms, Error: -                                                                                                                 
-  10. Status: 503, Time: 156 ms, Error: -                                                                                                                
-  1) [chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
+--- Batch 2: requests 101–200 starting at 15.28s ---
+[16.08s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[17.09s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[18.09s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[19.10s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[20.10s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[21.11s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[22.12s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[23.13s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[24.15s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[25.15s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[26.16s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[27.17s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[28.17s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[29.18s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[30.19s] Progress: Total: 100, Success: 23 (23.00%), Fail: 77
+[30.67s] Batch 2 completed. Total: 200, Success: 23 (11.50%), Fail: 177
+                                                                                                                                                         
+--- Batch 3: requests 201–300 starting at 30.67s ---
+[31.20s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[32.20s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[33.21s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[34.21s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[35.22s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[36.22s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[37.24s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[38.24s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[39.25s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[40.25s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[41.26s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[42.27s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[43.28s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[44.29s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[45.30s] Progress: Total: 200, Success: 23 (11.50%), Fail: 177
+[45.97s] Batch 3 completed. Total: 300, Success: 23 (7.67%), Fail: 277
+                                                                                                                                                         
+=== SPIKE TEST SUMMARY ===
+Total requests   : 300                                                                                                                                   
+Succeeded        : 23 (7.67%)                                                                                                                            
+Failed           : 277 (92.33%)                                                                                                                          
+Total time       : 45.97 s                                                                                                                               
+Avg response time: 14787 ms                                                                                                                              
+                                                                                                                                                         
+── Failure breakdown ──
+  network_error                  277 (100.0% of failures)                                                                                                
+                                                                                                                                                         
+── First 10 failures ──
+  1. req#5: reason=network_error, status=none, time=15200ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                       
+Call log:
+  - → GET http://"
+  2. req#6: reason=network_error, status=none, time=15199ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                       
+Call log:
+  - → GET http://"
+  3. req#13: reason=network_error, status=none, time=15189ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  4. req#16: reason=network_error, status=none, time=15186ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  5. req#17: reason=network_error, status=none, time=15185ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  6. req#18: reason=network_error, status=none, time=15184ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  7. req#23: reason=network_error, status=none, time=15177ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  8. req#26: reason=network_error, status=none, time=15205ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  9. req#31: reason=network_error, status=none, time=15196ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                      
+Call log:
+  - → GET http://"
+  10. req#33: reason=network_error, status=none, time=15192ms, err="apiRequestContext.get: Timeout 15000ms exceeded.                                     
+Call log:
+  - → GET http://"
+  1 passed (47.8s)
 
-    Error: expect(received).toBeGreaterThanOrEqual(expected)
+To open last HTML report run:
 
-    Expected: >= 95
-    Received:    20.5
+  npx playwright show-report
 
-      94 |
-      95 |     // Assert using the numeric value
-    > 96 |     expect(successRate).toBeGreaterThanOrEqual(SUCCESS_THRESHOLD);
-         |                         ^
-      97 |   });
-      98 | });
-      99 |
-        at D:\SLP.Project\e2e_tests\tests\tts\tts-high-traffic.spec.js:96:25
-
-  1 failed
-    [chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
-
-  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.

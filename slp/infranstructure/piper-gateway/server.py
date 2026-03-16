@@ -4,19 +4,16 @@ import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 from wyoming.client import AsyncTcpClient
 from wyoming.event import Event
 
-PIPER_HOST = "piper"
-PIPER_PORT = 10200
-
+PIPER_HOST  = "piper"
+PIPER_PORT  = 10200
 SAMPLE_RATE = 22050
-CHANNELS = 1
-BITS = 16
+CHANNELS    = 1
+BITS        = 16
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,48 +36,32 @@ def wav_header(sample_rate=22050, channels=1, bits=16):
 
 
 async def stream_tts(text: str):
-    try:
-        client = AsyncTcpClient(PIPER_HOST, PIPER_PORT)
-        await client.connect()
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Cannot connect to Piper: {e}")
+    client = AsyncTcpClient(PIPER_HOST, PIPER_PORT)
+    await client.connect()
 
     try:
-        event = Event(type="synthesize", data={"text": text})
-        await client.write_event(event)
+        await client.write_event(Event(type="synthesize", data={"text": text}))
 
+        # Send WAV header first so browser can start playing immediately
         yield wav_header(SAMPLE_RATE, CHANNELS, BITS)
 
+        # Stream chunks as Piper produces them
         while True:
             response = await client.read_event()
-            if response is None:
+            if response is None or response.type == "audio-stop":
                 break
             if response.type == "audio-chunk":
                 yield response.payload
-            if response.type == "audio-stop":
-                break
-    except Exception as e:
-        raise RuntimeError(f"Piper stream error: {e}")
     finally:
         await client.disconnect()
 
 
 @app.get("/tts")
 async def tts(text: str):
-    gen = stream_tts(text)
-    try:
-        first_chunk = await gen.__anext__()
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
 
-    async def chained():
-        yield first_chunk
-        async for chunk in gen:
-            yield chunk
-
-    return StreamingResponse(chained(), media_type="audio/wav")
+    return StreamingResponse(stream_tts(text), media_type="audio/wav")
 
 
 @app.get("/health")
