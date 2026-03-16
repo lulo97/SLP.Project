@@ -1,1 +1,1 @@
-npx playwright test tests/llama/test1/without_queue_test_1.spec.js --headed
+npx playwright test tests/llama/llama.spec.js --headed

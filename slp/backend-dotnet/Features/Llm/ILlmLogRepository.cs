@@ -8,5 +8,5 @@ public interface ILlmLogRepository
     Task AddAsync(LlmLog log);
     // New methods for queuing
     Task<LlmLog?> GetByJobIdAsync(string jobId);
-    Task UpdateJobStatusAsync(string jobId, string status, string? response = null);
+    Task UpdateJobStatusAsync(string jobId, string status, string? response = null, string? error = null);
 }

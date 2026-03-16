@@ -1,8 +1,5 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using backend_dotnet.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using backend_dotnet.Data;
 
 namespace backend_dotnet.Features.Llm;
 
@@ -43,7 +40,7 @@ public class LlmLogRepository : ILlmLogRepository
             .FirstOrDefaultAsync(log => log.JobId == jobId);
     }
 
-    public async Task UpdateJobStatusAsync(string jobId, string status, string? response = null)
+    public async Task UpdateJobStatusAsync(string jobId, string status, string? response = null, string? error = null)
     {
         var log = await _context.LlmLogs.FirstOrDefaultAsync(l => l.JobId == jobId);
         if (log != null)
@@ -51,8 +48,10 @@ public class LlmLogRepository : ILlmLogRepository
             log.Status = status;
             if (response != null)
                 log.Response = response;
+            if (error != null)
+                log.Error = error;   // set error field
 
-            if (status == "Completed")
+            if (status == "Completed" || status == "Failed")
                 log.CompletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

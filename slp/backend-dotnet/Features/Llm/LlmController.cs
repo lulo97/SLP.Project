@@ -40,31 +40,40 @@ public class LlmController : ControllerBase
     public async Task<IActionResult> Explain([FromBody] LlmExplainRequest request)
     {
         if (!CurrentUserId.HasValue)
+        {
+            _logger.LogWarning("Explain called without authentication");
             return Unauthorized();
-
-        if (string.IsNullOrWhiteSpace(request.SelectedText))
-            return BadRequest("SelectedText is required.");
+        }
 
         var userId = CurrentUserId.Value;
+        _logger.LogDebug("Explain request from user {UserId}: SelectedText length {Length}, Context provided: {HasContext}",
+            userId, request.SelectedText?.Length ?? 0, !string.IsNullOrWhiteSpace(request.Context));
 
-        // Check cache first (even if queue is enabled)
+        if (string.IsNullOrWhiteSpace(request.SelectedText))
+        {
+            _logger.LogWarning("Explain request from user {UserId} missing SelectedText", userId);
+            return BadRequest("SelectedText is required.");
+        }
+
         var fullPrompt = BuildExplainPrompt(request);
         var cached = await _logRepository.GetCachedResponseAsync(userId, "explain", fullPrompt);
         if (cached != null)
         {
-            _logger.LogInformation("Cache hit for explain, user={UserId}", userId);
+            _logger.LogInformation("Cache hit for explain, user={UserId}, prompt hash={Hash}",
+                userId, fullPrompt.GetHashCode());  // Or use a proper hash
             return Ok(new LlmExplainResponse { Explanation = cached.Response! });
         }
+        _logger.LogDebug("Cache miss for explain, user={UserId}", userId);
 
         if (_configuration.GetValue<bool>("Queue:Enabled"))
         {
-            // Enqueue job
             var job = new LlmJob
             {
                 UserId = userId,
                 RequestType = "explain",
                 RequestData = JsonSerializer.Serialize(request)
             };
+            _logger.LogInformation("Enqueuing explain job {JobId} for user {UserId}", job.JobId, userId);
 
             var log = new LlmLog
             {
@@ -83,8 +92,17 @@ public class LlmController : ControllerBase
         }
         else
         {
-            var explanation = await _llmService.ExplainAsync(userId, request);
-            return Ok(new LlmExplainResponse { Explanation = explanation });
+            _logger.LogDebug("Processing explain directly for user {UserId}", userId);
+            try
+            {
+                var explanation = await _llmService.ExplainAsync(userId, request);
+                return Ok(new LlmExplainResponse { Explanation = explanation });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing explain for user {UserId}", userId);
+                throw; // Let global handler manage response
+            }
         }
     }
 
@@ -154,6 +172,7 @@ public class LlmController : ControllerBase
             JobId = jobId,
             Status = log.Status ?? "Unknown",
             Result = log.Response,
+            Error = log.Error,
             CreatedAt = log.CreatedAt,
             CompletedAt = log.CompletedAt
         };

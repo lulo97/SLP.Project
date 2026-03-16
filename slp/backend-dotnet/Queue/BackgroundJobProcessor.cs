@@ -93,6 +93,9 @@ public class BackgroundJobProcessor : BackgroundService
         var logRepository = scope.ServiceProvider.GetRequiredService<ILlmLogRepository>();
         var llmService = scope.ServiceProvider.GetRequiredService<ILlmService>();
 
+        _logger.LogInformation("Processing job {JobId}, type {RequestType}, user {UserId}, retry {RetryCount}",
+            job.JobId, job.RequestType, job.UserId, job.RetryCount);
+
         try
         {
             await logRepository.UpdateJobStatusAsync(job.JobId, "Processing");
@@ -101,6 +104,8 @@ public class BackgroundJobProcessor : BackgroundService
             if (job.RequestType == "explain")
             {
                 var request = JsonSerializer.Deserialize<LlmExplainRequest>(job.RequestData);
+                _logger.LogDebug("Job {JobId}: Deserialized explain request, SelectedText length {Length}",
+                    job.JobId, request?.SelectedText?.Length ?? 0);
                 result = await llmService.ProcessExplainAsync(job.UserId, request!);
             }
             else if (job.RequestType == "grammar_check")
@@ -113,26 +118,38 @@ public class BackgroundJobProcessor : BackgroundService
                 throw new InvalidOperationException($"Unknown request type: {job.RequestType}");
             }
 
+            _logger.LogInformation("Job {JobId} completed successfully, response length {Length}",
+                job.JobId, result?.Length ?? 0);
             await logRepository.UpdateJobStatusAsync(job.JobId, "Completed", result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Job {JobId} failed", job.JobId);
 
-            // Retry logic
+            string errorMessage = ex.Message;
+            if (ex is HttpRequestException httpEx)
+            {
+                errorMessage = $"LLM API error: {httpEx.Message}";
+            }
+            else if (ex is JsonException jsonEx)
+            {
+                errorMessage = $"Invalid request data: {jsonEx.Message}";
+            }
+
             int maxRetries = _configuration.GetValue<int>("Queue:MaxRetries", 3);
             if (job.RetryCount < maxRetries)
             {
                 job.RetryCount++;
                 var db = _redis.GetDatabase();
                 var json = JsonSerializer.Serialize(job);
-                await db.ListLeftPushAsync(QueueKey, json); // re-enqueue at front
+                await db.ListLeftPushAsync(QueueKey, json);
                 _logger.LogWarning("Re-enqueued job {JobId} (retry {RetryCount}/{MaxRetries})",
                     job.JobId, job.RetryCount, maxRetries);
             }
             else
             {
-                await logRepository.UpdateJobStatusAsync(job.JobId, "Failed");
+                _logger.LogError("Job {JobId} failed after {MaxRetries} retries. Marking as Failed.", job.JobId, maxRetries);
+                await logRepository.UpdateJobStatusAsync(job.JobId, "Failed", error: errorMessage);
             }
         }
     }

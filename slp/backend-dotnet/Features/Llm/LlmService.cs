@@ -41,19 +41,30 @@ public class LlmService : ILlmService
     public async Task<string> ExplainAsync(int userId, LlmExplainRequest request)
     {
         var fullPrompt = BuildExplainPrompt(request);
+        _logger.LogDebug("ExplainAsync for user {UserId}, prompt hash {Hash}", userId, fullPrompt.GetHashCode());
 
-        // 1. Check cache
         var cached = await _logRepository.GetCachedResponseAsync(userId, "explain", fullPrompt);
         if (cached != null)
         {
             _logger.LogInformation("Cache hit for explain, user={UserId}", userId);
             return cached.Response!;
         }
+        _logger.LogDebug("Cache miss for explain, user={UserId}, calling LLM API", userId);
 
-        // 2. Call LLM API
-        var responseContent = await CallLlmApi(fullPrompt);
+        string responseContent;
+        try
+        {
+            responseContent = await CallLlmApi(fullPrompt);
+            _logger.LogInformation("LLM API call succeeded for explain, user={UserId}, response length {Length}",
+                userId, responseContent?.Length ?? 0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "LLM API call failed for explain, user={UserId}, prompt hash {Hash}",
+                userId, fullPrompt.GetHashCode());
+            throw; // Let controller handle
+        }
 
-        // 3. Store in database
         var logEntry = new LlmLog
         {
             UserId = userId,

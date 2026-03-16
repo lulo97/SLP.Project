@@ -342,7 +342,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   ArrowLeft, Sparkles, Type, Navigation, X, Link2,
@@ -354,6 +354,11 @@ import ExplanationPanel from "@/features/source/components/ExplanationPanel.vue"
 import type { ExplanationItem } from "@/features/source/components/ExplanationPanel.vue";
 import apiClient from "@/lib/api/client";
 import MobileLayout from "@/layouts/MobileLayout.vue";
+import {
+  requestExplanation,
+  requestGrammarCheck,
+} from '@/features/llm/llmService';
+import { message, Modal } from 'ant-design-vue'; // for grammar result display
 
 // ── Router / store ────────────────────────────────────────────────────────────
 const route = useRoute();
@@ -528,30 +533,63 @@ function handleExplain(text: string) {
 
 async function submitExplanation(text: string) {
   pendingExplainText.value = "";
+
+  // Create a temporary placeholder with loading indicator
+  const placeholderId = Date.now();
   const placeholder: ExplanationItem = {
-    id: Date.now(), sourceId: sourceId.value,
-    textRange: { text }, content: "",
-    authorType: "user", editable: true,
+    id: placeholderId,
+    sourceId: sourceId.value,
+    textRange: { text },
+    content: "", // empty indicates loading
+    authorType: "user",
+    editable: true,
     createdAt: new Date().toISOString(),
   };
   explanations.value.unshift(placeholder);
+
   try {
-    const res = await apiClient.post<ExplanationItem>("/explanations", {
-      sourceId: sourceId.value, textRange: { text }, content: "",
+    // 1. Call LLM to get explanation
+    const explanationText = await requestExplanation({
+      sourceId: sourceId.value,
+      selectedText: text,
+      context: undefined, // we could add surrounding paragraph context later
     });
-    const idx = explanations.value.findIndex((e) => e.id === placeholder.id);
-    if (idx !== -1) explanations.value[idx] = res.data;
-  } catch {
-    const idx = explanations.value.findIndex((e) => e.id === placeholder.id);
-    if (idx !== -1)
-      explanations.value[idx] = { ...placeholder, content: "[Explanation unavailable — LLM queued]" };
+
+    // 2. Save the explanation via the explanations endpoint
+    const saved = await apiClient.post<ExplanationItem>("/explanations", {
+      sourceId: sourceId.value,
+      textRange: { text },
+      content: explanationText,
+    });
+
+    // 3. Replace the placeholder with the saved explanation
+    const idx = explanations.value.findIndex(e => e.id === placeholderId);
+    if (idx !== -1) {
+      explanations.value[idx] = saved.data;
+    }
+  } catch (error: any) {
+    // Remove placeholder on error
+    const idx = explanations.value.findIndex(e => e.id === placeholderId);
+    if (idx !== -1) explanations.value.splice(idx, 1);
+    showNotif("Failed to generate explanation", "error", X);
+    console.error(error);
   }
 }
 
 async function handleGrammar(text: string) {
   window.getSelection()?.removeAllRanges();
-  showNotif("Grammar check queued", "info", SpellCheck);
-  try { await apiClient.post("/llm/grammar", { text, sourceId: sourceId.value }); } catch {}
+  try {
+    const corrected = await requestGrammarCheck({ text });
+    // Show the corrected text in a modal
+    Modal.info({
+      title: 'Grammar Check Result',
+      content: h('div', { style: 'white-space: pre-wrap; max-height: 400px; overflow-y: auto;' }, corrected),
+      okText: 'Close',
+      width: 600,
+    });
+  } catch (error) {
+    showNotif("Grammar check failed", "error", X);
+  }
 }
 
 async function handleTts(text: string) {

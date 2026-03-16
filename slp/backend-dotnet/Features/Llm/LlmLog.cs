@@ -41,6 +41,8 @@ public class LlmLog
 
     [Column("completed_at")]
     public DateTime? CompletedAt { get; set; }
+    [Column("error")]
+    public string? Error { get; set; }   // new field for failure details
 
     // Navigation property
     [ForeignKey(nameof(UserId))]

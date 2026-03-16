@@ -6,6 +6,9 @@ CREATE TABLE public.llm_log (
     response text,
     tokens_used integer,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    job_id character varying(50),
+    status character varying(20),
+    completed_at timestamp with time zone,
     CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY ((ARRAY['explain'::character varying, 'generate_questions'::character varying, 'summarize'::character varying, 'grammar_check'::character varying])::text[])))
 );
 
@@ -25,6 +28,10 @@ ALTER TABLE ONLY public.llm_log
     ADD CONSTRAINT llm_log_pkey PRIMARY KEY (id);
 
 CREATE INDEX idx_llm_log_created ON public.llm_log USING btree (created_at);
+
+CREATE INDEX idx_llm_log_job_id ON public.llm_log USING btree (job_id);
+
+CREATE INDEX idx_llm_log_status ON public.llm_log USING btree (status);
 
 CREATE INDEX idx_llm_log_type ON public.llm_log USING btree (request_type);
 

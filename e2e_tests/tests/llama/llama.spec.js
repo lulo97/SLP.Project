@@ -11,7 +11,7 @@ const adminUser = {
 function generateExplainRequest() {
   const id = Date.now() + Math.floor(Math.random() * 10000);
   return {
-    sourceId: 1, // dummy source ID
+    sourceId: 1,
     selectedText: `Explain this text ${id}`,
     context: `Optional context ${id}`,
   };
@@ -22,6 +22,53 @@ function generateGrammarRequest() {
   return {
     text: `This is a test sentence with a error ${id}.`,
   };
+}
+
+// Poll for job completion (max 30 attempts, 2s interval)
+async function pollForJobResult(request, jobId, adminToken) {
+  const maxAttempts = 30;
+  const interval = 2000;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const statusRes = await request.get(`${API_BASE_URL}/llm/job/${jobId}`, {
+      headers: { "X-Session-Token": adminToken },
+    });
+    expect(statusRes.status()).toBe(200);
+    const statusBody = await statusRes.json();
+
+    if (statusBody.status === "Completed") {
+      return statusBody.result;
+    }
+    if (statusBody.status === "Failed") {
+      throw new Error(`Job ${jobId} failed`);
+    }
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+  throw new Error(`Job ${jobId} timed out after ${maxAttempts * interval}ms`);
+}
+
+// Execute an LLM endpoint and return the final result (handles both 200 and 202)
+async function executeLlmRequest(request, url, data, adminToken) {
+  const res = await request.post(`${API_BASE_URL}${url}`, {
+    headers: { "X-Session-Token": adminToken },
+    data,
+  });
+
+  if (res.status() === 200) {
+    return await res.json(); // synchronous response
+  } else if (res.status() === 202) {
+    const jobBody = await res.json();
+    expect(jobBody).toHaveProperty("jobId");
+    expect(jobBody).toHaveProperty("status", "Pending");
+    const result = await pollForJobResult(request, jobBody.jobId, adminToken);
+    // The job result is the final output (explanation or correctedText)
+    if (url.includes("explain")) {
+      return { explanation: result };
+    } else {
+      return { correctedText: result };
+    }
+  } else {
+    throw new Error(`Unexpected status: ${res.status()}`);
+  }
 }
 
 test.describe("LLM API Tests (Explain & Grammar)", () => {
@@ -77,15 +124,9 @@ test.describe("LLM API Tests (Explain & Grammar)", () => {
   });
 
   test.describe("POST /llm/explain", () => {
-    test("should return 200 with explanation (non‑cached)", async ({ request }) => {
+    test("should return explanation (handles 200 or 202)", async ({ request }) => {
       const reqData = generateExplainRequest();
-      const res = await request.post(`${API_BASE_URL}/llm/explain`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res.status()).toBe(200);
-
-      const body = await res.json();
+      const body = await executeLlmRequest(request, "/llm/explain", reqData, adminToken);
       expect(body).toHaveProperty("explanation");
       expect(typeof body.explanation).toBe("string");
       expect(body.explanation.length).toBeGreaterThan(0);
@@ -98,36 +139,20 @@ test.describe("LLM API Tests (Explain & Grammar)", () => {
         context: "Geography",
       };
 
-      // First request – should call LLM API and store
-      const res1 = await request.post(`${API_BASE_URL}/llm/explain`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res1.status()).toBe(200);
-      const body1 = await res1.json();
+      // First request – may be synchronous or queued
+      const body1 = await executeLlmRequest(request, "/llm/explain", reqData, adminToken);
 
-      // Second request – should return cached response (same text)
-      const res2 = await request.post(`${API_BASE_URL}/llm/explain`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res2.status()).toBe(200);
-      const body2 = await res2.json();
+      // Second request – should be cached (identical request)
+      const body2 = await executeLlmRequest(request, "/llm/explain", reqData, adminToken);
 
       expect(body2.explanation).toEqual(body1.explanation);
     });
   });
 
   test.describe("POST /llm/grammar-check", () => {
-    test("should return 200 with corrected text (non‑cached)", async ({ request }) => {
+    test("should return corrected text (handles 200 or 202)", async ({ request }) => {
       const reqData = generateGrammarRequest();
-      const res = await request.post(`${API_BASE_URL}/llm/grammar-check`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res.status()).toBe(200);
-
-      const body = await res.json();
+      const body = await executeLlmRequest(request, "/llm/grammar-check", reqData, adminToken);
       expect(body).toHaveProperty("correctedText");
       expect(typeof body.correctedText).toBe("string");
       expect(body.correctedText.length).toBeGreaterThan(0);
@@ -138,19 +163,8 @@ test.describe("LLM API Tests (Explain & Grammar)", () => {
         text: "He go to school every day.",
       };
 
-      const res1 = await request.post(`${API_BASE_URL}/llm/grammar-check`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res1.status()).toBe(200);
-      const body1 = await res1.json();
-
-      const res2 = await request.post(`${API_BASE_URL}/llm/grammar-check`, {
-        headers: { "X-Session-Token": adminToken },
-        data: reqData,
-      });
-      expect(res2.status()).toBe(200);
-      const body2 = await res2.json();
+      const body1 = await executeLlmRequest(request, "/llm/grammar-check", reqData, adminToken);
+      const body2 = await executeLlmRequest(request, "/llm/grammar-check", reqData, adminToken);
 
       expect(body2.correctedText).toEqual(body1.correctedText);
     });
@@ -160,22 +174,12 @@ test.describe("LLM API Tests (Explain & Grammar)", () => {
     test("should handle both endpoints successfully", async ({ request }) => {
       // Explain
       const explainReq = generateExplainRequest();
-      const explainRes = await request.post(`${API_BASE_URL}/llm/explain`, {
-        headers: { "X-Session-Token": adminToken },
-        data: explainReq,
-      });
-      expect(explainRes.status()).toBe(200);
-      const explainBody = await explainRes.json();
+      const explainBody = await executeLlmRequest(request, "/llm/explain", explainReq, adminToken);
       expect(explainBody.explanation).toBeTruthy();
 
       // Grammar
       const grammarReq = generateGrammarRequest();
-      const grammarRes = await request.post(`${API_BASE_URL}/llm/grammar-check`, {
-        headers: { "X-Session-Token": adminToken },
-        data: grammarReq,
-      });
-      expect(grammarRes.status()).toBe(200);
-      const grammarBody = await grammarRes.json();
+      const grammarBody = await executeLlmRequest(request, "/llm/grammar-check", grammarReq, adminToken);
       expect(grammarBody.correctedText).toBeTruthy();
     });
   });
