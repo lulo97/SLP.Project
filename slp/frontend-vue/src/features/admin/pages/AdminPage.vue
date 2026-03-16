@@ -2,12 +2,16 @@
   <MobileLayout title="Admin Panel">
     <a-tabs v-model:activeKey="activeTab" class="admin-tabs">
       <!-- Users Tab -->
-      <a-tab-pane key="users" tab="Users">
+      <a-tab-pane key="users">
+        <template #tab>
+          <span data-testid="admin-tab-users">Users</span>
+        </template>
         <a-input-search
           v-model:value="userSearch"
           placeholder="Search users..."
           style="margin-bottom: 16px"
           @search="handleUserSearch"
+          data-testid="admin-users-search"
         />
         <a-table
           :data-source="filteredUsers"
@@ -43,6 +47,7 @@
                     :type="record.status === 'active' ? 'primary' : 'default'"
                     :danger="record.status === 'active'"
                     size="small"
+                    :data-testid="`admin-user-${record.status === 'active' ? 'ban' : 'unban'}-${record.id}`"
                   >
                     {{ record.status === 'active' ? 'Ban' : 'Unban' }}
                   </a-button>
@@ -54,12 +59,16 @@
       </a-tab-pane>
 
       <!-- Quizzes Tab -->
-      <a-tab-pane key="quizzes" tab="Quizzes">
+      <a-tab-pane key="quizzes">
+        <template #tab>
+          <span data-testid="admin-tab-quizzes">Quizzes</span>
+        </template>
         <a-input-search
           v-model:value="quizSearch"
           placeholder="Search quizzes..."
           style="margin-bottom: 16px"
           @search="handleQuizSearch"
+          data-testid="admin-quizzes-search"
         />
         <a-table
           :data-source="filteredQuizzes"
@@ -90,6 +99,7 @@
                     :type="record.disabled ? 'primary' : 'default'"
                     :danger="!record.disabled"
                     size="small"
+                    :data-testid="`admin-quiz-${record.disabled ? 'enable' : 'disable'}-${record.id}`"
                   >
                     {{ record.disabled ? 'Enable' : 'Disable' }}
                   </a-button>
@@ -101,12 +111,15 @@
       </a-tab-pane>
 
       <!-- Comments Tab -->
-      <a-tab-pane key="comments" tab="Comments">
+      <a-tab-pane key="comments">
+        <template #tab>
+          <span data-testid="admin-tab-comments">Comments</span>
+        </template>
         <div class="mb-4 flex items-center gap-2">
-          <a-checkbox v-model:checked="includeDeleted" @change="handleIncludeDeletedChange">
+          <a-checkbox v-model:checked="includeDeleted" @change="handleIncludeDeletedChange" data-testid="admin-comments-show-deleted">
             Show deleted
           </a-checkbox>
-          <a-button size="small" @click="refreshComments">Refresh</a-button>
+          <a-button size="small" @click="refreshComments" data-testid="admin-comments-refresh">Refresh</a-button>
         </div>
         <a-table
           :data-source="adminStore.comments"
@@ -132,14 +145,14 @@
                   title="Delete this comment?"
                   @confirm="adminStore.deleteComment(record.id)"
                 >
-                  <a-button danger size="small">Delete</a-button>
+                  <a-button danger size="small" :data-testid="`admin-comment-delete-${record.id}`">Delete</a-button>
                 </a-popconfirm>
                 <a-popconfirm
                   v-if="record.deletedAt"
                   title="Restore this comment?"
                   @confirm="adminStore.restoreComment(record.id)"
                 >
-                  <a-button type="primary" size="small">Restore</a-button>
+                  <a-button type="primary" size="small" :data-testid="`admin-comment-restore-${record.id}`">Restore</a-button>
                 </a-popconfirm>
               </div>
             </template>
@@ -148,7 +161,10 @@
       </a-tab-pane>
 
       <!-- Logs Tab -->
-      <a-tab-pane key="logs" tab="Logs">
+      <a-tab-pane key="logs">
+        <template #tab>
+          <span data-testid="admin-tab-logs">Logs</span>
+        </template>
         <a-table
           :data-source="adminStore.logs"
           :loading="adminStore.loading.logs"
@@ -196,7 +212,7 @@ const userSearch = ref('');
 const quizSearch = ref('');
 const includeDeleted = ref(false);
 
-// Column definitions
+// Column definitions (unchanged)
 const userColumns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
   { title: 'Username', dataIndex: 'username', key: 'username' },
@@ -258,51 +274,30 @@ const filteredQuizzes = computed(() => {
 });
 
 // Handlers
-const handleUserSearch = () => {
-  // Already computed
-};
-
-const handleQuizSearch = () => {
-  // Already computed
-};
-
+const handleUserSearch = () => {};
+const handleQuizSearch = () => {};
 const handleIncludeDeletedChange = () => {
   adminStore.fetchComments(includeDeleted.value);
 };
-
 const refreshComments = () => {
   adminStore.fetchComments(includeDeleted.value);
 };
 
-// Load data on mount and tab change
+// Load data on mount
 onMounted(() => {
   adminStore.fetchUsers();
   adminStore.fetchQuizzes();
   adminStore.fetchComments(false);
   adminStore.fetchLogs();
 });
-
-// Optionally, refetch when tab changes
-// (We can add watch on activeTab)
 </script>
 
 <style scoped>
 .admin-tabs :deep(.ant-tabs-nav) {
   margin-bottom: 16px;
 }
-
-.flex {
-  display: flex;
-}
-.gap-2 {
-  gap: 0.5rem;
-}
-.max-w-xs {
-  max-width: 20rem;
-}
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.flex { display: flex; }
+.gap-2 { gap: 0.5rem; }
+.max-w-xs { max-width: 20rem; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

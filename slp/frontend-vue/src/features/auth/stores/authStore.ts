@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia';
-import apiClient from '@/lib/api/client';
+import { defineStore } from "pinia";
+import apiClient from "@/lib/api/client";
 
 interface LoginResponse {
   token: string;
@@ -18,17 +18,21 @@ interface User {
   updatedAt: string;
 }
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null as User | null,
-    sessionToken: localStorage.getItem('session_token'),
+    sessionToken: localStorage.getItem("session_token"),
     loading: false,
     error: null as string | null,
   }),
 
   getters: {
     isAuthenticated: (state) => !!state.sessionToken,
-    isAdmin: (state) => state.user?.role === 'admin',
+    isAdmin: (state) => {
+      const output = state.user?.role === "admin";
+      console.log(output);
+      return output;
+    },
     isEmailVerified: (state) => state.user?.emailConfirmed || false,
   },
 
@@ -36,22 +40,22 @@ export const useAuthStore = defineStore('auth', {
     async login(username: string, password: string) {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        const response = await apiClient.post<LoginResponse>('/auth/login', {
+        const response = await apiClient.post<LoginResponse>("/auth/login", {
           username,
           password,
         });
-        
+
         const { token, userId } = response.data;
         this.sessionToken = token;
-        localStorage.setItem('session_token', token);
-        localStorage.setItem('user_id', userId);
-        
+        localStorage.setItem("session_token", token);
+        localStorage.setItem("user_id", userId);
+
         await this.fetchCurrentUser();
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.message || 'Login failed';
+        this.error = error.response?.data?.message || "Login failed";
         return false;
       } finally {
         this.loading = false;
@@ -61,16 +65,16 @@ export const useAuthStore = defineStore('auth', {
     async register(username: string, email: string, password: string) {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        await apiClient.post('/auth/register', {
+        await apiClient.post("/auth/register", {
           username,
           email,
           password,
         });
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.message || 'Registration failed';
+        this.error = error.response?.data?.message || "Registration failed";
         return false;
       } finally {
         this.loading = false;
@@ -79,39 +83,39 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        await apiClient.post('/auth/logout');
+        await apiClient.post("/auth/logout");
       } catch (error) {
-        console.error('Logout error:', error);
+        console.error("Logout error:", error);
       } finally {
         this.sessionToken = null;
         this.user = null;
-        localStorage.removeItem('session_token');
-        localStorage.removeItem('user_id');
+        localStorage.removeItem("session_token");
+        localStorage.removeItem("user_id");
       }
     },
 
     async fetchCurrentUser() {
       try {
-        const response = await apiClient.get<User>('/users/me');
+        const response = await apiClient.get<User>("/users/me");
         this.user = response.data;
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error("Failed to fetch user:", error);
       }
     },
 
     async updateProfile(name: string, avatarUrl: string) {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        const response = await apiClient.put<User>('/users/me', {
+        const response = await apiClient.put<User>("/users/me", {
           name,
           avatarUrl,
         });
         this.user = response.data;
         return true;
       } catch (error: any) {
-        this.error = error.response?.data?.message || 'Update failed';
+        this.error = error.response?.data?.message || "Update failed";
         return false;
       } finally {
         this.loading = false;
@@ -120,7 +124,7 @@ export const useAuthStore = defineStore('auth', {
 
     async requestPasswordReset(email: string) {
       try {
-        await apiClient.post('/auth/reset-password', { email });
+        await apiClient.post("/auth/reset-password", { email });
         return true;
       } catch (error) {
         return false;
@@ -129,7 +133,7 @@ export const useAuthStore = defineStore('auth', {
 
     async confirmPasswordReset(token: string, newPassword: string) {
       try {
-        await apiClient.post('/auth/reset-password/confirm', {
+        await apiClient.post("/auth/reset-password/confirm", {
           token,
           newPassword,
         });
@@ -141,7 +145,7 @@ export const useAuthStore = defineStore('auth', {
 
     async verifyEmail(token: string) {
       try {
-        await apiClient.post('/auth/verify-email', { token });
+        await apiClient.post("/auth/verify-email", { token });
         if (this.user) {
           this.user.emailConfirmed = true;
         }
@@ -153,7 +157,7 @@ export const useAuthStore = defineStore('auth', {
 
     async sendVerificationEmail() {
       try {
-        await apiClient.post('/users/me/verify-email/send');
+        await apiClient.post("/users/me/verify-email/send");
         return true;
       } catch (error) {
         return false;
@@ -162,6 +166,18 @@ export const useAuthStore = defineStore('auth', {
 
     clearError() {
       this.error = null;
+    },
+
+    // Inside useAuthStore actions
+    async fetchUserIfNeeded() {
+      if (this.user) return this.user;
+      if (!this.sessionToken) return null;
+      try {
+        await this.fetchCurrentUser();
+        return this.user;
+      } catch {
+        return null;
+      }
     },
   },
 });

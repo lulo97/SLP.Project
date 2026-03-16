@@ -1,1 +1,1 @@
-npx playwright test tests/admin_comment_report/report.spec.js --headed
+npx playwright test tests/admin/admin-logs.spec.js --headed
