@@ -1,12 +1,25 @@
-﻿using System.Threading.Tasks;
-
 namespace backend_dotnet.Features.Llm;
 
 public interface ILlmLogRepository
 {
-    Task<LlmLog?> GetCachedResponseAsync(int userId, string requestType, string prompt);
-    Task AddAsync(LlmLog log);
-    // New methods for queuing
+    /// <summary>
+    /// Find the most recent completed log with the same userId + requestType + prompt.
+    /// Returns null if no cache hit exists.
+    /// </summary>
+    Task<LlmLog?> FindCachedAsync(int? userId, string requestType, string prompt);
+
+    /// <summary>Persist a new log row and return it (Id populated).</summary>
+    Task<LlmLog> CreateAsync(LlmLog log);
+
+    /// <summary>Persist changes to an existing log row.</summary>
+    Task UpdateAsync(LlmLog log);
+
+    /// <summary>Look up a log by its job ID.</summary>
     Task<LlmLog?> GetByJobIdAsync(string jobId);
-    Task UpdateJobStatusAsync(string jobId, string status, string? response = null, string? error = null);
+
+    /// <summary>
+    /// Return all logs whose status is "Processing" —
+    /// used on startup to recover jobs that were interrupted.
+    /// </summary>
+    Task<List<LlmLog>> GetStaleProcessingLogsAsync();
 }

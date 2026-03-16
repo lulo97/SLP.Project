@@ -1,4 +1,3 @@
-﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -30,21 +29,18 @@ public class LlmLog
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // New fields for queuing
     [Column("job_id")]
     [MaxLength(50)]
     public string? JobId { get; set; }
 
+    /// <summary>Pending | Processing | Completed | Failed</summary>
     [Column("status")]
     [MaxLength(20)]
-    public string? Status { get; set; } // Pending, Processing, Completed, Failed
+    public string? Status { get; set; }
 
     [Column("completed_at")]
     public DateTime? CompletedAt { get; set; }
-    [Column("error")]
-    public string? Error { get; set; }   // new field for failure details
 
-    // Navigation property
-    [ForeignKey(nameof(UserId))]
-    public virtual User.User? User { get; set; }
+    [Column("error")]
+    public string? Error { get; set; }
 }

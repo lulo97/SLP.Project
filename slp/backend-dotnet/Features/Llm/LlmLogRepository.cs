@@ -1,60 +1,55 @@
-﻿using backend_dotnet.Data;
+using backend_dotnet.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend_dotnet.Features.Llm;
 
 public class LlmLogRepository : ILlmLogRepository
 {
-    private readonly AppDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly AppDbContext _db;
 
-    public LlmLogRepository(AppDbContext context, IConfiguration configuration)
+    public LlmLogRepository(AppDbContext db) => _db = db;
+
+    /// <inheritdoc/>
+    public async Task<LlmLog?> FindCachedAsync(int? userId, string requestType, string prompt)
     {
-        _context = context;
-        _configuration = configuration;
-    }
-
-    public async Task<LlmLog?> GetCachedResponseAsync(int userId, string requestType, string prompt)
-    {
-        if (!_configuration.GetValue<bool>("LlmCache:Enabled"))
-            return null;
-
-        return await _context.LlmLogs
-            .Where(log => log.UserId == userId
-                       && log.RequestType == requestType
-                       && log.Prompt == prompt
-                       && log.Response != null)
-            .OrderByDescending(log => log.CreatedAt)
+        return await _db.LlmLogs
+            .Where(l =>
+                l.UserId == userId &&
+                l.RequestType == requestType &&
+                l.Prompt == prompt &&
+                l.Status == "Completed" &&
+                l.Response != null)
+            .OrderByDescending(l => l.CreatedAt)
             .FirstOrDefaultAsync();
     }
 
-    public async Task AddAsync(LlmLog log)
+    /// <inheritdoc/>
+    public async Task<LlmLog> CreateAsync(LlmLog log)
     {
-        _context.LlmLogs.Add(log);
-        await _context.SaveChangesAsync();
+        _db.LlmLogs.Add(log);
+        await _db.SaveChangesAsync();
+        return log;
     }
 
+    /// <inheritdoc/>
+    public async Task UpdateAsync(LlmLog log)
+    {
+        _db.LlmLogs.Update(log);
+        await _db.SaveChangesAsync();
+    }
+
+    /// <inheritdoc/>
     public async Task<LlmLog?> GetByJobIdAsync(string jobId)
     {
-        return await _context.LlmLogs
-            .FirstOrDefaultAsync(log => log.JobId == jobId);
+        return await _db.LlmLogs
+            .FirstOrDefaultAsync(l => l.JobId == jobId);
     }
 
-    public async Task UpdateJobStatusAsync(string jobId, string status, string? response = null, string? error = null)
+    /// <inheritdoc/>
+    public async Task<List<LlmLog>> GetStaleProcessingLogsAsync()
     {
-        var log = await _context.LlmLogs.FirstOrDefaultAsync(l => l.JobId == jobId);
-        if (log != null)
-        {
-            log.Status = status;
-            if (response != null)
-                log.Response = response;
-            if (error != null)
-                log.Error = error;   // set error field
-
-            if (status == "Completed" || status == "Failed")
-                log.CompletedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-        }
+        return await _db.LlmLogs
+            .Where(l => l.Status == "Processing")
+            .ToListAsync();
     }
 }

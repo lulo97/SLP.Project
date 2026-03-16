@@ -9,6 +9,7 @@ CREATE TABLE public.llm_log (
     job_id character varying(50),
     status character varying(20),
     completed_at timestamp with time zone,
+    error text,
     CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY ((ARRAY['explain'::character varying, 'generate_questions'::character varying, 'summarize'::character varying, 'grammar_check'::character varying])::text[])))
 );
 

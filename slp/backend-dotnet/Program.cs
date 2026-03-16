@@ -34,6 +34,9 @@ if (app.Environment.IsDevelopment() || true)
 // Check database connection at startup
 await app.CheckDatabaseConnectionAsync();
 
+// Check LLM server at startup (non-fatal)
+await app.CheckLlmConnectionAsync();
+
 // Middleware pipeline
 app.UseCors("Frontend");
 app.UseHttpsRedirection();
