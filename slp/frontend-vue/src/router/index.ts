@@ -125,6 +125,12 @@ const router = createRouter({
         import("@/features/quiz-attempt/pages/AttemptReview.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/search",
+      name: "search",
+      component: () => import("@/features/search/pages/SearchPage.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 

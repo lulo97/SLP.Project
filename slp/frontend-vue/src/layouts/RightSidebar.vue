@@ -113,6 +113,14 @@
             </router-link>
           </a-menu-item>
 
+          <!-- Search -->
+          <a-menu-item key="/search">
+            <router-link to="/search" class="flex items-center">
+              <Search :size="18" class="mr-2" />
+              Search
+            </router-link>
+          </a-menu-item>
+
           <a-menu-divider />
 
           <!-- Profile -->
@@ -170,6 +178,7 @@ import {
   Upload,
   FolderOpen,
   Link, 
+  Search
 } from "lucide-vue-next";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { message } from "ant-design-vue";
