@@ -9,6 +9,7 @@ using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Queue;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
+using backend_dotnet.Features.Search;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
@@ -46,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<ILlmService, LlmService>();
         services.AddScoped<ILlmLogRepository, LlmLogRepository>();
 
+        services.AddScoped<ISearchService, SearchService>();
         return services;
     }
 

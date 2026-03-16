@@ -1,1 +1,1 @@
-npx playwright test tests/tts/tts-high-traffic.spec.js --headed
+npx playwright test tests/search --headed
