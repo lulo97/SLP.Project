@@ -1,1 +1,1 @@
-npx playwright test tests/llama/llama.spec.js --headed
+npx playwright test tests/tts/tts.spec.js --headed

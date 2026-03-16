@@ -52,6 +52,28 @@ services:
       --host 0.0.0.0
       --port ${LLAMA_PORT}
 
+  piper:
+    image: rhasspy/wyoming-piper
+    container_name: piper
+    command: >
+      --voice en_GB-cori-high
+    volumes:
+      - ./piper:/data
+    ports:
+      - "10200:10200"
+
+  piper-gateway:
+      image: python:3.11-slim
+      container_name: piper-gateway-container
+      working_dir: /app
+      volumes:
+        - ./piper-gateway:/app
+      command: bash -c "pip install fastapi uvicorn wyoming && uvicorn server:app --host 0.0.0.0 --port 8000"
+      ports:
+        - "8000:8000"
+      depends_on:
+        - piper
+
 volumes:
   redis_data:
   kafka_data:

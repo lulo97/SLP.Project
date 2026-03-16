@@ -142,3 +142,10 @@ slp/backend-dotnet/logs
 view_features.txt
 
 *.gguf
+
+*.onnx
+*.onnx.json
+
+__pycache__
+
+project-structure.txt
