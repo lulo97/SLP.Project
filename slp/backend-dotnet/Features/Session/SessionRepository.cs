@@ -34,4 +34,16 @@ public class SessionRepository : ISessionRepository
 
         await _db.SaveChangesAsync();
     }
+
+    public async Task RevokeAllForUserAsync(int userId)
+    {
+        var sessions = await _db.Sessions
+            .Where(s => s.UserId == userId && !s.Revoked)
+            .ToListAsync();
+        foreach (var session in sessions)
+        {
+            session.Revoked = true;
+        }
+        await _db.SaveChangesAsync();
+    }
 }

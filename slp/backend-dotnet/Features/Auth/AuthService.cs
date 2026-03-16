@@ -24,8 +24,11 @@ public class AuthService : IAuthService
     public async Task<LoginResponse?> LoginAsync(string username, string password)
     {
         var user = await _users.GetByUsernameAsync(username);
-
         if (user == null)
+            return null;
+
+        // Check if user is banned or inactive
+        if (user.Status != "active")
             return null;
 
         if (!PasswordHasher.Verify(password, user.PasswordHash))

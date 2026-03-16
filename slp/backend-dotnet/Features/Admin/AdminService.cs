@@ -1,5 +1,6 @@
 using backend_dotnet.Features.Comment;
 using backend_dotnet.Features.Quiz;
+using backend_dotnet.Features.Session;
 using backend_dotnet.Features.User;
 using System.Text.Json;
 
@@ -11,17 +12,20 @@ public class AdminService : IAdminService
     private readonly IQuizRepository _quizRepo;
     private readonly ICommentRepository _commentRepo;
     private readonly IAdminLogRepository _logRepo;
+    private readonly ISessionRepository _sessionRepo;
 
     public AdminService(
         IUserRepository userRepo,
         IQuizRepository quizRepo,
         ICommentRepository commentRepo,
-        IAdminLogRepository logRepo)
+        IAdminLogRepository logRepo,
+        ISessionRepository sessionRepo) // add this
     {
         _userRepo = userRepo;
         _quizRepo = quizRepo;
         _commentRepo = commentRepo;
         _logRepo = logRepo;
+        _sessionRepo = sessionRepo;
     }
 
     // --- Users ---
@@ -43,10 +47,13 @@ public class AdminService : IAdminService
     public async Task<bool> BanUserAsync(int adminId, int userId)
     {
         var user = await _userRepo.GetByIdAsync(userId);
-        if (user == null || user.Role == "admin") return false; // cannot ban admin
+        if (user == null || user.Role == "admin") return false;
 
         user.Status = "banned";
         await _userRepo.UpdateAsync(user);
+
+        // Revoke all sessions of this user
+        await _sessionRepo.RevokeAllForUserAsync(userId);
 
         await _logRepo.LogAsync(new AdminLog
         {
@@ -94,7 +101,8 @@ public class AdminService : IAdminService
 
     public async Task<bool> DisableQuizAsync(int adminId, int quizId)
     {
-        var quiz = await _quizRepo.GetByIdAsync(quizId);
+        // Include disabled quizzes so we can fetch even if already disabled
+        var quiz = await _quizRepo.GetByIdAsync(quizId, includeDisabled: true);
         if (quiz == null) return false;
 
         quiz.Disabled = true;
@@ -112,7 +120,8 @@ public class AdminService : IAdminService
 
     public async Task<bool> EnableQuizAsync(int adminId, int quizId)
     {
-        var quiz = await _quizRepo.GetByIdAsync(quizId);
+        // Include disabled quizzes so we can fetch the disabled one
+        var quiz = await _quizRepo.GetByIdAsync(quizId, includeDisabled: true);
         if (quiz == null) return false;
 
         quiz.Disabled = false;

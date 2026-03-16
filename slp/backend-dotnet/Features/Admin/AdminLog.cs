@@ -1,15 +1,30 @@
 using System.Text.Json;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend_dotnet.Features.Admin;
 
+[Table("admin_log")]
 public class AdminLog
 {
+    [Column("id")]
     public int Id { get; set; }
+
+    [Column("admin_id")]
     public int AdminId { get; set; }
-    public string Action { get; set; } = string.Empty; // e.g., "ban_user", "disable_quiz"
-    public string? TargetType { get; set; } // "user", "quiz", "comment", ...
+
+    [Column("action")]
+    public string Action { get; set; } = string.Empty;
+
+    [Column("target_type")]
+    public string? TargetType { get; set; }
+
+    [Column("target_id")]
     public int? TargetId { get; set; }
-    public JsonDocument? Details { get; set; } // additional structured data
+
+    [Column("details")]
+    public JsonDocument? Details { get; set; }
+
+    [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
