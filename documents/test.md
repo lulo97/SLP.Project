@@ -335,7 +335,7 @@ export const test = base.extend({
 
 ### 7.3 Mocking External Services
 - Use Playwright’s request interception to mock LLM responses, TTS audio, email sending, etc.
-- For Kafka‑based jobs, we can either:
+- For Redis jobs, we can either:
   - Use a test mode where the backend processes LLM requests synchronously.
   - Or poll until the job completes (with a timeout) and mock the LLM service to respond quickly.
 

@@ -4,7 +4,7 @@
 
 | Time | Task | Details |
 |------|------|---------|
-| 1h | Environment setup | Install .NET SDK, Node.js, Docker, Postgres, Redis. Create repo, initialise `docker-compose.yml` with Postgres, Redis, Kafka (if desired). |
+| 1h | Environment setup | Install .NET SDK, Node.js, Docker, Postgres, Redis. Create repo, initialise `docker-compose.yml` with Postgres, Redis (if desired). |
 | 2h | Backend skeleton | Create ASP.NET Core solution, project folders (Controllers, Models, Data, Services, Middleware). Add Entity Framework Core, configure DbContext. |
 | 2h | Database schema | Write initial migration for `users`, `password_reset_tokens`, `email_verification_otps`. Run migration. |
 | 3h | Authentication endpoints | Implement `POST /auth/login`, `POST /auth/logout`, `POST /auth/reset-password`, `POST /auth/reset-password/confirm`, `POST /auth/verify-email`, `GET /users/me`, `PUT /users/me`, `POST /users/me/verify-email/send`. Use Argon2id for password hashing. |

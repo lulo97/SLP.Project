@@ -28,7 +28,7 @@ SLP/
 │   │   ├── AuthService.cs
 │   │   ├── QuizService.cs
 │   │   ├── SourceService.cs
-│   │   ├── LLMQueueService.cs       # Publishes to Kafka
+│   │   ├── LLMQueueService.cs       # Publishes
 │   │   ├── TTSQueueService.cs
 │   │   ├── EmailService.cs          # Sends emails via SMTP/HTTP
 │   │   ├── RateLimitService.cs      # Redis counters
@@ -39,7 +39,6 @@ SLP/
 │   │   ├── SessionMiddleware.cs
 │   │   └── ErrorHandlingMiddleware.cs
 │   ├── Config/                       # Configuration classes
-│   │   ├── KafkaSettings.cs
 │   │   ├── RedisSettings.cs
 │   │   ├── LlmSettings.cs
 │   │   └── ...
@@ -91,7 +90,7 @@ SLP/
 │   ├── llm-service/                     # Python (llama.cpp)
 │   │   ├── app/
 │   │   │   ├── main.py                  # FastAPI / Flask
-│   │   │   ├── consumer.py               # Kafka consumer
+│   │   │   ├── consumer.py               # consumer
 │   │   │   ├── llama_wrapper.py
 │   │   │   └── ...
 │   │   ├── requirements.txt
@@ -123,9 +122,6 @@ SLP/
 │   │   └── my.cnf
 │   ├── redis/
 │   │   └── redis.conf
-│   └── kafka/
-│       ├── zookeeper.properties
-│       └── server.properties
 │
 ├── storage/                               # File storage (mounted volume)
 │   ├── uploads/                            # Original PDF/TXT files
@@ -155,10 +151,10 @@ SLP/
   - `AuthService`: Registration, login, password hashing (Argon2id), session management.
   - `QuizService`: CRUD for quizzes, cloning questions, handling attempts (snapshots).
   - `SourceService`: File upload, text extraction (calls PDF‑extractor microservice), reading progress.
-  - `LLMQueueService`: Publishes requests to Kafka `llm_requests` topic.
+  - `LLMQueueService`: Publishes requests `llm_requests` topic.
   - `RateLimitService`: Uses Redis to enforce per‑IP limits.
 - **Middleware/**: Custom pipeline components for rate limiting, session validation, and global error handling.
-- **Config/**: Strongly typed settings for Kafka, Redis, LLM endpoints, etc., bound from `appsettings.json`.
+- **Config/**: Strongly typed settings, Redis, LLM endpoints, etc., bound from `appsettings.json`.
 - **Program.cs / Startup.cs**: Application entry point; configures services, middleware, and endpoints.
 
 ### Frontend (React / Vue)
@@ -170,15 +166,14 @@ SLP/
 
 ### Microservices
 - **pdf-extractor/**: Java Spring Boot (or simple servlet) that receives a file, extracts text via Apache PDFBox, and returns plain text. Synchronous HTTP.
-- **llm-service/**: Python FastAPI app with a Kafka consumer. Listens to `llm_requests`, calls llama.cpp (subprocess or C library), stores result in DB via backend API (or directly if shared DB access is allowed). Returns job ID for polling.
+- **llm-service/**: Python FastAPI app with a consumer. Listens to `llm_requests`, calls llama.cpp (subprocess or C library), stores result in DB via backend API (or directly if shared DB access is allowed). Returns job ID for polling.
 - **tts-service/**: Similar to LLM service, but generates audio using Piper CLI. Audio may be saved to a public folder and URL returned.
 - **email-service/**: Lightweight SMTP sender. Consumes `email_requests` topic and sends emails via a configured SMTP relay (e.g., Postal, Mailcow, or direct SMTP).
 
 ### Infrastructure
-- **docker-compose.yml**: Defines all containers (backend, frontend, postgres, redis, kafka, zookeeper, each microservice). Networks and volumes are set up.
+- **docker-compose.yml**: Defines all containers (backend, frontend, postgres, redis, each microservice). Networks and volumes are set up.
 - **nginx/**: Reverse proxy configuration to serve frontend static files and route `/api` to backend. Also handles SSL termination if needed.
 - **postgres/init/**: SQL scripts to create tables, indexes, and full‑text search configuration on first run.
-- **kafka/**: Configuration files for Kafka and Zookeeper (minimal setup for single node).
 
 ### Storage
 - **uploads/**: Retains original uploaded PDF/TXT files. Subdirectories by date to avoid too many files in one folder.
@@ -190,7 +185,7 @@ SLP/
 - **seed-data.sql**: Populates development database with sample users, quizzes, and sources.
 
 ## Additional Notes
-- **Environment variables**: Sensitive values (DB passwords, Kafka brokers, API keys) are stored in `.env` (not committed) and referenced in `docker-compose.yml` and `appsettings.json`.
+- **Environment variables**: Sensitive values (DB passwords, API keys) are stored in `.env` (not committed) and referenced in `docker-compose.yml` and `appsettings.json`.
 - **Rate limiting**: Implemented in backend middleware using Redis counters; limits defined in `appsettings.json`.
 - **Full‑text search**: PostgreSQL GIN indexes on `quizzes.title`, `quizzes.description`, `sources.text`, etc. Use `websearch_to_tsquery` for simple syntax.
 - **Session store**: Redis with 7‑day TTL; cookie contains only session ID (HTTP‑only, Secure, SameSite=Strict).

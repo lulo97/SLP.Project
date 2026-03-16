@@ -9,10 +9,10 @@ test('redis container is running', async () => {
   expect(output).toBe('redis');
 });
 
-test('kafka container is running', async () => {
-  const output = execSync('docker ps --filter "name=kafka" --format "{{.Names}}"')
+test('Redis container is running', async () => {
+  const output = execSync('docker ps --filter "name=Redis" --format "{{.Names}}"')
     .toString()
     .trim();
 
-  expect(output).toBe('kafka');
+  expect(output).toBe('Redis');
 });

@@ -76,4 +76,3 @@ services:
 
 volumes:
   redis_data:
-  kafka_data:

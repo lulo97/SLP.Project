@@ -34,7 +34,7 @@ The platform follows a **service‑oriented** design with clear separation of co
               ▼                             ▼                     ▼
    ┌──────────────────┐          ┌────────────────── ┐  ┌──────────────────┐
    │  Microservices   │          │    Message Queue  │  │   Redis          │
-   │ - PDF/TXT Extract│          │     (Kafka)       │  │ - Rate limiting  │
+   │ - PDF/TXT Extract│          │     (Redis)       │  │ - Rate limiting  │
    │ - LLM (llama.cpp)│◄────────►│ - Request queue   │  │ - Session store  │
    │ - TTS (Piper)    │          │ - Async processing│  │ - Caching        │
    │ - Email          │          └────────────────── ┘  └──────────────────┘
@@ -48,7 +48,7 @@ The platform follows a **service‑oriented** design with clear separation of co
   - **LLM service**: Processes AI requests (explain, generate questions, summarise, grammar). Uses llama.cpp (Mistral 7B) running locally.
   - **TTS service**: Converts selected text to speech via Piper TTS (English only).
   - **Email service**: Sends verification OTPs and password‑reset links via SMTP or a lightweight mail server.
-- **Message Queue (Kafka)**: Decouples LLM and TTS requests from the main backend. Enables serialised processing and prevents overload.
+- **Message Queue (Redis)**: Decouples LLM and TTS requests from the main backend. Enables serialised processing and prevents overload.
 - **Redis**: Used for rate‑limiting counters, session storage (HTTP‑only cookies, 7‑day TTL), and optional caching.
 
 ## 3. Core Services & Components
@@ -69,7 +69,7 @@ The platform follows a **service‑oriented** design with clear separation of co
   - Quiz attempt handling (start, answer, submit) with snapshot creation.
   - Source management (upload, progress tracking).
   - Commenting and reporting.
-  - Orchestration of async LLM/TTS tasks (publish to Kafka, poll for results).
+  - Orchestration of async LLM tasks (publish to Redis, poll for results).
   - Rate limiting (Redis counters) and input validation.
   - Admin actions (ban users, disable content).
 
@@ -90,20 +90,19 @@ The platform follows a **service‑oriented** design with clear separation of co
 #### LLM Service (llama.cpp)
 - **Input**: Prompt (max 4000 tokens) with instructions to produce JSON output.  
 - **Processing**: llama.cpp runs locally (CPU). Output is validated by backend.  
-- **Queueing**: Backend publishes request to Kafka (`llm_requests` topic). Consumer picks up, calls llama.cpp, stores result in `llm_log`, and optionally notifies frontend via polling or WebSocket (future).  
+- **Queueing**: Backend publishes request to Redis (`llm_requests` topic). Consumer picks up, calls llama.cpp, stores result in `llm_log`, and optionally notifies frontend via polling or WebSocket (future).  
 - **Logging**: All requests/responses stored indefinitely in `llm_log`.
 
 #### TTS Service (Piper)
 - **Input**: Text snippet (≤500 chars, English).  
 - **Processing**: Piper CLI or HTTP endpoint generates audio.  
-- **Queueing**: Similar to LLM, requests go through Kafka (`tts_requests`). Audio returned to frontend (direct download or URL).
 
 #### Email Service
 - **Input**: Recipient, subject, plain/html body.  
 - **Processing**: Lightweight SMTP server (e.g., Postal, Mailcow) or direct SMTP.  
 - **Communication**: Backend sends HTTP request or drops message into a dedicated queue.
 
-### 3.5 Message Queue (Kafka)
+### 3.5 Message Queue (Redis)
 - **Topics**: `llm_requests`, `tts_requests`, `email_requests`.  
 - **Purpose**:
   - Serialise LLM/TTS processing to avoid overloading local resources.
@@ -154,7 +153,7 @@ The platform follows a **service‑oriented** design with clear separation of co
 ### 4.4 LLM Integration
 - **Use cases**: Explanation, question generation, summarization, grammar checking.  
 - **Workflow**:
-  1. Frontend requests LLM action → backend validates input and creates a job in Kafka.
+  1. Frontend requests LLM action → backend validates input and creates a job in Redis.
   2. Consumer processes job, calls llama.cpp, stores result in `llm_log`.
   3. Frontend polls (or uses WebSocket) to retrieve result.
 - **Prompts**: Engineered to output JSON; backend validates JSON structure.
@@ -194,7 +193,7 @@ The platform follows a **service‑oriented** design with clear separation of co
 ### 5.3 LLM Explanation Request
 1. User selects text in reading view and taps “Explain”.
 2. Frontend calls `POST /llm/explain` with source ID and text range.
-3. Backend checks if an explanation already exists (user or system). If not, publishes a job to Kafka `llm_requests`.
+3. Backend checks if an explanation already exists (user or system). If not, publishes a job to Redis `llm_requests`.
 4. Consumer processes job: calls llama.cpp, stores result in `llm_log` and as a system explanation in `explanation` table.
 5. Frontend polls `/explanations?source=...` until new explanation appears, then displays it.
 
@@ -215,11 +214,10 @@ The platform follows a **service‑oriented** design with clear separation of co
   - Backend API container  
   - PostgreSQL container  
   - Redis container  
-  - Kafka + Zookeeper containers  
   - Microservice containers (extraction, LLM, TTS, email)  
 - LLM service requires llama.cpp compiled for CPU (no GPU).  
 - TTS uses Piper with pre‑downloaded English voice.  
-- Environment variables manage configuration (database URLs, Kafka brokers, etc.).  
+- Environment variables manage configuration (database URLs, Redis, etc.).  
 - Nginx serves as reverse proxy for frontend static files and API.
 
 ---

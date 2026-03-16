@@ -10,26 +10,16 @@ This schedule assumes a single full‑stack developer working **~12 hours per da
 
 ## Day 5 – LLM, Queues, Search & Tagging
 
-**Goal**: Asynchronous LLM processing, global search, tag cloud, and polish.
+**Goal**: global search, tag cloud, and polish.
 
-| Time | Task | Details |
-|------|------|---------|
-| 2h | Kafka setup | Add Kafka to Docker Compose. Create topics `llm_requests`, `tts_requests`. |
-| 2h | LLM queue service | Backend: implement `LLMQueueService` that publishes to Kafka. Add endpoints `POST /llm/explain`, `/llm/generate-questions`, `/llm/summarize`, `/llm/grammar-check`, `GET /llm/jobs/:id`. |
-| 2h | LLM consumer microservice | Create Python service using `kafka-python` and `llama.cpp` (mock if not available). Consume jobs, call model, store result in `llm_log` and `explanation` (if explanation). |
-| 1h | TTS consumer | Similar Python service using Piper (mock if not available). |
 | 2h | Full‑text search | Add GIN indexes in PostgreSQL. Implement `GET /search` endpoint that searches quizzes, sources, questions, favorites. Return paginated mixed results. |
 | 1h | Frontend: search UI | Build search page with tabs for each type. Highlight matches. |
 | 1h | Tagging | Implement `GET /tags` (list with usage). Frontend tag cloud / autocomplete. |
 | 1h | Integration | Connect LLM actions from reading bubble to new endpoints; show job status and poll for result. |
 
 **End‑of‑Day Checklist**  
-- [ ] Kafka running, topics created.  
-- [ ] LLM and TTS consumer services start (mock responses if needed).  
-- [ ] LLM requests are queued and processed (async).  
 - [ ] Search returns correct results across all types.  
 - [ ] Tags endpoint works; frontend displays tag list.  
-- [ ] LLM actions in reading view show polling progress.
 
 ---
 
@@ -85,12 +75,12 @@ This schedule assumes a single full‑stack developer working **~12 hours per da
 - [ ] Admin: users (ban/unban), quizzes (disable/enable), comments (soft delete/restore), reports (resolve), logs.  
 - [ ] Search: global search with type tabs.  
 - [ ] Tags: list with counts.  
-- [ ] LLM: async processing via Kafka, job polling.  
+- [ ] LLM: async processing via Redis, job polling.  
 - [ ] TTS: async processing (mock).  
 - [ ] Rate limiting: login (10/min), comments (20/min), attempts (30/hr), LLM (10/hr).  
 - [ ] File upload limits: PDF ≤20 MB, TXT ≤5 MB.  
 - [ ] Security: password hashing (Argon2id), HTML sanitisation, HTTP‑only cookies.  
-- [ ] Infrastructure: Docker Compose orchestrates all services, Redis for sessions, Kafka for queues, Nginx reverse proxy.  
+- [ ] Infrastructure: Docker Compose orchestrates all services, Redis for sessions, Redis for queues, Nginx reverse proxy.  
 - [ ] E2E tests pass for critical journeys.  
 - [ ] Backup script works.
 

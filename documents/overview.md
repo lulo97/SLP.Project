@@ -162,10 +162,10 @@ POST   /comment
 
 - **PDF/Text extraction**: Handled by a dedicated **microservice** (separate from the main backend). It exposes a REST API that accepts file uploads, extracts text using Apache PDFBox (or equivalent library), and returns plain text. The main backend stores the extracted text in the `source` table.
 - **LLM integration (llama.cpp)**:
-  - Requests are placed into an **Apache Kafka** queue to serialize processing and avoid overloading the local model.
+  - Requests are placed into an queue to serialize processing and avoid overloading the local model.
   - A consumer service picks up jobs, calls llama.cpp, and stores results in the `llm_log` table.
   - No GPU constraints (runs on personal laptop CPU).
-- **TTS (Piper)**: Similarly, TTS requests are queued via Kafka. A consumer calls the Piper CLI or HTTP endpoint and returns the audio data (or a URL) to the frontend.
+- **TTS (Piper)**: Calls the Piper CLI or HTTP endpoint and returns the audio data (or a URL) to the frontend.
 - **Email delivery**: A separate lightweight email service (e.g., **Postal**, **Mailcow**, or a simple SMTP server) handles all outgoing emails. The main backend sends email requests via HTTP or SMTP.
 
 ### 16.3 Data Model & Storage

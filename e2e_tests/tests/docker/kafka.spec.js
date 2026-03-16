@@ -24,7 +24,7 @@ test('Redis port is open', async () => {
   expect(open).toBeTruthy();
 });
 
-test('Kafka port is open', async () => {
+test('Redis port is open', async () => {
   const open = await checkPort(9092);
   expect(open).toBeTruthy();
 });

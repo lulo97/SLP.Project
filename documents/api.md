@@ -143,7 +143,7 @@ Error Responses: Standard HTTP status codes with a JSON body: `{ "error": { "cod
 
 ## LLM (AI) Operations
 
-All LLM endpoints accept a request and return a job ID. Processing is asynchronous via Kafka; the frontend can poll or use WebSocket for completion (not specified, but typical pattern). For simplicity, we'll define synchronous‑style endpoints that queue and return immediately with a job ID, and a separate status endpoint.
+All LLM endpoints accept a request and return a job ID. the frontend can poll or use WebSocket for completion (not specified, but typical pattern). For simplicity, we'll define synchronous‑style endpoints that queue and return immediately with a job ID, and a separate status endpoint.
 
 | Method | Path                          | Description |
 |--------|-------------------------------|-------------|
