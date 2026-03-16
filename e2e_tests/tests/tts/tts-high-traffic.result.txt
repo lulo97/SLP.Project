@@ -1,0 +1,47 @@
+D:\SLP.Project\e2e_tests>npx playwright test tests/tts/tts-high-traffic.spec.js --headed
+
+Running 1 test using 1 worker
+[chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
+Batch 1: requests 1 to 50
+Batch 2: requests 51 to 100
+Batch 3: requests 101 to 150
+Batch 4: requests 151 to 200
+
+=== SPIKE TEST SUMMARY ===
+Total requests:    200                                                                                                                                   
+Succeeded:         41 (20.50%)                                                                                                                           
+Failed:            159                                                                                                                                   
+Total time:        31.19 s                                                                                                                               
+Avg response time: 1677 ms                                                                                                                               
+                                                                                                                                                         
+First 10 failures:
+  1. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  2. Status: 503, Time: 157 ms, Error: -                                                                                                                 
+  3. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  4. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  5. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  6. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  7. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  8. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  9. Status: 503, Time: 156 ms, Error: -                                                                                                                 
+  10. Status: 503, Time: 156 ms, Error: -                                                                                                                
+  1) [chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 95
+    Received:    20.5
+
+      94 |
+      95 |     // Assert using the numeric value
+    > 96 |     expect(successRate).toBeGreaterThanOrEqual(SUCCESS_THRESHOLD);
+         |                         ^
+      97 |   });
+      98 | });
+      99 |
+        at D:\SLP.Project\e2e_tests\tests\tts\tts-high-traffic.spec.js:96:25
+
+  1 failed
+    [chromium] › tests\tts\tts-high-traffic.spec.js:14:3 › TTS spike test › send many concurrent requests
+
+  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.
