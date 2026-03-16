@@ -1,112 +1,100 @@
 <template>
+  <!-- Progress bar (fixed, above header) -->
   <div
-    class="min-h-screen bg-[#f7f5f0] flex flex-col transition-[padding-right] duration-[280ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-    :class="{ 'md:pr-[320px]': panelOpen }"
-    data-testid="source-detail-page"
+    class="fixed top-0 left-0 right-0 h-[3px] bg-black/[0.06] z-[300]"
+    data-testid="reading-progress-bar-track"
   >
-
-    <!-- ── Progress bar ──────────────────────────────────────────────── -->
     <div
-      class="fixed top-0 left-0 right-0 h-[3px] bg-black/[0.06] z-[300]"
-      data-testid="reading-progress-bar-track"
-    >
-      <div
-        class="h-full bg-gradient-to-r from-[#7c6af5] to-[#a78bfa] transition-all duration-[400ms] ease-linear rounded-r-[2px]"
-        :style="{ width: readPercent + '%' }"
-        data-testid="reading-progress-bar-fill"
-      />
-    </div>
+      class="h-full bg-gradient-to-r from-[#7c6af5] to-[#a78bfa] transition-all duration-[400ms] ease-linear rounded-r-[2px]"
+      :style="{ width: readPercent + '%' }"
+      data-testid="reading-progress-bar-fill"
+    />
+  </div>
 
-    <!-- ── Header ───────────────────────────────────────────────────── -->
-    <header
-      class="sticky top-0 z-[100] bg-[rgba(247,245,240,0.92)] backdrop-blur-[12px] border-b border-black/[0.07]"
-      data-testid="source-detail-header"
-    >
-      <div class="max-w-[760px] mx-auto px-6 h-[52px] flex items-center justify-between gap-4">
+  <MobileLayout :title="source?.title || 'Source'">
+    <!-- Header slots -->
+    <template #header-left>
+      <button
+        class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-[13px]
+               font-medium text-gray-500 py-1.5 pr-2.5 pl-1.5 rounded-[7px]
+               transition-all duration-150 hover:text-[#1a1a2e] hover:bg-black/[0.05]
+               font-[inherit] whitespace-nowrap"
+        @click="router.push('/source')"
+        data-testid="source-detail-back-btn"
+      >
+        <ArrowLeft :size="18" />
+        <span class="hidden sm:inline">Sources</span>
+      </button>
+    </template>
 
+    <template #header-center>
+      <span
+        v-if="source"
+        class="text-[11px] font-semibold tracking-[0.06em] uppercase py-[3px] px-2.5
+               rounded-full bg-[#ede9fe] text-[#7c6af5]"
+        :data-type="source.type"
+        data-testid="source-detail-type-badge"
+      >
+        {{ typeLabel }}
+      </span>
+    </template>
+
+    <template #header-right>
+      <a-tooltip title="Resume reading">
         <button
-          class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-[13px]
-                 font-medium text-gray-500 py-1.5 pr-2.5 pl-1.5 rounded-[7px]
-                 transition-all duration-150 hover:text-[#1a1a2e] hover:bg-black/[0.05]
-                 font-[inherit] whitespace-nowrap"
-          @click="router.push('/source')"
-          data-testid="source-detail-back-btn"
+          v-if="savedScrollPosition > 100"
+          class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 rounded-lg cursor-pointer
+                 text-xs font-medium text-[#059669] bg-[rgba(5,150,105,0.08)] font-[inherit]
+                 whitespace-nowrap transition-all duration-150 hover:bg-[rgba(5,150,105,0.15)]"
+          @click="resumeReading"
+          data-testid="source-detail-resume-btn"
         >
-          <ArrowLeft :size="18" />
-          <span class="hidden sm:inline">Sources</span>
+          <Navigation :size="15" />
+          <span class="hidden sm:inline">Resume</span>
         </button>
+      </a-tooltip>
 
-        <div class="flex-1 flex justify-center">
+      <a-tooltip title="Explanations">
+        <button
+          class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 bg-transparent
+                 rounded-lg cursor-pointer text-xs font-medium text-gray-500 font-[inherit]
+                 whitespace-nowrap transition-all duration-150
+                 hover:bg-[rgba(124,106,245,0.1)] hover:text-[#7c6af5]"
+          :class="{ 'bg-[rgba(124,106,245,0.1)] !text-[#7c6af5]': panelOpen }"
+          @click="panelOpen = !panelOpen"
+          data-testid="source-detail-explanations-toggle-btn"
+        >
+          <Sparkles :size="16" />
           <span
-            v-if="source"
-            class="text-[11px] font-semibold tracking-[0.06em] uppercase py-[3px] px-2.5
-                   rounded-full bg-[#ede9fe] text-[#7c6af5]"
-            :data-type="source.type"
-            data-testid="source-detail-type-badge"
-          >
-            {{ typeLabel }}
-          </span>
-        </div>
+            v-if="explanations.length"
+            class="absolute top-0.5 right-1 bg-[#7c6af5] text-white text-[9px] font-bold
+                   min-w-[14px] h-[14px] rounded-[7px] flex items-center justify-center px-[3px]"
+            data-testid="source-detail-explanations-badge"
+          >{{ explanations.length }}</span>
+        </button>
+      </a-tooltip>
 
-        <div class="flex items-center gap-1">
-          <a-tooltip title="Resume reading">
-            <button
-              v-if="savedScrollPosition > 100"
-              class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 rounded-lg cursor-pointer
-                     text-xs font-medium text-[#059669] bg-[rgba(5,150,105,0.08)] font-[inherit]
-                     whitespace-nowrap transition-all duration-150 hover:bg-[rgba(5,150,105,0.15)]"
-              @click="resumeReading"
-              data-testid="source-detail-resume-btn"
-            >
-              <Navigation :size="15" />
-              <span class="hidden sm:inline">Resume</span>
-            </button>
-          </a-tooltip>
+      <a-tooltip title="Font size">
+        <button
+          class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 bg-transparent
+                 rounded-lg cursor-pointer text-xs font-medium text-gray-500 font-[inherit]
+                 whitespace-nowrap transition-all duration-150
+                 hover:bg-[rgba(124,106,245,0.1)] hover:text-[#7c6af5]"
+          @click="cycleFontSize"
+          data-testid="source-detail-font-size-btn"
+        >
+          <Type :size="16" />
+        </button>
+      </a-tooltip>
+    </template>
 
-          <a-tooltip title="Explanations">
-            <button
-              class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 bg-transparent
-                     rounded-lg cursor-pointer text-xs font-medium text-gray-500 font-[inherit]
-                     whitespace-nowrap transition-all duration-150
-                     hover:bg-[rgba(124,106,245,0.1)] hover:text-[#7c6af5]"
-              :class="{ 'bg-[rgba(124,106,245,0.1)] !text-[#7c6af5]': panelOpen }"
-              @click="panelOpen = !panelOpen"
-              data-testid="source-detail-explanations-toggle-btn"
-            >
-              <Sparkles :size="16" />
-              <span
-                v-if="explanations.length"
-                class="absolute top-0.5 right-1 bg-[#7c6af5] text-white text-[9px] font-bold
-                       min-w-[14px] h-[14px] rounded-[7px] flex items-center justify-center px-[3px]"
-                data-testid="source-detail-explanations-badge"
-              >{{ explanations.length }}</span>
-            </button>
-          </a-tooltip>
-
-          <a-tooltip title="Font size">
-            <button
-              class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 bg-transparent
-                     rounded-lg cursor-pointer text-xs font-medium text-gray-500 font-[inherit]
-                     whitespace-nowrap transition-all duration-150
-                     hover:bg-[rgba(124,106,245,0.1)] hover:text-[#7c6af5]"
-              @click="cycleFontSize"
-              data-testid="source-detail-font-size-btn"
-            >
-              <Type :size="16" />
-            </button>
-          </a-tooltip>
-        </div>
-      </div>
-    </header>
-
-    <!-- ── Main scroll area ──────────────────────────────────────────── -->
+    <!-- Main scrollable content -->
     <main
       class="flex-1 overflow-y-auto px-6 pt-10 pb-[120px]"
       ref="scrollContainer"
       @scroll="onScroll"
       data-testid="source-detail-main"
     >
-
       <!-- Loading skeleton -->
       <div v-if="loading" class="max-w-[680px] mx-auto" data-testid="source-detail-loading">
         <div class="skeleton-shimmer mb-4" style="height:36px; width:75%" />
@@ -145,7 +133,6 @@
         ref="articleRef"
         data-testid="source-detail-article"
       >
-
         <!-- Article header -->
         <header
           class="mb-10 pb-8 border-b border-[#e8e4dc]"
@@ -271,89 +258,87 @@
           <span>End of source</span>
           <div class="flex-1 h-px bg-[#e8e4dc]" />
         </div>
-
       </article>
     </main>
+  </MobileLayout>
 
-    <!-- ── Selection Bubble ──────────────────────────────────────────── -->
-    <SelectionBubble
-      :container-ref="contentRef"
-      @explain="handleExplain"
-      @grammar="handleGrammar"
-      @tts="handleTts"
-      @favorite="handleFavorite"
-    />
+  <!-- Selection Bubble -->
+  <SelectionBubble
+    :container-ref="contentRef"
+    @explain="handleExplain"
+    @grammar="handleGrammar"
+    @tts="handleTts"
+    @favorite="handleFavorite"
+  />
 
-    <!-- ── Explanation panel ─────────────────────────────────────────── -->
-    <ExplanationPanel
-      :is-open="panelOpen"
-      :pending-text="pendingExplainText"
-      :explanations="explanations"
-      :loading="explanationsLoading"
-      @close="panelOpen = false"
-      @request-explain="submitExplanation"
-      @clear-pending="pendingExplainText = ''"
-    />
+  <!-- Explanation panel -->
+  <ExplanationPanel
+    :is-open="panelOpen"
+    :pending-text="pendingExplainText"
+    :explanations="explanations"
+    :loading="explanationsLoading"
+    @close="panelOpen = false"
+    @request-explain="submitExplanation"
+    @clear-pending="pendingExplainText = ''"
+  />
 
-    <!-- ── Favorite modal ────────────────────────────────────────────── -->
-    <a-modal
-      v-model:open="favoriteModalOpen"
-      title="Save to Favorites"
-      ok-text="Save"
-      :confirm-loading="savingFavorite"
-      @ok="submitFavorite"
-      @cancel="favoriteModalOpen = false"
-    >
-      <div data-testid="source-detail-favorite-modal" class="flex flex-col gap-1.5">
-        <div class="text-xs font-semibold text-gray-500">Selected text</div>
-        <a-textarea
-          v-model:value="favoriteText"
-          :rows="3"
-          placeholder="Your selected text…"
-          data-testid="source-detail-favorite-text-input"
-        />
-        <div class="text-xs font-semibold text-gray-500 mt-3">Type</div>
-        <a-radio-group
-          v-model:value="favoriteType"
-          button-style="solid"
-          size="small"
-          data-testid="source-detail-favorite-type-group"
-        >
-          <a-radio-button value="word"   data-testid="source-detail-favorite-type-word">Word</a-radio-button>
-          <a-radio-button value="phrase" data-testid="source-detail-favorite-type-phrase">Phrase</a-radio-button>
-          <a-radio-button value="idiom"  data-testid="source-detail-favorite-type-idiom">Idiom</a-radio-button>
-          <a-radio-button value="other"  data-testid="source-detail-favorite-type-other">Other</a-radio-button>
-        </a-radio-group>
-        <div class="text-xs font-semibold text-gray-500 mt-3">Note (optional)</div>
-        <a-input
-          v-model:value="favoriteNote"
-          placeholder="Add a personal note…"
-          data-testid="source-detail-favorite-note-input"
-        />
-      </div>
-    </a-modal>
-
-    <!-- ── Notification ──────────────────────────────────────────────── -->
-    <Transition name="notif">
-      <div
-        v-if="notification"
-        class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2
-               px-[18px] py-2.5 rounded-[24px] text-[13px] font-medium
-               z-[9000] whitespace-nowrap shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
-        :class="{
-          'bg-[#059669] text-white': notification.type === 'success',
-          'bg-[#1a1a2e] text-white': notification.type === 'info',
-          'bg-[#dc2626] text-white': notification.type === 'error',
-        }"
-        data-testid="source-detail-notification"
-        :data-notif-type="notification.type"
+  <!-- Favorite modal -->
+  <a-modal
+    v-model:open="favoriteModalOpen"
+    title="Save to Favorites"
+    ok-text="Save"
+    :confirm-loading="savingFavorite"
+    @ok="submitFavorite"
+    @cancel="favoriteModalOpen = false"
+  >
+    <div data-testid="source-detail-favorite-modal" class="flex flex-col gap-1.5">
+      <div class="text-xs font-semibold text-gray-500">Selected text</div>
+      <a-textarea
+        v-model:value="favoriteText"
+        :rows="3"
+        placeholder="Your selected text…"
+        data-testid="source-detail-favorite-text-input"
+      />
+      <div class="text-xs font-semibold text-gray-500 mt-3">Type</div>
+      <a-radio-group
+        v-model:value="favoriteType"
+        button-style="solid"
+        size="small"
+        data-testid="source-detail-favorite-type-group"
       >
-        <component :is="notification.icon" :size="14" />
-        {{ notification.message }}
-      </div>
-    </Transition>
+        <a-radio-button value="word"   data-testid="source-detail-favorite-type-word">Word</a-radio-button>
+        <a-radio-button value="phrase" data-testid="source-detail-favorite-type-phrase">Phrase</a-radio-button>
+        <a-radio-button value="idiom"  data-testid="source-detail-favorite-type-idiom">Idiom</a-radio-button>
+        <a-radio-button value="other"  data-testid="source-detail-favorite-type-other">Other</a-radio-button>
+      </a-radio-group>
+      <div class="text-xs font-semibold text-gray-500 mt-3">Note (optional)</div>
+      <a-input
+        v-model:value="favoriteNote"
+        placeholder="Add a personal note…"
+        data-testid="source-detail-favorite-note-input"
+      />
+    </div>
+  </a-modal>
 
-  </div>
+  <!-- Notification -->
+  <Transition name="notif">
+    <div
+      v-if="notification"
+      class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2
+             px-[18px] py-2.5 rounded-[24px] text-[13px] font-medium
+             z-[9000] whitespace-nowrap shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+      :class="{
+        'bg-[#059669] text-white': notification.type === 'success',
+        'bg-[#1a1a2e] text-white': notification.type === 'info',
+        'bg-[#dc2626] text-white': notification.type === 'error',
+      }"
+      data-testid="source-detail-notification"
+      :data-notif-type="notification.type"
+    >
+      <component :is="notification.icon" :size="14" />
+      {{ notification.message }}
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -368,6 +353,7 @@ import SelectionBubble from "@/features/source/components/SelectionBubble.vue";
 import ExplanationPanel from "@/features/source/components/ExplanationPanel.vue";
 import type { ExplanationItem } from "@/features/source/components/ExplanationPanel.vue";
 import apiClient from "@/lib/api/client";
+import MobileLayout from "@/layouts/MobileLayout.vue";
 
 // ── Router / store ────────────────────────────────────────────────────────────
 const route = useRoute();
@@ -476,7 +462,6 @@ async function loadSource() {
     await loadProgress();
     await loadExplanations();
   } catch {
-    // Use the specific error message set by the store
     error.value = sourceStore.error || "Could not load this source.";
   } finally {
     loading.value = false;

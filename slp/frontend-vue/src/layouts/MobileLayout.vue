@@ -3,10 +3,22 @@
     <!-- Mobile Header with Right Sidebar Toggle -->
     <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]">
       <div class="flex items-center justify-between p-4">
-        <h1 class="text-xl font-semibold">{{ title }}</h1>
-        <button @click="toggleSidebar" class="p-2 hover:bg-gray-100 rounded-lg">
-          <Menu :size="24" />
-        </button>
+        <!-- Left slot (default: title) -->
+        <slot name="header-left">
+          <h1 class="text-xl font-semibold">{{ title }}</h1>
+        </slot>
+
+        <!-- Centre slot (optional) -->
+        <slot name="header-center" />
+
+        <!-- Right slot (optional) – placed before the hamburger -->
+        <div class="flex items-center gap-2">
+          <slot name="header-right" />
+          <!-- Always visible hamburger -->
+          <button @click="toggleSidebar" class="p-2 hover:bg-gray-100 rounded-lg">
+            <Menu :size="24" />
+          </button>
+        </div>
       </div>
     </header>
 

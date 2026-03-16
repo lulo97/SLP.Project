@@ -1,6 +1,6 @@
 <template>
   <MobileLayout title="My Sources">
-    <template #header-extra>
+    <template #header-right>
       <a-space>
         <a-button
           type="primary"
