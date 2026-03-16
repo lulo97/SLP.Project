@@ -1,5 +1,7 @@
 using backend_dotnet.Data;
+using backend_dotnet.Features.Admin;
 using backend_dotnet.Features.Auth;
+using backend_dotnet.Features.Comment;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
@@ -9,6 +11,7 @@ using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Queue;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
+using backend_dotnet.Features.Report;
 using backend_dotnet.Features.Search;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
@@ -48,6 +51,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILlmLogRepository, LlmLogRepository>();
 
         services.AddScoped<ISearchService, SearchService>();
+
+        services.AddScoped<ICommentRepository, CommentRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IAdminLogRepository, AdminLogRepository>();
         return services;
     }
 
@@ -59,6 +66,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IQuizService, QuizService>();
         services.AddScoped<IQuestionService, QuestionService>();
         services.AddScoped<ISourceService, SourceService>();
+        services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         // Email service with HttpClient
         services.AddHttpClient<IEmailService, EmailService>(client =>

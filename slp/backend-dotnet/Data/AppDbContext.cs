@@ -1,9 +1,12 @@
-﻿using backend_dotnet.Features.Explanation;
+﻿using backend_dotnet.Features.Admin;
+using backend_dotnet.Features.Comment;
+using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.QuizAttempt;
+using backend_dotnet.Features.Report;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
@@ -39,6 +42,9 @@ public class AppDbContext : DbContext
     public DbSet<Features.Progress.UserSourceProgress> UserSourceProgresses => Set<Features.Progress.UserSourceProgress>();
     public DbSet<Features.Favorite.FavoriteItem> FavoriteItems => Set<Features.Favorite.FavoriteItem>();
     public DbSet<LlmLog> LlmLogs { get; set; }
+    public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Report> Reports => Set<Report>();
+    public DbSet<AdminLog> AdminLogs => Set<AdminLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -232,6 +238,60 @@ public class AppDbContext : DbContext
             b.Property(f => f.Type)
              .HasMaxLength(20)
              .HasDefaultValue("word");
+        });
+
+        // ── Comment ─────────────────────────────────────────────────────
+        modelBuilder.Entity<Comment>(b =>
+        {
+            b.ToTable("comment");
+            b.HasKey(c => c.Id);
+            b.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(c => c.Parent)
+                .WithMany(c => c.Replies)
+                .HasForeignKey(c => c.ParentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Property(c => c.TargetType).HasMaxLength(20);
+            b.HasIndex(c => new { c.TargetType, c.TargetId });
+            b.HasQueryFilter(c => c.DeletedAt == null); // soft delete filter
+        });
+
+        // ── Report ─────────────────────────────────────────────────────
+        modelBuilder.Entity<Report>(b =>
+        {
+            b.ToTable("report");
+            b.HasKey(r => r.Id);
+
+            // User who created the report
+            b.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Admin who resolved the report
+            b.HasOne(r => r.Resolver)
+                .WithMany()
+                .HasForeignKey(r => r.ResolvedBy)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.Property(r => r.TargetType).HasMaxLength(20);
+            b.HasIndex(r => new { r.TargetType, r.TargetId });
+            b.HasIndex(r => r.Resolved);
+        });
+
+        // ── AdminLog ───────────────────────────────────────────────────
+        modelBuilder.Entity<AdminLog>(b =>
+        {
+            b.ToTable("admin_log");
+            b.HasKey(l => l.Id);
+            b.HasOne(l => l.Admin)
+                .WithMany()
+                .HasForeignKey(l => l.AdminId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Property(l => l.TargetType).HasMaxLength(20);
+            b.HasIndex(l => l.CreatedAt);
         });
     }
 }

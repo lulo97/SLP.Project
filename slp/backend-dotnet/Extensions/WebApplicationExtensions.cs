@@ -84,7 +84,7 @@ public static class WebApplicationExtensions
                 stream = true,
                 return_progress = false,
                 temperature = 0.8,
-                max_tokens = 50          // keep the health-check reply short
+                max_tokens = 50
             };
 
             var bodyJson = JsonSerializer.Serialize(payload);
@@ -96,8 +96,7 @@ public static class WebApplicationExtensions
             var http = httpFactory.CreateClient();
             http.Timeout = TimeSpan.FromSeconds(15);
 
-            using var response = await http.SendAsync(
-                request, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -159,8 +158,7 @@ public static class WebApplicationExtensions
         }
         catch (TaskCanceledException)
         {
-            logger.LogWarning("✗ LLM server health check timed out (>{Timeout}s) — server may still be loading",
-                15);
+            logger.LogWarning("✗ LLM server health check timed out (>{Timeout}s) — server may still be loading", 15);
         }
         catch (HttpRequestException ex)
         {
@@ -168,6 +166,7 @@ public static class WebApplicationExtensions
         }
         catch (Exception ex)
         {
+            // Catch any other unexpected errors (e.g., JSON serialization, stream reading)
             logger.LogWarning(ex, "✗ LLM server health check failed unexpectedly");
         }
     }

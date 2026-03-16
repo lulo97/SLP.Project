@@ -28,4 +28,6 @@ public interface IQuizRepository
     Task<IEnumerable<Source.Source>> GetSourcesByQuizIdAsync(int quizId);
     Task AddSourceToQuizAsync(int quizId, int sourceId);
     Task RemoveSourceFromQuizAsync(int quizId, int sourceId);
+    Task<IEnumerable<Quiz>> GetAllForAdminAsync();  // <-- ADD THIS
+
 }

@@ -11,5 +11,6 @@
         Task UpdateAsync(User user);
         Task CreateAsync(User user);
         Task DeleteAsync(User user);
+        Task<IEnumerable<User>> GetAllAsync();  // <-- ADD THIS
     }
 }

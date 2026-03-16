@@ -283,4 +283,14 @@ public class QuizRepository : IQuizRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<IEnumerable<Quiz>> GetAllForAdminAsync()
+    {
+        // Ignore the global query filter (Disabled == false) to see all quizzes
+        return await _context.Quizzes
+            .IgnoreQueryFilters()
+            .Include(q => q.User)
+            .OrderByDescending(q => q.CreatedAt)
+            .ToListAsync();
+    }
 }

@@ -55,4 +55,11 @@ public class UserRepository : IUserRepository
         _db.Users.Remove(user);
         await _db.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await _db.Users
+            .OrderBy(u => u.Id)
+            .ToListAsync();
+    }
 }
