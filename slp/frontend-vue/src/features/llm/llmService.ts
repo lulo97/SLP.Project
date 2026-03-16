@@ -7,16 +7,13 @@ export interface LlmExplainRequest {
   context?: string;
 }
 
-export interface LlmExplainResponse {
-  explanation: string;
-}
-
 export interface LlmGrammarRequest {
   text: string;
 }
 
-export interface LlmGrammarResponse {
-  correctedText: string;
+// Response shapes from the backend
+interface SyncResponse {
+  result: string;
 }
 
 export interface LlmJobResponse {
@@ -43,17 +40,17 @@ const MAX_POLL_ATTEMPTS = 30; // 60 seconds max
 export async function requestExplanation(
   request: LlmExplainRequest
 ): Promise<string> {
-  const response = await apiClient.post<LlmExplainResponse | LlmJobResponse>(
+  const response = await apiClient.post<SyncResponse | LlmJobResponse>(
     '/llm/explain',
     request
   );
 
-  // If response contains explanation, return it immediately
-  if ('explanation' in response.data) {
-    return response.data.explanation;
+  // Synchronous response (queue disabled)
+  if ('result' in response.data) {
+    return response.data.result;
   }
 
-  // Otherwise, we have a job – start polling
+  // Asynchronous response (queue enabled)
   const { jobId } = response.data as LlmJobResponse;
   return pollForResult(jobId);
 }
@@ -65,13 +62,13 @@ export async function requestExplanation(
 export async function requestGrammarCheck(
   request: LlmGrammarRequest
 ): Promise<string> {
-  const response = await apiClient.post<LlmGrammarResponse | LlmJobResponse>(
+  const response = await apiClient.post<SyncResponse | LlmJobResponse>(
     '/llm/grammar-check',
     request
   );
 
-  if ('correctedText' in response.data) {
-    return response.data.correctedText;
+  if ('result' in response.data) {
+    return response.data.result;
   }
 
   const { jobId } = response.data as LlmJobResponse;
