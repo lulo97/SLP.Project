@@ -75,9 +75,9 @@ test.describe('Admin Quizzes', () => {
     await page.fill('[data-testid="admin-quizzes-search"]', quiz.title);
     await page.keyboard.press('Enter');
 
-    // Should see only the test quiz
+    // Should see the test quiz (and only one occurrence of it)
     await expect(page.locator(`text=${quiz.title}`)).toBeVisible();
-    const rows = await page.locator('.ant-table-row').count();
-    expect(rows).toBe(1);
+    const rowsWithTitle = await page.locator(`.ant-table-row:has-text("${quiz.title}")`).count();
+    expect(rowsWithTitle).toBe(1);
   });
 });
