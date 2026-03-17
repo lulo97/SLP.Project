@@ -1,4 +1,5 @@
 using backend_dotnet.Extensions;
+using backend_dotnet.Features.Source;
 using backend_dotnet.Middlewares;
 using Serilog;
 
@@ -22,6 +23,12 @@ builder.Services.AddCaching(builder.Configuration);
 builder.Services.AddAuthAndCors(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpClient<IParserClient, ParserClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ParserService:BaseUrl"]);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 

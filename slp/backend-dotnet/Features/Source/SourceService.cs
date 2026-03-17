@@ -1,11 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-
 namespace backend_dotnet.Features.Source;
 
 public class SourceService : ISourceService
@@ -13,14 +5,32 @@ public class SourceService : ISourceService
     private readonly ISourceRepository _sourceRepository;
     private readonly ILogger<SourceService> _logger;
     private readonly string _uploadPath;
+    private readonly IParserClient _parserClient;
 
-    public SourceService(ISourceRepository sourceRepository, ILogger<SourceService> logger, IWebHostEnvironment env)
+    // FIX: map file extensions to DB-allowed type values
+    // DB constraint: book | link | note | pdf | txt
+    private static readonly Dictionary<string, string> ExtensionTypeMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "pdf",  "pdf"  },
+        { "txt",  "txt"  },
+        { "html", "txt"  },   // HTML files stored under the "txt" bucket
+        { "htm",  "txt"  },
+        { "md",   "txt"  },
+        { "epub", "book" },
+    };
+
+    public SourceService(
+        ISourceRepository sourceRepository,
+        ILogger<SourceService> logger,
+        IWebHostEnvironment env,
+        IParserClient parserClient)
     {
         _sourceRepository = sourceRepository;
         _logger = logger;
         _uploadPath = Path.Combine(env.WebRootPath ?? env.ContentRootPath, "uploads");
         if (!Directory.Exists(_uploadPath))
             Directory.CreateDirectory(_uploadPath);
+        _parserClient = parserClient;
     }
 
     public async Task<SourceDto?> GetSourceByIdAsync(int id, int? currentUserId)
@@ -29,7 +39,6 @@ public class SourceService : ISourceService
         if (source == null)
             return null;
 
-        // If source is not owned by current user, we may still return if public? For now, only owner can view.
         if (source.UserId != currentUserId)
             return null;
 
@@ -47,36 +56,37 @@ public class SourceService : ISourceService
         if (file == null || file.Length == 0)
             throw new ArgumentException("No file uploaded.");
 
-        // Generate unique filename
-        var ext = Path.GetExtension(file.FileName);
-        var fileName = $"{Guid.NewGuid()}{ext}";
+        if (file.Length > 20 * 1024 * 1024)
+            throw new ArgumentException("File too large.");
+
+        // Parse first (uses the form-file stream internally)
+        using var parseStream = file.OpenReadStream();
+        var parseResult = await _parserClient.ParseFileAsync(parseStream, file.FileName, title);
+
+        // Persist a copy of the original file
+        var ext = Path.GetExtension(file.FileName).TrimStart('.');
+        var fileName = $"{Guid.NewGuid()}.{ext}";
         var filePath = Path.Combine(_uploadPath, fileName);
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        // FIX: use async copy to avoid blocking the thread
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
         {
-            await file.CopyToAsync(stream);
+            await file.CopyToAsync(fileStream);
         }
 
-        // Extract text based on file type (mock for now)
-        string? rawText = null;
-        if (ext.ToLower() == ".txt")
-        {
-            rawText = await File.ReadAllTextAsync(filePath);
-        }
-        else if (ext.ToLower() == ".pdf")
-        {
-            // Mock PDF extraction: just log
-            _logger.LogInformation("PDF extraction not implemented, storing file only.");
-            rawText = "[PDF content extraction placeholder]";
-        }
+        // FIX: map extension to a DB-allowed type value
+        var sourceType = ExtensionTypeMap.TryGetValue(ext, out var mapped) ? mapped : "txt";
 
         var source = new Source
         {
             UserId = userId,
-            Type = ext?.TrimStart('.') ?? "unknown",
-            Title = title ?? file.FileName,
+            Type = sourceType,
+            Title = parseResult.Title ?? title ?? file.FileName,
             FilePath = filePath,
-            RawText = rawText,
+            RawText = parseResult.RawText,
+            RawHtml = parseResult.RawHtml,
+            ContentJson = parseResult.ContentJson?.ToString(),
+            MetadataJson = parseResult.Metadata?.ToString(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -87,14 +97,18 @@ public class SourceService : ISourceService
 
     public async Task<SourceDto> CreateSourceFromUrlAsync(int userId, string url, string? title)
     {
-        // Mock URL fetching: just store URL and metadata
+        var parseResult = await _parserClient.ParseUrlAsync(url, title);
+
         var source = new Source
         {
             UserId = userId,
             Type = "link",
-            Title = title ?? url,
+            Title = parseResult.Title ?? title ?? url,
             Url = url,
-            RawText = "[Content would be fetched from URL]",
+            RawText = parseResult.RawText,
+            RawHtml = parseResult.RawHtml,
+            ContentJson = parseResult.ContentJson?.ToString(),
+            MetadataJson = parseResult.Metadata?.ToString(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -106,15 +120,12 @@ public class SourceService : ISourceService
     public async Task<bool> DeleteSourceAsync(int id, int userId, bool isAdmin)
     {
         var source = await _sourceRepository.GetByIdAsync(id);
-        if (source == null)
-            return false;
+        if (source == null) return false;
 
-        if (!isAdmin && source.UserId != userId)
-            return false;
+        if (!isAdmin && source.UserId != userId) return false;
 
         await _sourceRepository.SoftDeleteAsync(id);
 
-        // Optionally delete physical file?
         if (!string.IsNullOrEmpty(source.FilePath) && File.Exists(source.FilePath))
         {
             try { File.Delete(source.FilePath); } catch { /* ignore */ }
@@ -123,40 +134,8 @@ public class SourceService : ISourceService
         return true;
     }
 
-    private SourceDto MapToDto(Source s)
-    {
-        return new SourceDto
-        {
-            Id = s.Id,
-            UserId = s.UserId,
-            Type = s.Type,
-            Title = s.Title,
-            Url = s.Url,
-            RawText = s.RawText,
-            ContentJson = s.ContentJson,   // ← ADD THIS LINE
-            FilePath = s.FilePath,
-            CreatedAt = s.CreatedAt,
-            UpdatedAt = s.UpdatedAt,
-            Metadata = s.MetadataJson
-        };
-    }
-
-    private SourceListDto MapToListDto(Source s)
-    {
-        return new SourceListDto
-        {
-            Id = s.Id,
-            Type = s.Type,
-            Title = s.Title,
-            Url = s.Url,
-            CreatedAt = s.CreatedAt,
-            UpdatedAt = s.UpdatedAt
-        };
-    }
-
     public async Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content)
     {
-        // Optional: validate input
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title is required.");
         if (string.IsNullOrWhiteSpace(content))
@@ -165,7 +144,7 @@ public class SourceService : ISourceService
         var source = new Source
         {
             UserId = userId,
-            Type = "note",                     // matches the database constraint
+            Type = "note",
             Title = title,
             RawText = content,
             CreatedAt = DateTime.UtcNow,
@@ -175,4 +154,31 @@ public class SourceService : ISourceService
         var created = await _sourceRepository.CreateAsync(source);
         return MapToDto(created);
     }
+
+    // ── Mappers ──────────────────────────────────────────────────────────────
+
+    private static SourceDto MapToDto(Source s) => new()
+    {
+        Id = s.Id,
+        UserId = s.UserId,
+        Type = s.Type,
+        Title = s.Title,
+        Url = s.Url,
+        RawText = s.RawText,
+        ContentJson = s.ContentJson,
+        FilePath = s.FilePath,
+        CreatedAt = s.CreatedAt,
+        UpdatedAt = s.UpdatedAt,
+        Metadata = s.MetadataJson
+    };
+
+    private static SourceListDto MapToListDto(Source s) => new()
+    {
+        Id = s.Id,
+        Type = s.Type,
+        Title = s.Title,
+        Url = s.Url,
+        CreatedAt = s.CreatedAt,
+        UpdatedAt = s.UpdatedAt
+    };
 }

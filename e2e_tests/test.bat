@@ -1,1 +1,1 @@
-npx playwright test tests/parser/parser.spec.js --headed
+npx playwright test tests/parser/parser-backend.spec.js --headed

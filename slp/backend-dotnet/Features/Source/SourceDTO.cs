@@ -36,7 +36,9 @@ public class SourceListDto
 public class UploadSourceRequest
 {
     public required IFormFile File { get; set; }
-    public required string Title { get; set; }
+
+    // FIX: Title is optional — parser or filename is used as fallback
+    public string? Title { get; set; }
 }
 
 public class CreateNoteSourceRequest
