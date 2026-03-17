@@ -1,11 +1,13 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using backend_dotnet.Features.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.Question;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class QuestionController : ControllerBase
@@ -24,28 +26,6 @@ public class QuestionController : ControllerBase
         : null;
 
     private bool IsAdmin => User.IsInRole("admin");
-
-    [HttpGet]
-    public async Task<IActionResult> GetQuestions([FromQuery] string? search, [FromQuery] string? type, [FromQuery] List<string>? tags, [FromQuery] bool? mine)
-    {
-        if (mine == true)
-        {
-            if (!CurrentUserId.HasValue)
-                return Unauthorized();
-            var myQuestions = await _questionService.GetUserQuestionsAsync(CurrentUserId.Value);
-            return Ok(myQuestions);
-        }
-
-        var searchDto = new QuestionSearchDto
-        {
-            SearchTerm = search,
-            Type = type,
-            Tags = tags,
-            UserId = CurrentUserId
-        };
-        var results = await _questionService.SearchQuestionsAsync(searchDto);
-        return Ok(results);
-    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetQuestion(int id)
@@ -66,6 +46,8 @@ public class QuestionController : ControllerBase
     [FromQuery] int pageSize = 20)
     {
         // Enforce max page size
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
         if (pageSize > 50) pageSize = 50;
 
         var searchDto = new QuestionSearchDto
