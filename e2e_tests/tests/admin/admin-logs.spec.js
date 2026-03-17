@@ -53,13 +53,13 @@ test.describe('Admin Logs', () => {
 
     // Switch to Logs tab
     await page.click('[data-testid="admin-tab-logs"]');
-    await expect(page.locator('.ant-table')).toBeVisible();
+    // Wait for the logs panel and its table to be visible
+    await expect(page.locator('[data-testid="admin-logs-panel"] .ant-table')).toBeVisible();
 
     // Wait a moment for logs to load
     await page.waitForTimeout(1000);
 
     // Check that logs contain our actions
-    // We'll look for the specific actions in the table
     const actions = [
       { action: 'ban_user', targetId: createdUser.id },
       { action: 'unban_user', targetId: createdUser.id },
