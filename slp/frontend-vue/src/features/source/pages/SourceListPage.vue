@@ -122,17 +122,26 @@ const sourceStore = useSourceStore();
 
 const pagination = { pageSize: 20, showSizeChanger: false };
 
+// FIX: aligned with SourceDetailPage typeLabel and backend type values.
+// Backend types: pdf | txt | link | note | book
+// 'link' stores URL sources (not 'url'), so it maps to "URL" not "Link".
+// Added 'book' and the 'url' alias for forward-compatibility.
 const formatType = (type: string) => {
   const map: Record<string, string> = {
-    pdf: "PDF", txt: "Text", link: "Link", note: "Note", book: "Book",
+    pdf:  "PDF",
+    txt:  "Text",
+    link: "URL",   // backend stores URL sources as type="link"
+    url:  "URL",   // alias — belt-and-suspenders
+    note: "Note",
+    book: "Book",
   };
-  return map[type] || type;
+  return map[type] ?? type.toUpperCase();
 };
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
-const viewSource  = (id: number) => router.push(`/source/${id}`);
-const goToUpload  = () => router.push("/source/upload");
+const viewSource    = (id: number) => router.push(`/source/${id}`);
+const goToUpload    = () => router.push("/source/upload");
 const goToUrlCreate = () => router.push("/source/new-url");
 
 const deleteSource = async (id: number) => {

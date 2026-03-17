@@ -6,10 +6,10 @@
         @submit.prevent="handleUpload"
         data-testid="source-upload-form"
       >
-        <a-form-item label="Title" required>
+        <a-form-item label="Title">
           <a-input
             v-model:value="title"
-            placeholder="Enter source title"
+            placeholder="Enter source title (optional — parser will detect it)"
             data-testid="source-upload-title-input"
           />
         </a-form-item>
@@ -28,8 +28,9 @@
           <p class="ant-upload-text" data-testid="source-upload-dragger-text">
             Click or drag file to this area to upload
           </p>
+          <!-- FIX: hint updated to match backend-accepted types and 20 MB limit -->
           <p class="ant-upload-hint" data-testid="source-upload-dragger-hint">
-            Support for PDF, TXT. Max 10MB.
+            Supports PDF, TXT, HTML. Max 20 MB.
           </p>
         </a-upload-dragger>
 
@@ -46,7 +47,7 @@
           type="primary"
           html-type="submit"
           :loading="sourceStore.loading"
-          :disabled="!fileList.length || !title.trim()"
+          :disabled="!fileList.length"
           block
           class="mt-4"
           data-testid="source-upload-submit-btn"
@@ -77,23 +78,27 @@ import { InboxOutlined } from "@ant-design/icons-vue";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useSourceStore } from "../stores/sourceStore";
 
+const MAX_FILE_MB = 20; // FIX: was 10; backend allows up to 20 MB
+
 const router = useRouter();
 const sourceStore = useSourceStore();
 const fileList = ref<any[]>([]);
-const title = ref("");
+const title    = ref("");
 
 const beforeUpload = (file: File) => {
-  const isLt10M = file.size / 1024 / 1024 < 10;
-  if (!isLt10M) message.error("File must be smaller than 10MB");
-  return isLt10M;
+  const isUnderLimit = file.size / 1024 / 1024 < MAX_FILE_MB;
+  if (!isUnderLimit) message.error(`File must be smaller than ${MAX_FILE_MB} MB`);
+  return isUnderLimit;
 };
 
 const handleRemove = () => { fileList.value = []; };
 
 const handleUpload = async () => {
-  if (!fileList.value.length || !title.value.trim()) return;
-  const file = fileList.value[0].originFileObj;
-  const result = await sourceStore.uploadSource(file, title.value);
+  if (!fileList.value.length) return;
+  const file   = fileList.value[0].originFileObj;
+  // Title is now optional — pass undefined when blank so the backend/parser
+  // falls back to the detected title from the document itself.
+  const result = await sourceStore.uploadSource(file, title.value.trim() || undefined as any);
   if (result) {
     message.success("File uploaded successfully");
     fileList.value = [];

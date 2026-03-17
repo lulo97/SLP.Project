@@ -304,30 +304,12 @@
         size="small"
         data-testid="source-detail-favorite-type-group"
       >
-        <a-radio-button
-          value="word"
-          data-testid="source-detail-favorite-type-word"
-          >Word</a-radio-button
-        >
-        <a-radio-button
-          value="phrase"
-          data-testid="source-detail-favorite-type-phrase"
-          >Phrase</a-radio-button
-        >
-        <a-radio-button
-          value="idiom"
-          data-testid="source-detail-favorite-type-idiom"
-          >Idiom</a-radio-button
-        >
-        <a-radio-button
-          value="other"
-          data-testid="source-detail-favorite-type-other"
-          >Other</a-radio-button
-        >
+        <a-radio-button value="word" data-testid="source-detail-favorite-type-word">Word</a-radio-button>
+        <a-radio-button value="phrase" data-testid="source-detail-favorite-type-phrase">Phrase</a-radio-button>
+        <a-radio-button value="idiom" data-testid="source-detail-favorite-type-idiom">Idiom</a-radio-button>
+        <a-radio-button value="other" data-testid="source-detail-favorite-type-other">Other</a-radio-button>
       </a-radio-group>
-      <div class="text-xs font-semibold text-gray-500 mt-3">
-        Note (optional)
-      </div>
+      <div class="text-xs font-semibold text-gray-500 mt-3">Note (optional)</div>
       <a-input
         v-model:value="favoriteNote"
         placeholder="Add a personal note…"
@@ -375,8 +357,6 @@ import {
   Link2,
   FileText,
   AlertCircle,
-  Volume2,
-  SpellCheck,
   Bookmark,
 } from "lucide-vue-next";
 import { useSourceStore } from "@/features/source/stores/sourceStore";
@@ -385,11 +365,8 @@ import ExplanationPanel from "@/features/source/components/ExplanationPanel.vue"
 import type { ExplanationItem } from "@/features/source/components/ExplanationPanel.vue";
 import apiClient from "@/lib/api/client";
 import MobileLayout from "@/layouts/MobileLayout.vue";
-import {
-  requestExplanation,
-  requestGrammarCheck,
-} from "@/features/llm/llmService";
-import { message, Modal } from "ant-design-vue"; // for grammar result display
+import { requestExplanation, requestGrammarCheck } from "@/features/llm/llmService";
+import { Modal } from "ant-design-vue";
 import { useTts } from "@/features/tts/useTts";
 import TtsPlayer from "@/features/tts/TtsPlayer.vue";
 
@@ -409,62 +386,51 @@ const {
 
 // ── Refs ──────────────────────────────────────────────────────────────────────
 const scrollContainer = ref<HTMLElement | null>(null);
-const articleRef = ref<HTMLElement | null>(null);
-const contentRef = ref<HTMLElement | null>(null);
+const articleRef      = ref<HTMLElement | null>(null);
+const contentRef      = ref<HTMLElement | null>(null);
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const loading = ref(true);
-const error = ref<string | null>(null);
-const source = computed(() => sourceStore.currentSource);
+const error   = ref<string | null>(null);
+const source  = computed(() => sourceStore.currentSource);
 
-const readPercent = ref(0);
-const savedScrollPosition = ref(0);
-const showResumeToast = ref(false);
+const readPercent          = ref(0);
+const savedScrollPosition  = ref(0);
+const showResumeToast      = ref(false);
 
-const panelOpen = ref(false);
+const panelOpen          = ref(false);
 const pendingExplainText = ref("");
-const explanations = ref<ExplanationItem[]>([]);
+const explanations       = ref<ExplanationItem[]>([]);
 const explanationsLoading = ref(false);
 
 const favoriteModalOpen = ref(false);
-const favoriteText = ref("");
-const favoriteNote = ref("");
-const favoriteType = ref<"word" | "phrase" | "idiom" | "other">("word");
-const savingFavorite = ref(false);
+const favoriteText      = ref("");
+const favoriteNote      = ref("");
+const favoriteType      = ref<"word" | "phrase" | "idiom" | "other">("word");
+const savingFavorite    = ref(false);
 
-// 0 = text-sm (14px), 1 = text-base (16px), 2 = text-lg (18px) — standard Tailwind
 const fontSizeIndex = ref(1);
 const fontSizes = ["text-sm", "text-base", "text-lg"];
 
-const notification = ref<{ message: string; type: string; icon: any } | null>(
-  null,
-);
+const notification = ref<{ message: string; type: string; icon: any } | null>(null);
 let notifTimer: ReturnType<typeof setTimeout> | null = null;
 
-const skeletonWidths = [
-  "100%",
-  "94%",
-  "100%",
-  "87%",
-  "96%",
-  "100%",
-  "78%",
-  "100%",
-];
+const skeletonWidths = ["100%", "94%", "100%", "87%", "96%", "100%", "78%", "100%"];
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 const typeLabel = computed(() => {
+  // FIX: added 'book' type; 'link' and 'url' both map to "URL" to match the
+  // backend which stores URL sources with type = "link".
   const map: Record<string, string> = {
-    pdf: "PDF",
-    txt: "Text",
-    link: "URL",
-    note: "Note",
-    url: "URL",
+    pdf:     "PDF",
+    txt:     "Text",
+    link:    "URL",
+    url:     "URL",
+    note:    "Note",
+    book:    "Book",
     unknown: "File",
   };
-  return (
-    map[source.value?.type ?? ""] ?? (source.value?.type ?? "").toUpperCase()
-  );
+  return map[source.value?.type ?? ""] ?? (source.value?.type ?? "").toUpperCase();
 });
 
 const paragraphs = computed(() =>
@@ -479,9 +445,7 @@ const wordCount = computed(() => {
   return t ? t.split(/\s+/).length : 0;
 });
 
-const readTime = computed(() =>
-  wordCount.value ? Math.ceil(wordCount.value / 200) : 0,
-);
+const readTime      = computed(() => (wordCount.value ? Math.ceil(wordCount.value / 200) : 0));
 const fontSizeClass = computed(() => fontSizes[fontSizeIndex.value]);
 
 const renderedContent = computed(() => {
@@ -498,39 +462,27 @@ function renderNode(node: any): string {
   if (node.type === "text") {
     let text = node.text ?? "";
     for (const mark of node.marks ?? []) {
-      if (mark.type === "bold") text = `<strong>${text}</strong>`;
-      else if (mark.type === "italic") text = `<em>${text}</em>`;
+      if (mark.type === "bold")         text = `<strong>${text}</strong>`;
+      else if (mark.type === "italic")  text = `<em>${text}</em>`;
       else if (mark.type === "underline") text = `<u>${text}</u>`;
-      else if (mark.type === "code") text = `<code>${text}</code>`;
-      else if (mark.type === "link")
-        text = `<a href="${mark.attrs?.href}" target="_blank">${text}</a>`;
+      else if (mark.type === "code")    text = `<code>${text}</code>`;
+      else if (mark.type === "link")    text = `<a href="${mark.attrs?.href}" target="_blank">${text}</a>`;
     }
     return text;
   }
   const children = (node.content ?? []).map(renderNode).join("");
   switch (node.type) {
-    case "doc":
-      return children;
-    case "paragraph":
-      return `<p>${children || "<br>"}</p>`;
-    case "heading":
-      return `<h${node.attrs?.level ?? 2}>${children}</h${node.attrs?.level ?? 2}>`;
-    case "bulletList":
-      return `<ul>${children}</ul>`;
-    case "orderedList":
-      return `<ol>${children}</ol>`;
-    case "listItem":
-      return `<li>${children}</li>`;
-    case "blockquote":
-      return `<blockquote>${children}</blockquote>`;
-    case "codeBlock":
-      return `<pre><code>${children}</code></pre>`;
-    case "hardBreak":
-      return "<br>";
-    case "horizontalRule":
-      return "<hr>";
-    default:
-      return children;
+    case "doc":           return children;
+    case "paragraph":     return `<p>${children || "<br>"}</p>`;
+    case "heading":       return `<h${node.attrs?.level ?? 2}>${children}</h${node.attrs?.level ?? 2}>`;
+    case "bulletList":    return `<ul>${children}</ul>`;
+    case "orderedList":   return `<ol>${children}</ol>`;
+    case "listItem":      return `<li>${children}</li>`;
+    case "blockquote":    return `<blockquote>${children}</blockquote>`;
+    case "codeBlock":     return `<pre><code>${children}</code></pre>`;
+    case "hardBreak":     return "<br>";
+    case "horizontalRule": return "<hr>";
+    default:              return children;
   }
 }
 
@@ -561,12 +513,14 @@ async function loadProgress() {
 async function loadExplanations() {
   explanationsLoading.value = true;
   try {
+    // FIX: was "/sources/${sourceId.value}/explanations" (plural) which is wrong.
+    // The backend controller is mounted at /api/source (singular).
     const res = await apiClient.get<ExplanationItem[]>(
-      `/sources/${sourceId.value}/explanations`,
+      `/source/${sourceId.value}/explanations`,
     );
     explanations.value = res.data;
   } catch {
-    /* no explanations yet */
+    /* no explanations yet — fail silently */
   } finally {
     explanationsLoading.value = false;
   }
@@ -578,17 +532,14 @@ let scrollSaveTimer: ReturnType<typeof setTimeout> | null = null;
 function onScroll() {
   const el = scrollContainer.value;
   if (!el) return;
-  const scrollTop = el.scrollTop;
+  const scrollTop    = el.scrollTop;
   const scrollHeight = el.scrollHeight - el.clientHeight;
-  readPercent.value = Math.min(
-    100,
-    scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0,
-  );
+  readPercent.value  = Math.min(100, scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0);
 
   if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
   scrollSaveTimer = setTimeout(() => {
     sourceStore.updateProgress(sourceId.value, {
-      scrollPosition: Math.round(scrollTop),
+      scrollPosition:  Math.round(scrollTop),
       percentComplete: Math.round(readPercent.value),
     });
     savedScrollPosition.value = Math.round(scrollTop);
@@ -598,10 +549,7 @@ function onScroll() {
 function resumeReading() {
   showResumeToast.value = false;
   nextTick(() => {
-    scrollContainer.value?.scrollTo({
-      top: savedScrollPosition.value,
-      behavior: "smooth",
-    });
+    scrollContainer.value?.scrollTo({ top: savedScrollPosition.value, behavior: "smooth" });
   });
 }
 
@@ -621,13 +569,12 @@ function handleExplain(text: string) {
 async function submitExplanation(text: string) {
   pendingExplainText.value = "";
 
-  // Create a temporary placeholder with loading indicator
   const placeholderId = Date.now();
   const placeholder: ExplanationItem = {
     id: placeholderId,
     sourceId: sourceId.value,
     textRange: { text },
-    content: "", // empty indicates loading
+    content: "",
     authorType: "user",
     editable: true,
     createdAt: new Date().toISOString(),
@@ -635,31 +582,25 @@ async function submitExplanation(text: string) {
   explanations.value.unshift(placeholder);
 
   try {
-    // 1. Call LLM to get explanation
     const explanationText = await requestExplanation({
       sourceId: sourceId.value,
       selectedText: text,
-      context: undefined, // we could add surrounding paragraph context later
+      context: undefined,
     });
 
-    // 2. Save the explanation via the explanations endpoint
     const saved = await apiClient.post<ExplanationItem>("/explanations", {
       sourceId: sourceId.value,
       textRange: { text },
       content: explanationText,
     });
 
-    // 3. Replace the placeholder with the saved explanation
     const idx = explanations.value.findIndex((e) => e.id === placeholderId);
-    if (idx !== -1) {
-      explanations.value[idx] = saved.data;
-    }
-  } catch (error: any) {
-    // Remove placeholder on error
+    if (idx !== -1) explanations.value[idx] = saved.data;
+  } catch (err: any) {
     const idx = explanations.value.findIndex((e) => e.id === placeholderId);
     if (idx !== -1) explanations.value.splice(idx, 1);
     showNotif("Failed to generate explanation", "error", X);
-    console.error(error);
+    console.error(err);
   }
 }
 
@@ -667,33 +608,30 @@ async function handleGrammar(text: string) {
   window.getSelection()?.removeAllRanges();
   try {
     const corrected = await requestGrammarCheck({ text });
-    // Show the corrected text in a modal
     Modal.info({
       title: "Grammar Check Result",
       content: h(
         "div",
-        {
-          style: "white-space: pre-wrap; max-height: 400px; overflow-y: auto;",
-        },
+        { style: "white-space: pre-wrap; max-height: 400px; overflow-y: auto;" },
         corrected,
       ),
       okText: "Close",
       width: 600,
     });
-  } catch (error) {
+  } catch {
     showNotif("Grammar check failed", "error", X);
   }
 }
 
 function handleTts(selectedText: string) {
   window.getSelection()?.removeAllRanges();
-  ttsPlay(selectedText); // ← streams directly from piper gateway
+  ttsPlay(selectedText);
 }
 
 function handleFavorite(text: string) {
-  favoriteText.value = text;
-  favoriteNote.value = "";
-  favoriteType.value = "word";
+  favoriteText.value  = text;
+  favoriteNote.value  = "";
+  favoriteType.value  = "word";
   favoriteModalOpen.value = true;
   window.getSelection()?.removeAllRanges();
 }
@@ -702,9 +640,9 @@ async function submitFavorite() {
   savingFavorite.value = true;
   try {
     await apiClient.post("/favorites", {
-      text: favoriteText.value,
-      type: favoriteType.value,
-      note: favoriteNote.value.trim() || undefined,
+      text:  favoriteText.value,
+      type:  favoriteType.value,
+      note:  favoriteNote.value.trim() || undefined,
     });
     favoriteModalOpen.value = false;
     showNotif("Saved to favorites", "success", Bookmark);
@@ -716,17 +654,15 @@ async function submitFavorite() {
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────
-function showNotif(message: string, type: string, icon: any) {
-  notification.value = { message, type, icon };
+function showNotif(msg: string, type: string, icon: any) {
+  notification.value = { message: msg, type, icon };
   if (notifTimer) clearTimeout(notifTimer);
   notifTimer = setTimeout(() => (notification.value = null), 2800);
 }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    year: "numeric", month: "long", day: "numeric",
   });
 }
 
@@ -740,7 +676,7 @@ onUnmounted(() => {
     const el = scrollContainer.value;
     const sh = el.scrollHeight - el.clientHeight;
     sourceStore.updateProgress(sourceId.value, {
-      scrollPosition: Math.round(el.scrollTop),
+      scrollPosition:  Math.round(el.scrollTop),
       percentComplete: sh > 0 ? Math.round((el.scrollTop / sh) * 100) : 0,
     });
   }
@@ -748,21 +684,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/*
- * Only rules that CANNOT be expressed in Tailwind are kept here:
- *   1. @keyframes (shimmer, slideDown/Up, notifIn/Out)
- *   2. .article-body :deep(*) — v-html / TipTap rendered content
- *   3. .article-body ::selection
- */
+/* Only rules that CANNOT be expressed in Tailwind are kept here */
 
 /* ── Shimmer skeleton ─────────────────────────────────────────────────── */
 @keyframes shimmer {
-  from {
-    background-position: -600px 0;
-  }
-  to {
-    background-position: 600px 0;
-  }
+  from { background-position: -600px 0; }
+  to   { background-position:  600px 0; }
 }
 .skeleton-shimmer {
   background: linear-gradient(90deg, #e8e4dc 25%, #f0ece3 50%, #e8e4dc 75%);
@@ -772,33 +699,22 @@ onUnmounted(() => {
 }
 
 /* ── Rich text body (v-html output) ──────────────────────────────────── */
-.article-body ::selection {
-  background: #c4b5fd;
-}
+.article-body ::selection { background: #c4b5fd; }
 
-.article-body :deep(p) {
-  margin-bottom: 1.4em;
-}
+.article-body :deep(p) { margin-bottom: 1.4em; }
 
 .article-body :deep(h1),
 .article-body :deep(h2),
 .article-body :deep(h3),
 .article-body :deep(h4) {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #1a1a2e;
   margin: 1.8em 0 0.6em;
 }
-.article-body :deep(h2) {
-  font-size: 1.4em;
-}
-.article-body :deep(h3) {
-  font-size: 1.2em;
-}
+.article-body :deep(h2) { font-size: 1.4em; }
+.article-body :deep(h3) { font-size: 1.2em; }
 
 .article-body :deep(blockquote) {
   border-left: 3px solid #7c6af5;
@@ -826,20 +742,11 @@ onUnmounted(() => {
   font-size: 0.85em;
   margin: 1.6em 0;
 }
-.article-body :deep(pre code) {
-  background: none;
-  color: inherit;
-  padding: 0;
-}
+.article-body :deep(pre code) { background: none; color: inherit; padding: 0; }
 
 .article-body :deep(ul),
-.article-body :deep(ol) {
-  padding-left: 1.6em;
-  margin-bottom: 1.4em;
-}
-.article-body :deep(li) {
-  margin-bottom: 0.4em;
-}
+.article-body :deep(ol) { padding-left: 1.6em; margin-bottom: 1.4em; }
+.article-body :deep(li) { margin-bottom: 0.4em; }
 
 .article-body :deep(a) {
   color: #7c6af5;
@@ -847,58 +754,28 @@ onUnmounted(() => {
   text-decoration-color: rgba(124, 106, 245, 0.3);
 }
 
-.article-body :deep(hr) {
-  border: none;
-  border-top: 1px solid #e8e4dc;
-  margin: 2em 0;
-}
+.article-body :deep(hr) { border: none; border-top: 1px solid #e8e4dc; margin: 2em 0; }
 
 /* ── Transition animations ────────────────────────────────────────────── */
-.resume-toast-enter-active {
-  animation: slideDown 0.25s ease;
-}
-.resume-toast-leave-active {
-  animation: slideUp 0.2s ease forwards;
-}
+.resume-toast-enter-active { animation: slideDown 0.25s ease; }
+.resume-toast-leave-active { animation: slideUp  0.2s  ease forwards; }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideUp {
-  to {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
+  to   { opacity: 0; transform: translateY(-6px); }
 }
 
-.notif-enter-active {
-  animation: notifIn 0.22s ease;
-}
-.notif-leave-active {
-  animation: notifOut 0.18s ease forwards;
-}
+.notif-enter-active { animation: notifIn  0.22s ease; }
+.notif-leave-active { animation: notifOut 0.18s ease forwards; }
 
 @keyframes notifIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 @keyframes notifOut {
-  to {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
+  to   { opacity: 0; transform: translateX(-50%) translateY(8px); }
 }
 </style>
