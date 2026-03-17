@@ -21,6 +21,7 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddCaching(builder.Configuration);
 builder.Services.AddAuthAndCors(builder.Configuration);
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

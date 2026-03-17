@@ -139,5 +139,5 @@ public sealed class AvatarController : ControllerBase
     /// e.g. "a3f9c1.jpg" → "http://filestorage:8090/files/a3f9c1.jpg"
     /// </summary>
     private string BuildUrl(string filename) =>
-        $"{_settings.BaseUrl.TrimEnd('/')}/files/{filename}";
+        $"{_settings.BaseUrlFrontend.TrimEnd('/')}/files/{filename}";
 }

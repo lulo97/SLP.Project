@@ -7,6 +7,18 @@ interface LoginResponse {
   email: string;
 }
 
+interface UserApiResponse {
+  id: number;
+  username: string;
+  email: string;
+  emailConfirmed: boolean;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  avatarFilename: string | null;
+}
+
 interface User {
   id: number;
   username: string;
@@ -16,7 +28,14 @@ interface User {
   status: string;
   createdAt: string;
   updatedAt: string;
-  avatarUrl: string | undefined;
+  avatarFilename: string | null;
+  avatarUrl: string | undefined;  // computed from avatarFilename, never from API
+}
+
+function buildAvatarUrl(filename: string | null | undefined): string | undefined {
+  if (!filename) return undefined;
+  const base = import.meta.env.VITE_FILESTORAGE_URL as string;
+  return `${base}/files/${filename}`;
 }
 
 export const useAuthStore = defineStore("auth", {
@@ -97,8 +116,13 @@ export const useAuthStore = defineStore("auth", {
 
     async fetchCurrentUser() {
       try {
-        const response = await apiClient.get<User>("/users/me");
-        this.user = response.data;
+        const response = await apiClient.get<UserApiResponse>("/users/me");
+        const raw = response.data;
+        // avatarFilename comes from the API; avatarUrl is constructed here
+        this.user = {
+          ...raw,
+          avatarUrl: buildAvatarUrl(raw.avatarFilename),
+        };
       } catch (error) {
         console.error("Failed to fetch user:", error);
       }
@@ -109,11 +133,15 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
 
       try {
-        const response = await apiClient.put<User>("/users/me", {
+        const response = await apiClient.put<UserApiResponse>("/users/me", {
           name,
           avatarUrl,
         });
-        this.user = response.data;
+        const raw = response.data;
+        this.user = {
+          ...raw,
+          avatarUrl: buildAvatarUrl(raw.avatarFilename),
+        };
         return true;
       } catch (error: any) {
         this.error = error.response?.data?.message || "Update failed";
@@ -169,7 +197,6 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
     },
 
-    // Inside useAuthStore actions
     async fetchUserIfNeeded() {
       if (this.user) return this.user;
       if (!this.sessionToken) return null;
