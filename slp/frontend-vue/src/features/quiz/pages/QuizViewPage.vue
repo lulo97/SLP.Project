@@ -14,6 +14,22 @@
         :total-questions="questions.length"
       />
 
+      <!-- Report Quiz card (visible to authenticated users) -->
+<a-card v-if="isAuthenticated" class="shadow-sm" data-testid="report-quiz-card">
+  <div class="flex items-center justify-between">
+    <span>Find something wrong with this quiz?</span>
+    <a-button @click="reportModalVisible = true" danger ghost data-testid="report-quiz-button">
+      <FlagOutlined /> Report Quiz
+    </a-button>
+  </div>
+</a-card>
+
+<ReportModal
+  v-model:visible="reportModalVisible"
+  target-type="quiz"
+  :target-id="quizId"
+/>
+
       <!-- Notes section – only visible to owner (notes are private) -->
       <NotesSection
         v-if="isOwner"
@@ -132,6 +148,7 @@ import { useAuthStore } from "@/features/auth/stores/authStore";
 import { useSourceStore } from "@/features/source/stores/sourceStore";
 import { useAttemptStore } from "@/features/quiz-attempt/stores/attemptStore";
 import { useQuizQuestions } from "../composables/useQuizQuestions";
+import { FlagOutlined } from "@ant-design/icons-vue";
 
 // Components
 import QuizInfoCard from "../components/QuizInfoCard.vue";
@@ -140,6 +157,7 @@ import SourcesSection from "../components/SourcesSection.vue";
 import QuestionsSection from "../components/QuestionsSection.vue";
 import QuizActionsCard from "../components/QuizActionsCard.vue";
 import CommentsSection from '@/features/comment/components/CommentsSection.vue'; // add this
+import ReportModal from '@/features/report/components/ReportModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -149,6 +167,8 @@ const sourceStore = useSourceStore();
 const attemptStore = useAttemptStore();
 
 const quizId = computed(() => Number(route.params.id));
+const reportModalVisible = ref(false);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
 
 // Determine if current user is the owner
 const isOwner = computed(() => {

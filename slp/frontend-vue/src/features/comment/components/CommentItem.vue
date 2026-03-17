@@ -50,20 +50,21 @@
         </div>
       </template>
       <template #actions>
-        <span
-          v-if="isAuthenticated"
-          @click="reply"
-          data-testid="reply-button"
-        >
+        <span v-if="isAuthenticated" @click="reply" data-testid="reply-button">
           <MessageOutlined /> Reply
         </span>
-        <span
-          v-if="canEdit"
-          @click="startEdit"
-          data-testid="edit-button"
-        >
+        <span v-if="canEdit" @click="startEdit" data-testid="edit-button">
           <EditOutlined /> Edit
         </span>
+
+        <span
+          v-if="isAuthenticated"
+          @click="$emit('report', comment.id)"
+          data-testid="report-button"
+        >
+          <FlagOutlined /> Report
+        </span>
+
         <a-popconfirm
           v-if="canDelete"
           title="Delete this comment?"
@@ -73,15 +74,16 @@
           :okButtonProps="{ 'data-testid': 'confirm-delete-comment-button' }"
           :cancelButtonProps="{ 'data-testid': 'cancel-delete-comment-button' }"
         >
-          <span data-testid="delete-button">
-            <DeleteOutlined /> Delete
-          </span>
+          <span data-testid="delete-button"> <DeleteOutlined /> Delete </span>
         </a-popconfirm>
       </template>
     </a-comment>
 
     <!-- Replies -->
-    <div v-if="comment.replies && comment.replies.length" class="ml-8 mt-2 space-y-2">
+    <div
+      v-if="comment.replies && comment.replies.length"
+      class="ml-8 mt-2 space-y-2"
+    >
       <CommentItem
         v-for="reply in comment.replies"
         :key="`${reply.id}-${reply.updatedAt || reply.createdAt}`"
@@ -100,11 +102,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { MessageOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { message } from 'ant-design-vue';
-import type { CommentDto } from '../stores/commentStore';
-import { useCommentStore } from '../stores/commentStore';
+import { ref, computed, watch } from "vue";
+import {
+  MessageOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  FlagOutlined,
+} from "@ant-design/icons-vue";
+import { message } from "ant-design-vue";
+import type { CommentDto } from "../stores/commentStore";
+import { useCommentStore } from "../stores/commentStore";
 
 const props = defineProps<{
   comment: CommentDto;
@@ -116,9 +123,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'reply', commentId: number): void;
-  (e: 'edit', commentId: number): void;
-  (e: 'delete', commentId: number): void;
+  (e: "reply", commentId: number): void;
+  (e: "edit", commentId: number): void;
+  (e: "delete", commentId: number): void;
+  (e: "report", commentId: number): void;
 }>();
 
 const store = useCommentStore();
@@ -126,24 +134,29 @@ const editing = ref(false);
 const editContent = ref(props.comment.content);
 
 // Watch for missing userId (debugging)
-watch(() => props.comment.userId, (newVal) => {
-  if (newVal === undefined) {
-    console.warn('Comment missing userId:', props.comment);
-  }
-});
+watch(
+  () => props.comment.userId,
+  (newVal) => {
+    if (newVal === undefined) {
+      console.warn("Comment missing userId:", props.comment);
+    }
+  },
+);
 
 const canEdit = computed(() => {
   const userId = props.comment.userId;
   if (userId === undefined) {
     return false; // Fallback if data is incomplete
   }
-  return props.isAuthenticated && (props.currentUserId === userId || props.isAdmin);
+  return (
+    props.isAuthenticated && (props.currentUserId === userId || props.isAdmin)
+  );
 });
 
 const canDelete = canEdit; // same permissions
 
 const reply = () => {
-  emit('reply', props.comment.id);
+  emit("reply", props.comment.id);
 };
 
 const startEdit = () => {
@@ -157,19 +170,24 @@ const cancelEdit = () => {
 
 const saveEdit = async () => {
   if (!editContent.value.trim()) {
-    message.warning('Content cannot be empty');
+    message.warning("Content cannot be empty");
     return;
   }
   try {
-    await store.updateComment(props.comment.id, { content: editContent.value }, props.targetType, props.targetId);
+    await store.updateComment(
+      props.comment.id,
+      { content: editContent.value },
+      props.targetType,
+      props.targetId,
+    );
     editing.value = false;
-    message.success('Comment updated');
+    message.success("Comment updated");
   } catch {
     // error already in store
   }
 };
 
 const deleteComment = () => {
-  emit('delete', props.comment.id);
+  emit("delete", props.comment.id);
 };
 </script>

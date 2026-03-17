@@ -43,6 +43,7 @@
           @reply="openReplyForm"
           @edit="() => {}"
           @delete="handleDeleteComment"
+           @report="openReportModal"
         />
       </div>
     </div>
@@ -79,6 +80,13 @@
         </a-button>
       </template>
     </a-modal>
+
+    <ReportModal
+  v-model:visible="reportModalVisible"
+  :target-type="'comment'"
+  :target-id="reportingCommentId!"
+  @reported="reportModalVisible = false"
+/>
   </a-card>
 </template>
 
@@ -88,6 +96,7 @@ import { message } from 'ant-design-vue';
 import { useCommentStore } from '../stores/commentStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import CommentItem from './CommentItem.vue';
+import ReportModal from '@/features/report/components/ReportModal.vue';
 
 const props = defineProps<{
   targetType: string;
@@ -105,6 +114,13 @@ const newCommentContent = ref('');
 const replyModalVisible = ref(false);
 const replyContent = ref('');
 const replyingTo = ref<number | null>(null);
+const reportModalVisible = ref(false);
+const reportingCommentId = ref<number | null>(null);
+
+  const openReportModal = (commentId: number) => {
+  reportingCommentId.value = commentId;
+  reportModalVisible.value = true;
+};
 
 const fetchComments = async () => {
   await store.fetchComments(props.targetType, props.targetId);

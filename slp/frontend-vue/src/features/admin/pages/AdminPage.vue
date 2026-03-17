@@ -191,6 +191,16 @@
           </a-table>
         </div>
       </a-tab-pane>
+
+      <!-- Reports Tab (NEW) -->
+      <a-tab-pane key="reports">
+        <template #tab>
+          <span data-testid="admin-tab-reports">Reports</span>
+        </template>
+        <div data-testid="admin-reports-panel">
+          <AdminReports />
+        </div>
+      </a-tab-pane>
     </a-tabs>
   </MobileLayout>
 </template>
@@ -200,6 +210,7 @@ import { ref, computed, onMounted } from 'vue';
 import { Tabs, TabPane, Input, Table, Tag, Button, Popconfirm, Checkbox } from 'ant-design-vue';
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { useAdminStore } from '../stores/adminStore';
+import AdminReports from '@/features/report/pages/AdminReports.vue'; // Import reports component
 
 const ATabs = Tabs;
 const ATabPane = TabPane;
