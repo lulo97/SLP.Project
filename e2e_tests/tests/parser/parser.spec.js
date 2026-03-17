@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const fs = require("fs");
 const path = require("path");
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "http://127.0.0.1:3006";
 
 test.describe("Source Parser API", () => {
   test.beforeAll(async () => {
