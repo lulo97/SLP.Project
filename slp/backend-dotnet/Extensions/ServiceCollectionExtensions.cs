@@ -82,25 +82,31 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCaching(this IServiceCollection services, IConfiguration configuration)
     {
-        // Redis queue (only if enabled)
-        if (configuration.GetValue<bool>("Queue:Enabled"))
+        bool queueEnabled = configuration.GetValue<bool>("Queue:Enabled");
+        string redisConnectionString = configuration.GetConnectionString("Redis");
+
+        // Register the Redis connection factory (used by RedisQueueService)
+        services.AddSingleton<RedisConnectionFactory>(sp =>
         {
-            var redisConnectionString = configuration["ConnectionStrings:Redis"];
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
-                ConnectionMultiplexer.Connect(redisConnectionString));
+            var logger = sp.GetRequiredService<ILogger<RedisConnectionFactory>>();
+            return new RedisConnectionFactory(redisConnectionString, logger);
+        });
+
+        if (queueEnabled)
+        {
+            // RedisQueueService will degrade gracefully if Redis is unavailable
             services.AddSingleton<IQueueService, RedisQueueService>();
             services.AddHostedService<BackgroundJobProcessor>();
         }
         else
         {
-            // No-op queue service when disabled
             services.AddSingleton<IQueueService, NullQueueService>();
         }
 
-        // Distributed cache (optional – uses Redis as cache)
+        // Distributed cache (still uses Redis – if it fails, cache operations will throw)
         services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = configuration.GetConnectionString("Redis");
+            options.Configuration = redisConnectionString;
             options.InstanceName = "SampleApp";
         });
 

@@ -33,4 +33,7 @@ public interface IQueueService
     /// queue so it can be retried by the background processor.
     /// </summary>
     Task RequeueStaleAsync(string jobId);
+
+    /// <summary>Indicates whether the queue is operational (e.g., Redis connected).</summary>
+    bool IsAvailable { get; }
 }

@@ -1,3 +1,4 @@
+using backend_dotnet.Features.Helpers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,5 +12,5 @@ public interface IQuestionService
     Task<QuestionDto> CreateQuestionAsync(int userId, CreateQuestionDto dto);
     Task<QuestionDto?> UpdateQuestionAsync(int id, int userId, UpdateQuestionDto dto);
     Task<bool> DeleteQuestionAsync(int id, int userId, bool isAdmin);
-    Task<IEnumerable<QuestionListDto>> SearchQuestionsAsync(QuestionSearchDto search);
+    Task<PaginatedResult<QuestionListDto>> SearchQuestionsAsync(QuestionSearchDto search, int page = 1, int pageSize = 20);
 }

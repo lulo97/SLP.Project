@@ -8,6 +8,8 @@ namespace backend_dotnet.Features.Queue;
 /// </summary>
 public class NullQueueService : IQueueService
 {
+    public bool IsAvailable => false;
+
     public Task EnqueueAsync(LlmJob job) =>
         throw new InvalidOperationException(
             "Queue is disabled. Set Queue:Enabled = true in configuration to use async processing.");

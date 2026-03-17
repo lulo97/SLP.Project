@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace backend_dotnet.Features.Question;
 
 public interface IQuestionRepository
@@ -12,5 +9,12 @@ public interface IQuestionRepository
     Task UpdateAsync(Question question);
     Task SoftDeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
-    Task<IEnumerable<Question>> SearchAsync(string? searchTerm, string? type, List<string>? tags, int? userId);
+    Task<(IEnumerable<Question> Items, int TotalCount)> SearchAsync(
+        string? searchTerm,
+        string? type,
+        List<string>? tags,
+        int? userId,
+        int page = 1,
+        int pageSize = 20
+    );
 }

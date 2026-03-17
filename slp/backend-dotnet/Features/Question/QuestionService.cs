@@ -1,10 +1,11 @@
+using backend_dotnet.Features.Helpers;
+using backend_dotnet.Features.Tag;
+using backend_dotnet.Helpers;   // <-- ADDED
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using backend_dotnet.Features.Tag;
-using backend_dotnet.Helpers;   // <-- ADDED
 
 namespace backend_dotnet.Features.Question;
 
@@ -109,10 +110,23 @@ public class QuestionService : IQuestionService
         return true;
     }
 
-    public async Task<IEnumerable<QuestionListDto>> SearchQuestionsAsync(QuestionSearchDto search)
+    public async Task<PaginatedResult<QuestionListDto>> SearchQuestionsAsync(QuestionSearchDto search, int page = 1, int pageSize = 20)
     {
-        var questions = await _questionRepository.SearchAsync(search.SearchTerm, search.Type, search.Tags, search.UserId);
-        return questions.Select(MapToListDto);
+        var (items, totalCount) = await _questionRepository.SearchAsync(
+            search.SearchTerm,
+            search.Type,
+            search.Tags,
+            search.UserId,
+            page,
+            pageSize);
+
+        return new PaginatedResult<QuestionListDto>
+        {
+            Items = items.Select(MapToListDto).ToList(),
+            Total = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     // ------------------------------------------------------------------------

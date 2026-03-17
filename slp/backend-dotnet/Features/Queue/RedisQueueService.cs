@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace backend_dotnet.Features.Queue;
@@ -15,23 +16,37 @@ namespace backend_dotnet.Features.Queue;
 /// </summary>
 public class RedisQueueService : IQueueService
 {
-    private const string PendingKey    = "llm:queue:pending";
+    private const string PendingKey = "llm:queue:pending";
     private const string ProcessingKey = "llm:queue:processing";
     private static string JobDataKey(string jobId) => $"llm:job:{jobId}";
 
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IConnectionMultiplexer? _redis;
     private readonly ILogger<RedisQueueService> _logger;
+    private bool _warnedUnavailable = false;
 
-    public RedisQueueService(IConnectionMultiplexer redis, ILogger<RedisQueueService> logger)
+    public RedisQueueService(RedisConnectionFactory factory, ILogger<RedisQueueService> logger)
     {
-        _redis  = redis;
+        _redis = factory.Connection;
         _logger = logger;
     }
 
-    /// <inheritdoc/>
+    public bool IsAvailable => _redis != null;
+
+    private void LogUnavailableIfNeeded()
+    {
+        if (_redis == null && !_warnedUnavailable)
+        {
+            _logger.LogWarning("Redis is unavailable – queue operations will be no-ops until connection is restored.");
+            _warnedUnavailable = true;
+        }
+    }
+
     public async Task EnqueueAsync(LlmJob job)
     {
-        var db  = _redis.GetDatabase();
+        LogUnavailableIfNeeded();
+        if (_redis == null) return;
+
+        var db = _redis.GetDatabase();
         var json = JsonSerializer.Serialize(job);
 
         // Store full job data — TTL 7 days to self-clean old jobs
@@ -43,9 +58,11 @@ public class RedisQueueService : IQueueService
         _logger.LogDebug("Enqueued job {JobId} ({RequestType})", job.JobId, job.RequestType);
     }
 
-    /// <inheritdoc/>
     public async Task<LlmJob?> DequeueAsync(CancellationToken ct = default)
     {
+        LogUnavailableIfNeeded();
+        if (_redis == null) return null;
+
         var db = _redis.GetDatabase();
 
         // Atomically move one jobId from right of pending → left of processing
@@ -54,7 +71,6 @@ public class RedisQueueService : IQueueService
             return null;
 
         var jobId = jobIdValue.ToString();
-
         var jobJson = await db.StringGetAsync(JobDataKey(jobId));
         if (jobJson.IsNullOrEmpty)
         {
@@ -67,25 +83,31 @@ public class RedisQueueService : IQueueService
         return JsonSerializer.Deserialize<LlmJob>(jobJson.ToString());
     }
 
-    /// <inheritdoc/>
     public async Task AcknowledgeAsync(string jobId)
     {
+        LogUnavailableIfNeeded();
+        if (_redis == null) return;
+
         var db = _redis.GetDatabase();
-        var removed = await db.ListRemoveAsync(ProcessingKey, jobId);
-        _logger.LogDebug("Acknowledged job {JobId} (removed {Count} entries)", jobId, removed);
+        await db.ListRemoveAsync(ProcessingKey, jobId);
+        _logger.LogDebug("Acknowledged job {JobId}", jobId);
     }
 
-    /// <inheritdoc/>
     public async Task<List<string>> GetProcessingJobIdsAsync()
     {
-        var db     = _redis.GetDatabase();
+        LogUnavailableIfNeeded();
+        if (_redis == null) return new List<string>();
+
+        var db = _redis.GetDatabase();
         var values = await db.ListRangeAsync(ProcessingKey);
         return values.Select(v => v.ToString()).ToList();
     }
 
-    /// <inheritdoc/>
     public async Task RequeueStaleAsync(string jobId)
     {
+        LogUnavailableIfNeeded();
+        if (_redis == null) return;
+
         var db = _redis.GetDatabase();
 
         // Remove from processing list

@@ -56,6 +56,30 @@ public class QuestionController : ControllerBase
         return Ok(question);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetQuestions(
+    [FromQuery] string? search,
+    [FromQuery] string? type,
+    [FromQuery] List<string>? tags,
+    [FromQuery] bool? mine,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20)
+    {
+        // Enforce max page size
+        if (pageSize > 50) pageSize = 50;
+
+        var searchDto = new QuestionSearchDto
+        {
+            SearchTerm = search,
+            Type = type,
+            Tags = tags,
+            UserId = mine == true ? CurrentUserId : null
+        };
+
+        var results = await _questionService.SearchQuestionsAsync(searchDto, page, pageSize);
+        return Ok(results);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateQuestion([FromBody] CreateQuestionDto dto)
     {

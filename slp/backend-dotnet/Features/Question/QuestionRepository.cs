@@ -1,8 +1,5 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using backend_dotnet.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend_dotnet.Features.Question;
 
@@ -73,7 +70,14 @@ public class QuestionRepository : IQuestionRepository
         return await _context.Questions.AnyAsync(q => q.Id == id);
     }
 
-    public async Task<IEnumerable<Question>> SearchAsync(string? searchTerm, string? type, List<string>? tags, int? userId)
+    public async Task<(IEnumerable<Question> Items, int TotalCount)> SearchAsync(
+        string? searchTerm,
+        string? type,
+        List<string>? tags,
+        int? userId,
+        int page = 1,
+        int pageSize = 20
+    )
     {
         var query = _context.Questions.AsQueryable();
 
@@ -98,10 +102,17 @@ public class QuestionRepository : IQuestionRepository
             }
         }
 
-        return await query
+        // Efficient count query – indexes on user_id, type, updated_at help here
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .Include(q => q.User)
             .Include(q => q.QuestionTags).ThenInclude(qt => qt.Tag)
             .OrderByDescending(q => q.UpdatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 }
