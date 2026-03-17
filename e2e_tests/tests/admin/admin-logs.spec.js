@@ -35,7 +35,7 @@ test.describe('Admin Logs', () => {
   });
 
   test('logs are recorded after admin actions', async ({ browser, request }) => {
-    // Perform some admin actions via API to generate logs
+    // Perform admin actions
     await request.post(`${API_BASE_URL}/admin/users/${createdUser.id}/ban`, {
       headers: { 'X-Session-Token': adminToken },
     });
@@ -53,13 +53,9 @@ test.describe('Admin Logs', () => {
 
     // Switch to Logs tab
     await page.click('[data-testid="admin-tab-logs"]');
-    // Wait for the logs panel and its table to be visible
     await expect(page.locator('[data-testid="admin-logs-panel"] .ant-table')).toBeVisible();
 
-    // Wait a moment for logs to load
-    await page.waitForTimeout(1000);
-
-    // Check that logs contain our actions
+    // Check that logs contain our actions with exact matching
     const actions = [
       { action: 'ban_user', targetId: createdUser.id },
       { action: 'unban_user', targetId: createdUser.id },
@@ -68,9 +64,17 @@ test.describe('Admin Logs', () => {
     ];
 
     for (const { action, targetId } of actions) {
-      const logRow = page.locator(`.ant-table-row:has-text("${action}")`);
-      await expect(logRow).toBeVisible();
-      // Optionally verify target ID appears
+      // Find row that:
+      // 1. Contains an <a-tag> with the exact action text (regex ensures exact match)
+      // 2. Contains the target ID somewhere in the row
+      const logRow = page
+        .locator('.ant-table-row')
+        .filter({ has: page.locator('.ant-tag', { hasText: new RegExp(`^${action}$`) }) })
+        .filter({ hasText: targetId.toString() });
+
+      await expect(logRow).toBeVisible({ timeout: 5000 });
+      
+      // Optionally verify target ID appears (already covered by filter)
       await expect(logRow.locator(`text=${targetId}`)).toBeVisible();
     }
   });
