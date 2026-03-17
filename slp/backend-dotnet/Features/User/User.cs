@@ -20,13 +20,20 @@ public class User
     public string Email { get; set; } = "";
 
     [Column("email_confirmed")]
-    public bool EmailConfirmed { get; set; }    // was EmailVerified in AuthService
+    public bool EmailConfirmed { get; set; }
 
     [Column("role")]
     public string Role { get; set; } = "user";
 
     [Column("status")]
     public string Status { get; set; } = "active";
+
+    /// <summary>
+    /// Bare filename of the stored avatar (e.g. "a3f9c1.jpg").
+    /// The full public URL is constructed at the API layer from FileStorageSettings.BaseUrl.
+    /// </summary>
+    [Column("avatar_filename")]
+    public string? AvatarFilename { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }

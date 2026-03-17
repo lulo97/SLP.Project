@@ -3435,6 +3435,15 @@ services:
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_INTERNAL_PORT}"
 
+  parser:
+    build: ./parser
+    container_name: parser-container
+    env_file:
+      - .env
+    ports:
+      - "${PARSER_PORT}:${PARSER_PORT}"
+    restart: unless-stopped
+
 volumes:
   redis_data:
 

@@ -83,5 +83,18 @@ services:
       - "${PARSER_PORT}:${PARSER_PORT}"
     restart: unless-stopped
 
+  filestorage:
+    build: ./filestorage
+    container_name: filestorage-container
+    ports:
+      - "${FILESTORAGE_PORT}:3007"
+    environment:
+      - FILESTORAGE_API_KEY=${FILESTORAGE_API_KEY}
+      - UPLOAD_DIR=/data/files
+    volumes:
+      - filestorage_data:/data/files
+    restart: unless-stopped
+
 volumes:
   redis_data:
+  filestorage_data:

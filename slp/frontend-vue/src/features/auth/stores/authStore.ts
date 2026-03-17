@@ -16,6 +16,7 @@ interface User {
   status: string;
   createdAt: string;
   updatedAt: string;
+  avatarUrl: string | undefined;
 }
 
 export const useAuthStore = defineStore("auth", {

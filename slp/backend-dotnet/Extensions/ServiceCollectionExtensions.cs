@@ -5,6 +5,7 @@ using backend_dotnet.Features.Comment;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
+using backend_dotnet.Features.FileStorage;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
@@ -129,6 +130,23 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddFileStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<FileStorageSettings>(
+            configuration.GetSection("FileStorage"));
+    
+        services.AddHttpClient<IFileStorageClient, FileStorageClient>(client =>
+        {
+            var baseUrl = configuration["FileStorage:BaseUrl"] ?? "http://localhost:8090";
+            client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+    
         return services;
     }
 }

@@ -37,10 +37,10 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 - **Endpoints**:
   - `POST /upload` – multipart `file`, returns `{ url: "http://filestorage:8000/files/{uuid}.ext" }`
   - `GET /files/{filename}` – serves file
-  - `DELETE /files/{filename}` – deletes file (requires API key)
+  - `DELETE /files/{filename}` – deletes file
 - **Storage**: Files saved on mounted Docker volume, named with UUID.
-- **Allowed formats**: JPEG, PNG, GIF; max 2MB.
-- **Security**: API key for upload/delete (env `API_KEY`).
+- **Allowed formats**: JPEG, PNG; max 2MB.
+- **Security**: API key for upload/delete
 - **Backend integration**: New `IFileStorageClient` with methods `UploadAvatarAsync`, `DeleteFileAsync`. Add `avatar_url` column to `users` table.
 - **Docker**: Add service to compose, volume `filestorage_data`.
 
