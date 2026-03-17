@@ -12,6 +12,8 @@
         ok-text="Yes"
         cancel-text="No"
         @confirm="emit('delete')"
+        :okButtonProps="{ 'data-testid': 'confirm-delete-quiz-button' }"
+        :cancelButtonProps="{ 'data-testid': 'cancel-delete-quiz-button' }"
       >
         <a-button block danger v-if="canEdit" data-testid="delete-quiz-button">
           <DeleteOutlined /> Delete Quiz

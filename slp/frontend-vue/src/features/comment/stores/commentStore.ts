@@ -8,6 +8,7 @@ export interface CommentDto {
   parentId: number | null;
   content: string;
   createdAt: string;
+  updatedAt: string;
   editedAt: string | null;
   replies: CommentDto[];
 }

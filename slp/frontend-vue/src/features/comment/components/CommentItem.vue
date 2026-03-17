@@ -1,5 +1,9 @@
 <template>
-  <div class="comment-item" :data-testid="`comment-${comment.id}`">
+  <div
+    class="comment-item"
+    :data-testid="`comment-${comment.id}`"
+    :key="`${comment.id}-${comment.updatedAt || comment.createdAt}`"
+  >
     <a-comment>
       <template #author>
         <span>{{ comment.username }}</span>
@@ -11,22 +15,53 @@
       </template>
       <template #content>
         <div v-if="editing">
-          <a-textarea v-model:value="editContent" :rows="2" />
+          <a-textarea
+            v-model:value="editContent"
+            :rows="2"
+            data-testid="edit-comment-input"
+          />
           <div class="mt-2 space-x-2">
-            <a-button type="primary" size="small" @click="saveEdit">Save</a-button>
-            <a-button size="small" @click="cancelEdit">Cancel</a-button>
+            <a-button
+              type="primary"
+              size="small"
+              @click="saveEdit"
+              data-testid="save-edit-button"
+            >
+              Save
+            </a-button>
+            <a-button
+              size="small"
+              @click="cancelEdit"
+              data-testid="cancel-edit-button"
+            >
+              Cancel
+            </a-button>
           </div>
         </div>
         <div v-else>
           <p>{{ comment.content }}</p>
-          <div v-if="comment.editedAt" class="text-xs text-gray-400">(edited)</div>
+          <div
+            v-if="comment.editedAt"
+            class="text-xs text-gray-400"
+            data-testid="comment-edited-indicator"
+          >
+            (edited)
+          </div>
         </div>
       </template>
       <template #actions>
-        <span v-if="isAuthenticated" @click="reply" data-testid="reply-button">
+        <span
+          v-if="isAuthenticated"
+          @click="reply"
+          data-testid="reply-button"
+        >
           <MessageOutlined /> Reply
         </span>
-        <span v-if="canEdit" @click="startEdit" data-testid="edit-button">
+        <span
+          v-if="canEdit"
+          @click="startEdit"
+          data-testid="edit-button"
+        >
           <EditOutlined /> Edit
         </span>
         <a-popconfirm
@@ -35,6 +70,8 @@
           ok-text="Yes"
           cancel-text="No"
           @confirm="deleteComment"
+          :okButtonProps="{ 'data-testid': 'confirm-delete-comment-button' }"
+          :cancelButtonProps="{ 'data-testid': 'cancel-delete-comment-button' }"
         >
           <span data-testid="delete-button">
             <DeleteOutlined /> Delete
@@ -47,7 +84,7 @@
     <div v-if="comment.replies && comment.replies.length" class="ml-8 mt-2 space-y-2">
       <CommentItem
         v-for="reply in comment.replies"
-        :key="reply.id"
+        :key="`${reply.id}-${reply.updatedAt || reply.createdAt}`"
         :comment="reply"
         :target-type="targetType"
         :target-id="targetId"
@@ -63,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { MessageOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import type { CommentDto } from '../stores/commentStore';
@@ -88,9 +125,21 @@ const store = useCommentStore();
 const editing = ref(false);
 const editContent = ref(props.comment.content);
 
-const canEdit = computed(() => 
-  props.isAuthenticated && (props.currentUserId === props.comment.userId || props.isAdmin)
-);
+// Watch for missing userId (debugging)
+watch(() => props.comment.userId, (newVal) => {
+  if (newVal === undefined) {
+    console.warn('Comment missing userId:', props.comment);
+  }
+});
+
+const canEdit = computed(() => {
+  const userId = props.comment.userId;
+  if (userId === undefined) {
+    return false; // Fallback if data is incomplete
+  }
+  return props.isAuthenticated && (props.currentUserId === userId || props.isAdmin);
+});
+
 const canDelete = canEdit; // same permissions
 
 const reply = () => {

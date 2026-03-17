@@ -23,7 +23,7 @@
         </a-button>
       </div>
       <div v-else class="text-gray-500 mb-4">
-        <a href="/login">Log in</a> to comment.
+        <a href="/login" data-testid="login-to-comment">Log in</a> to comment.
       </div>
 
       <!-- Comments list -->
@@ -47,11 +47,10 @@
       </div>
     </div>
 
-    <!-- Reply modal -->
+    <!-- Reply modal with custom footer buttons -->
     <a-modal
       v-model:visible="replyModalVisible"
       title="Reply to comment"
-      @ok="handleReplySubmit"
       :confirm-loading="store.loading"
       data-testid="reply-modal"
     >
@@ -61,6 +60,24 @@
         placeholder="Write your reply..."
         data-testid="reply-input"
       />
+      <template #footer>
+        <a-button
+          key="cancel"
+          @click="replyModalVisible = false"
+          data-testid="reply-modal-cancel"
+        >
+          Cancel
+        </a-button>
+        <a-button
+          key="submit"
+          type="primary"
+          :loading="store.loading"
+          @click="handleReplySubmit"
+          data-testid="reply-modal-ok"
+        >
+          Reply
+        </a-button>
+      </template>
     </a-modal>
   </a-card>
 </template>
