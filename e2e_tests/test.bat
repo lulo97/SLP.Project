@@ -1,1 +1,1 @@
-npx playwright test tests/admin/admin-quizzes.spec.js --headed
+npx playwright test tests/admin/admin-users.spec.js --headed
