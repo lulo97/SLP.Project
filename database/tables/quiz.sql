@@ -30,6 +30,8 @@ CREATE INDEX idx_quiz_created ON public.quiz USING btree (created_at);
 
 CREATE INDEX idx_quiz_disabled ON public.quiz USING btree (disabled);
 
+CREATE INDEX idx_quiz_fts ON public.quiz USING gin (to_tsvector('english'::regconfig, (((title)::text || ' '::text) || COALESCE(description, ''::text))));
+
 CREATE INDEX idx_quiz_user ON public.quiz USING btree (user_id);
 
 CREATE INDEX idx_quiz_visibility ON public.quiz USING btree (visibility);
