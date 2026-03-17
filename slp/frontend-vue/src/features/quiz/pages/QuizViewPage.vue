@@ -99,10 +99,9 @@
       </a-card>
 
       <!-- Questions section – readonly mode for non‑owner -->
-      <QuestionsSection
-        :questions="questions"
-        :readonly="!isOwner"
-      />
+      <QuestionsSection :questions="questions" :readonly="!isOwner" />
+
+      <CommentsSection target-type="quiz" :target-id="quizId" />
 
       <!-- Actions card – only owner sees edit/duplicate/delete -->
       <QuizActionsCard
@@ -124,22 +123,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { message } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useQuizStore } from '../stores/quizStore';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useSourceStore } from '@/features/source/stores/sourceStore';
-import { useAttemptStore } from '@/features/quiz-attempt/stores/attemptStore';
-import { useQuizQuestions } from '../composables/useQuizQuestions';
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useQuizStore } from "../stores/quizStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { useSourceStore } from "@/features/source/stores/sourceStore";
+import { useAttemptStore } from "@/features/quiz-attempt/stores/attemptStore";
+import { useQuizQuestions } from "../composables/useQuizQuestions";
 
 // Components
-import QuizInfoCard from '../components/QuizInfoCard.vue';
-import NotesSection from '../components/NotesSection.vue';
-import SourcesSection from '../components/SourcesSection.vue';
-import QuestionsSection from '../components/QuestionsSection.vue';
-import QuizActionsCard from '../components/QuizActionsCard.vue';
+import QuizInfoCard from "../components/QuizInfoCard.vue";
+import NotesSection from "../components/NotesSection.vue";
+import SourcesSection from "../components/SourcesSection.vue";
+import QuestionsSection from "../components/QuestionsSection.vue";
+import QuizActionsCard from "../components/QuizActionsCard.vue";
+import CommentsSection from '@/features/comment/components/CommentsSection.vue'; // add this
 
 const route = useRoute();
 const router = useRouter();
@@ -171,7 +171,7 @@ const startAttempt = async () => {
     const result = await attemptStore.startAttempt(quizId.value);
     router.push(`/quiz/${quizId.value}/attempt/${result.attemptId}`);
   } catch (err) {
-    message.error('Could not start attempt');
+    message.error("Could not start attempt");
   }
 };
 const resumeAttempt = (attemptId: number) => {
@@ -185,19 +185,19 @@ const goToReview = (attemptId: number) => {
 const handleAddNote = async (note: { title: string; content: string }) => {
   try {
     await quizStore.addNoteToQuiz(quizId.value, note);
-    message.success('Note added');
+    message.success("Note added");
     await quizStore.fetchQuizNotes(quizId.value);
   } catch (err) {
-    message.error('Failed to add note');
+    message.error("Failed to add note");
   }
 };
 const handleRemoveNote = async (noteId: number) => {
   const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
   if (success) {
-    message.success('Note removed');
+    message.success("Note removed");
     await quizStore.fetchQuizNotes(quizId.value);
   } else {
-    message.error('Failed to remove note');
+    message.error("Failed to remove note");
   }
 };
 
@@ -207,19 +207,19 @@ const handleAttachSources = async (sourceIds: number[]) => {
     for (const sourceId of sourceIds) {
       await quizStore.addSourceToQuiz(quizId.value, sourceId);
     }
-    message.success('Sources attached');
+    message.success("Sources attached");
     await quizStore.fetchQuizSources(quizId.value);
   } catch (err) {
-    message.error('Failed to attach some sources');
+    message.error("Failed to attach some sources");
   }
 };
 const handleDetachSource = async (sourceId: number) => {
   const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
   if (success) {
-    message.success('Source detached');
+    message.success("Source detached");
     await quizStore.fetchQuizSources(quizId.value);
   } else {
-    message.error('Failed to detach source');
+    message.error("Failed to detach source");
   }
 };
 
@@ -227,19 +227,19 @@ const handleDetachSource = async (sourceId: number) => {
 const handleDuplicate = async () => {
   const duplicated = await quizStore.duplicateQuiz(quizId.value);
   if (duplicated) {
-    message.success('Quiz duplicated');
+    message.success("Quiz duplicated");
     router.push(`/quiz/${duplicated.id}/edit`);
   } else {
-    message.error('Failed to duplicate');
+    message.error("Failed to duplicate");
   }
 };
 const handleDelete = async () => {
   const success = await quizStore.deleteQuiz(quizId.value);
   if (success) {
-    message.success('Quiz deleted');
-    router.push('/quiz');
+    message.success("Quiz deleted");
+    router.push("/quiz");
   } else {
-    message.error('Failed to delete');
+    message.error("Failed to delete");
   }
 };
 
