@@ -1,0 +1,257 @@
+<template>
+  <MobileLayout :title="quizStore.currentQuiz?.title || 'Quiz'">
+    <div
+      v-if="quizStore.loading"
+      class="text-center py-8"
+      data-testid="quiz-view-loading"
+    >
+      <a-spin />
+    </div>
+    <div v-else-if="quizStore.currentQuiz" class="space-y-4">
+      <!-- Info card (always visible) -->
+      <QuizInfoCard
+        :quiz="quizStore.currentQuiz"
+        :total-questions="questions.length"
+      />
+
+      <!-- Notes section – only visible to owner (notes are private) -->
+      <NotesSection
+        v-if="isOwner"
+        :notes="notes"
+        :loading="quizStore.notesLoading"
+        @add="handleAddNote"
+        @remove="handleRemoveNote"
+      />
+
+      <!-- Sources section – visible to all, but actions disabled for non‑owner -->
+      <SourcesSection
+        :sources="sources"
+        :loading="quizStore.sourcesLoading"
+        :can-edit="isOwner"
+        :readonly="!isOwner"
+        :available-sources="sourceStore.sources"
+        :available-sources-loading="sourceStore.loading"
+        @attach="handleAttachSources"
+        @detach="handleDetachSource"
+      />
+
+      <!-- Attempts section (anyone can start an attempt) -->
+      <a-card
+        title="Your Attempts"
+        class="shadow-sm mt-4"
+        data-testid="attempts-section"
+      >
+        <template #extra>
+          <a-button
+            type="primary"
+            size="small"
+            @click="startAttempt"
+            :loading="attemptStore.loading"
+            data-testid="start-attempt-button"
+          >
+            Start Attempt
+          </a-button>
+        </template>
+        <a-list
+          :data-source="attemptStore.userAttempts"
+          size="small"
+          data-testid="attempts-list"
+        >
+          <template #renderItem="{ item }">
+            <a-list-item :data-testid="`attempt-item-${item.id}`">
+              <a-list-item-meta>
+                <template #title>
+                  <span>Attempt #{{ item.id }}</span>
+                </template>
+                <template #description>
+                  {{ new Date(item.startTime).toLocaleString() }} -
+                  <span
+                    :class="{
+                      'text-green-600': item.status === 'completed',
+                      'text-yellow-600': item.status === 'in_progress',
+                      'text-gray-600': item.status === 'abandoned',
+                    }"
+                  >
+                    {{ item.status }}
+                  </span>
+                  <span v-if="item.score !== null">
+                    - Score: {{ item.score }}/{{ item.maxScore }}</span
+                  >
+                </template>
+              </a-list-item-meta>
+              <template #actions>
+                <span
+                  v-if="item.status === 'completed'"
+                  @click="goToReview(item.id)"
+                  data-testid="review-attempt"
+                  >Review</span
+                >
+                <span
+                  v-else-if="item.status === 'in_progress'"
+                  @click="resumeAttempt(item.id)"
+                  data-testid="resume-attempt"
+                  >Resume</span
+                >
+              </template>
+            </a-list-item>
+          </template>
+        </a-list>
+      </a-card>
+
+      <!-- Questions section – readonly mode for non‑owner -->
+      <QuestionsSection
+        :questions="questions"
+        :readonly="!isOwner"
+      />
+
+      <!-- Actions card – only owner sees edit/duplicate/delete -->
+      <QuizActionsCard
+        v-if="isOwner"
+        :quiz-id="quizId"
+        :can-edit="true"
+        @duplicate="handleDuplicate"
+        @delete="handleDelete"
+      />
+    </div>
+    <div
+      v-else
+      class="text-center py-8 text-gray-500"
+      data-testid="quiz-not-found"
+    >
+      Quiz not found or is not accessible.
+    </div>
+  </MobileLayout>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import MobileLayout from '@/layouts/MobileLayout.vue';
+import { useQuizStore } from '../stores/quizStore';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useSourceStore } from '@/features/source/stores/sourceStore';
+import { useAttemptStore } from '@/features/quiz-attempt/stores/attemptStore';
+import { useQuizQuestions } from '../composables/useQuizQuestions';
+
+// Components
+import QuizInfoCard from '../components/QuizInfoCard.vue';
+import NotesSection from '../components/NotesSection.vue';
+import SourcesSection from '../components/SourcesSection.vue';
+import QuestionsSection from '../components/QuestionsSection.vue';
+import QuizActionsCard from '../components/QuizActionsCard.vue';
+
+const route = useRoute();
+const router = useRouter();
+const quizStore = useQuizStore();
+const authStore = useAuthStore();
+const sourceStore = useSourceStore();
+const attemptStore = useAttemptStore();
+
+const quizId = computed(() => Number(route.params.id));
+
+// Determine if current user is the owner
+const isOwner = computed(() => {
+  const quiz = quizStore.currentQuiz;
+  return !!quiz && authStore.user?.id === quiz.userId;
+});
+
+// Notes (only fetched for owner)
+const notes = computed(() => quizStore.notes);
+
+// Sources (always fetched)
+const sources = computed(() => quizStore.sources);
+
+// Questions
+const { questions, loadQuestions } = useQuizQuestions(quizId.value);
+
+// Attempts
+const startAttempt = async () => {
+  try {
+    const result = await attemptStore.startAttempt(quizId.value);
+    router.push(`/quiz/${quizId.value}/attempt/${result.attemptId}`);
+  } catch (err) {
+    message.error('Could not start attempt');
+  }
+};
+const resumeAttempt = (attemptId: number) => {
+  router.push(`/quiz/${quizId.value}/attempt/${attemptId}`);
+};
+const goToReview = (attemptId: number) => {
+  router.push(`/quiz/attempt/${attemptId}/review`);
+};
+
+// Notes actions (only for owner)
+const handleAddNote = async (note: { title: string; content: string }) => {
+  try {
+    await quizStore.addNoteToQuiz(quizId.value, note);
+    message.success('Note added');
+    await quizStore.fetchQuizNotes(quizId.value);
+  } catch (err) {
+    message.error('Failed to add note');
+  }
+};
+const handleRemoveNote = async (noteId: number) => {
+  const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
+  if (success) {
+    message.success('Note removed');
+    await quizStore.fetchQuizNotes(quizId.value);
+  } else {
+    message.error('Failed to remove note');
+  }
+};
+
+// Sources actions (only for owner – the buttons are hidden by readonly)
+const handleAttachSources = async (sourceIds: number[]) => {
+  try {
+    for (const sourceId of sourceIds) {
+      await quizStore.addSourceToQuiz(quizId.value, sourceId);
+    }
+    message.success('Sources attached');
+    await quizStore.fetchQuizSources(quizId.value);
+  } catch (err) {
+    message.error('Failed to attach some sources');
+  }
+};
+const handleDetachSource = async (sourceId: number) => {
+  const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
+  if (success) {
+    message.success('Source detached');
+    await quizStore.fetchQuizSources(quizId.value);
+  } else {
+    message.error('Failed to detach source');
+  }
+};
+
+// Quiz actions (only for owner)
+const handleDuplicate = async () => {
+  const duplicated = await quizStore.duplicateQuiz(quizId.value);
+  if (duplicated) {
+    message.success('Quiz duplicated');
+    router.push(`/quiz/${duplicated.id}/edit`);
+  } else {
+    message.error('Failed to duplicate');
+  }
+};
+const handleDelete = async () => {
+  const success = await quizStore.deleteQuiz(quizId.value);
+  if (success) {
+    message.success('Quiz deleted');
+    router.push('/quiz');
+  } else {
+    message.error('Failed to delete');
+  }
+};
+
+onMounted(async () => {
+  await quizStore.fetchQuizById(quizId.value);
+  // Only fetch notes if owner (privacy)
+  if (isOwner.value) {
+    await quizStore.fetchQuizNotes(quizId.value);
+  }
+  await quizStore.fetchQuizSources(quizId.value);
+  await sourceStore.fetchSources(); // for attach modal (will not be opened anyway)
+  await attemptStore.fetchUserAttemptsForQuiz(quizId.value);
+  await loadQuestions();
+});
+</script>

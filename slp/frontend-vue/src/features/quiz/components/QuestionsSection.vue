@@ -2,7 +2,13 @@
   <a-card title="Questions" class="shadow-sm">
     <div class="mb-2 flex justify-between items-center">
       <span class="font-medium" data-testid="questions-total">Total: {{ questions.length }}</span>
-      <a-button type="primary" size="small" @click="emit('add')" data-testid="add-question-button">
+      <a-button
+        v-if="!readonly"
+        type="primary"
+        size="small"
+        @click="emit('add')"
+        data-testid="add-question-button"
+      >
         <PlusOutlined /> Add Question
       </a-button>
     </div>
@@ -17,8 +23,8 @@
     >
       <div v-for="(q, index) in questions" :key="q.id" class="relative">
         <!-- Question Item -->
-        <div class="flex items-start gap-2 p-2 bg-gray-50 rounded border" :data-testid="`question-item-${q.id}`">
-          <div class="flex flex-col gap-1">
+        <div class="flex items-start gap-2 p-2 bg-gray-50 rounded border">
+          <div v-if="!readonly" class="flex flex-col gap-1">
             <a-button @click="emit('edit', q)" size="small" type="text" :data-testid="`edit-question-${q.id}`">
               <EditOutlined />
             </a-button>
@@ -41,7 +47,7 @@
         </div>
         <!-- Insert button between questions (except after last) -->
         <div
-          v-if="index < questions.length - 1"
+          v-if="!readonly && index < questions.length - 1"
           class="flex justify-center my-1"
         >
           <a-button
@@ -66,6 +72,7 @@ import type { DisplayQuestion } from '../types';
 
 defineProps<{
   questions: DisplayQuestion[];
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{

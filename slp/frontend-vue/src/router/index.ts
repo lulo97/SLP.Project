@@ -131,6 +131,12 @@ const router = createRouter({
       component: () => import("@/features/search/pages/SearchPage.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/quiz/view/:id",
+      name: "QuizView",
+      component: () => import("@/features/quiz/pages/QuizViewPage.vue"),
+      meta: { requiresAuth: false }, // or true if you want to require login to view
+    },
   ],
 });
 

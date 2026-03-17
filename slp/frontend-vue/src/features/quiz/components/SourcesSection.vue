@@ -10,7 +10,7 @@
       <a-tag
         v-for="src in sources"
         :key="src.id"
-        closable
+        :closable="!readonly && canEdit"
         @close="emit('detach', src.id)"
         :data-testid="`source-tag-${src.id}`"
       >
@@ -18,6 +18,7 @@
       </a-tag>
     </div>
     <a-button
+      v-if="!readonly"
       @click="openAttachModal"
       block
       type="dashed"
@@ -74,6 +75,7 @@ const props = defineProps<{
   sources: any[];
   loading: boolean;
   canEdit: boolean;
+  readonly?: boolean;   // <-- new
   availableSources: any[];
   availableSourcesLoading: boolean;
 }>();
