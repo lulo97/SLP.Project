@@ -1,31 +1,35 @@
 import { defineStore } from "pinia";
 import apiClient from "@/lib/api/client";
 
-// Match backend's QuestionDto
 export interface QuestionDto {
   id: number;
   userId: number;
   type: string;
-  content: string; // was "title"
+  content: string;
   explanation?: string;
-  metadataJson?: string; // JSON string
+  metadataJson?: string;
   createdAt: string;
   updatedAt: string;
-  tags: string[]; // from navigation
+  tags: string[];
   userName?: string;
 }
 
-// Payload for create – matches backend's CreateQuestionDto
 export interface CreateQuestionPayload {
   type: string;
   content: string;
   explanation?: string;
   metadataJson?: string;
-  tagNames?: string[]; // backend expects tagNames, not tags
+  tagNames?: string[];
 }
 
-// Update payload (all optional)
 export type UpdateQuestionPayload = Partial<CreateQuestionPayload>;
+
+interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export const useQuestionStore = defineStore("question", {
   state: () => ({
@@ -33,21 +37,35 @@ export const useQuestionStore = defineStore("question", {
     currentQuestion: null as QuestionDto | null,
     loading: false,
     error: null as string | null,
+    // Pagination state
+    currentPage: 1,
+    pageSize: 10,
+    total: 0,
   }),
 
   actions: {
-    async fetchQuestions(params?: {
-      type?: string;
-      tag?: string;
-      search?: string;
-    }) {
+    async fetchQuestions(
+      params?: { type?: string; tag?: string; search?: string },
+      page = 1,
+      pageSize = 10
+    ) {
       this.loading = true;
       this.error = null;
+      this.currentPage = page;
+      this.pageSize = pageSize;
       try {
-        const response = await apiClient.get<QuestionDto[]>("/question", {
-          params,
-        });
-        this.questions = response.data;
+        const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+        if (params?.type) query.set("type", params.type);
+        if (params?.tag) query.set("tags", params.tag);
+        if (params?.search) query.set("search", params.search);
+
+        const response = await apiClient.get<PaginatedResult<QuestionDto>>(
+          `/question?${query.toString()}`
+        );
+        // Backend returns PaginatedResult<QuestionListDto>
+        this.questions = response.data.items ?? (response.data as any);
+        this.total = response.data.total ?? 0;
+        this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to fetch questions";
       } finally {
@@ -72,10 +90,7 @@ export const useQuestionStore = defineStore("question", {
       this.loading = true;
       this.error = null;
       try {
-        const response = await apiClient.post<QuestionDto>(
-          "/question",
-          payload,
-        );
+        const response = await apiClient.post<QuestionDto>("/question", payload);
         return response.data;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to create question";
@@ -91,7 +106,7 @@ export const useQuestionStore = defineStore("question", {
       try {
         const response = await apiClient.put<QuestionDto>(
           `/question/${id}`,
-          payload,
+          payload
         );
         return response.data;
       } catch (err: any) {
@@ -125,7 +140,7 @@ export const useQuestionStore = defineStore("question", {
       this.error = null;
       try {
         const response = await apiClient.get<QuestionDto[]>(
-          `/quiz/${quizId}/questions`,
+          `/quiz/${quizId}/questions`
         );
         return response.data;
       } catch (err: any) {

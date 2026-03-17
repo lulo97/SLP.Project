@@ -44,35 +44,66 @@
           <a-list-item-meta>
             <template #title>
               <div class="flex items-center justify-between">
-                <router-link :to="`/quiz/${item.id}`" class="text-lg font-medium" :data-testid="`quiz-title-link-${item.id}`">
+                <router-link
+                  :to="`/quiz/${item.id}`"
+                  class="text-base font-medium"
+                  :data-testid="`quiz-title-link-${item.id}`"
+                >
                   {{ item.title }}
                 </router-link>
-                <a-tag :color="item.visibility === 'public' ? 'green' : 'blue'" :data-testid="`quiz-visibility-${item.id}`">
+                <a-tag
+                  :color="item.visibility === 'public' ? 'green' : 'blue'"
+                  :data-testid="`quiz-visibility-${item.id}`"
+                >
                   {{ item.visibility }}
                 </a-tag>
               </div>
             </template>
             <template #description>
               <div class="text-sm text-gray-500">
-                <div class="mb-2" :data-testid="`quiz-description-${item.id}`">{{ item.description || 'No description' }}</div>
-                <div class="flex items-center justify-between">
-                  <span :data-testid="`quiz-author-${item.id}`">by {{ item.userName || 'Unknown' }}</span>
-                  <span :data-testid="`quiz-question-count-${item.id}`">{{ item.questionCount }} questions</span>
+                <div class="mb-1" :data-testid="`quiz-description-${item.id}`">
+                  {{ item.description || 'No description' }}
                 </div>
-                <div class="flex flex-wrap gap-1 mt-2">
-                  <a-tag v-for="tag in item.tags" :key="tag" size="small" :data-testid="`quiz-tag-${item.id}-${tag}`">{{ tag }}</a-tag>
+                <div class="flex items-center justify-between">
+                  <span :data-testid="`quiz-author-${item.id}`">
+                    by {{ item.userName || 'Unknown' }}
+                  </span>
+                  <span :data-testid="`quiz-question-count-${item.id}`">
+                    {{ item.questionCount }} questions
+                  </span>
+                </div>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  <a-tag
+                    v-for="tag in item.tags"
+                    :key="tag"
+                    size="small"
+                    :data-testid="`quiz-tag-${item.id}-${tag}`"
+                  >
+                    {{ tag }}
+                  </a-tag>
                 </div>
               </div>
             </template>
           </a-list-item-meta>
           <template #actions>
-            <span @click="handleDuplicate(item.id)" :data-testid="`duplicate-quiz-${item.id}`">
+            <span
+              @click="handleDuplicate(item.id)"
+              :data-testid="`duplicate-quiz-${item.id}`"
+            >
               <CopyOutlined /> Duplicate
             </span>
-            <span v-if="isOwnerOrAdmin(item)" @click="handleEdit(item.id)" :data-testid="`edit-quiz-${item.id}`">
+            <span
+              v-if="isOwnerOrAdmin(item)"
+              @click="handleEdit(item.id)"
+              :data-testid="`edit-quiz-${item.id}`"
+            >
               <EditOutlined /> Edit
             </span>
-            <span v-if="isOwnerOrAdmin(item)" @click="handleDelete(item.id)" :data-testid="`delete-quiz-${item.id}`">
+            <span
+              v-if="isOwnerOrAdmin(item)"
+              @click="handleDelete(item.id)"
+              :data-testid="`delete-quiz-${item.id}`"
+            >
               <DeleteOutlined /> Delete
             </span>
           </template>
@@ -80,7 +111,32 @@
       </template>
     </a-list>
 
-    <!-- Floating Action Button to Create Quiz -->
+    <!-- Pagination -->
+    <div
+      v-if="quizStore.total > quizStore.pageSize"
+      class="flex justify-center mt-4 pb-20"
+      data-testid="quiz-pagination"
+    >
+      <a-pagination
+        v-model:current="quizStore.currentPage"
+        :total="quizStore.total"
+        :page-size="quizStore.pageSize"
+        :show-size-changer="false"
+        simple
+        @change="handlePageChange"
+      />
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!quizStore.loading && quizStore.quizzes.length === 0"
+      class="text-center py-12 text-gray-400"
+      data-testid="quiz-list-empty"
+    >
+      <p class="text-base">No quizzes found.</p>
+    </div>
+
+    <!-- Floating Action Button -->
     <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
       <a-float-button @click="goToCreateQuiz" data-testid="create-quiz-fab">
         <template #icon><PlusOutlined /></template>
@@ -105,26 +161,44 @@ const authStore = useAuthStore();
 
 const currentTab = ref<'my' | 'public'>('my');
 const searchTerm = ref('');
+// Track the last search term so page changes know what to search
+const activeSearchTerm = ref('');
 
 const switchTab = (tab: 'my' | 'public') => {
   currentTab.value = tab;
+  searchTerm.value = '';
+  activeSearchTerm.value = '';
+  // Reset to page 1 on tab switch
   if (tab === 'my') {
-    quizStore.fetchMyQuizzes();
+    quizStore.fetchMyQuizzes(1);
   } else {
-    quizStore.fetchPublicQuizzes();
+    quizStore.fetchPublicQuizzes(undefined, 1);
   }
 };
 
 const handleSearch = () => {
-  if (searchTerm.value.trim()) {
-    quizStore.searchQuizzes(searchTerm.value);
+  activeSearchTerm.value = searchTerm.value.trim();
+  if (activeSearchTerm.value) {
+    quizStore.searchQuizzes(activeSearchTerm.value, 1);
   } else {
-    quizStore.fetchPublicQuizzes();
+    quizStore.fetchPublicQuizzes(undefined, 1);
   }
 };
 
+const handlePageChange = (page: number) => {
+  if (currentTab.value === 'my') {
+    quizStore.fetchMyQuizzes(page);
+  } else if (activeSearchTerm.value) {
+    quizStore.searchQuizzes(activeSearchTerm.value, page);
+  } else {
+    quizStore.fetchPublicQuizzes(undefined, page);
+  }
+  // Scroll to top on page change
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const isOwnerOrAdmin = (quiz: QuizListDto) => {
-  return authStore.isAdmin || (authStore.user && 'userId' in quiz && quiz.userId === authStore.user.id);
+  return authStore.isAdmin || (authStore.user && quiz.userId === authStore.user.id);
 };
 
 const handleDuplicate = async (id: number) => {
@@ -152,7 +226,8 @@ const handleDelete = (id: number) => {
       const success = await quizStore.deleteQuiz(id);
       if (success) {
         message.success('Quiz deleted');
-        switchTab(currentTab.value);
+        // Reload current page (or go back one page if it was the only item)
+        handlePageChange(quizStore.currentPage);
       } else {
         message.error('Failed to delete');
       }
@@ -172,5 +247,11 @@ onMounted(() => {
 <style scoped>
 .quiz-list :deep(.ant-list-item-meta-description) {
   margin-top: 4px;
+}
+/* Ensure pagination is nicely centered on mobile */
+:deep(.ant-pagination-simple) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

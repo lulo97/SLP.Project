@@ -12,6 +12,7 @@ export interface QuizListDto {
   tags: string[];
   questionCount: number;
   userName?: string;
+  userId?: number;
 }
 
 export interface QuizDto extends QuizListDto {
@@ -49,6 +50,13 @@ export interface SourceDto {
   updatedAt: string;
 }
 
+interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export const useQuizStore = defineStore("quiz", {
   state: () => ({
     quizzes: [] as QuizListDto[],
@@ -59,15 +67,26 @@ export const useQuizStore = defineStore("quiz", {
     notesLoading: false,
     sources: [] as SourceDto[],
     sourcesLoading: false,
+    // Pagination state
+    currentPage: 1,
+    pageSize: 10,
+    total: 0,
   }),
 
   actions: {
-    async fetchMyQuizzes() {
+    async fetchMyQuizzes(page = 1, pageSize = 10) {
       this.loading = true;
       this.error = null;
+      this.currentPage = page;
+      this.pageSize = pageSize;
       try {
-        const response = await apiClient.get<QuizListDto[]>("/quiz?mine=true");
-        this.quizzes = response.data;
+        const response = await apiClient.get<PaginatedResult<QuizListDto>>(
+          `/quiz?mine=true&page=${page}&pageSize=${pageSize}`
+        );
+        // Backend returns PaginatedResult<QuizListDto>
+        this.quizzes = response.data.items ?? (response.data as any);
+        this.total = response.data.total ?? 0;
+        this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error =
           err.response?.data?.message || "Failed to fetch your quizzes";
@@ -76,13 +95,23 @@ export const useQuizStore = defineStore("quiz", {
       }
     },
 
-    async fetchPublicQuizzes(visibility?: string) {
+    async fetchPublicQuizzes(visibility?: string, page = 1, pageSize = 10) {
       this.loading = true;
       this.error = null;
+      this.currentPage = page;
+      this.pageSize = pageSize;
       try {
-        const url = visibility ? `/quiz?visibility=${visibility}` : "/quiz";
-        const response = await apiClient.get<QuizListDto[]>(url);
-        this.quizzes = response.data;
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+        });
+        if (visibility) params.set("visibility", visibility);
+        const response = await apiClient.get<PaginatedResult<QuizListDto>>(
+          `/quiz?${params.toString()}`
+        );
+        this.quizzes = response.data.items ?? (response.data as any);
+        this.total = response.data.total ?? 0;
+        this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error =
           err.response?.data?.message || "Failed to fetch public quizzes";
@@ -91,14 +120,18 @@ export const useQuizStore = defineStore("quiz", {
       }
     },
 
-    async searchQuizzes(searchTerm: string) {
+    async searchQuizzes(searchTerm: string, page = 1, pageSize = 10) {
       this.loading = true;
       this.error = null;
+      this.currentPage = page;
+      this.pageSize = pageSize;
       try {
-        const response = await apiClient.get<QuizListDto[]>(
-          `/quiz?search=${encodeURIComponent(searchTerm)}`,
+        const response = await apiClient.get<PaginatedResult<QuizListDto>>(
+          `/quiz?search=${encodeURIComponent(searchTerm)}&page=${page}&pageSize=${pageSize}`
         );
-        this.quizzes = response.data;
+        this.quizzes = response.data.items ?? (response.data as any);
+        this.total = response.data.total ?? 0;
+        this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Search failed";
       } finally {
@@ -184,7 +217,7 @@ export const useQuizStore = defineStore("quiz", {
       this.error = null;
       try {
         const response = await apiClient.get(`/quiz/${quizId}/questions`);
-        return response.data; // array of QuizQuestionDto
+        return response.data;
       } catch (err: any) {
         this.error =
           err.response?.data?.message || "Failed to fetch quiz questions";
@@ -197,7 +230,7 @@ export const useQuizStore = defineStore("quiz", {
     async createQuizQuestion(
       quizId: number,
       snapshotJson: string,
-      displayOrder: number,
+      displayOrder: number
     ) {
       this.loading = true;
       this.error = null;
@@ -206,7 +239,7 @@ export const useQuizStore = defineStore("quiz", {
           questionSnapshotJson: snapshotJson,
           displayOrder,
         });
-        return response.data; // QuizQuestionDto
+        return response.data;
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to create question";
         throw err;
@@ -218,7 +251,7 @@ export const useQuizStore = defineStore("quiz", {
     async updateQuizQuestion(
       questionId: number,
       snapshotJson: string,
-      displayOrder: number,
+      displayOrder: number
     ) {
       this.loading = true;
       this.error = null;
@@ -255,7 +288,7 @@ export const useQuizStore = defineStore("quiz", {
       this.error = null;
       try {
         const response = await apiClient.get<NoteDto[]>(
-          `/quiz/${quizId}/notes`,
+          `/quiz/${quizId}/notes`
         );
         this.notes = response.data;
       } catch (err: any) {
@@ -267,14 +300,14 @@ export const useQuizStore = defineStore("quiz", {
 
     async addNoteToQuiz(
       quizId: number,
-      payload: { title: string; content: string },
+      payload: { title: string; content: string }
     ) {
-      this.loading = true; // or use a separate flag
+      this.loading = true;
       this.error = null;
       try {
         const response = await apiClient.post<NoteDto>(
           `/quiz/${quizId}/notes`,
-          payload,
+          payload
         );
         return response.data;
       } catch (err: any) {
@@ -304,7 +337,7 @@ export const useQuizStore = defineStore("quiz", {
       this.error = null;
       try {
         const response = await apiClient.get<SourceDto[]>(
-          `/quiz/${quizId}/sources`,
+          `/quiz/${quizId}/sources`
         );
         this.sources = response.data;
       } catch (err: any) {
@@ -320,7 +353,7 @@ export const useQuizStore = defineStore("quiz", {
       try {
         const response = await apiClient.post<SourceDto>(
           `/quiz/${quizId}/sources`,
-          { sourceId },
+          { sourceId }
         );
         return response.data;
       } catch (err: any) {

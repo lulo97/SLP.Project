@@ -6,16 +6,16 @@
         v-model:value="search"
         placeholder="Search questions..."
         enter-button
-        @search="fetchQuestions"
+        @search="handleSearch"
         data-testid="question-search"
       />
       <div class="flex space-x-2">
         <a-select
           v-model:value="typeFilter"
           placeholder="All Types"
-          style="width: 120px"
+          style="width: 140px"
           allow-clear
-          @change="fetchQuestions"
+          @change="handleFilterChange"
           data-testid="filter-type"
         >
           <a-select-option value="multiple_choice">Multiple Choice</a-select-option>
@@ -28,7 +28,7 @@
           v-model:value="tagFilter"
           placeholder="Filter by tag"
           style="flex: 1"
-          @pressEnter="fetchQuestions"
+          @pressEnter="handleFilterChange"
           data-testid="filter-tag"
         />
       </div>
@@ -44,23 +44,25 @@
         <a-list-item :data-testid="`question-item-${item.id}`">
           <a-list-item-meta>
             <template #title>
-              <div class="flex items-center justify-between">
-                <span class="font-medium">{{ item.content }}</span>
-                <a-tag>{{ item.type }}</a-tag>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-medium text-sm leading-snug">{{ item.content }}</span>
+                <a-tag class="shrink-0">{{ formatType(item.type) }}</a-tag>
               </div>
             </template>
             <template #description>
               <div class="text-sm">
-                <!-- Extract description from metadata if present -->
-                <p class="text-gray-600">{{ getDescription(item) || 'No description' }}</p>
-                <div class="flex flex-wrap gap-1 mt-2">
+                <p class="text-gray-500">{{ getDescription(item) || 'No description' }}</p>
+                <div class="flex flex-wrap gap-1 mt-1">
                   <a-tag v-for="tag in item.tags" :key="tag" size="small">{{ tag }}</a-tag>
                 </div>
               </div>
             </template>
           </a-list-item-meta>
           <template #actions>
-            <span @click="handleEdit(item.id)" :data-testid="`edit-question-${item.id}`">
+            <span
+              @click="handleEdit(item.id)"
+              :data-testid="`edit-question-${item.id}`"
+            >
               <EditOutlined /> Edit
             </span>
             <a-popconfirm
@@ -78,6 +80,32 @@
       </template>
     </a-list>
 
+    <!-- Pagination -->
+    <div
+      v-if="questionStore.total > questionStore.pageSize"
+      class="flex justify-center mt-4 pb-20"
+      data-testid="question-pagination"
+    >
+      <a-pagination
+        v-model:current="questionStore.currentPage"
+        :total="questionStore.total"
+        :page-size="questionStore.pageSize"
+        :show-size-changer="false"
+        simple
+        @change="handlePageChange"
+      />
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!questionStore.loading && questionStore.questions.length === 0"
+      class="text-center py-12 text-gray-400"
+      data-testid="question-list-empty"
+    >
+      <p class="text-base">No questions found.</p>
+    </div>
+
+    <!-- Floating Action Button -->
     <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
       <a-float-button @click="goToCreateQuestion" data-testid="create-question">
         <template #icon><PlusOutlined /></template>
@@ -101,15 +129,36 @@ const search = ref('');
 const typeFilter = ref<string | undefined>(undefined);
 const tagFilter = ref('');
 
-const fetchQuestions = () => {
-  const params: any = {};
-  if (search.value) params.search = search.value;
-  if (typeFilter.value) params.type = typeFilter.value;
-  if (tagFilter.value) params.tag = tagFilter.value;
-  questionStore.fetchQuestions(params);
+// Build the current filter params object
+const buildParams = () => ({
+  search: search.value || undefined,
+  type: typeFilter.value || undefined,
+  tag: tagFilter.value || undefined,
+});
+
+// Search triggered explicitly (search button or Enter in search box)
+const handleSearch = () => {
+  questionStore.fetchQuestions(buildParams(), 1);
 };
 
-// Helper to extract description from metadata
+// Filter changed (type select or tag Enter) — reset to page 1
+const handleFilterChange = () => {
+  questionStore.fetchQuestions(buildParams(), 1);
+};
+
+const handlePageChange = (page: number) => {
+  questionStore.fetchQuestions(buildParams(), page);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const formatType = (type: string) => {
+  if (!type) return 'Unknown';
+  return type
+    .split(/[_\-]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const getDescription = (item: any) => {
   if (!item.metadataJson) return '';
   try {
@@ -128,7 +177,8 @@ const handleDelete = async (id: number) => {
   const success = await questionStore.deleteQuestion(id);
   if (success) {
     message.success('Question deleted');
-    fetchQuestions();
+    // Reload the same page
+    handlePageChange(questionStore.currentPage);
   } else {
     message.error('Delete failed');
   }
@@ -139,6 +189,14 @@ const goToCreateQuestion = () => {
 };
 
 onMounted(() => {
-  fetchQuestions();
+  questionStore.fetchQuestions({}, 1);
 });
 </script>
+
+<style scoped>
+:deep(.ant-pagination-simple) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
