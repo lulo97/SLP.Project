@@ -116,25 +116,67 @@ public class QuizRepository : IQuizRepository
         return await _context.Quizzes.AnyAsync(q => q.Id == id && !q.Disabled);
     }
 
-    public async Task<IEnumerable<Quiz>> SearchAsync(string? searchTerm, int? userId, bool publicOnly = true)
+    public async Task<(IEnumerable<Quiz> Items, int TotalCount)> SearchAsync(
+        string? searchTerm,
+        int? userId,
+        string? visibility,
+        bool includeDisabled,
+        string? sortBy,
+        string? sortOrder,
+        int page,
+        int pageSize)
     {
-        var query = _context.Quizzes.Where(q => !q.Disabled);
-        if (publicOnly)
-            query = query.Where(q => q.Visibility == "public");
+        var query = _context.Quizzes.AsQueryable();
+
+        // Apply disabled filter correctly
+        if (includeDisabled)
+        {
+            query = query.IgnoreQueryFilters(); // Bypass global filter
+        }
+        else
+        {
+            query = query.Where(q => !q.Disabled);
+        }
+
+        // Filter by user
         if (userId.HasValue)
             query = query.Where(q => q.UserId == userId.Value);
+
+        // Filter by visibility
+        if (!string.IsNullOrEmpty(visibility))
+            query = query.Where(q => q.Visibility == visibility);
+        else if (!userId.HasValue) // public listing, default to public
+            query = query.Where(q => q.Visibility == "public");
+
+        // Search term
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            searchTerm = $"%{searchTerm}%";
-            query = query.Where(q => EF.Functions.ILike(q.Title, searchTerm) ||
-                                     (q.Description != null && EF.Functions.ILike(q.Description, searchTerm)));
+            var pattern = $"%{searchTerm}%";
+            query = query.Where(q => EF.Functions.ILike(q.Title, pattern) ||
+                                     (q.Description != null && EF.Functions.ILike(q.Description, pattern)));
         }
-        return await query
+
+        // Total count (before sorting/includes)
+        var totalCount = await query.CountAsync();
+
+        // Sorting
+        IOrderedQueryable<Quiz> orderedQuery = (sortBy?.ToLower(), sortOrder?.ToLower()) switch
+        {
+            ("title", "asc") => query.OrderBy(q => q.Title),
+            ("title", "desc") => query.OrderByDescending(q => q.Title),
+            _ => sortOrder == "asc" ? query.OrderBy(q => q.CreatedAt) : query.OrderByDescending(q => q.CreatedAt)
+        };
+
+        // Apply pagination and includes
+        var items = await orderedQuery
             .Include(q => q.User)
-            .Include(q => q.QuizQuestions)          // ← ADD THIS
+            .Include(q => q.QuizQuestions)
             .Include(q => q.QuizTags).ThenInclude(qt => qt.Tag)
-            .OrderByDescending(q => q.UpdatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     // ==================== QuizQuestion repository methods ====================

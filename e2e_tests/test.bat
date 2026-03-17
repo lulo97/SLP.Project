@@ -1,1 +1,1 @@
-npx playwright test tests/question/backend/questions-api-pagination.spec.js --headed
+npx playwright test tests/quiz/quiz-api-pagination.spec.js --headed

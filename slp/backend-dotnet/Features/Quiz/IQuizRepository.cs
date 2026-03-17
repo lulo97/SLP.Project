@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace backend_dotnet.Features.Quiz;
 
 public interface IQuizRepository
@@ -13,7 +10,15 @@ public interface IQuizRepository
     Task SoftDeleteAsync(int id);
     Task HardDeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
-    Task<IEnumerable<Quiz>> SearchAsync(string? searchTerm, int? userId, bool publicOnly = true);
+    Task<(IEnumerable<Quiz> Items, int TotalCount)> SearchAsync(
+        string? searchTerm,
+        int? userId,
+        string? visibility,
+        bool includeDisabled,
+        string? sortBy,
+        string? sortOrder,
+        int page,
+        int pageSize);
     Task<IEnumerable<QuizQuestion>> GetQuestionsByQuizIdAsync(int quizId);
     Task<QuizQuestion?> GetQuizQuestionByIdAsync(int id);
     Task<QuizQuestion> CreateQuizQuestionAsync(QuizQuestion quizQuestion);
@@ -28,6 +33,6 @@ public interface IQuizRepository
     Task<IEnumerable<Source.Source>> GetSourcesByQuizIdAsync(int quizId);
     Task AddSourceToQuizAsync(int quizId, int sourceId);
     Task RemoveSourceFromQuizAsync(int quizId, int sourceId);
-    Task<IEnumerable<Quiz>> GetAllForAdminAsync();  // <-- ADD THIS
+    Task<IEnumerable<Quiz>> GetAllForAdminAsync();
 
 }

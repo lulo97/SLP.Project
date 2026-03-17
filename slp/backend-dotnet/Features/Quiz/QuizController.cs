@@ -1,11 +1,13 @@
 using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Note;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.Quiz;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class QuizController : ControllerBase
@@ -26,24 +28,53 @@ public class QuizController : ControllerBase
     private bool IsAdmin => User.IsInRole("admin");
 
     [HttpGet]
-    public async Task<IActionResult> GetQuizzes([FromQuery] string? visibility, [FromQuery] string? search, [FromQuery] bool? mine)
+    [HttpGet]
+    public async Task<IActionResult> GetQuizzes(
+    [FromQuery] string? search,
+    [FromQuery] string? visibility,
+    [FromQuery] bool? mine,
+    [FromQuery] string? sortBy,
+    [FromQuery] string? sortOrder,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20)
     {
+        // Normalize pagination parameters
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
+        if (pageSize > 50) pageSize = 50;
+
+        int? userId = null;
+        bool includeDisabled = false;
+        string? effectiveVisibility = visibility;
+
         if (mine == true)
         {
             if (!CurrentUserId.HasValue)
                 return Unauthorized();
-            var myQuizzes = await _quizService.GetUserQuizzesAsync(CurrentUserId.Value);
-            return Ok(myQuizzes);
+            userId = CurrentUserId.Value;
+            includeDisabled = true;          // owner sees their own disabled quizzes
+            effectiveVisibility = null;      // owner sees all visibilities
         }
-
-        if (!string.IsNullOrWhiteSpace(search))
+        else
         {
-            var results = await _quizService.SearchQuizzesAsync(search, CurrentUserId, publicOnly: true);
-            return Ok(results);
+            // Public listing: default to public, exclude disabled
+            if (string.IsNullOrEmpty(effectiveVisibility))
+                effectiveVisibility = "public";
+            // includeDisabled remains false
         }
 
-        var quizzes = await _quizService.GetPublicQuizzesAsync(visibility);
-        return Ok(quizzes);
+        var searchDto = new QuizSearchDto
+        {
+            SearchTerm = search,
+            UserId = userId,
+            Visibility = effectiveVisibility,
+            IncludeDisabled = includeDisabled,
+            SortBy = sortBy,
+            SortOrder = sortOrder
+        };
+
+        var results = await _quizService.SearchQuizzesAsync(searchDto, page, pageSize);
+        return Ok(results);
     }
 
     [HttpGet("{id}")]

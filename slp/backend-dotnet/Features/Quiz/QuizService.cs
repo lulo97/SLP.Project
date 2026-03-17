@@ -1,14 +1,15 @@
+using backend_dotnet.Features.Helpers;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
+using backend_dotnet.Helpers;          // <-- ADDED
+using backend_dotnet.Helpers;          // <-- ADDED (if your helper is in Helpers namespace)
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using backend_dotnet.Helpers;          // <-- ADDED
-using backend_dotnet.Helpers;          // <-- ADDED (if your helper is in Helpers namespace)
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -176,10 +177,25 @@ public class QuizService : IQuizService
         return MapToDto(created);
     }
 
-    public async Task<IEnumerable<QuizListDto>> SearchQuizzesAsync(string? searchTerm, int? userId, bool publicOnly)
+    public async Task<PaginatedResult<QuizListDto>> SearchQuizzesAsync(QuizSearchDto search, int page, int pageSize)
     {
-        var quizzes = await _quizRepository.SearchAsync(searchTerm, userId, publicOnly);
-        return quizzes.Select(MapToListDto);
+        var (items, totalCount) = await _quizRepository.SearchAsync(
+            search.SearchTerm,
+            search.UserId,
+            search.Visibility,
+            search.IncludeDisabled,
+            search.SortBy,
+            search.SortOrder,
+            page,
+            pageSize);
+
+        return new PaginatedResult<QuizListDto>
+        {
+            Items = items.Select(MapToListDto).ToList(),
+            Total = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     private QuizDto MapToDto(Quiz quiz)

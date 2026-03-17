@@ -1,3 +1,4 @@
+using backend_dotnet.Features.Helpers;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Source;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ public interface IQuizService
     Task<QuizDto?> UpdateQuizAsync(int id, int userId, UpdateQuizDto dto);
     Task<bool> DeleteQuizAsync(int id, int userId, bool isAdmin);
     Task<QuizDto?> DuplicateQuizAsync(int id, int userId);
-    Task<IEnumerable<QuizListDto>> SearchQuizzesAsync(string? searchTerm, int? userId, bool publicOnly);
+    Task<PaginatedResult<QuizListDto>> SearchQuizzesAsync(QuizSearchDto search, int page, int pageSize);
     Task<IEnumerable<QuizQuestionDto>> GetQuizQuestionsAsync(int quizId, int? currentUserId);
     Task<QuizQuestionDto?> GetQuizQuestionByIdAsync(int id, int? currentUserId);
     Task<QuizQuestionDto> CreateQuizQuestionAsync(int quizId, int userId, CreateQuizQuestionDto dto);

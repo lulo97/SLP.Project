@@ -53,3 +53,13 @@ public class AddSourceToQuizDto
 {
     public int SourceId { get; set; }
 }
+
+public class QuizSearchDto
+{
+    public string? SearchTerm { get; set; }
+    public int? UserId { get; set; }
+    public string? Visibility { get; set; }   // "public", "unlisted", etc.
+    public bool IncludeDisabled { get; set; }
+    public string? SortBy { get; set; }        // "createdAt", "title"
+    public string? SortOrder { get; set; }     // "asc", "desc"
+}
