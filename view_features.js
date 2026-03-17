@@ -7,7 +7,7 @@ const path = require("path");
 const config = {
   // Filenames must contain at least one of these keywords (case‑insensitive)
   // Leave empty to include all files (subject to excludeKeywords)
-  keywords: ["source", "explanation", "favorite"],
+  keywords: ["user", "admin"],
 
   // Filenames that contain any of these keywords will be EXCLUDED (case‑insensitive)
   excludeKeywords: [],   // <-- add your exclude terms here
