@@ -18,13 +18,7 @@
         </a-form-item>
 
         <a-form-item label="Tags">
-          <a-select
-            v-model:value="form.tagNames"
-            mode="tags"
-            placeholder="Enter tags and press enter"
-            :token-separators="[',']"
-            data-testid="quiz-tags-select"
-          />
+          <TagSelector v-model="form.tagNames" data-testid="quiz-tags-select" />
         </a-form-item>
 
         <a-form-item>
@@ -42,21 +36,22 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import MobileLayout from '@/layouts/MobileLayout.vue';
+import TagSelector from '@/components/TagSelector.vue';
 import { useQuizStore } from '../stores/quizStore';
 import type { CreateQuizPayload, UpdateQuizPayload } from '../stores/quizStore';
 
-const route = useRoute();
-const router = useRouter();
+const route    = useRoute();
+const router   = useRouter();
 const quizStore = useQuizStore();
 
 const quizId = computed(() => (route.params.id ? Number(route.params.id) : null));
 const isEdit = computed(() => !!quizId.value);
 
 const form = ref<CreateQuizPayload & { tagNames: string[] }>({
-  title: '',
+  title:      '',
   description: '',
-  visibility: 'public', // default public
-  tagNames: [],
+  visibility: 'public',
+  tagNames:   [],
 });
 
 const handleSubmit = async () => {
@@ -86,10 +81,10 @@ onMounted(async () => {
     await quizStore.fetchQuizById(quizId.value!);
     if (quizStore.currentQuiz) {
       form.value = {
-        title: quizStore.currentQuiz.title,
+        title:       quizStore.currentQuiz.title,
         description: quizStore.currentQuiz.description,
-        visibility: quizStore.currentQuiz.visibility as any,
-        tagNames: quizStore.currentQuiz.tags,
+        visibility:  quizStore.currentQuiz.visibility as any,
+        tagNames:    quizStore.currentQuiz.tags,
       };
     }
   }

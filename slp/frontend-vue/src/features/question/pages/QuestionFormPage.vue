@@ -20,23 +20,18 @@ import QuestionForm from '../components/QuestionForm.vue';
 import { useQuestionStore } from '../stores/questionStore';
 import type { CreateQuestionPayload, UpdateQuestionPayload } from '../stores/questionStore';
 
-const route = useRoute();
-const router = useRouter();
+const route         = useRoute();
+const router        = useRouter();
 const questionStore = useQuestionStore();
 
 const questionId = computed(() => (route.params.id ? Number(route.params.id) : null));
-const isEdit = computed(() => !!questionId.value);
+const isEdit     = computed(() => !!questionId.value);
 
-const initialQuestion = computed(() => {
-  if (isEdit.value && questionStore.currentQuestion) {
-    return questionStore.currentQuestion;
-  }
-  return null;
-});
+const initialQuestion = computed(() =>
+  isEdit.value && questionStore.currentQuestion ? questionStore.currentQuestion : null,
+);
 
-const goBack = () => {
-  router.back();
-};
+const goBack = () => router.back();
 
 const handleSave = async (payload: CreateQuestionPayload) => {
   if (isEdit.value) {

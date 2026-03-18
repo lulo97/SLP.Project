@@ -44,3 +44,10 @@
 - **Components**: Add `<a-pagination>` below lists, conditionally visible.
 - **Reset logic**: On filter/tab change, reset page to 1.
 - **Cursor fix**: Add CSS class `.action-icon { cursor: pointer; }` to action icon wrappers.
+
+### Frontend (Dev2)
+#### Task 6: Breadcrumb Component
+- **Component**: `Breadcrumb.vue` using Ant Design `<a-breadcrumb>`.
+- **Props**: `items: Array<{ label: string; path?: string }>`, `maxItems` (default 3) with truncation logic.
+- **Integration**: Replace static title in `MobileLayout`’s `#header-left` slot on pages that need breadcrumbs.
+- **Pages**: Dashboard, Quiz list, Quiz detail, Quiz edit, Question list, Source list, Source detail, Search, Admin.

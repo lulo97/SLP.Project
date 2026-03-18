@@ -9,13 +9,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 #### Additional: Cursor Pointer for Quiz List Actions
 - **Implementation**: Identify `<span>` wrappers in `QuizListPage.vue`, apply class.
 
-### Frontend (Dev2)
-#### Task 6: Breadcrumb Component
-- **Component**: `Breadcrumb.vue` using Ant Design `<a-breadcrumb>`.
-- **Props**: `items: Array<{ label: string; path?: string }>`, `maxItems` (default 3) with truncation logic.
-- **Integration**: Replace static title in `MobileLayout`’s `#header-left` slot on pages that need breadcrumbs.
-- **Pages**: Dashboard, Quiz list, Quiz detail, Quiz edit, Question list, Source list, Source detail, Search, Admin.
-
 #### Task 12: Tag Selector Component
 - **Store**: `tagStore` with `tags` array, `fetchTags()` (cached).
 - **Component**: `TagSelector.vue` – wraps Ant Design `<a-select mode="tags">`, binds `v-model`, loads options from store, shows loading/error.
