@@ -1,0 +1,46 @@
+
+### Backend (Dev1)
+#### Task 13: Question Pagination
+- **Endpoint**: `GET /api/question` now accepts `page` (default 1) and `pageSize` (default 20, max 50).
+- **Response**: `PaginatedResult<QuestionListDto>` with `items`, `total`, `page`, `pageSize`, `totalPages`.
+- **Repository**: Add `skip`/`take` to `SearchAsync`, return `(IEnumerable<Question>, int totalCount)`.
+- **Service**: Update `SearchQuestionsAsync` to use pagination.
+- **Solution**: Use existing filters; ensure count query is efficient (indexes on `user_id`, `type`, `updated_at`).
+
+#### Task 9: Quiz List Pagination
+- **Endpoint**: `GET /api/quiz` extended with `page`, `limit`, `sort`, `order`, `visibility`, `search`, `mine`.
+- **Response**: Same paginated structure.
+- **Repository**: Apply `Skip`/`Take` after filters.
+- **Service**: Respect `mine` flag and visibility rules.
+- **Solution**: Default sort by `createdAt DESC`. For public list, exclude disabled quizzes.
+
+### Backend (Dev2)
+#### Task 14: Source Parser Microservice
+- **New service**: `parser` (Python FastAPI).
+- **Endpoints**:
+  - `POST /parse/url` – JSON `{ url, title? }` → returns `{ title, raw_text, raw_html, content_json?, metadata }`
+  - `POST /parse/file` – multipart `file` → returns `{ title (if extracted), raw_text, content_json?, metadata }`
+- **Libraries**: `trafilatura` (HTML), `pypdf` (PDF), `python-magic` (MIME).
+- **Security**: Validate URL (no private IPs), file size (PDF ≤20MB, TXT ≤5MB), MIME type.
+- **Docker**: Add to `docker-compose.yml` with internal network, expose port 8000, set env `MAX_FILE_SIZE`, `REQUEST_TIMEOUT`.
+- **Backend integration**: Modify `SourceService` to call this service when creating URL/file source, store returned data.
+
+#### Task 16: Avatar File Storage Microservice
+- **New service**: `filestorage` (Python FastAPI).
+- **Endpoints**:
+  - `POST /upload` – multipart `file`, returns `{ url: "http://filestorage:8000/files/{uuid}.ext" }`
+  - `GET /files/{filename}` – serves file
+  - `DELETE /files/{filename}` – deletes file
+- **Storage**: Files saved on mounted Docker volume, named with UUID.
+- **Allowed formats**: JPEG, PNG; max 2MB.
+- **Security**: API key for upload/delete
+- **Backend integration**: New `IFileStorageClient` with methods `UploadAvatarAsync`, `DeleteFileAsync`. Add `avatar_url` column to `users` table.
+- **Docker**: Add service to compose, volume `filestorage_data`.
+
+### Frontend (Dev1)
+#### Task 13 & 9: Pagination UI
+- **Store**: Add pagination state (`currentPage`, `pageSize`, `total`) to `questionStore` and `quizStore`.
+- **Actions**: Modify `fetch` methods to accept `page` and `pageSize`, update state.
+- **Components**: Add `<a-pagination>` below lists, conditionally visible.
+- **Reset logic**: On filter/tab change, reset page to 1.
+- **Cursor fix**: Add CSS class `.action-icon { cursor: pointer; }` to action icon wrappers.
