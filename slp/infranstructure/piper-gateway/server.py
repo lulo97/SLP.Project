@@ -1,69 +1,177 @@
-# server.py
-import struct
-import asyncio
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
+"""
+piper-gateway/server.py
+
+FastAPI gateway in front of the Piper TTS container.
+
+Endpoints
+---------
+GET  /health          — always 200; reports piper_enabled + cache_dir
+GET  /tts?text=...    — cache-first synthesis (used by frontend/browser)
+POST /tts  { text }   — same logic, JSON body (used by backend services)
+
+Cache
+-----
+Key: SHA-256(text.encode()).hexdigest() + ".wav"  stored in TTS_CACHE_DIR
+A cache hit is served even when Piper is offline (PIPER_ENABLED=false).
+A cache miss with PIPER_ENABLED=false returns 503.
+
+Environment variables
+---------------------
+PIPER_HOST            Piper container hostname      (default: piper)
+PIPER_PORT            Wyoming TCP port              (default: 10200)
+PIPER_ENABLED         "true"/"false"                (default: true)
+TTS_CACHE_DIR         Directory for .wav cache      (default: /cache/tts)
+"""
+
+import hashlib
+import io
+import os
+import wave
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, Response
+from pydantic import BaseModel
+
+from wyoming.audio import AudioChunk, AudioStart, AudioStop
 from wyoming.client import AsyncTcpClient
-from wyoming.event import Event
+from wyoming.tts import Synthesize
 
-PIPER_HOST  = "piper"
-PIPER_PORT  = 10200
-SAMPLE_RATE = 22050
-CHANNELS    = 1
-BITS        = 16
+# ── Configuration ─────────────────────────────────────────────────────────────
+PIPER_HOST    = os.getenv("PIPER_HOST", "piper")
+PIPER_PORT    = int(os.getenv("PIPER_PORT", "10200"))
+PIPER_ENABLED = os.getenv("PIPER_ENABLED", "true").lower() == "true"
+TTS_CACHE_DIR = Path(os.getenv("TTS_CACHE_DIR", "/cache/tts"))
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+app = FastAPI(title="piper-gateway")
 
 
-def wav_header(sample_rate=22050, channels=1, bits=16):
-    datasize = 0x7FFFFFFF
-    return struct.pack(
-        "<4sI4s4sIHHIIHH4sI",
-        b"RIFF", datasize + 36, b"WAVE",
-        b"fmt ", 16, 1, channels, sample_rate,
-        sample_rate * channels * bits // 8,
-        channels * bits // 8, bits,
-        b"data", datasize,
-    )
+# ── Models ────────────────────────────────────────────────────────────────────
+
+class TTSRequest(BaseModel):
+    text: str
 
 
-async def stream_tts(text: str):
-    client = AsyncTcpClient(PIPER_HOST, PIPER_PORT)
-    await client.connect()
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-    try:
-        await client.write_event(Event(type="synthesize", data={"text": text}))
+def cache_path_for(text: str) -> Path:
+    key = hashlib.sha256(text.encode("utf-8")).hexdigest() + ".wav"
+    return TTS_CACHE_DIR / key
 
-        # Send WAV header first so browser can start playing immediately
-        yield wav_header(SAMPLE_RATE, CHANNELS, BITS)
 
-        # Stream chunks as Piper produces them
+async def synthesize_with_piper(text: str) -> bytes:
+    chunks: list[bytes] = []
+    audio_format: dict = {}
+
+    async with AsyncTcpClient(PIPER_HOST, PIPER_PORT) as client:
+        await client.write_event(Synthesize(text=text).event())
+
         while True:
-            response = await client.read_event()
-            if response is None or response.type == "audio-stop":
+            event = await client.read_event()
+            if event is None:
                 break
-            if response.type == "audio-chunk":
-                yield response.payload
-    finally:
-        await client.disconnect()
+            if AudioStart.is_type(event.type):
+                start = AudioStart.from_event(event)
+                audio_format = {
+                    "rate":     start.rate,
+                    "width":    start.width,
+                    "channels": start.channels,
+                }
+            elif AudioChunk.is_type(event.type):
+                chunks.append(AudioChunk.from_event(event).audio)
+            elif AudioStop.is_type(event.type):
+                break
+
+    raw_pcm  = b"".join(chunks)
+    rate     = audio_format.get("rate",     22050)
+    width    = audio_format.get("width",    2)
+    channels = audio_format.get("channels", 1)
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(width)
+        wf.setframerate(rate)
+        wf.writeframes(raw_pcm)
+    return buf.getvalue()
 
 
-@app.get("/tts")
-async def tts(text: str):
+async def handle_tts(text: str) -> Response:
+    """Shared logic for both GET and POST /tts."""
+    text = text.strip()
     if not text:
-        raise HTTPException(status_code=400, detail="text is required")
+        raise HTTPException(status_code=400, detail="text must not be empty")
 
-    return StreamingResponse(stream_tts(text), media_type="audio/wav")
+    cached = cache_path_for(text)
 
+    # 1. Cache hit — serve immediately regardless of PIPER_ENABLED
+    if cached.exists():
+        return FileResponse(
+            path=str(cached),
+            media_type="audio/wav",
+            headers={"X-Cache": "HIT"},
+        )
+
+    # 2. Cache miss + Piper offline → 503
+    if not PIPER_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="TTS service is offline and no cached audio exists for this text.",
+        )
+
+    # 3. Cache miss + Piper online → synthesise and cache
+    try:
+        wav_bytes = await synthesize_with_piper(text)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Piper synthesis failed: {exc}") from exc
+
+    # Atomic write: tmp → rename
+    tmp = cached.with_suffix(".tmp")
+    try:
+        tmp.write_bytes(wav_bytes)
+        tmp.rename(cached)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        # Still return audio even if caching failed
+        return Response(content=wav_bytes, media_type="audio/wav",
+                        headers={"X-Cache": "MISS"})
+
+    return Response(content=wav_bytes, media_type="audio/wav",
+                    headers={"X-Cache": "MISS"})
+
+
+# ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    """
+    Always 200. The gateway is healthy even when Piper is offline because
+    cached audio can still be served.
+    """
+    return {
+        "status":        "ok",
+        "piper_enabled": PIPER_ENABLED,
+        "piper_host":    PIPER_HOST,
+        "piper_port":    PIPER_PORT,
+        "cache_dir":     str(TTS_CACHE_DIR),
+    }
+
+
+@app.get("/tts")
+async def tts_get(text: str = Query(..., min_length=1)):
+    """
+    GET /tts?text=hello+world
+    Used by browser/frontend — query-string is simpler from JS fetch/XHR.
+    """
+    return await handle_tts(text)
+
+
+@app.post("/tts")
+async def tts_post(request: TTSRequest):
+    """
+    POST /tts  { "text": "hello world" }
+    Used by backend services that prefer a JSON body.
+    """
+    return await handle_tts(request.text)

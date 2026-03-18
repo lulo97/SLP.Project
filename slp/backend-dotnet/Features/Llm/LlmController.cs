@@ -25,26 +25,20 @@ public class LlmController : ControllerBase
         ILogger<LlmController> logger)
     {
         _llmService = llmService;
-        _repo       = repo;
-        _queue      = queue;
-        _config     = config;
-        _logger     = logger;
+        _repo = repo;
+        _queue = queue;
+        _config = config;
+        _logger = logger;
     }
 
     // ── POST /api/llm/explain ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Explain a selected piece of text.
-    /// Returns the result directly when queuing is disabled,
-    /// or 202 Accepted with a jobId when queuing is enabled.
-    /// </summary>
     [HttpPost("explain")]
     public async Task<IActionResult> Explain([FromBody] ExplainRequest request)
     {
         var userId = GetUserId();
         var prompt = _llmService.BuildExplainPrompt(request);
 
-        // Cache check
         if (_config.GetValue<bool>("LlmCache:Enabled", true))
         {
             var cached = await _repo.FindCachedAsync(userId, "explain", prompt);
@@ -63,18 +57,12 @@ public class LlmController : ControllerBase
 
     // ── POST /api/llm/grammar-check ──────────────────────────────────────────
 
-    /// <summary>
-    /// Grammar-check and correct the supplied text.
-    /// Returns the result directly when queuing is disabled,
-    /// or 202 Accepted with a jobId when queuing is enabled.
-    /// </summary>
     [HttpPost("grammar-check")]
     public async Task<IActionResult> GrammarCheck([FromBody] GrammarCheckRequest request)
     {
         var userId = GetUserId();
         var prompt = _llmService.BuildGrammarCheckPrompt(request);
 
-        // Cache check
         if (_config.GetValue<bool>("LlmCache:Enabled", true))
         {
             var cached = await _repo.FindCachedAsync(userId, "grammar_check", prompt);
@@ -93,7 +81,6 @@ public class LlmController : ControllerBase
 
     // ── GET /api/llm/job/{jobId} ─────────────────────────────────────────────
 
-    /// <summary>Poll the status of a previously submitted async job.</summary>
     [HttpGet("job/{jobId}")]
     public async Task<IActionResult> GetJobStatus(string jobId)
     {
@@ -101,18 +88,17 @@ public class LlmController : ControllerBase
         if (log is null)
             return NotFound(new { message = $"Job '{jobId}' not found." });
 
-        // Security: caller must own the job
         var userId = GetUserId();
         if (log.UserId != userId)
             return Forbid();
 
         return Ok(new JobStatusResponse
         {
-            JobId       = log.JobId!,
-            Status      = log.Status ?? "Unknown",
-            Result      = log.Response,
-            Error       = log.Error,
-            CreatedAt   = log.CreatedAt,
+            JobId = log.JobId!,
+            Status = log.Status ?? "Unknown",
+            Result = log.Response,
+            Error = log.Error,
+            CreatedAt = log.CreatedAt,
             CompletedAt = log.CompletedAt
         });
     }
@@ -126,16 +112,20 @@ public class LlmController : ControllerBase
         {
             var (content, tokensUsed) = await _llmService.CallLlmAsync(prompt);
 
+            // Persist the user-scoped log
             await _repo.CreateAsync(new LlmLog
             {
-                UserId      = userId,
+                UserId = userId,
                 RequestType = requestType,
-                Prompt      = prompt,
-                Response    = content,
-                TokensUsed  = tokensUsed,
-                Status      = "Completed",
+                Prompt = prompt,
+                Response = content,
+                TokensUsed = tokensUsed,
+                Status = "Completed",
                 CompletedAt = DateTime.UtcNow
             });
+
+            // Populate / refresh global cache so this result survives LLM downtime
+            await _repo.UpsertGlobalCacheAsync(requestType, prompt, content, tokensUsed);
 
             return Ok(new SyncLlmResponse { Result = content });
         }
@@ -145,11 +135,11 @@ public class LlmController : ControllerBase
 
             await _repo.CreateAsync(new LlmLog
             {
-                UserId      = userId,
+                UserId = userId,
                 RequestType = requestType,
-                Prompt      = prompt,
-                Status      = "Failed",
-                Error       = ex.Message,
+                Prompt = prompt,
+                Status = "Failed",
+                Error = ex.Message,
                 CompletedAt = DateTime.UtcNow
             });
 
@@ -162,25 +152,23 @@ public class LlmController : ControllerBase
     {
         var jobId = Guid.NewGuid().ToString();
 
-        // 1. Persist log with Pending status
         var log = await _repo.CreateAsync(new LlmLog
         {
-            UserId      = userId,
+            UserId = userId,
             RequestType = requestType,
-            Prompt      = prompt,
-            JobId       = jobId,
-            Status      = "Pending"
+            Prompt = prompt,
+            JobId = jobId,
+            Status = "Pending"
         });
 
-        // 2. Push to queue
         var job = new LlmJob
         {
-            JobId       = jobId,
-            UserId      = userId,
+            JobId = jobId,
+            UserId = userId,
             RequestType = requestType,
             RequestData = JsonSerializer.Serialize(requestObj),
-            CreatedAt   = DateTime.UtcNow,
-            RetryCount  = 0
+            CreatedAt = DateTime.UtcNow,
+            RetryCount = 0
         };
 
         await _queue.EnqueueAsync(job);

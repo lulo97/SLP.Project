@@ -3,14 +3,6 @@ using backend_dotnet.Features.Llm;
 
 namespace backend_dotnet.Features.Queue;
 
-/// <summary>
-/// Long-running <see cref="BackgroundService"/> that continuously polls the
-/// Redis queue, processes LLM jobs, and updates the database log accordingly.
-///
-/// On startup it recovers any jobs that were left in "Processing" state
-/// (e.g. due to a previous crash) by resetting them to "Pending" and
-/// re-enqueuing their IDs.
-/// </summary>
 public class BackgroundJobProcessor : BackgroundService
 {
     private readonly IQueueService _queue;
@@ -18,8 +10,16 @@ public class BackgroundJobProcessor : BackgroundService
     private readonly IConfiguration _config;
     private readonly ILogger<BackgroundJobProcessor> _logger;
 
-    // How long to wait when the queue is empty before polling again
     private static readonly TimeSpan EmptyQueueDelay = TimeSpan.FromMilliseconds(500);
+
+    // Exponential backoff: 30s, 60s, 120s for retries 1, 2, 3
+    // Keeps a VPS alive during model load without hammering it.
+    private static readonly TimeSpan[] RetryDelays =
+    {
+        TimeSpan.FromSeconds(30),
+        TimeSpan.FromSeconds(60),
+        TimeSpan.FromSeconds(120),
+    };
 
     public BackgroundJobProcessor(
         IQueueService queue,
@@ -38,9 +38,7 @@ public class BackgroundJobProcessor : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("BackgroundJobProcessor starting");
-
         await RecoverStaleJobsAsync();
-
         _logger.LogInformation("BackgroundJobProcessor is ready — polling queue");
 
         while (!stoppingToken.IsCancellationRequested)
@@ -63,7 +61,6 @@ public class BackgroundJobProcessor : BackgroundService
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // Normal shutdown
                 break;
             }
             catch (Exception ex)
@@ -80,13 +77,10 @@ public class BackgroundJobProcessor : BackgroundService
 
     private async Task ProcessJobAsync(LlmJob job, CancellationToken ct)
     {
-        // Each job gets its own DI scope so scoped services (EF DbContext) are
-        // properly isolated and disposed after the job finishes.
         using var scope = _services.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<ILlmLogRepository>();
         var llmService = scope.ServiceProvider.GetRequiredService<ILlmService>();
 
-        // ── Verify DB record still exists ────────────────────────────────────
         var log = await repo.GetByJobIdAsync(job.JobId);
         if (log is null)
         {
@@ -95,11 +89,28 @@ public class BackgroundJobProcessor : BackgroundService
             return;
         }
 
-        // ── Mark Processing ──────────────────────────────────────────────────
+        // ── Cache check BEFORE calling the LLM ───────────────────────────────
+        // Always runs regardless of LlmCache:Enabled — the config flag controls
+        // the controller's pre-enqueue check, but the processor must always try
+        // the cache so jobs can complete while the LLM is offline.
+        var cached = await repo.FindCachedAsync(job.UserId, job.RequestType, log.Prompt);
+        if (cached?.Response is not null)
+        {
+            _logger.LogInformation(
+                "Job {JobId} resolved from global cache — LLM call skipped", job.JobId);
+
+            log.Response = cached.Response;
+            log.Status = "Completed";
+            log.CompletedAt = DateTime.UtcNow;
+            await repo.UpdateAsync(log);
+            await _queue.AcknowledgeAsync(job.JobId);
+            return;
+        }
+
+        // ── Mark as Processing and call the LLM ──────────────────────────────
         log.Status = "Processing";
         await repo.UpdateAsync(log);
 
-        // ── Execute ──────────────────────────────────────────────────────────
         try
         {
             var result = await DispatchAsync(job, llmService, ct);
@@ -108,23 +119,27 @@ public class BackgroundJobProcessor : BackgroundService
             log.Status = "Completed";
             log.CompletedAt = DateTime.UtcNow;
             await repo.UpdateAsync(log);
-            await _queue.AcknowledgeAsync(job.JobId);
 
+            // Populate global cache so future jobs resolve without hitting the LLM
+            await repo.UpsertGlobalCacheAsync(log.RequestType, log.Prompt, result, log.TokensUsed);
+
+            await _queue.AcknowledgeAsync(job.JobId);
             _logger.LogInformation("Job {JobId} completed successfully", job.JobId);
         }
         catch (Exception ex) when (IsDeserializationError(ex))
         {
-            // Unrecoverable — bad request data, no point retrying
-            _logger.LogError(ex, "Job {JobId} has unrecoverable request data — marking Failed", job.JobId);
-            await FailJobAsync(log, repo, job.JobId, $"Unrecoverable deserialization error: {ex.Message}");
+            _logger.LogError(ex,
+                "Job {JobId} has unrecoverable request data — marking Failed", job.JobId);
+            await FailJobAsync(log, repo, job.JobId,
+                $"Unrecoverable deserialization error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            await HandleTransientFailureAsync(job, log, repo, ex);
+            await HandleTransientFailureAsync(job, log, repo, ex, ct);
         }
     }
 
-    // ── Dispatch to the right service method ─────────────────────────────────
+    // ── Dispatch ──────────────────────────────────────────────────────────────
 
     private async Task<string> DispatchAsync(
         LlmJob job, ILlmService llmService, CancellationToken ct)
@@ -142,8 +157,8 @@ public class BackgroundJobProcessor : BackgroundService
         LlmJob job, ILlmService llmService, CancellationToken ct)
     {
         var request = JsonSerializer.Deserialize<ExplainRequest>(job.RequestData)
-            ?? throw new JsonException($"Failed to deserialize ExplainRequest for job {job.JobId}.");
-
+            ?? throw new JsonException(
+                $"Failed to deserialize ExplainRequest for job {job.JobId}.");
         return await llmService.ProcessExplainAsync(job.UserId, request, ct);
     }
 
@@ -151,15 +166,16 @@ public class BackgroundJobProcessor : BackgroundService
         LlmJob job, ILlmService llmService, CancellationToken ct)
     {
         var request = JsonSerializer.Deserialize<GrammarCheckRequest>(job.RequestData)
-            ?? throw new JsonException($"Failed to deserialize GrammarCheckRequest for job {job.JobId}.");
-
+            ?? throw new JsonException(
+                $"Failed to deserialize GrammarCheckRequest for job {job.JobId}.");
         return await llmService.ProcessGrammarCheckAsync(job.UserId, request, ct);
     }
 
     // ── Retry / failure helpers ───────────────────────────────────────────────
 
     private async Task HandleTransientFailureAsync(
-        LlmJob job, LlmLog log, ILlmLogRepository repo, Exception ex)
+        LlmJob job, LlmLog log, ILlmLogRepository repo, Exception ex,
+        CancellationToken ct)
     {
         var maxRetries = _config.GetValue<int>("Queue:MaxRetries", 3);
 
@@ -169,17 +185,44 @@ public class BackgroundJobProcessor : BackgroundService
 
         if (job.RetryCount < maxRetries)
         {
-            job.RetryCount++;
+            // ── Exponential backoff BEFORE re-enqueue ─────────────────────────
+            // Prevents tight retry loops when the LLM is loading (HTTP 503).
+            // Index is clamped so we never go out of bounds on the delays array.
+            var delayIndex = Math.Min(job.RetryCount, RetryDelays.Length - 1);
+            var delay = RetryDelays[delayIndex];
 
-            // Ack the current processing entry, then re-enqueue with updated retry count
-            await _queue.AcknowledgeAsync(job.JobId);
-            await _queue.EnqueueAsync(job);
+            _logger.LogInformation(
+                "Job {JobId} will retry in {Delay}s (retry {Next}/{Max})",
+                job.JobId, (int)delay.TotalSeconds, job.RetryCount + 1, maxRetries);
 
+            // Park the DB record as Pending before sleeping so the status is
+            // visible to callers polling /api/llm/job/{jobId}.
             log.Status = "Pending";
             await repo.UpdateAsync(log);
 
+            // Sleep — this intentionally blocks the worker for the backoff
+            // period.  On a small VPS with light load this is preferable to a
+            // complex delayed-queue mechanism.
+            try
+            {
+                await Task.Delay(delay, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // App is shutting down — re-enqueue so the job is not lost,
+                // then let the cancellation propagate.
+                job.RetryCount++;
+                await _queue.AcknowledgeAsync(job.JobId);
+                await _queue.EnqueueAsync(job);
+                throw;
+            }
+
+            job.RetryCount++;
+            await _queue.AcknowledgeAsync(job.JobId);
+            await _queue.EnqueueAsync(job);
+
             _logger.LogInformation(
-                "Job {JobId} re-queued for retry {RetryCount}/{MaxRetries}",
+                "Job {JobId} re-queued (retry {RetryCount}/{MaxRetries})",
                 job.JobId, job.RetryCount, maxRetries);
         }
         else
@@ -187,7 +230,6 @@ public class BackgroundJobProcessor : BackgroundService
             _logger.LogError(
                 "Job {JobId} permanently failed after {MaxRetries} retries",
                 job.JobId, maxRetries);
-
             await FailJobAsync(log, repo, job.JobId, ex.Message);
         }
     }
@@ -202,12 +244,8 @@ public class BackgroundJobProcessor : BackgroundService
         await _queue.AcknowledgeAsync(jobId);
     }
 
-    // ── Stale-job recovery on startup ─────────────────────────────────────────
+    // ── Stale-job recovery ────────────────────────────────────────────────────
 
-    /// <summary>
-    /// On restart, any jobs left in "Processing" in both the DB and the
-    /// Redis processing queue are moved back to "Pending" and re-enqueued.
-    /// </summary>
     private async Task RecoverStaleJobsAsync()
     {
         try
@@ -232,36 +270,26 @@ public class BackgroundJobProcessor : BackgroundService
                     log.Status = "Pending";
                     await repo.UpdateAsync(log);
                 }
-
                 await _queue.RequeueStaleAsync(jobId);
                 _logger.LogInformation("Recovered stale job {JobId}", jobId);
             }
         }
         catch (Exception ex)
         {
-            // Non-fatal — log and continue startup
             _logger.LogError(ex, "Error during stale-job recovery");
         }
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Returns true for errors caused by bad request data that cannot be fixed by
-    /// retrying — JSON parse failures and unknown request type errors.
-    /// These are caught first so the job is failed immediately without retry.
-    /// </summary>
     private static bool IsDeserializationError(Exception ex)
     {
-        if (ex is JsonException)
-            return true;
-
+        if (ex is JsonException) return true;
         if (ex is InvalidOperationException ioe)
         {
             return ioe.Message.Contains("deserialize", StringComparison.OrdinalIgnoreCase)
                 || ioe.Message.Contains("Unknown requestType", StringComparison.OrdinalIgnoreCase);
         }
-
         return false;
     }
 }

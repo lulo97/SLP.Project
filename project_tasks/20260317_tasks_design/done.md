@@ -72,3 +72,12 @@
 - **Repository**: Add `GetByUserIdAsync`, `DeleteAsync` with check.
 - **Service**: Enforce resolved check.
 - **Solution**: No new table; existing `report` table used. Add index on `user_id` if missing.
+
+#### Task 3: Comment History
+- **New table**: `comment_history` (`id`, `comment_id`, `content`, `edited_at`). Foreign key `ON DELETE CASCADE`.
+- **Backend**:
+  - On comment update: save current content to history before applying new.
+  - On comment create: optionally save initial version.
+  - Endpoint `GET /api/comments/{id}/history` (owner/admin only).
+- **Repository**: `AddHistoryAsync`, `GetHistoryAsync`.
+- **Solution**: Record each edit; history entries immutable.

@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using backend_dotnet.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -8,6 +6,8 @@ namespace backend_dotnet.Extensions;
 
 public static class WebApplicationExtensions
 {
+    // ── Database ──────────────────────────────────────────────────────────────
+
     public static async Task CheckDatabaseConnectionAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -26,20 +26,14 @@ public static class WebApplicationExtensions
             await using var command = new NpgsqlCommand("SELECT 1", connection);
             var result = await command.ExecuteScalarAsync();
 
-            if (result != null && Convert.ToInt32(result) == 1)
-            {
-                logger.LogInformation("✓ Database connection successful");
-            }
-            else
-            {
-                throw new Exception("Database query returned unexpected result. Connection string = " + connectionString);
-            }
+            if (result is null || Convert.ToInt32(result) != 1)
+                throw new Exception("Database query returned unexpected result. ConnectionString=" + connectionString);
 
-            // Optional: check users table accessibility
+            logger.LogInformation("✓ Database connection successful");
+
             try
             {
-                var canQueryUsers = await dbContext.Database
-                    .ExecuteSqlRawAsync("SELECT 1 FROM users LIMIT 1") >= 0;
+                await dbContext.Database.ExecuteSqlRawAsync("SELECT 1 FROM users LIMIT 1");
                 logger.LogInformation("✓ Users table is accessible");
             }
             catch (Exception ex)
@@ -51,14 +45,18 @@ public static class WebApplicationExtensions
         {
             logger.LogError(ex, "✗ Database connection failed!");
             logger.LogError("Please check: 1. PostgreSQL is running 2. Connection string is correct 3. Database exists");
-            throw; // Fail fast if DB not available
+            throw;
         }
     }
 
+    // ── LLM (llama.cpp) ───────────────────────────────────────────────────────
+
     /// <summary>
-    /// Sends a minimal "hi" message to the local LLM server and logs the first
-    /// few words of the reply. Non-fatal — a failure is logged as a warning so
-    /// the app still starts normally when the LLM server is offline.
+    /// Probes the llama.cpp <c>GET /health</c> endpoint.
+    /// Returns 200 {"status":"ok"} when a model is loaded and ready.
+    /// Returns 503 while the model is still loading — logged as a warning, not fatal.
+    /// Non-fatal overall: a missing or offline LLM should not prevent app startup
+    /// because cached responses in llm_log will still be served.
     /// </summary>
     public static async Task CheckLlmConnectionAsync(this WebApplication app)
     {
@@ -67,107 +65,120 @@ public static class WebApplicationExtensions
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var httpFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
 
-        var baseUrl = configuration["LlmApi:BaseUrl"];
-        if (string.IsNullOrWhiteSpace(baseUrl))
+        var completionsUrl = configuration["LlmApi:BaseUrl"];
+        if (string.IsNullOrWhiteSpace(completionsUrl))
         {
             logger.LogWarning("LlmApi:BaseUrl is not configured — skipping LLM health check");
             return;
         }
 
-        logger.LogInformation("Checking LLM server connection at {Url} ...", baseUrl);
+        // Derive /health from the configured completions URL
+        // e.g. http://llama-container:3003/v1/chat/completions → http://llama-container:3003/health
+        string healthUrl;
+        try
+        {
+            var uri = new Uri(completionsUrl);
+            healthUrl = $"{uri.Scheme}://{uri.Host}:{uri.Port}/health";
+        }
+        catch
+        {
+            logger.LogWarning("LlmApi:BaseUrl is not a valid URI — skipping LLM health check");
+            return;
+        }
+
+        logger.LogInformation("Checking LLM server health at {Url} ...", healthUrl);
 
         try
         {
-            var payload = new
-            {
-                messages = new[] { new { role = "user", content = "hi" } },
-                stream = true,
-                return_progress = false,
-                temperature = 0.8,
-                max_tokens = 50
-            };
-
-            var bodyJson = JsonSerializer.Serialize(payload);
-            using var request = new HttpRequestMessage(HttpMethod.Post, baseUrl)
-            {
-                Content = new StringContent(bodyJson, Encoding.UTF8, "application/json")
-            };
-
             var http = httpFactory.CreateClient();
-            http.Timeout = TimeSpan.FromSeconds(15);
+            http.Timeout = TimeSpan.FromSeconds(10);
 
-            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await http.GetAsync(healthUrl);
 
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("✓ LLM server is ready (HTTP {StatusCode})", (int)response.StatusCode);
+            }
+            else if ((int)response.StatusCode == 503)
+            {
+                // llama.cpp returns 503 while loading the model — not an error, just warming up
+                logger.LogWarning(
+                    "⚠ LLM server is loading its model (HTTP 503) — requests will be served from cache until it is ready");
+            }
+            else
             {
                 logger.LogWarning(
-                    "✗ LLM server returned HTTP {StatusCode} — server may be loading a model",
-                    (int)response.StatusCode);
-                return;
+                    "✗ LLM server returned unexpected HTTP {StatusCode}", (int)response.StatusCode);
             }
-
-            // Read the SSE stream just long enough to get the first content fragment
-            await using var stream = await response.Content.ReadAsStreamAsync();
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-
-            var previewBuilder = new StringBuilder();
-            var chunksRead = 0;
-
-            while (!reader.EndOfStream && chunksRead < 30)
-            {
-                var line = await reader.ReadLineAsync();
-                if (line is null || !line.StartsWith("data: ", StringComparison.Ordinal))
-                    continue;
-
-                var data = line["data: ".Length..].Trim();
-                if (data == "[DONE]") break;
-                if (string.IsNullOrEmpty(data)) continue;
-
-                try
-                {
-                    using var doc = JsonDocument.Parse(data);
-                    var root = doc.RootElement;
-
-                    if (root.TryGetProperty("choices", out var choices) &&
-                        choices.GetArrayLength() > 0)
-                    {
-                        var choice = choices[0];
-                        var deltaEl = choice.TryGetProperty("delta", out var d) ? d
-                                      : choice.TryGetProperty("message", out var m) ? m
-                                      : (JsonElement?)null;
-
-                        if (deltaEl.HasValue &&
-                            deltaEl.Value.TryGetProperty("content", out var contentEl) &&
-                            contentEl.ValueKind == JsonValueKind.String)
-                        {
-                            previewBuilder.Append(contentEl.GetString());
-                        }
-                    }
-                }
-                catch (JsonException) { /* skip malformed chunk */ }
-
-                chunksRead++;
-            }
-
-            var preview = previewBuilder.ToString().Trim();
-            if (preview.Length > 80)
-                preview = preview[..80] + "…";
-
-            logger.LogInformation(
-                "✓ LLM server is reachable — response preview: \"{Preview}\"", preview);
         }
         catch (TaskCanceledException)
         {
-            logger.LogWarning("✗ LLM server health check timed out (>{Timeout}s) — server may still be loading", 15);
+            logger.LogWarning("✗ LLM health check timed out (>10 s) — server may still be loading");
         }
         catch (HttpRequestException ex)
         {
-            logger.LogWarning("✗ LLM server is unreachable: {Message}", ex.Message);
+            logger.LogWarning("✗ LLM server is unreachable: {Message} — cached responses will be used", ex.Message);
         }
         catch (Exception ex)
         {
-            // Catch any other unexpected errors (e.g., JSON serialization, stream reading)
-            logger.LogWarning(ex, "✗ LLM server health check failed unexpectedly");
+            logger.LogWarning(ex, "✗ LLM health check failed unexpectedly");
+        }
+    }
+
+    // ── TTS (piper-gateway) ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Probes the piper-gateway <c>GET /health</c> endpoint.
+    /// Non-fatal: a missing TTS service should not prevent app startup
+    /// because file-cached audio will still be served by the gateway itself.
+    /// </summary>
+    public static async Task CheckTtsConnectionAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var httpFactory = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>();
+
+        var baseUrl = configuration["TtsApi:BaseUrl"];
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            logger.LogWarning("TtsApi:BaseUrl is not configured — skipping TTS health check");
+            return;
+        }
+
+        var healthUrl = baseUrl.TrimEnd('/') + "/health";
+        logger.LogInformation("Checking TTS gateway health at {Url} ...", healthUrl);
+
+        try
+        {
+            var http = httpFactory.CreateClient();
+            http.Timeout = TimeSpan.FromSeconds(10);
+
+            using var response = await http.GetAsync(healthUrl);
+            var body = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("✓ TTS gateway is reachable — {Body}", body);
+            }
+            else
+            {
+                logger.LogWarning(
+                    "✗ TTS gateway returned HTTP {StatusCode}: {Body}",
+                    (int)response.StatusCode, body);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            logger.LogWarning("✗ TTS health check timed out (>10 s)");
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning("✗ TTS gateway is unreachable: {Message} — cached audio will still be served", ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "✗ TTS health check failed unexpectedly");
         }
     }
 }

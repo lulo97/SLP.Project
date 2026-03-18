@@ -18,8 +18,8 @@ public class ExplanationController : ControllerBase
         ? int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")
         : null;
 
-    // GET /api/sources/{sourceId}/explanations
-    [HttpGet("sources/{sourceId}/explanations")]
+    // GET /api/source/{sourceId}/explanations   ← matches SourceController prefix
+    [HttpGet("source/{sourceId}/explanations")]
     public async Task<IActionResult> GetBySource(int sourceId)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();

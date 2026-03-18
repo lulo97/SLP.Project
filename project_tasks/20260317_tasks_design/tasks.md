@@ -13,14 +13,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 
 ## Day 2
 
-#### Task 3: Comment History
-- **New table**: `comment_history` (`id`, `comment_id`, `content`, `edited_at`). Foreign key `ON DELETE CASCADE`.
-- **Backend**:
-  - On comment update: save current content to history before applying new.
-  - On comment create: optionally save initial version.
-  - Endpoint `GET /api/comments/{id}/history` (owner/admin only).
-- **Repository**: `AddHistoryAsync`, `GetHistoryAsync`.
-- **Solution**: Record each edit; history entries immutable.
 
 ### Backend (Dev2)
 
@@ -29,12 +21,13 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
   - Modify `llm_log` table: allow `user_id NULL` (remove `NOT NULL` constraint). Add unique index `(request_type, prompt) WHERE user_id IS NULL`.
   - Update `ILlmLogRepository.FindCachedAsync` to include `user_id IS NULL` in lookup.
   - Update service to prefer user-specific cache, fallback to global.
+  - Also check llama.cpp service call to check health from backend dotnet
 - **TTS cache**:
   - Modify `piper-gateway` (Python) to check file cache before calling Piper.
   - Cache key: `hashlib.sha256(text.encode()).hexdigest() + ".wav"` in `TTS_CACHE_DIR`.
   - If cache miss and `PIPER_ENABLED=false`, return 503.
   - Add env `TTS_CACHE_DIR`, `PIPER_ENABLED`.
-- **Sync scripts**: Create Python script to pre-generate TTS from a text file, save to cache dir. Use `rsync` to push to VPS.
+  - Also check service call to check health from backend dotnet
 
 ### Frontend (Dev1)
 #### Task 5: Dashboard – Word of the Day

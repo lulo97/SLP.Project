@@ -5,7 +5,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -15,7 +14,6 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add services
 builder.Services.AddControllers();
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
@@ -39,13 +37,12 @@ if (app.Environment.IsDevelopment() || true)
     app.UseSwaggerUI();
 }
 
-// Check database connection at startup
-await app.CheckDatabaseConnectionAsync();
+// ── Startup health checks (all non-fatal except DB) ───────────────────────────
+await app.CheckDatabaseConnectionAsync();   // fatal — app cannot run without DB
+await app.CheckLlmConnectionAsync();        // non-fatal — cached responses still work
+await app.CheckTtsConnectionAsync();        // non-fatal — cached audio still works
 
-// Check LLM server at startup (non-fatal)
-await app.CheckLlmConnectionAsync();
-
-// Middleware pipeline
+// ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseCors("Frontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
