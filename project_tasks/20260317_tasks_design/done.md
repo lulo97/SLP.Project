@@ -62,3 +62,13 @@
 - **Store**: `settingsStore` with `theme` (light/dark), `language` (string), persistence to localStorage.
 - **i18n**: Install `vue-i18n`, create basic locale files (`en.json`, `vi.json`) with a few strings.
 - **Setup**: Integrate i18n in `main.ts`, provide to app.
+
+
+### Backend (Dev1)
+#### Task 1: User Reports Page
+- **Endpoints**:
+  - `GET /api/user/reports` – returns current user’s reports (ordered by `created_at DESC`)
+  - `DELETE /api/user/reports/{id}` – hard delete if `resolved = false` and ownership matches.
+- **Repository**: Add `GetByUserIdAsync`, `DeleteAsync` with check.
+- **Service**: Enforce resolved check.
+- **Solution**: No new table; existing `report` table used. Add index on `user_id` if missing.

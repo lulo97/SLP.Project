@@ -516,11 +516,19 @@ node_modules
     "BaseUrl": "http://localhost:3003/v1/chat/completions"
   },
   "LlmCache": {
-      "Enabled": false // set to false to disable cache lookup
+    "Enabled": false // set to false to disable cache lookup
   },
   "Queue": {
     "Enabled": true, // set to true to enable Redis queuing
     "MaxRetries": 3
+  },
+  "ParserService": {
+    "BaseUrl": "http://localhost:3006" // internal Docker network name
+  },
+  "FileStorage": {
+    "BaseUrl": "http://filestorage-container:3007",
+    "FileStorage__BaseUrlFrontend": null,
+    "ApiKey": ""
   }
 }
 
@@ -915,6 +923,7 @@ using backend_dotnet.Features.Comment;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
+using backend_dotnet.Features.FileStorage;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
@@ -992,25 +1001,31 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCaching(this IServiceCollection services, IConfiguration configuration)
     {
-        // Redis queue (only if enabled)
-        if (configuration.GetValue<bool>("Queue:Enabled"))
+        bool queueEnabled = configuration.GetValue<bool>("Queue:Enabled");
+        string redisConnectionString = configuration.GetConnectionString("Redis");
+
+        // Register the Redis connection factory (used by RedisQueueService)
+        services.AddSingleton<RedisConnectionFactory>(sp =>
         {
-            var redisConnectionString = configuration["ConnectionStrings:Redis"];
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
-                ConnectionMultiplexer.Connect(redisConnectionString));
+            var logger = sp.GetRequiredService<ILogger<RedisConnectionFactory>>();
+            return new RedisConnectionFactory(redisConnectionString, logger);
+        });
+
+        if (queueEnabled)
+        {
+            // RedisQueueService will degrade gracefully if Redis is unavailable
             services.AddSingleton<IQueueService, RedisQueueService>();
             services.AddHostedService<BackgroundJobProcessor>();
         }
         else
         {
-            // No-op queue service when disabled
             services.AddSingleton<IQueueService, NullQueueService>();
         }
 
-        // Distributed cache (optional – uses Redis as cache)
+        // Distributed cache (still uses Redis – if it fails, cache operations will throw)
         services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = configuration.GetConnectionString("Redis");
+            options.Configuration = redisConnectionString;
             options.InstanceName = "SampleApp";
         });
 
@@ -1033,6 +1048,23 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddFileStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<FileStorageSettings>(
+            configuration.GetSection("FileStorage"));
+    
+        services.AddHttpClient<IFileStorageClient, FileStorageClient>(client =>
+        {
+            var baseUrl = configuration["FileStorage:BaseUrl"] ?? "http://localhost:8090";
+            client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+    
         return services;
     }
 }
@@ -1223,6 +1255,19 @@ public static class AdminHelper
     {
         return userId == 1; // Hardcoded admin ID
     }
+}
+
+===== FILE: Helpers\PaginatedResult.cs =====
+
+namespace backend_dotnet.Features.Helpers;
+
+public class PaginatedResult<T>
+{
+    public List<T> Items { get; set; } = new();
+    public int Total { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)Total / PageSize);
 }
 
 ===== FILE: Helpers\QuestionValidationHelper.cs =====
@@ -1641,6 +1686,7 @@ namespace backend_dotnet.Middlewares
 ===== FILE: Program.cs =====
 
 using backend_dotnet.Extensions;
+using backend_dotnet.Features.Source;
 using backend_dotnet.Middlewares;
 using Serilog;
 
@@ -1662,8 +1708,15 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddCaching(builder.Configuration);
 builder.Services.AddAuthAndCors(builder.Configuration);
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpClient<IParserClient, ParserClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ParserService:BaseUrl"]);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 
@@ -1766,6 +1819,8 @@ docker-compose.yml
 VITE_API_BACKEND_URL=http://localhost:3001/api
 VITE_FRONTEND_PORT=4000
 VITE_TTS_URL=http://localhost:3005
+VITE_FILESTORAGE_URL=http://localhost:3007
+
 
 ===== FILE: .vscode\extensions.json =====
 
@@ -1828,6 +1883,7 @@ CMD ["npm", "run", "dev", "--", "--host"]
     "pinia": "^3.0.4",
     "vue": "^3.5.25",
     "vue-draggable-next": "^2.3.0",
+    "vue-i18n": "^11.3.0",
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
@@ -1899,6 +1955,301 @@ body {
 }
 </style>
 
+===== FILE: src\components\Breadcrumb.vue =====
+
+<template>
+  <!-- Multi-step trail -->
+  <nav
+    v-if="items.length > 1"
+    class="flex items-center min-w-0"
+    aria-label="Breadcrumb"
+  >
+    <ol class="flex items-center min-w-0">
+      <li
+        v-for="(item, i) in displayItems"
+        :key="i"
+        class="flex items-center min-w-0"
+      >
+        <!-- Ellipsis when trail is truncated -->
+        <span v-if="item.ellipsis" class="text-gray-400 text-xs px-1 shrink-0">
+          …
+        </span>
+
+        <!-- Ancestor link -->
+        <router-link
+          v-else-if="item.path && i < displayItems.length - 1"
+          :to="item.path"
+          class="text-gray-400 text-xs font-medium hover:text-blue-500 transition-colors shrink-0 max-w-[64px] truncate"
+        >
+          {{ item.label }}
+        </router-link>
+
+        <!-- Current page (last item, no link) -->
+        <span
+          v-else
+          class="text-gray-800 text-sm font-semibold truncate max-w-[160px]"
+          aria-current="page"
+        >
+          {{ item.label }}
+        </span>
+
+        <!-- Separator (skip after last item and after ellipsis) -->
+        <ChevronRight
+          v-if="i < displayItems.length - 1"
+          :size="12"
+          class="text-gray-300 shrink-0 mx-0.5"
+        />
+      </li>
+    </ol>
+  </nav>
+
+  <!-- Single item or unmapped route → plain title -->
+  <h1 v-else class="text-xl font-semibold truncate">
+    {{ fallbackTitle }}
+  </h1>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { ChevronRight } from 'lucide-vue-next';
+import { useQuizStore } from '@/features/quiz/stores/quizStore';
+import { useSourceStore } from '@/features/source/stores/sourceStore';
+
+interface BreadcrumbItem {
+  label: string;
+  path?: string;
+  ellipsis?: boolean;
+}
+
+const props = withDefaults(
+  defineProps<{
+    /** Shown as plain <h1> when the route has no trail (e.g. Dashboard) */
+    fallbackTitle: string;
+    /** Max crumbs before middle items are collapsed into "…" */
+    maxItems?: number;
+  }>(),
+  { maxItems: 3 },
+);
+
+const route       = useRoute();
+const quizStore   = useQuizStore();
+const sourceStore = useSourceStore();
+
+// ── Static anchors ──────────────────────────────────────────────────────────
+const HOME:          BreadcrumbItem = { label: 'Home',          path: '/dashboard' };
+const QUIZ_LIST:     BreadcrumbItem = { label: 'My Quizzes',    path: '/quiz'      };
+const QUESTION_LIST: BreadcrumbItem = { label: 'Question Bank', path: '/questions' };
+const SOURCE_LIST:   BreadcrumbItem = { label: 'My Sources',    path: '/source'    };
+
+// ── Route → trail mapping ────────────────────────────────────────────────────
+const items = computed<BreadcrumbItem[]>(() => {
+  const name        = route.name as string | undefined;
+  // Dynamic labels pulled from already-loaded store state
+  const quizTitle   = quizStore.currentQuiz?.title   || 'Quiz';
+  const sourceTitle = sourceStore.currentSource?.title || 'Source';
+
+  switch (name) {
+    // ── Dashboard ────────────────────────────────────────────────────────
+    case 'dashboard':
+      return [HOME];
+
+    // ── Quiz ─────────────────────────────────────────────────────────────
+    case 'quiz-list':
+      return [HOME, QUIZ_LIST];
+
+    case 'quiz-create':
+      return [HOME, QUIZ_LIST, { label: 'Create' }];
+
+    case 'quiz-detail':
+    case 'QuizView':       // /quiz/view/:id  (public view)
+      return [HOME, QUIZ_LIST, { label: quizTitle }];
+
+    case 'quiz-edit':
+      // Title already conveys "we're in this quiz"; page heading shows "Edit"
+      return [HOME, QUIZ_LIST, { label: quizTitle }];
+
+    // ── Quiz attempts ────────────────────────────────────────────────────
+    case 'QuizPlayer':
+      return [HOME, QUIZ_LIST, { label: quizTitle }];
+
+    case 'AttemptReview':
+      return [HOME, QUIZ_LIST, { label: 'Review' }];
+
+    // ── Question bank ────────────────────────────────────────────────────
+    case 'question-list':
+      return [HOME, QUESTION_LIST];
+
+    case 'question-create':
+      return [HOME, QUESTION_LIST, { label: 'New' }];
+
+    case 'question-edit':
+      return [HOME, QUESTION_LIST, { label: 'Edit' }];
+
+    // ── Sources ──────────────────────────────────────────────────────────
+    case 'source-list':
+      return [HOME, SOURCE_LIST];
+
+    case 'source-upload':
+      return [HOME, SOURCE_LIST, { label: 'Upload' }];
+
+    case 'source-url-create':
+      return [HOME, SOURCE_LIST, { label: 'Add URL' }];
+
+    case 'SourceTextCreate':
+      return [HOME, SOURCE_LIST, { label: 'Add Text' }];
+
+    case 'source-detail':
+      // Note: SourceDetailPage overrides #header-left with its own back button,
+      // so this entry only fires if that slot override is ever removed.
+      return [HOME, SOURCE_LIST, { label: sourceTitle }];
+
+    // ── Misc ─────────────────────────────────────────────────────────────
+    case 'search':
+      return [HOME, { label: 'Search' }];
+
+    case 'admin':
+      return [HOME, { label: 'Admin' }];
+
+    default:
+      return []; // unknown route → fallback to plain <h1>
+  }
+});
+
+// ── Truncation: first + "…" + last(n) when items exceed maxItems ─────────────
+const displayItems = computed<BreadcrumbItem[]>(() => {
+  const all = items.value;
+  if (all.length <= props.maxItems) return all;
+
+  // Keep first crumb + enough tail crumbs to fill maxItems
+  const tailCount = props.maxItems - 2; // -1 for first, -1 for ellipsis
+  const first     = all[0] as BreadcrumbItem;   // length > maxItems ≥ 2, so [0] always exists
+  const tail      = all.slice(-tailCount);
+  return [first, { label: '…', ellipsis: true }, ...tail];
+});
+</script>
+
+===== FILE: src\components\TagSelector.vue =====
+
+<template>
+  <a-select
+    v-model:value="selected"
+    mode="tags"
+    :placeholder="placeholder"
+    :loading="tagStore.loading"
+    :options="options"
+    :token-separators="[',']"
+    :max-tag-count="MAX_TAGS"
+    :status="atLimit ? 'warning' : undefined"
+    allow-clear
+    style="width: 100%"
+    data-testid="tag-selector"
+    @change="handleChange"
+  >
+    <template v-if="tagStore.error" #notFoundContent>
+      <span class="text-red-400 text-xs px-2">{{ tagStore.error }}</span>
+    </template>
+  </a-select>
+
+  <div v-if="atLimit" class="text-yellow-500 text-xs mt-1">
+    Maximum {{ MAX_TAGS }} tags allowed.
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, watch } from 'vue';
+import { useTagStore } from '@/features/tag/stores/tagStore';
+
+const MAX_TAGS = 10;
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[];
+    placeholder?: string;
+  }>(),
+  { placeholder: 'Select or create tags…' },
+);
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string[]): void;
+}>();
+
+const tagStore = useTagStore();
+
+// Merge existing tags from store with any free-typed values already in modelValue,
+// de-duplicated and sorted so the dropdown always shows the union.
+const options = computed(() =>
+  Array.from(
+    new Map(
+      [
+        ...tagStore.tags.map((t) => ({ value: t.name, label: t.name })),
+        ...props.modelValue.map((v) => ({ value: v, label: v })),
+      ].map((o) => [o.value.toLowerCase(), o]),
+    ).values(),
+  ).sort((a, b) => a.label.localeCompare(b.label)),
+);
+
+const selected = computed<string[]>({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+});
+
+const atLimit = computed(() => props.modelValue.length >= MAX_TAGS);
+
+// Enforce max-10 and de-duplicate on every change
+function handleChange(newVal: string[]) {
+  // Normalise: trim + lowercase for de-dup comparison, but keep original casing
+  const seen  = new Set<string>();
+  const clean = newVal
+    .map((v) => v.trim())
+    .filter((v) => {
+      if (!v) return false;
+      const key = v.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, MAX_TAGS); // hard cap
+
+  emit('update:modelValue', clean);
+}
+
+onMounted(() => tagStore.fetchTags());
+</script>
+
+===== FILE: src\i18n.ts =====
+
+import { createI18n } from 'vue-i18n';
+import en from './locales/en.json';
+import vi from './locales/vi.json';
+
+// Read saved language from localStorage so i18n starts with the user's
+// persisted preference (settingsStore syncs it afterward via watch).
+function getInitialLocale(): 'en' | 'vi' {
+  try {
+    const raw = localStorage.getItem('app_settings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.language === 'vi') return 'vi';
+    }
+  } catch { /* ignore */ }
+  return 'en';
+}
+
+export const i18n = createI18n({
+  legacy: false,          // use Composition API mode
+  locale: getInitialLocale(),
+  fallbackLocale: 'en',
+  messages: { en, vi },
+});
+
+/*
+settingsStore — reads/writes localStorage key app_settings. toggleTheme() flips the dark class on <html>. Fully independent of i18n.
+i18n.ts — reads the same localStorage key directly so it can set the correct initial locale before Vue mounts (avoids a flash of wrong language).
+main.ts — installs i18n into the app, then adds a watch so any call to settingsStore.setLanguage('vi') automatically updates i18n.global.locale in real time.
+Using in components: const { t } = useI18n() then {{ t('nav.dashboard') }}. The locale files mirror each other exactly, so adding a new key to en.json just needs the matching entry in vi.json.
+*/
+
 ===== FILE: src\layouts\MobileLayout.vue =====
 
 <template>
@@ -1906,9 +2257,9 @@ body {
     <!-- Mobile Header with Right Sidebar Toggle -->
     <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]">
       <div class="flex items-center justify-between p-4">
-        <!-- Left slot (default: title) -->
+        <!-- Left slot: breadcrumb by default, pages can override with custom content -->
         <slot name="header-left">
-          <h1 class="text-xl font-semibold">{{ title }}</h1>
+          <BreadcrumbNav :fallback-title="title" />
         </slot>
 
         <!-- Centre slot (optional) -->
@@ -1931,8 +2282,8 @@ body {
     </main>
 
     <!-- Right Sidebar -->
-    <RightSidebar 
-      :is-open="sidebarOpen" 
+    <RightSidebar
+      :is-open="sidebarOpen"
       @close="sidebarOpen = false"
       @logout="handleLogout"
     />
@@ -1944,12 +2295,13 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Menu } from 'lucide-vue-next';
 import RightSidebar from './RightSidebar.vue';
+import BreadcrumbNav from '@/components/Breadcrumb.vue';
 
 defineProps<{
   title: string;
 }>();
 
-const router = useRouter();
+const router      = useRouter();
 const sidebarOpen = ref(false);
 
 const toggleSidebar = () => {
@@ -1987,18 +2339,11 @@ const handleLogout = () => {
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ authStore.user.username }}</p>
-            <p class="text-sm text-gray-500 truncate">
-              {{ authStore.user.email }}
-            </p>
+            <p class="text-sm text-gray-500 truncate">{{ authStore.user.email }}</p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
-          <a-button
-            type="link"
-            size="small"
-            @click="sendVerification"
-            :loading="sendingVerification"
-          >
+          <a-button type="link" size="small" @click="sendVerification" :loading="sendingVerification">
             Verify Email
           </a-button>
         </div>
@@ -2006,111 +2351,88 @@ const handleLogout = () => {
 
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
-        <a-menu
-          mode="inline"
-          :selected-keys="[currentRoute]"
-          class="border-none"
-        >
-          <!-- Dashboard -->
+        <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
-              <LayoutDashboard :size="18" class="mr-2" />
-              Dashboard
+              <LayoutDashboard :size="18" class="mr-2" />Dashboard
             </router-link>
           </a-menu-item>
 
-          <!-- Quiz Section -->
           <a-menu-item key="/quiz">
             <router-link to="/quiz" class="flex items-center">
-              <FileText :size="18" class="mr-2" />
-              My Quizzes
+              <FileText :size="18" class="mr-2" />My Quizzes
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/quiz/new">
             <router-link to="/quiz/new" class="flex items-center">
-              <PlusCircle :size="18" class="mr-2" />
-              Create Quiz
+              <PlusCircle :size="18" class="mr-2" />Create Quiz
             </router-link>
           </a-menu-item>
 
-          <!-- Question Bank Section -->
           <a-menu-item key="/questions">
             <router-link to="/questions" class="flex items-center">
-              <HelpCircle :size="18" class="mr-2" />
-              Question Bank
+              <HelpCircle :size="18" class="mr-2" />Question Bank
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/question/new">
             <router-link to="/question/new" class="flex items-center">
-              <Plus :size="18" class="mr-2" />
-              New Question
+              <Plus :size="18" class="mr-2" />New Question
             </router-link>
           </a-menu-item>
 
-          <!-- Source Section -->
           <a-menu-item key="/source">
             <router-link to="/source" class="flex items-center">
-              <FolderOpen :size="18" class="mr-2" />
-              My Sources
+              <FolderOpen :size="18" class="mr-2" />My Sources
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/upload">
             <router-link to="/source/upload" class="flex items-center">
-              <Upload :size="18" class="mr-2" />
-              Upload File
+              <Upload :size="18" class="mr-2" />Upload File
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/new-url">
             <router-link to="/source/new-url" class="flex items-center">
-              <Link :size="18" class="mr-2" />
-              Add from URL
+              <LinkIcon :size="18" class="mr-2" />Add from URL
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/new-note">
             <router-link to="/source/new-note" class="flex items-center">
-              <FileText :size="18" class="mr-2" />
-              Add from Text
+              <FileText :size="18" class="mr-2" />Add from Text
             </router-link>
           </a-menu-item>
 
-          <!-- Search -->
           <a-menu-item key="/search">
             <router-link to="/search" class="flex items-center">
-              <Search :size="18" class="mr-2" />
-              Search
+              <Search :size="18" class="mr-2" />Search
             </router-link>
           </a-menu-item>
 
           <a-menu-divider />
 
-          <!-- Profile -->
           <a-menu-item key="/profile">
             <router-link to="/profile" class="flex items-center">
-              <User :size="18" class="mr-2" />
-              Profile
+              <User :size="18" class="mr-2" />Profile
             </router-link>
           </a-menu-item>
-
-          <!-- Admin (if admin) -->
           <a-menu-item v-if="authStore.isAdmin" key="/admin">
             <router-link to="/admin" class="flex items-center">
-              <Shield :size="18" class="mr-2" />
-              Admin
+              <Shield :size="18" class="mr-2" />Admin
             </router-link>
           </a-menu-item>
 
           <a-menu-divider />
+
+          <!-- Settings -->
+          <a-menu-item key="settings" @click="settingsOpen = true">
+            <div class="flex items-center">
+              <Settings :size="18" class="mr-2" />Settings
+            </div>
+          </a-menu-item>
 
           <!-- Logout -->
           <a-menu-item key="logout" @click="handleLogout">
             <div class="flex items-center text-red-500">
-              <LogOut :size="18" class="mr-2" />
-              Logout
+              <LogOut :size="18" class="mr-2" />Logout
             </div>
           </a-menu-item>
         </a-menu>
@@ -2123,67 +2445,117 @@ const handleLogout = () => {
     v-if="isOpen"
     class="fixed inset-0 bg-black bg-opacity-50 z-40"
     @click="$emit('close')"
-  ></div>
+  />
+
+  <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
+  <a-modal
+    v-model:open="settingsOpen"
+    title="Settings"
+    :footer="null"
+    width="320px"
+    centered
+  >
+    <div class="space-y-6 py-2">
+
+      <!-- Theme -->
+      <div>
+        <p class="text-sm font-medium text-gray-600 mb-2">Theme</p>
+        <div class="flex gap-2">
+          <button
+            v-for="option in themeOptions"
+            :key="option.value"
+            class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+            :class="settingsStore.theme === option.value
+              ? 'border-blue-500 bg-blue-50 text-blue-600'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            @click="settingsStore.setTheme(option.value)"
+          >
+            <component :is="option.icon" :size="16" />
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div>
+        <p class="text-sm font-medium text-gray-600 mb-2">Language</p>
+        <div class="flex gap-2">
+          <button
+            v-for="option in languageOptions"
+            :key="option.value"
+            class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+            :class="settingsStore.language === option.value
+              ? 'border-blue-500 bg-blue-50 text-blue-600'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            @click="settingsStore.setLanguage(option.value)"
+          >
+            <span>{{ option.flag }}</span>
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRoute } from "vue-router";
-import { Menu, Divider, Button } from "ant-design-vue";
+import { ref, h } from 'vue';
+import { useRoute } from 'vue-router';
+import { Menu, Divider, Button } from 'ant-design-vue';
 import {
-  X,
-  LayoutDashboard,
-  User,
-  Shield,
-  LogOut,
-  FileText,
-  PlusCircle,
-  HelpCircle,
-  Plus,
-  Upload,
-  FolderOpen,
-  Link, 
-  Search
-} from "lucide-vue-next";
-import { useAuthStore } from "@/features/auth/stores/authStore";
-import { message } from "ant-design-vue";
+  X, LayoutDashboard, User, Shield, LogOut,
+  FileText, PlusCircle, HelpCircle, Plus,
+  Upload, FolderOpen, Link as LinkIcon, Search,
+  Settings, Sun, Moon,
+} from 'lucide-vue-next';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useSettingsStore } from '@/features/settings/stores/settingsStore';
+import type { Theme, Language } from '@/features/settings/stores/settingsStore';
+import { message } from 'ant-design-vue';
 
-const AMenu = Menu;
-const AMenuItem = Menu.Item;
+const AMenu      = Menu;
+const AMenuItem  = Menu.Item;
 const AMenuDivider = Divider;
-const AButton = Button;
+const AButton    = Button;
 
-defineProps<{
-  isOpen: boolean;
-}>();
+defineProps<{ isOpen: boolean }>();
+const emit = defineEmits(['close', 'logout']);
 
-const emit = defineEmits(["close", "logout"]);
+const route         = useRoute();
+const authStore     = useAuthStore();
+const settingsStore = useSettingsStore();
+const currentRoute  = route.path;
 
-const route = useRoute();
-const authStore = useAuthStore();
-const currentRoute = route.path;
-
+const settingsOpen = ref(false);
 const sendingVerification = ref(false);
 
+// ── Option lists ──────────────────────────────────────────────────────────────
+const themeOptions: { value: Theme; label: string; icon: any }[] = [
+  { value: 'light', label: 'Light', icon: Sun  },
+  { value: 'dark',  label: 'Dark',  icon: Moon },
+];
+
+const languageOptions: { value: Language; label: string; flag: string }[] = [
+  { value: 'en', label: 'English',    flag: '🇬🇧' },
+  { value: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+];
+
+// ── Handlers ──────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout();
-  emit("logout");
-  emit("close");
+  emit('logout');
+  emit('close');
 };
 
 const sendVerification = async () => {
   sendingVerification.value = true;
   const success = await authStore.sendVerificationEmail();
   sendingVerification.value = false;
-
-  if (success) {
-    message.success("Verification email sent!");
-  } else {
-    message.error("Failed to send verification email");
-  }
+  if (success) message.success('Verification email sent!');
+  else         message.error('Failed to send verification email');
 };
 </script>
-
 
 ===== FILE: src\lib\api\client.ts =====
 
@@ -2220,21 +2592,190 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
+===== FILE: src\locales\en.json =====
+
+{
+  "common": {
+    "save":   "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit":   "Edit",
+    "create": "Create",
+    "loading": "Loading…",
+    "error":   "Something went wrong",
+    "confirm": "Are you sure?"
+  },
+  "nav": {
+    "dashboard":    "Dashboard",
+    "myQuizzes":    "My Quizzes",
+    "createQuiz":   "Create Quiz",
+    "questionBank": "Question Bank",
+    "newQuestion":  "New Question",
+    "mySources":    "My Sources",
+    "uploadFile":   "Upload File",
+    "addFromUrl":   "Add from URL",
+    "addFromText":  "Add from Text",
+    "search":       "Search",
+    "profile":      "Profile",
+    "admin":        "Admin",
+    "logout":       "Logout"
+  },
+  "auth": {
+    "login":           "Login",
+    "register":        "Register",
+    "logout":          "Logout",
+    "email":           "Email",
+    "username":        "Username",
+    "password":        "Password",
+    "forgotPassword":  "Forgot password?",
+    "verifyEmail":     "Verify Email"
+  },
+  "quiz": {
+    "title":          "Title",
+    "description":    "Description",
+    "visibility":     "Visibility",
+    "visibilityPrivate": "Private (only you)",
+    "visibilityPublic":  "Public (visible to everyone)",
+    "tags":           "Tags",
+    "questions":      "Questions",
+    "noQuestions":    "No questions yet.",
+    "createQuiz":     "Create Quiz",
+    "updateQuiz":     "Update Quiz",
+    "duplicateQuiz":  "Duplicate",
+    "deleteQuiz":     "Delete Quiz",
+    "startAttempt":   "Start Attempt",
+    "yourAttempts":   "Your Attempts"
+  },
+  "question": {
+    "title":        "Question Title",
+    "type":         "Question Type",
+    "explanation":  "Explanation",
+    "tags":         "Tags",
+    "createQuestion": "Create Question",
+    "updateQuestion": "Update Question"
+  },
+  "source": {
+    "mySources":  "My Sources",
+    "uploadFile": "Upload File",
+    "addUrl":     "Add from URL",
+    "addNote":    "Add from Text",
+    "noSources":  "No sources yet."
+  },
+  "settings": {
+    "title":        "Settings",
+    "theme":        "Theme",
+    "themeLight":   "Light",
+    "themeDark":    "Dark",
+    "language":     "Language"
+  }
+}
+
+===== FILE: src\locales\vi.json =====
+
+{
+  "common": {
+    "save":    "Lưu",
+    "cancel":  "Hủy",
+    "delete":  "Xóa",
+    "edit":    "Chỉnh sửa",
+    "create":  "Tạo mới",
+    "loading": "Đang tải…",
+    "error":   "Đã có lỗi xảy ra",
+    "confirm": "Bạn có chắc không?"
+  },
+  "nav": {
+    "dashboard":    "Trang chủ",
+    "myQuizzes":    "Bài kiểm tra của tôi",
+    "createQuiz":   "Tạo bài kiểm tra",
+    "questionBank": "Ngân hàng câu hỏi",
+    "newQuestion":  "Câu hỏi mới",
+    "mySources":    "Tài liệu của tôi",
+    "uploadFile":   "Tải file lên",
+    "addFromUrl":   "Thêm từ URL",
+    "addFromText":  "Thêm từ văn bản",
+    "search":       "Tìm kiếm",
+    "profile":      "Hồ sơ",
+    "admin":        "Quản trị",
+    "logout":       "Đăng xuất"
+  },
+  "auth": {
+    "login":          "Đăng nhập",
+    "register":       "Đăng ký",
+    "logout":         "Đăng xuất",
+    "email":          "Email",
+    "username":       "Tên người dùng",
+    "password":       "Mật khẩu",
+    "forgotPassword": "Quên mật khẩu?",
+    "verifyEmail":    "Xác minh Email"
+  },
+  "quiz": {
+    "title":             "Tiêu đề",
+    "description":       "Mô tả",
+    "visibility":        "Hiển thị",
+    "visibilityPrivate": "Riêng tư (chỉ mình bạn)",
+    "visibilityPublic":  "Công khai (mọi người đều thấy)",
+    "tags":              "Nhãn",
+    "questions":         "Câu hỏi",
+    "noQuestions":       "Chưa có câu hỏi.",
+    "createQuiz":        "Tạo bài kiểm tra",
+    "updateQuiz":        "Cập nhật bài kiểm tra",
+    "duplicateQuiz":     "Nhân bản",
+    "deleteQuiz":        "Xóa bài kiểm tra",
+    "startAttempt":      "Bắt đầu làm bài",
+    "yourAttempts":      "Lần làm của bạn"
+  },
+  "question": {
+    "title":          "Nội dung câu hỏi",
+    "type":           "Loại câu hỏi",
+    "explanation":    "Giải thích",
+    "tags":           "Nhãn",
+    "createQuestion": "Tạo câu hỏi",
+    "updateQuestion": "Cập nhật câu hỏi"
+  },
+  "source": {
+    "mySources":  "Tài liệu của tôi",
+    "uploadFile": "Tải file lên",
+    "addUrl":     "Thêm từ URL",
+    "addNote":    "Thêm từ văn bản",
+    "noSources":  "Chưa có tài liệu."
+  },
+  "settings": {
+    "title":      "Cài đặt",
+    "theme":      "Giao diện",
+    "themeLight": "Sáng",
+    "themeDark":  "Tối",
+    "language":   "Ngôn ngữ"
+  }
+}
+
 ===== FILE: src\main.ts =====
 
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import Antd from 'ant-design-vue';
+import { createApp }   from 'vue';
+import { createPinia }  from 'pinia';
+import Antd             from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
-import App from './App.vue';
-import router from './router';
+import App              from './App.vue';
+import router           from './router';
+import { i18n }         from './i18n';
+import { useSettingsStore } from './features/settings/stores/settingsStore';
 
-const app = createApp(App);
+const app   = createApp(App);
 const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
 app.use(Antd);
+app.use(i18n);
+
+// Sync vue-i18n locale whenever settingsStore.language changes
+const settingsStore = useSettingsStore();
+i18n.global.locale.value = settingsStore.language;
+
+import { watch } from 'vue';
+watch(
+  () => settingsStore.language,
+  (lang) => { i18n.global.locale.value = lang; },
+);
 
 app.mount('#app');
 
@@ -3444,8 +3985,21 @@ services:
       - "${PARSER_PORT}:${PARSER_PORT}"
     restart: unless-stopped
 
+  filestorage:
+    build: ./filestorage
+    container_name: filestorage-container
+    ports:
+      - "${FILESTORAGE_PORT}:3007"
+    environment:
+      - FILESTORAGE_API_KEY=${FILESTORAGE_API_KEY}
+      - UPLOAD_DIR=/data/files
+    volumes:
+      - filestorage_data:/data/files
+    restart: unless-stopped
+
 volumes:
   redis_data:
+  filestorage_data:
 
 --- FILE: slp\infranstructure\piper-gateway\server.py ---
 # server.py

@@ -45,6 +45,8 @@ public class AppDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<AdminLog> AdminLogs => Set<AdminLog>();
+    public DbSet<CommentHistory> CommentHistories => Set<CommentHistory>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -83,4 +83,18 @@ public class CommentRepository : ICommentRepository
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task AddHistoryAsync(CommentHistory entry)
+    {
+        _db.CommentHistories.Add(entry);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<CommentHistory>> GetHistoryAsync(int commentId)
+    {
+        return await _db.CommentHistories
+            .Where(h => h.CommentId == commentId)
+            .OrderBy(h => h.EditedAt)
+            .ToListAsync();
+    }
 }

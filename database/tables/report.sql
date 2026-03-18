@@ -32,6 +32,8 @@ CREATE INDEX idx_report_resolved ON public.report USING btree (resolved);
 
 CREATE INDEX idx_report_target ON public.report USING btree (target_type, target_id);
 
+CREATE INDEX idx_report_user_id ON public.report USING btree (user_id);
+
 ALTER TABLE ONLY public.report
     ADD CONSTRAINT report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id) ON DELETE SET NULL;
 

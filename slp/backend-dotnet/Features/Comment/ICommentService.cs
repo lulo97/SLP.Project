@@ -1,7 +1,5 @@
 using backend_dotnet.Features.Comment;
 
-namespace backend_dotnet.Features.Comment;
-
 public interface ICommentService
 {
     Task<CommentDto?> GetByIdAsync(int id);
@@ -10,4 +8,7 @@ public interface ICommentService
     Task<CommentDto?> UpdateAsync(int userId, int commentId, UpdateCommentRequest request);
     Task<bool> DeleteAsync(int userId, int commentId, bool isAdmin);
     Task<bool> RestoreAsync(int adminId, int commentId);
+
+    // History
+    Task<IEnumerable<CommentHistoryDto>?> GetHistoryAsync(int commentId);
 }

@@ -56,6 +56,9 @@
         <span v-if="canEdit" @click="startEdit" data-testid="edit-button">
           <EditOutlined /> Edit
         </span>
+        <span @click="openHistory" data-testid="history-button">
+          <HistoryOutlined /> History
+        </span>
 
         <span
           v-if="isAuthenticated"
@@ -78,6 +81,11 @@
         </a-popconfirm>
       </template>
     </a-comment>
+
+    <CommentHistoryModal
+      v-model:visible="historyModalVisible"
+      :comment-id="comment.id"
+    />
 
     <!-- Replies -->
     <div
@@ -112,6 +120,8 @@ import {
 import { message } from "ant-design-vue";
 import type { CommentDto } from "../stores/commentStore";
 import { useCommentStore } from "../stores/commentStore";
+import { HistoryOutlined } from "@ant-design/icons-vue";
+import CommentHistoryModal from "./CommentHistoryModal.vue";
 
 const props = defineProps<{
   comment: CommentDto;
@@ -132,6 +142,7 @@ const emit = defineEmits<{
 const store = useCommentStore();
 const editing = ref(false);
 const editContent = ref(props.comment.content);
+const historyModalVisible = ref(false);
 
 // Watch for missing userId (debugging)
 watch(
@@ -142,6 +153,10 @@ watch(
     }
   },
 );
+
+const openHistory = () => {
+  historyModalVisible.value = true;
+};
 
 const canEdit = computed(() => {
   const userId = props.comment.userId;

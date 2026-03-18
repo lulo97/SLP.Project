@@ -13,15 +13,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 
 ## Day 2
 
-### Backend (Dev1)
-#### Task 1: User Reports Page
-- **Endpoints**:
-  - `GET /api/user/reports` – returns current user’s reports (ordered by `created_at DESC`)
-  - `DELETE /api/user/reports/{id}` – hard delete if `resolved = false` and ownership matches.
-- **Repository**: Add `GetByUserIdAsync`, `DeleteAsync` with check.
-- **Service**: Enforce resolved check.
-- **Solution**: No new table; existing `report` table used. Add index on `user_id` if missing.
-
 #### Task 3: Comment History
 - **New table**: `comment_history` (`id`, `comment_id`, `content`, `edited_at`). Foreign key `ON DELETE CASCADE`.
 - **Backend**:

@@ -70,4 +70,12 @@ public class CommentController : ControllerBase
         if (!restored) return NotFound();
         return Ok();
     }
+
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetHistory(int id)
+    {
+        var history = await _commentService.GetHistoryAsync(id);
+        if (history == null) return NotFound();
+        return Ok(history);
+    }
 }

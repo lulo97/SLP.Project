@@ -11,6 +11,7 @@ CREATE TABLE public.users (
     password_reset_token text,
     password_reset_expiry timestamp with time zone,
     email_verification_token text,
+    avatar_filename text,
     CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['user'::character varying, 'admin'::character varying])::text[]))),
     CONSTRAINT users_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'banned'::character varying])::text[])))
 );

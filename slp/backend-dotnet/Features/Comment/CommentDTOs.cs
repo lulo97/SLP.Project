@@ -24,3 +24,11 @@ public class UpdateCommentRequest
 {
     public string Content { get; set; } = string.Empty;
 }
+
+public class CommentHistoryDto
+{
+    public int Id { get; set; }
+    public int CommentId { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTime EditedAt { get; set; }
+}

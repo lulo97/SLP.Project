@@ -38,6 +38,15 @@ public class CommentService : ICommentService
             CreatedAt = DateTime.UtcNow
         };
         var created = await _commentRepo.CreateAsync(comment);
+
+        // Save initial version (v1)
+        await _commentRepo.AddHistoryAsync(new CommentHistory
+        {
+            CommentId = created.Id,
+            Content = created.Content,
+            EditedAt = created.CreatedAt
+        });
+
         return MapToDto(created);
     }
 
@@ -46,9 +55,32 @@ public class CommentService : ICommentService
         var comment = await _commentRepo.GetByIdAsync(commentId);
         if (comment == null || comment.UserId != userId) return null;
 
+        // Snapshot current content before overwriting
+        await _commentRepo.AddHistoryAsync(new CommentHistory
+        {
+            CommentId = comment.Id,
+            Content = comment.Content,
+            EditedAt = DateTime.UtcNow
+        });
+
         comment.Content = request.Content;
-        await _commentRepo.UpdateAsync(comment);
+        await _commentRepo.UpdateAsync(comment); // sets EditedAt inside repo
         return MapToDto(comment);
+    }
+
+    public async Task<IEnumerable<CommentHistoryDto>?> GetHistoryAsync(int commentId)
+    {
+        var comment = await _commentRepo.GetByIdAsync(commentId);
+        if (comment == null) return null;
+
+        var history = await _commentRepo.GetHistoryAsync(commentId);
+        return history.Select(h => new CommentHistoryDto
+        {
+            Id = h.Id,
+            CommentId = h.CommentId,
+            Content = h.Content,
+            EditedAt = h.EditedAt
+        });
     }
 
     public async Task<bool> DeleteAsync(int userId, int commentId, bool isAdmin)
