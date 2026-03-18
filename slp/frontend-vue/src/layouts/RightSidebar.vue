@@ -22,18 +22,11 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ authStore.user.username }}</p>
-            <p class="text-sm text-gray-500 truncate">
-              {{ authStore.user.email }}
-            </p>
+            <p class="text-sm text-gray-500 truncate">{{ authStore.user.email }}</p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
-          <a-button
-            type="link"
-            size="small"
-            @click="sendVerification"
-            :loading="sendingVerification"
-          >
+          <a-button type="link" size="small" @click="sendVerification" :loading="sendingVerification">
             Verify Email
           </a-button>
         </div>
@@ -41,111 +34,88 @@
 
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
-        <a-menu
-          mode="inline"
-          :selected-keys="[currentRoute]"
-          class="border-none"
-        >
-          <!-- Dashboard -->
+        <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
-              <LayoutDashboard :size="18" class="mr-2" />
-              Dashboard
+              <LayoutDashboard :size="18" class="mr-2" />Dashboard
             </router-link>
           </a-menu-item>
 
-          <!-- Quiz Section -->
           <a-menu-item key="/quiz">
             <router-link to="/quiz" class="flex items-center">
-              <FileText :size="18" class="mr-2" />
-              My Quizzes
+              <FileText :size="18" class="mr-2" />My Quizzes
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/quiz/new">
             <router-link to="/quiz/new" class="flex items-center">
-              <PlusCircle :size="18" class="mr-2" />
-              Create Quiz
+              <PlusCircle :size="18" class="mr-2" />Create Quiz
             </router-link>
           </a-menu-item>
 
-          <!-- Question Bank Section -->
           <a-menu-item key="/questions">
             <router-link to="/questions" class="flex items-center">
-              <HelpCircle :size="18" class="mr-2" />
-              Question Bank
+              <HelpCircle :size="18" class="mr-2" />Question Bank
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/question/new">
             <router-link to="/question/new" class="flex items-center">
-              <Plus :size="18" class="mr-2" />
-              New Question
+              <Plus :size="18" class="mr-2" />New Question
             </router-link>
           </a-menu-item>
 
-          <!-- Source Section -->
           <a-menu-item key="/source">
             <router-link to="/source" class="flex items-center">
-              <FolderOpen :size="18" class="mr-2" />
-              My Sources
+              <FolderOpen :size="18" class="mr-2" />My Sources
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/upload">
             <router-link to="/source/upload" class="flex items-center">
-              <Upload :size="18" class="mr-2" />
-              Upload File
+              <Upload :size="18" class="mr-2" />Upload File
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/new-url">
             <router-link to="/source/new-url" class="flex items-center">
-              <Link :size="18" class="mr-2" />
-              Add from URL
+              <LinkIcon :size="18" class="mr-2" />Add from URL
             </router-link>
           </a-menu-item>
-
           <a-menu-item key="/source/new-note">
             <router-link to="/source/new-note" class="flex items-center">
-              <FileText :size="18" class="mr-2" />
-              Add from Text
+              <FileText :size="18" class="mr-2" />Add from Text
             </router-link>
           </a-menu-item>
 
-          <!-- Search -->
           <a-menu-item key="/search">
             <router-link to="/search" class="flex items-center">
-              <Search :size="18" class="mr-2" />
-              Search
+              <Search :size="18" class="mr-2" />Search
             </router-link>
           </a-menu-item>
 
           <a-menu-divider />
 
-          <!-- Profile -->
           <a-menu-item key="/profile">
             <router-link to="/profile" class="flex items-center">
-              <User :size="18" class="mr-2" />
-              Profile
+              <User :size="18" class="mr-2" />Profile
             </router-link>
           </a-menu-item>
-
-          <!-- Admin (if admin) -->
           <a-menu-item v-if="authStore.isAdmin" key="/admin">
             <router-link to="/admin" class="flex items-center">
-              <Shield :size="18" class="mr-2" />
-              Admin
+              <Shield :size="18" class="mr-2" />Admin
             </router-link>
           </a-menu-item>
 
           <a-menu-divider />
+
+          <!-- Settings -->
+          <a-menu-item key="settings" @click="settingsOpen = true">
+            <div class="flex items-center">
+              <Settings :size="18" class="mr-2" />Settings
+            </div>
+          </a-menu-item>
 
           <!-- Logout -->
           <a-menu-item key="logout" @click="handleLogout">
             <div class="flex items-center text-red-500">
-              <LogOut :size="18" class="mr-2" />
-              Logout
+              <LogOut :size="18" class="mr-2" />Logout
             </div>
           </a-menu-item>
         </a-menu>
@@ -158,63 +128,114 @@
     v-if="isOpen"
     class="fixed inset-0 bg-black bg-opacity-50 z-40"
     @click="$emit('close')"
-  ></div>
+  />
+
+  <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
+  <a-modal
+    v-model:open="settingsOpen"
+    title="Settings"
+    :footer="null"
+    width="320px"
+    centered
+  >
+    <div class="space-y-6 py-2">
+
+      <!-- Theme -->
+      <div>
+        <p class="text-sm font-medium text-gray-600 mb-2">Theme</p>
+        <div class="flex gap-2">
+          <button
+            v-for="option in themeOptions"
+            :key="option.value"
+            class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+            :class="settingsStore.theme === option.value
+              ? 'border-blue-500 bg-blue-50 text-blue-600'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            @click="settingsStore.setTheme(option.value)"
+          >
+            <component :is="option.icon" :size="16" />
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div>
+        <p class="text-sm font-medium text-gray-600 mb-2">Language</p>
+        <div class="flex gap-2">
+          <button
+            v-for="option in languageOptions"
+            :key="option.value"
+            class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+            :class="settingsStore.language === option.value
+              ? 'border-blue-500 bg-blue-50 text-blue-600'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            @click="settingsStore.setLanguage(option.value)"
+          >
+            <span>{{ option.flag }}</span>
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRoute } from "vue-router";
-import { Menu, Divider, Button } from "ant-design-vue";
+import { ref, h } from 'vue';
+import { useRoute } from 'vue-router';
+import { Menu, Divider, Button } from 'ant-design-vue';
 import {
-  X,
-  LayoutDashboard,
-  User,
-  Shield,
-  LogOut,
-  FileText,
-  PlusCircle,
-  HelpCircle,
-  Plus,
-  Upload,
-  FolderOpen,
-  Link, 
-  Search
-} from "lucide-vue-next";
-import { useAuthStore } from "@/features/auth/stores/authStore";
-import { message } from "ant-design-vue";
+  X, LayoutDashboard, User, Shield, LogOut,
+  FileText, PlusCircle, HelpCircle, Plus,
+  Upload, FolderOpen, Link as LinkIcon, Search,
+  Settings, Sun, Moon,
+} from 'lucide-vue-next';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useSettingsStore } from '@/features/settings/stores/settingsStore';
+import type { Theme, Language } from '@/features/settings/stores/settingsStore';
+import { message } from 'ant-design-vue';
 
-const AMenu = Menu;
-const AMenuItem = Menu.Item;
+const AMenu      = Menu;
+const AMenuItem  = Menu.Item;
 const AMenuDivider = Divider;
-const AButton = Button;
+const AButton    = Button;
 
-defineProps<{
-  isOpen: boolean;
-}>();
+defineProps<{ isOpen: boolean }>();
+const emit = defineEmits(['close', 'logout']);
 
-const emit = defineEmits(["close", "logout"]);
+const route         = useRoute();
+const authStore     = useAuthStore();
+const settingsStore = useSettingsStore();
+const currentRoute  = route.path;
 
-const route = useRoute();
-const authStore = useAuthStore();
-const currentRoute = route.path;
-
+const settingsOpen = ref(false);
 const sendingVerification = ref(false);
 
+// ── Option lists ──────────────────────────────────────────────────────────────
+const themeOptions: { value: Theme; label: string; icon: any }[] = [
+  { value: 'light', label: 'Light', icon: Sun  },
+  { value: 'dark',  label: 'Dark',  icon: Moon },
+];
+
+const languageOptions: { value: Language; label: string; flag: string }[] = [
+  { value: 'en', label: 'English',    flag: '🇬🇧' },
+  { value: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+];
+
+// ── Handlers ──────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout();
-  emit("logout");
-  emit("close");
+  emit('logout');
+  emit('close');
 };
 
 const sendVerification = async () => {
   sendingVerification.value = true;
   const success = await authStore.sendVerificationEmail();
   sendingVerification.value = false;
-
-  if (success) {
-    message.success("Verification email sent!");
-  } else {
-    message.error("Failed to send verification email");
-  }
+  if (success) message.success('Verification email sent!');
+  else         message.error('Failed to send verification email');
 };
 </script>

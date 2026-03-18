@@ -1,0 +1,75 @@
+{
+  "common": {
+    "save":   "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit":   "Edit",
+    "create": "Create",
+    "loading": "Loading…",
+    "error":   "Something went wrong",
+    "confirm": "Are you sure?"
+  },
+  "nav": {
+    "dashboard":    "Dashboard",
+    "myQuizzes":    "My Quizzes",
+    "createQuiz":   "Create Quiz",
+    "questionBank": "Question Bank",
+    "newQuestion":  "New Question",
+    "mySources":    "My Sources",
+    "uploadFile":   "Upload File",
+    "addFromUrl":   "Add from URL",
+    "addFromText":  "Add from Text",
+    "search":       "Search",
+    "profile":      "Profile",
+    "admin":        "Admin",
+    "logout":       "Logout"
+  },
+  "auth": {
+    "login":           "Login",
+    "register":        "Register",
+    "logout":          "Logout",
+    "email":           "Email",
+    "username":        "Username",
+    "password":        "Password",
+    "forgotPassword":  "Forgot password?",
+    "verifyEmail":     "Verify Email"
+  },
+  "quiz": {
+    "title":          "Title",
+    "description":    "Description",
+    "visibility":     "Visibility",
+    "visibilityPrivate": "Private (only you)",
+    "visibilityPublic":  "Public (visible to everyone)",
+    "tags":           "Tags",
+    "questions":      "Questions",
+    "noQuestions":    "No questions yet.",
+    "createQuiz":     "Create Quiz",
+    "updateQuiz":     "Update Quiz",
+    "duplicateQuiz":  "Duplicate",
+    "deleteQuiz":     "Delete Quiz",
+    "startAttempt":   "Start Attempt",
+    "yourAttempts":   "Your Attempts"
+  },
+  "question": {
+    "title":        "Question Title",
+    "type":         "Question Type",
+    "explanation":  "Explanation",
+    "tags":         "Tags",
+    "createQuestion": "Create Question",
+    "updateQuestion": "Update Question"
+  },
+  "source": {
+    "mySources":  "My Sources",
+    "uploadFile": "Upload File",
+    "addUrl":     "Add from URL",
+    "addNote":    "Add from Text",
+    "noSources":  "No sources yet."
+  },
+  "settings": {
+    "title":        "Settings",
+    "theme":        "Theme",
+    "themeLight":   "Light",
+    "themeDark":    "Dark",
+    "language":     "Language"
+  }
+}

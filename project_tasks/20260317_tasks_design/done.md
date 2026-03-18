@@ -51,3 +51,9 @@
 - **Props**: `items: Array<{ label: string; path?: string }>`, `maxItems` (default 3) with truncation logic.
 - **Integration**: Replace static title in `MobileLayout`’s `#header-left` slot on pages that need breadcrumbs.
 - **Pages**: Dashboard, Quiz list, Quiz detail, Quiz edit, Question list, Source list, Source detail, Search, Admin.
+
+#### Task 12: Tag Selector Component
+- **Store**: `tagStore` with `tags` array, `fetchTags()` (cached).
+- **Component**: `TagSelector.vue` – wraps Ant Design `<a-select mode="tags">`, binds `v-model`, loads options from store, shows loading/error.
+- **Usage**: Replace existing tag selects in `QuizFormPage` and `QuestionFormPage`.
+- **Solution**: Prevents duplicate tags in selection, max 10 tags enforced (frontend + backend later).

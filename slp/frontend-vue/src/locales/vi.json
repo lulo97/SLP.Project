@@ -1,0 +1,75 @@
+{
+  "common": {
+    "save":    "Lưu",
+    "cancel":  "Hủy",
+    "delete":  "Xóa",
+    "edit":    "Chỉnh sửa",
+    "create":  "Tạo mới",
+    "loading": "Đang tải…",
+    "error":   "Đã có lỗi xảy ra",
+    "confirm": "Bạn có chắc không?"
+  },
+  "nav": {
+    "dashboard":    "Trang chủ",
+    "myQuizzes":    "Bài kiểm tra của tôi",
+    "createQuiz":   "Tạo bài kiểm tra",
+    "questionBank": "Ngân hàng câu hỏi",
+    "newQuestion":  "Câu hỏi mới",
+    "mySources":    "Tài liệu của tôi",
+    "uploadFile":   "Tải file lên",
+    "addFromUrl":   "Thêm từ URL",
+    "addFromText":  "Thêm từ văn bản",
+    "search":       "Tìm kiếm",
+    "profile":      "Hồ sơ",
+    "admin":        "Quản trị",
+    "logout":       "Đăng xuất"
+  },
+  "auth": {
+    "login":          "Đăng nhập",
+    "register":       "Đăng ký",
+    "logout":         "Đăng xuất",
+    "email":          "Email",
+    "username":       "Tên người dùng",
+    "password":       "Mật khẩu",
+    "forgotPassword": "Quên mật khẩu?",
+    "verifyEmail":    "Xác minh Email"
+  },
+  "quiz": {
+    "title":             "Tiêu đề",
+    "description":       "Mô tả",
+    "visibility":        "Hiển thị",
+    "visibilityPrivate": "Riêng tư (chỉ mình bạn)",
+    "visibilityPublic":  "Công khai (mọi người đều thấy)",
+    "tags":              "Nhãn",
+    "questions":         "Câu hỏi",
+    "noQuestions":       "Chưa có câu hỏi.",
+    "createQuiz":        "Tạo bài kiểm tra",
+    "updateQuiz":        "Cập nhật bài kiểm tra",
+    "duplicateQuiz":     "Nhân bản",
+    "deleteQuiz":        "Xóa bài kiểm tra",
+    "startAttempt":      "Bắt đầu làm bài",
+    "yourAttempts":      "Lần làm của bạn"
+  },
+  "question": {
+    "title":          "Nội dung câu hỏi",
+    "type":           "Loại câu hỏi",
+    "explanation":    "Giải thích",
+    "tags":           "Nhãn",
+    "createQuestion": "Tạo câu hỏi",
+    "updateQuestion": "Cập nhật câu hỏi"
+  },
+  "source": {
+    "mySources":  "Tài liệu của tôi",
+    "uploadFile": "Tải file lên",
+    "addUrl":     "Thêm từ URL",
+    "addNote":    "Thêm từ văn bản",
+    "noSources":  "Chưa có tài liệu."
+  },
+  "settings": {
+    "title":      "Cài đặt",
+    "theme":      "Giao diện",
+    "themeLight": "Sáng",
+    "themeDark":  "Tối",
+    "language":   "Ngôn ngữ"
+  }
+}

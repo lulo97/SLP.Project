@@ -9,11 +9,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 #### Additional: Cursor Pointer for Quiz List Actions
 - **Implementation**: Identify `<span>` wrappers in `QuizListPage.vue`, apply class.
 
-#### Task 12: Tag Selector Component
-- **Store**: `tagStore` with `tags` array, `fetchTags()` (cached).
-- **Component**: `TagSelector.vue` – wraps Ant Design `<a-select mode="tags">`, binds `v-model`, loads options from store, shows loading/error.
-- **Usage**: Replace existing tag selects in `QuizFormPage` and `QuestionFormPage`.
-- **Solution**: Prevents duplicate tags in selection, max 10 tags enforced (frontend + backend later).
 
 #### Start Task 17: Settings (store & i18n)
 - **Store**: `settingsStore` with `theme` (light/dark), `language` (string), persistence to localStorage.
