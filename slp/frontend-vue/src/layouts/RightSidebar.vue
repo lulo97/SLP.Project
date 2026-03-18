@@ -97,6 +97,13 @@
               <User :size="18" class="mr-2" />Profile
             </router-link>
           </a-menu-item>
+
+          <a-menu-item key="/reports">
+            <router-link to="/reports" class="flex items-center">
+              <Flag :size="18" class="mr-2" />My Reports
+            </router-link>
+          </a-menu-item>
+
           <a-menu-item v-if="authStore.isAdmin" key="/admin">
             <router-link to="/admin" class="flex items-center">
               <Shield :size="18" class="mr-2" />Admin
@@ -190,7 +197,7 @@ import {
   X, LayoutDashboard, User, Shield, LogOut,
   FileText, PlusCircle, HelpCircle, Plus,
   Upload, FolderOpen, Link as LinkIcon, Search,
-  Settings, Sun, Moon,
+  Settings, Sun, Moon, Flag
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useSettingsStore } from '@/features/settings/stores/settingsStore';

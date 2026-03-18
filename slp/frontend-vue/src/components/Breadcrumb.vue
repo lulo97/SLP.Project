@@ -152,6 +152,9 @@ const items = computed<BreadcrumbItem[]>(() => {
     case 'admin':
       return [HOME, { label: 'Admin' }];
 
+    case 'user-reports':
+      return [HOME, { label: 'My Reports' }];
+
     default:
       return []; // unknown route → fallback to plain <h1>
   }

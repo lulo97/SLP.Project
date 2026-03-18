@@ -137,6 +137,12 @@ const router = createRouter({
       component: () => import("@/features/quiz/pages/QuizViewPage.vue"),
       meta: { requiresAuth: false }, // or true if you want to require login to view
     },
+    {
+      path: "/reports",
+      name: "user-reports",
+      component: () => import("@/features/report/pages/UserReportsPage.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 

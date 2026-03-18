@@ -9,12 +9,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 #### Additional: Cursor Pointer for Quiz List Actions
 - **Implementation**: Identify `<span>` wrappers in `QuizListPage.vue`, apply class.
 
-
-#### Start Task 17: Settings (store & i18n)
-- **Store**: `settingsStore` with `theme` (light/dark), `language` (string), persistence to localStorage.
-- **i18n**: Install `vue-i18n`, create basic locale files (`en.json`, `vi.json`) with a few strings.
-- **Setup**: Integrate i18n in `main.ts`, provide to app.
-
 ---
 
 ## Day 2
@@ -38,10 +32,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 - **Solution**: Record each edit; history entries immutable.
 
 ### Backend (Dev2)
-#### Task 14 & 16: Finish Microservices
-- Complete coding of `parser` and `filestorage` services, write Dockerfiles, test locally.
-- Ensure `filestorage` returns correct URL (use `BASE_URL` env).
-- Add API key authentication to sensitive endpoints.
 
 #### Task 19: LLM & TTS Cache
 - **LLM cache**:
@@ -61,16 +51,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 - **Store**: Add `dashboardStore` with `wordOfDay`, `loading`, `error`.
 - **Component**: In `DashboardPage.vue`, create card with word, definition, example, speaker icon (if TTS available). Use skeleton loading.
 - **Solution**: If no word, show fallback message.
-
-#### Task 16: Avatar Frontend
-- **Component**: `AvatarUpload.vue` using Ant Design `<a-upload>`. Shows current avatar (from `authStore.user.avatarUrl`), uploads to `POST /api/users/{userId}/avatar`.
-- **Store**: Update user object after upload.
-- **Integration**: Add to profile page.
-
-#### Continue Task 17: Settings UI
-- Create `SettingsDrawer.vue` with theme toggle (light/dark) and language selector (dropdown).
-- Place settings button in `MobileLayout` header-right slot, opening drawer.
-- Bind to store and apply theme changes (Ant Design `ConfigProvider` + Tailwind dark class).
 
 ### Frontend (Dev2)
 #### Task 10: Quiz Edit – Notes & Sources

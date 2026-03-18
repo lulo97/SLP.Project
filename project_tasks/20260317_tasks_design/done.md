@@ -57,3 +57,8 @@
 - **Component**: `TagSelector.vue` – wraps Ant Design `<a-select mode="tags">`, binds `v-model`, loads options from store, shows loading/error.
 - **Usage**: Replace existing tag selects in `QuizFormPage` and `QuestionFormPage`.
 - **Solution**: Prevents duplicate tags in selection, max 10 tags enforced (frontend + backend later).
+
+#### Start Task 17: Settings (store & i18n)
+- **Store**: `settingsStore` with `theme` (light/dark), `language` (string), persistence to localStorage.
+- **i18n**: Install `vue-i18n`, create basic locale files (`en.json`, `vi.json`) with a few strings.
+- **Setup**: Integrate i18n in `main.ts`, provide to app.

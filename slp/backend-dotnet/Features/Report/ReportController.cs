@@ -51,4 +51,31 @@ public class ReportController : ControllerBase
         if (!resolved) return NotFound();
         return Ok();
     }
+
+    // GET /api/reports/mine
+    [Authorize]
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMyReports()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var reports = await _reportService.GetByUserIdAsync(userId);
+        return Ok(reports);
+    }
+
+    // DELETE /api/reports/mine/{id}
+    [Authorize]
+    [HttpDelete("mine/{id}")]
+    public async Task<IActionResult> DeleteMyReport(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        // Need to distinguish "resolved" from "not found/not owner"
+        var report = await _reportService.GetByIdAsync(id);
+        if (report == null || report.UserId != userId) return NotFound();
+        if (report.Resolved) return Conflict(new { message = "Cannot delete a resolved report." });
+
+        var deleted = await _reportService.DeleteAsync(userId, id);
+        if (!deleted) return NotFound();
+        return NoContent();
+    }
 }

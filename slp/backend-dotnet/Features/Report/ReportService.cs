@@ -70,4 +70,21 @@ public class ReportService : IReportService
             CreatedAt = r.CreatedAt
         };
     }
+
+    public async Task<IEnumerable<ReportDto>> GetByUserIdAsync(int userId)
+    {
+        var reports = await _reportRepo.GetByUserIdAsync(userId);
+        return reports.Select(MapToDto);
+    }
+
+    public async Task<bool> DeleteAsync(int userId, int reportId)
+    {
+        var report = await _reportRepo.GetByIdAsync(reportId);
+
+        if (report == null) return false;               // not found
+        if (report.UserId != userId) return false;      // not owner  → 404 (don't leak existence)
+        if (report.Resolved) return false;              // already resolved → caller maps to 409
+
+        return await _reportRepo.DeleteAsync(reportId);
+    }
 }

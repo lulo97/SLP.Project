@@ -54,4 +54,23 @@ public class ReportRepository : IReportRepository
         await _db.SaveChangesAsync();
         return true;
     }
+
+    public async Task<IEnumerable<Report>> GetByUserIdAsync(int userId)
+    {
+        return await _db.Reports
+            .Include(r => r.User)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var report = await _db.Reports.FindAsync(id);
+        if (report == null) return false;
+
+        _db.Reports.Remove(report);
+        await _db.SaveChangesAsync();
+        return true;
+    }
 }
