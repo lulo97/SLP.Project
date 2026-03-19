@@ -148,3 +148,10 @@
 - Use CSS media queries (`max-width: 768px`) to switch from `<a-table>` to card-based layout.
 - For each admin tab (Users, Quizzes, Comments, Logs, Reports), create a mobile-friendly card component that shows essential info and actions.
 - Ensure touch targets are ≥44px.
+
+#### Task 7: Review & Report (Frontend)
+- **QuizPlayer.vue**: Add “Report Question” button (icon) near question. Click opens `ReportModal` with `targetType: 'quiz_question'`, `targetId: quizQuestionId`, `attemptId: currentAttemptId`.
+- **AttemptReview.vue**:
+  - Add “Report Quiz” button (top) with `targetType: 'quiz'`.
+  - Add “Report Question” per question in review (similar to player).
+- **ReportModal.vue**: Reusable modal with reason textarea, emits success.
