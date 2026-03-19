@@ -24,4 +24,4 @@ COPY --from=build /app/dist ./dist
 
 EXPOSE 3002
 
-CMD ["http-server", "dist", "-p", "3002"]
+CMD ["http-server", "dist", "-p", "3002", "--spa"]
