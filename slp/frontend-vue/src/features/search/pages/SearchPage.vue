@@ -216,7 +216,7 @@
             :page-size="searchStore.pageSize"
             :show-size-changer="false"
             size="small"
-            @change="searchStore.setPage"
+            @change="(page: number) => searchStore.setPage(page)"
           />
         </div>
       </div>
@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
   InputSearch,
@@ -294,6 +294,65 @@ const typeConfig: Record<
   },
 };
 
+// ── URL sync ─────────────────────────────────────────────────────────────────
+
+/**
+ * Watcher A — store → URL
+ *
+ * After each committed search (lastQuery/activeType/page update), reflect the
+ * new state in the URL via router.replace so the address bar stays in sync and
+ * the page is bookmarkable / shareable.
+ * Uses router.replace (not push) so pagination clicks don't pollute history.
+ */
+watch(
+  () => [searchStore.lastQuery, searchStore.activeType, searchStore.page] as const,
+  ([q, type, page]) => {
+    if (!q) return;
+
+    // Only replace when the URL actually differs to avoid a redundant history entry
+    // and to prevent Watcher B from firing needlessly.
+    const cq = route.query;
+    if (cq.q !== q || cq.type !== type || Number(cq.page) !== page) {
+      router.replace({ query: { q, type, page } });
+    }
+  },
+);
+
+/**
+ * Watcher B — URL → store  (back / forward navigation)
+ *
+ * When the user navigates back or forward the URL changes but the store doesn't.
+ * Read the new params and re-run the search.
+ *
+ * Loop-prevention: Watcher A's router.replace also triggers this watcher, but
+ * by the time it fires the store's lastQuery/activeType/page already match the
+ * URL params, so the early-return guard below exits immediately.
+ */
+watch(
+  () => route.query,
+  (query) => {
+    const q    = (query.q    as string | undefined)     ?? '';
+    const type = (query.type as SearchType | undefined) ?? 'all';
+    const page = parseInt(query.page as string) || 1;
+
+    if (!q) return;
+
+    // Already in sync — this was triggered by Watcher A's own router.replace.
+    if (
+      q    === searchStore.lastQuery  &&
+      type === searchStore.activeType &&
+      page === searchStore.page
+    ) return;
+
+    // Restore store state from URL then search without resetting page
+    // (the URL is the source of truth for back/forward).
+    searchStore.query      = q;
+    searchStore.activeType = type;
+    searchStore.page       = page;
+    searchStore.search();
+  },
+);
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getTabCount(type: SearchType): number | null {
@@ -317,10 +376,10 @@ function formatDate(iso: string): string {
 
 function navigateTo(item: SearchResultItem) {
   switch (item.resultType) {
-    case 'quiz':     router.push(`/quiz/${item.id}`);     break;
+    case 'quiz':     router.push(`/quiz/${item.id}`);          break;
     case 'question': router.push(`/question/${item.id}/edit`); break;
-    case 'source':   router.push(`/source/${item.id}`);   break;
-    case 'favorite': router.push('/favorites');            break;
+    case 'source':   router.push(`/source/${item.id}`);        break;
+    case 'favorite': router.push('/favorites');                 break;
   }
 }
 
@@ -328,12 +387,23 @@ function onSearch() {
   searchStore.search(true);
 }
 
-// Pre-fill query from URL ?q= param (e.g. linked from another page)
+// ── Mount: restore state from URL ────────────────────────────────────────────
+
+/**
+ * If the page is opened with ?q=…&type=…&page=… already in the URL
+ * (bookmark, shared link, or a hard reload mid-session), hydrate the store
+ * and fire the search immediately so results appear without user interaction.
+ */
 onMounted(() => {
-  const q = route.query.q as string | undefined;
+  const q    = (route.query.q    as string | undefined)     ?? '';
+  const type = (route.query.type as SearchType | undefined) ?? 'all';
+  const page = parseInt(route.query.page as string) || 1;
+
   if (q) {
-    searchStore.setQuery(q);
-    searchStore.search(true);
+    searchStore.query      = q;
+    searchStore.activeType = type;
+    searchStore.page       = page;
+    searchStore.search(); // honour page from URL — do not reset
   }
 });
 </script>
