@@ -127,6 +127,12 @@
             </router-link>
           </a-menu-item>
 
+          <a-menu-item v-if="authStore.isAdmin" key="/admin/metrics">
+            <router-link to="/admin/metrics" class="flex items-center">
+              <BarChart2 :size="18" class="mr-2" />Metrics
+            </router-link>
+          </a-menu-item>
+
           <a-menu-divider />
 
           <!-- Settings -->
@@ -230,7 +236,8 @@ import {
   Sun,
   Moon,
   Flag,
-  Activity
+  Activity,
+  BarChart2,
 } from "lucide-vue-next";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { useSettingsStore } from "@/features/settings/stores/settingsStore";

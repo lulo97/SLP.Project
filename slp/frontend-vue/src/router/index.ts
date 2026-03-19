@@ -161,6 +161,11 @@ const router = createRouter({
       component: () => import("@/features/auth/pages/VerifyEmailPage.vue"),
       meta: { requiresGuest: false },
     },
+    {
+      path: "/admin/metrics",
+      component: () => import("@/features/admin/pages/AdminMetricsPage.vue"),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 });
 
