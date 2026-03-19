@@ -23,6 +23,7 @@ builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
+builder.Services.AddApiMetrics();
 
 builder.Services.AddHttpClient<IParserClient, ParserClient>(client =>
 {
@@ -48,6 +49,7 @@ app.UseCors("Frontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseMiddleware<RateLimitingMiddleware>();
+app.UseMiddleware<MetricsMiddleware>();
 app.UseMiddleware<SessionMiddleware>();
 app.UseAuthorization();
 app.MapControllers();

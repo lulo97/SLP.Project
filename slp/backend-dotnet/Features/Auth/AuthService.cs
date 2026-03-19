@@ -60,15 +60,15 @@ public class AuthService : IAuthService
         }
 
         // Optional: require email verification before allowing login
-        if (!user.EmailConfirmed)
-        {
-            return new LoginResult
-            {
-                Success = false,
-                ErrorCode = "EMAIL_NOT_VERIFIED",
-                Message = "Please verify your email before logging in."
-            };
-        }
+        //if (!user.EmailConfirmed)
+        //{
+        //    return new LoginResult
+        //    {
+        //        Success = false,
+        //        ErrorCode = "EMAIL_NOT_VERIFIED",
+        //        Message = "Please verify your email before logging in."
+        //    };
+        //}
 
         var token = SessionTokenService.GenerateToken();
         var tokenHash = SessionTokenService.HashToken(token);

@@ -12,6 +12,7 @@
   - `GET /api/admin/metrics/errors`
   - `GET /api/admin/metrics/latency`
 - **Solution**: Use Redis for short-term, PostgreSQL for long-term.
+
 ### Frontend (Dev1)
 
 ### Frontend (Dev2)

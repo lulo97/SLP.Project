@@ -1,1 +1,1 @@
-npx playwright test tests/auth/auth.api.spec.js --headed
+npx playwright test tests/metrics/metrics.api.spec.js --headed

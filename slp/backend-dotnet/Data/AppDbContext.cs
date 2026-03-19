@@ -48,6 +48,7 @@ public class AppDbContext : DbContext
     public DbSet<AdminLog> AdminLogs => Set<AdminLog>();
     public DbSet<CommentHistory> CommentHistories => Set<CommentHistory>();
     public DbSet<DailyWord> DailyWords => Set<DailyWord>();
+    public DbSet<Features.Metrics.MetricEntry> Metrics => Set<Features.Metrics.MetricEntry>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -296,6 +297,13 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
             b.Property(l => l.TargetType).HasMaxLength(20);
             b.HasIndex(l => l.CreatedAt);
+        });
+
+        modelBuilder.Entity<Features.Metrics.MetricEntry>(b =>
+        {
+            b.ToTable("metrics");
+            b.HasKey(m => m.Id);
+            b.HasIndex(m => new { m.Name, m.Timestamp });
         });
     }
 }

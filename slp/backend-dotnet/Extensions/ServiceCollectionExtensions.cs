@@ -9,6 +9,7 @@ using backend_dotnet.Features.Favorite;
 using backend_dotnet.Features.FileStorage;
 using backend_dotnet.Features.Health;
 using backend_dotnet.Features.Llm;
+using backend_dotnet.Features.Metrics;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
@@ -94,6 +95,17 @@ public static class ServiceCollectionExtensions
         bool queueEnabled = configuration.GetValue<bool>("Queue:Enabled");
         string redisConnectionString = configuration.GetConnectionString("Redis");
 
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<Program>>();
+            try { return ConnectionMultiplexer.Connect(redisConnectionString); }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Could not connect IConnectionMultiplexer to Redis");
+                throw;
+            }
+        });
+
         // Register the Redis connection factory (used by RedisQueueService)
         services.AddSingleton<RedisConnectionFactory>(sp =>
         {
@@ -155,6 +167,13 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(30);
         });
     
+        return services;
+    }
+
+    public static IServiceCollection AddApiMetrics(this IServiceCollection services)
+    {
+        services.AddSingleton<IMetricsCollector, RedisMetricsCollector>();
+        services.AddHostedService<MetricsFlushService>();
         return services;
     }
 }
