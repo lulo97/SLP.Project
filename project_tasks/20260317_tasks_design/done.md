@@ -135,3 +135,11 @@
 - **Undo**: Call `POST /api/reports/{id}/undo-resolve`, then refresh both tabs.
 - **Actions**: For unresolved, add “Resolve” button (calls resolve endpoint) and direct moderation buttons (Delete Comment, Disable Quiz) – these will call existing admin endpoints.
 - **Solution**: Undo allowed for any admin, logged in `admin_log`.
+
+#### Task 18: Health Dashboard Backend
+- **Controller**: `HealthDashboardController` with `[Authorize(Roles = "admin")]` and endpoint `GET /api/health/services`.
+- **Implementation**: Parallel checks using `IHttpClientFactory` (HTTP) and `TcpClient` (TCP). Timeout 3 seconds.
+- **Services to check**: Redis (port 6379), Mail (SMTP port), Backend (self, optional), Frontend (HTTP root), Llama (HTTP `/health`), Piper (TCP port), Piper Gateway (HTTP `/health`), ...
+- **Response**: JSON with timestamp and array of `{ name, status, details, responseTimeMs }`.
+- **Cache**: In-memory cache for 10 seconds to reduce load.
+- **Frontend**: Add a page to view services status
