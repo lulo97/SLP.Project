@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 public interface IAuthService
 {
-    Task<LoginResponse?> LoginAsync(string username, string password);
+    Task<LoginResult> LoginAsync(string username, string password);
     Task LogoutAsync(ClaimsPrincipal user);
 
     Task RequestPasswordResetAsync(string email);

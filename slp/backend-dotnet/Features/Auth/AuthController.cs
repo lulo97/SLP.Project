@@ -1,5 +1,6 @@
 ﻿using backend_dotnet.Features.User;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -20,19 +21,27 @@ public class AuthController : ControllerBase
         _userService = userService;
     }
 
-    // POST /auth/login
+    // POST /api/auth/login
     [HttpPost("auth/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await _authService.LoginAsync(request.Username, request.Password);
 
-        if (result == null)
-            return Unauthorized(new { message = "Invalid credentials" });
+        if (!result.Success)
+        {
+            return result.ErrorCode switch
+            {
+                "USER_NOT_FOUND" or "INVALID_PASSWORD" => Unauthorized(new { code = result.ErrorCode, message = result.Message }),
+                "ACCOUNT_BANNED" => Unauthorized(new { code = result.ErrorCode, message = result.Message }),
+                "EMAIL_NOT_VERIFIED" => Unauthorized(new { code = result.ErrorCode, message = result.Message }),
+                _ => Unauthorized(new { code = "LOGIN_FAILED", message = "Login failed" })
+            };
+        }
 
-        return Ok(result);
+        return Ok(result.Data);
     }
 
-    // POST /auth/logout
+    // POST /api/auth/logout
     [Authorize]
     [HttpPost("auth/logout")]
     public async Task<IActionResult> Logout()
@@ -41,17 +50,17 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
-    // POST /auth/reset-password
-    [HttpPost("auth/reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    // POST /api/auth/forgot-password (send reset email)
+    [HttpPost("auth/forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         await _authService.RequestPasswordResetAsync(request.Email);
         return Ok(new { message = "Password reset email sent if account exists." });
     }
 
-    // POST /auth/reset-password/confirm
-    [HttpPost("auth/reset-password/confirm")]
-    public async Task<IActionResult> ConfirmResetPassword([FromBody] ConfirmResetPasswordRequest request)
+    // POST /api/auth/reset-password (confirm reset)
+    [HttpPost("auth/reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var success = await _authService.ConfirmPasswordResetAsync(
             request.Token,
@@ -63,7 +72,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Password reset successful" });
     }
 
-    // POST /auth/verify-email
+    // POST /api/auth/verify-email
     [HttpPost("auth/verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
     {
@@ -75,74 +84,57 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Email verified successfully" });
     }
 
-    // GET /users/me
+    // POST /api/auth/resend-verification
+    [Authorize]
+    [HttpPost("auth/resend-verification")]
+    public async Task<IActionResult> ResendVerification()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await _authService.SendVerificationEmailAsync(userId);
+        return Ok(new { message = "Verification email sent." });
+    }
+
+    // GET /api/users/me
     [Authorize]
     [HttpGet("users/me")]
     public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         var user = await _userService.GetByIdAsync(userId);
-
-        if (user == null)
-            return NotFound();
-
+        if (user == null) return NotFound();
         return Ok(user);
     }
 
-    // PUT /users/me
+    // PUT /api/users/me
     [Authorize]
     [HttpPut("users/me")]
     public async Task<IActionResult> UpdateCurrentUser([FromBody] UpdateUserRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         var updated = await _userService.UpdateAsync(userId, request);
-
         return Ok(updated);
     }
 
-    // POST /users/me/verify-email/send
-    [Authorize]
-    [HttpPost("users/me/verify-email/send")]
-    public async Task<IActionResult> SendVerificationEmail()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        await _authService.SendVerificationEmailAsync(userId);
-
-        return Ok(new { message = "Verification email sent." });
-    }
-
-    // POST /auth/register
+    // POST /api/auth/register
     [HttpPost("auth/register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
     {
         var user = await _userService.RegisterAsync(request);
-
         return Ok(user);
     }
 
-    // DELETE /users/{id}
+    // DELETE /api/users/{id}
     [Authorize]
     [HttpDelete("users/{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         var currentUser = await _userService.GetByIdAsync(currentUserId);
-
-        if (currentUser == null)
-            return Unauthorized();
-
-        if (currentUser.Username != "admin")
-            return Forbid();
+        if (currentUser == null) return Unauthorized();
+        if (currentUser.Username != "admin") return Forbid();
 
         var deleted = await _userService.DeleteAsync(id);
-
-        if (!deleted)
-            return NotFound();
-
+        if (!deleted) return NotFound();
         return Ok(new { message = "User deleted successfully" });
     }
 }

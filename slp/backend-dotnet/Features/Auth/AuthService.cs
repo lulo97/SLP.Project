@@ -2,6 +2,7 @@
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.User;
+using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using System.Text;
 
@@ -10,29 +11,64 @@ public class AuthService : IAuthService
     private readonly IUserRepository _users;
     private readonly ISessionRepository _sessions;
     private readonly IEmailService _email;
+    private readonly string _frontendBaseUrl;
 
     public AuthService(
         IUserRepository users,
         ISessionRepository sessions,
-        IEmailService email)
+        IEmailService email,
+        IConfiguration configuration) // Add IConfiguration parameter
     {
         _users = users;
         _sessions = sessions;
         _email = email;
+        _frontendBaseUrl = configuration.GetValue<string>("Frontend:BaseUrlForEmail")?.TrimEnd('/')
+                           ?? "http://localhost:3002";
     }
 
-    public async Task<LoginResponse?> LoginAsync(string username, string password)
+    public async Task<LoginResult> LoginAsync(string username, string password)
     {
         var user = await _users.GetByUsernameAsync(username);
         if (user == null)
-            return null;
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorCode = "USER_NOT_FOUND",
+                Message = "Invalid credentials"
+            };
+        }
 
-        // Check if user is banned or inactive
         if (user.Status != "active")
-            return null;
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorCode = "ACCOUNT_BANNED",
+                Message = "Your account has been banned. Please contact support."
+            };
+        }
 
         if (!PasswordHasher.Verify(password, user.PasswordHash))
-            return null;
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorCode = "INVALID_PASSWORD",
+                Message = "Invalid credentials"
+            };
+        }
+
+        // Optional: require email verification before allowing login
+        if (!user.EmailConfirmed)
+        {
+            return new LoginResult
+            {
+                Success = false,
+                ErrorCode = "EMAIL_NOT_VERIFIED",
+                Message = "Please verify your email before logging in."
+            };
+        }
 
         var token = SessionTokenService.GenerateToken();
         var tokenHash = SessionTokenService.HashToken(token);
@@ -47,18 +83,21 @@ public class AuthService : IAuthService
 
         await _sessions.CreateAsync(session);
 
-        return new LoginResponse
+        return new LoginResult
         {
-            Token = token,
-            UserId = user.Id.ToString(),
-            Email = user.Email
+            Success = true,
+            Data = new LoginResponse
+            {
+                Token = token,
+                UserId = user.Id.ToString(),
+                Email = user.Email
+            }
         };
     }
 
     public async Task LogoutAsync(ClaimsPrincipal user)
     {
         var sessionId = user.FindFirst("session_id")?.Value;
-
         if (sessionId != null)
             await _sessions.RevokeAsync(sessionId);
     }
@@ -66,31 +105,24 @@ public class AuthService : IAuthService
     public async Task RequestPasswordResetAsync(string email)
     {
         var user = await _users.GetByEmailAsync(email);
-
-        if (user == null)
-            return;
+        if (user == null) return;
 
         var token = Guid.NewGuid().ToString();
-
         user.PasswordResetToken = token;
         user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1);
-
         await _users.UpdateAsync(user);
 
-        await _email.SendAsync(
-            user.Email,
-            "Password Reset",
-            $"Reset token: {token}");
+        // Build reset link using configured frontend URL
+        var resetLink = $"{_frontendBaseUrl}/reset-password?token={token}";
+        var htmlBody = EmailTemplates.GetPasswordResetEmail(resetLink);
+
+        await _email.SendHtmlAsync(user.Email, "Reset Your Password", htmlBody);
     }
 
     public async Task<bool> ConfirmPasswordResetAsync(string token, string newPassword)
     {
         var user = await _users.GetByResetTokenAsync(token);
-
-        if (user == null)
-            return false;
-
-        if (user.PasswordResetExpiry < DateTime.UtcNow)
+        if (user == null || user.PasswordResetExpiry < DateTime.UtcNow)
             return false;
 
         user.PasswordHash = PasswordHasher.Hash(newPassword);
@@ -99,43 +131,39 @@ public class AuthService : IAuthService
 
         await _users.UpdateAsync(user);
 
+        // Revoke all existing sessions for this user
+        await _sessions.RevokeAllForUserAsync(user.Id);
+
         return true;
     }
 
     public async Task<bool> VerifyEmailAsync(string token)
     {
         var user = await _users.GetByEmailVerificationTokenAsync(token);
+        if (user == null) return false;
 
-        if (user == null)
-            return false;
-
-        user.EmailConfirmed = true;               // was EmailVerified
+        user.EmailConfirmed = true;
         user.EmailVerificationToken = null;
 
         await _users.UpdateAsync(user);
-
         return true;
     }
 
     public async Task SendVerificationEmailAsync(string userId)
     {
-        if (!int.TryParse(userId, out var id))    // parse string to int
-            return;
+        if (!int.TryParse(userId, out var id)) return;
 
         var user = await _users.GetByIdAsync(id);
-
-        if (user == null)
-            return;
+        if (user == null) return;
 
         var token = Guid.NewGuid().ToString();
-
         user.EmailVerificationToken = token;
-
         await _users.UpdateAsync(user);
 
-        await _email.SendAsync(
-            user.Email,
-            "Verify your email",
-            $"Verification token: {token}");
+        // Build verification link
+        var verifyLink = $"{_frontendBaseUrl}/verify-email?token={token}";
+        var htmlBody = EmailTemplates.GetEmailVerificationEmail(verifyLink);
+
+        await _email.SendHtmlAsync(user.Email, "Verify Your Email", htmlBody);
     }
 }

@@ -29,10 +29,17 @@ interface User {
   createdAt: string;
   updatedAt: string;
   avatarFilename: string | null;
-  avatarUrl: string | undefined;  // computed from avatarFilename, never from API
+  avatarUrl: string | undefined; // computed from avatarFilename, never from API
 }
 
-function buildAvatarUrl(filename: string | null | undefined): string | undefined {
+interface ApiError {
+  code?: string;
+  message?: string;
+}
+
+function buildAvatarUrl(
+  filename: string | null | undefined,
+): string | undefined {
   if (!filename) return undefined;
   const base = import.meta.env.VITE_FILESTORAGE_URL as string;
   return `${base}/files/${filename}`;
@@ -73,10 +80,15 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("user_id", userId);
 
         await this.fetchCurrentUser();
-        return true;
+        return { success: true };
       } catch (error: any) {
-        this.error = error.response?.data?.message || "Login failed";
-        return false;
+        const errorData = error.response?.data;
+        this.error = errorData?.message || "Login failed";
+        return {
+          success: false,
+          code: errorData?.code,
+          message: this.error,
+        };
       } finally {
         this.loading = false;
       }
@@ -153,7 +165,7 @@ export const useAuthStore = defineStore("auth", {
 
     async requestPasswordReset(email: string) {
       try {
-        await apiClient.post("/auth/reset-password", { email });
+        await apiClient.post("/auth/forgot-password", { email }); // changed
         return true;
       } catch (error) {
         return false;
@@ -162,7 +174,8 @@ export const useAuthStore = defineStore("auth", {
 
     async confirmPasswordReset(token: string, newPassword: string) {
       try {
-        await apiClient.post("/auth/reset-password/confirm", {
+        await apiClient.post("/auth/reset-password", {
+          // changed
           token,
           newPassword,
         });
@@ -186,7 +199,7 @@ export const useAuthStore = defineStore("auth", {
 
     async sendVerificationEmail() {
       try {
-        await apiClient.post("/users/me/verify-email/send");
+        await apiClient.post("/auth/resend-verification"); // changed from /users/me/verify-email/send
         return true;
       } catch (error) {
         return false;

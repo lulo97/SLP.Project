@@ -149,6 +149,18 @@ const router = createRouter({
       component: () => import("@/features/admin/pages/AdminHealthPage.vue"),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: () => import("@/features/auth/pages/ResetPasswordPage.vue"),
+      meta: { requiresGuest: false },
+    },
+    {
+      path: "/verify-email",
+      name: "verify-email",
+      component: () => import("@/features/auth/pages/VerifyEmailPage.vue"),
+      meta: { requiresGuest: false },
+    },
   ],
 });
 

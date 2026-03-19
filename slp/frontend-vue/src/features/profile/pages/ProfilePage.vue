@@ -67,22 +67,41 @@
       >
         <div class="space-y-3">
           <!-- Email Verification -->
-          <div class="flex items-start justify-between">
-            <div class="flex items-start min-w-0 flex-1">
-              <Mail :size="18" class="mr-2 mt-0.5 flex-shrink-0 text-gray-500" />
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-start min-w-0 flex-1 mr-2">
+              <Mail
+                :size="18"
+                class="mr-2 mt-0.5 flex-shrink-0 text-gray-400"
+              />
               <div class="min-w-0">
-                <p class="text-sm font-medium truncate">Email Verification</p>
+                <p class="text-sm font-medium text-gray-700 truncate">
+                  Email Verification
+                </p>
                 <p class="text-xs text-gray-500 truncate">
-                  {{ authStore.isEmailVerified ? "Verified" : "Not verified" }}
+                  {{ authStore.user?.email }}
                 </p>
               </div>
             </div>
-            <a-tag
-              :color="authStore.isEmailVerified ? 'success' : 'warning'"
-              class="ml-2 flex-shrink-0 text-xs"
-            >
-              {{ authStore.isEmailVerified ? "Verified" : "Pending" }}
-            </a-tag>
+
+            <div class="flex items-center flex-shrink-0">
+              <a-tag
+                :color="authStore.isEmailVerified ? 'success' : 'warning'"
+                class="m-0 border-none px-2 text-[11px] leading-5 rounded-full"
+              >
+                {{ authStore.isEmailVerified ? "Verified" : "Pending" }}
+              </a-tag>
+
+              <a-button
+                v-if="!authStore.isEmailVerified"
+                type="link"
+                size="small"
+                :loading="sendingVerification"
+                @click="sendVerification"
+                class="ml-1 px-1 h-auto text-xs font-semibold"
+              >
+                Verify Now
+              </a-button>
+            </div>
           </div>
 
           <!-- Password -->
@@ -91,7 +110,9 @@
               <Key :size="18" class="mr-2 mt-0.5 flex-shrink-0 text-gray-500" />
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">Password</p>
-                <p class="text-xs text-gray-500 truncate">Last changed recently</p>
+                <p class="text-xs text-gray-500 truncate">
+                  Last changed recently
+                </p>
               </div>
             </div>
             <a-button
@@ -106,7 +127,10 @@
           <!-- Account Status -->
           <div class="flex items-start justify-between">
             <div class="flex items-start min-w-0 flex-1">
-              <Shield :size="18" class="mr-2 mt-0.5 flex-shrink-0 text-gray-500" />
+              <Shield
+                :size="18"
+                class="mr-2 mt-0.5 flex-shrink-0 text-gray-500"
+              />
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">Account Status</p>
                 <p class="text-xs text-gray-500 capitalize truncate">
@@ -115,7 +139,9 @@
               </div>
             </div>
             <a-tag
-              :color="authStore.user?.status === 'active' ? 'success' : 'default'"
+              :color="
+                authStore.user?.status === 'active' ? 'success' : 'default'
+              "
               class="ml-2 flex-shrink-0 text-xs"
             >
               {{ authStore.user?.status }}
@@ -149,7 +175,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import {
-  Card, Form, Input, Button, Tag, Modal, message, Spin,
+  Card,
+  Form,
+  Input,
+  Button,
+  Tag,
+  Modal,
+  message,
+  Spin,
 } from "ant-design-vue";
 import { Camera, Mail, Key, Shield } from "lucide-vue-next";
 import MobileLayout from "@/layouts/MobileLayout.vue";
@@ -171,7 +204,7 @@ const authStore = useAuthStore();
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const avatarUploading = ref(false);
-const avatarDeleting  = ref(false);
+const avatarDeleting = ref(false);
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -208,7 +241,8 @@ async function handleFileSelected(event: Event) {
 
     message.success("Avatar updated!");
   } catch (err: any) {
-    const detail = err.response?.data?.message ?? "Upload failed. Please try again.";
+    const detail =
+      err.response?.data?.message ?? "Upload failed. Please try again.";
     message.error(detail);
   } finally {
     avatarUploading.value = false;
@@ -231,6 +265,21 @@ async function handleDeleteAvatar() {
     avatarDeleting.value = false;
   }
 }
+
+// ── Email Verification ────────────────────────────────────────────────────────
+
+const sendingVerification = ref(false);
+
+const sendVerification = async () => {
+  sendingVerification.value = true;
+  const success = await authStore.sendVerificationEmail();
+  sendingVerification.value = false;
+  if (success) {
+    message.success("Verification email sent!");
+  } else {
+    message.error("Failed to send verification email");
+  }
+};
 
 // ── Password ──────────────────────────────────────────────────────────────────
 
