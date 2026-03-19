@@ -507,9 +507,9 @@ node_modules
     "Redis": "localhost:6379"
   },
   "Email": {
-    "ApiEndpoint": "http://localhost:8025/api/send",
+    "ApiEndpoint": "http://localhost:3000/send-email",
     "FromEmail": "noreply@yourapp.com",
-    "FromName": "Your App Name",
+    "FromName": "SLP",
     "ThrowOnError": false
   },
   "LlmApi": {
@@ -532,6 +532,10 @@ node_modules
   },
   "TtsApi": {
     "BaseUrl": "http://localhost:3005"
+  },
+  "Frontend": {
+    "BaseUrl": "http://localhost:3002",
+    "BaseUrlForEmail": "http://localhost:3002"
   }
 }
 
@@ -932,6 +936,7 @@ using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
 using backend_dotnet.Features.FileStorage;
+using backend_dotnet.Features.Health;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Progress;
@@ -973,6 +978,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IHealthCheckService, HealthCheckService>();
 
         // LLM – use AddHttpClient to register ILlmService (transient) with HttpClient
         services.AddHttpClient<ILlmService, LlmService>();
@@ -1733,6 +1739,7 @@ builder.Services.AddAuthAndCors(builder.Configuration);
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHttpClient<IParserClient, ParserClient>(client =>
 {
@@ -1852,19 +1859,33 @@ VITE_FILESTORAGE_URL=http://localhost:3007
 
 ===== FILE: Dockerfile =====
 
-FROM node:20-alpine
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
+ARG VITE_API_BACKEND_URL
+ARG VITE_TTS_URL
+ARG VITE_FILESTORAGE_URL
+
+ENV VITE_API_BACKEND_URL=$VITE_API_BACKEND_URL
+ENV VITE_TTS_URL=$VITE_TTS_URL
+ENV VITE_FILESTORAGE_URL=$VITE_FILESTORAGE_URL
+
 COPY package*.json ./
-
 RUN npm install
-
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+FROM node:20-alpine
 
-CMD ["npm", "run", "dev", "--", "--host"]
+WORKDIR /app
+RUN npm install -g http-server
+
+COPY --from=build /app/dist ./dist
+
+EXPOSE 3002
+
+CMD ["http-server", "dist", "-p", "3002"]
 
 ===== FILE: index.html =====
 
@@ -1900,9 +1921,11 @@ CMD ["npm", "run", "dev", "--", "--host"]
   "dependencies": {
     "ant-design-vue": "^4.2.6",
     "axios": "^1.13.6",
+    "chart.js": "^4.5.1",
     "lucide-vue-next": "^0.577.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",
+    "vue-chartjs": "^5.3.3",
     "vue-draggable-next": "^2.3.0",
     "vue-i18n": "^11.3.0",
     "vue-router": "^5.0.3"
@@ -2181,7 +2204,7 @@ const displayItems = computed<BreadcrumbItem[]>(() => {
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useTagStore } from '@/features/tag/stores/tagStore';
 
 const MAX_TAGS = 10;
@@ -2363,11 +2386,18 @@ const handleLogout = () => {
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ authStore.user.username }}</p>
-            <p class="text-sm text-gray-500 truncate">{{ authStore.user.email }}</p>
+            <p class="text-sm text-gray-500 truncate">
+              {{ authStore.user.email }}
+            </p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
-          <a-button type="link" size="small" @click="sendVerification" :loading="sendingVerification">
+          <a-button
+            type="link"
+            size="small"
+            @click="sendVerification"
+            :loading="sendingVerification"
+          >
             Verify Email
           </a-button>
         </div>
@@ -2375,7 +2405,11 @@ const handleLogout = () => {
 
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
-        <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
+        <a-menu
+          mode="inline"
+          :selected-keys="[currentRoute]"
+          class="border-none"
+        >
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
               <LayoutDashboard :size="18" class="mr-2" />Dashboard
@@ -2451,6 +2485,18 @@ const handleLogout = () => {
             </router-link>
           </a-menu-item>
 
+          <a-menu-item v-if="authStore.isAdmin" key="/admin/health">
+            <router-link to="/admin/health" class="flex items-center">
+              <Activity :size="18" class="mr-2" />Service Health
+            </router-link>
+          </a-menu-item>
+
+          <a-menu-item v-if="authStore.isAdmin" key="/admin/metrics">
+            <router-link to="/admin/metrics" class="flex items-center">
+              <BarChart2 :size="18" class="mr-2" />Metrics
+            </router-link>
+          </a-menu-item>
+
           <a-menu-divider />
 
           <!-- Settings -->
@@ -2487,7 +2533,6 @@ const handleLogout = () => {
     centered
   >
     <div class="space-y-6 py-2">
-
       <!-- Theme -->
       <div>
         <p class="text-sm font-medium text-gray-600 mb-2">Theme</p>
@@ -2496,9 +2541,11 @@ const handleLogout = () => {
             v-for="option in themeOptions"
             :key="option.value"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
-            :class="settingsStore.theme === option.value
-              ? 'border-blue-500 bg-blue-50 text-blue-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            :class="
+              settingsStore.theme === option.value
+                ? 'border-blue-500 bg-blue-50 text-blue-600'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            "
             @click="settingsStore.setTheme(option.value)"
           >
             <component :is="option.icon" :size="16" />
@@ -2515,9 +2562,11 @@ const handleLogout = () => {
             v-for="option in languageOptions"
             :key="option.value"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
-            :class="settingsStore.language === option.value
-              ? 'border-blue-500 bg-blue-50 text-blue-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            :class="
+              settingsStore.language === option.value
+                ? 'border-blue-500 bg-blue-50 text-blue-600'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            "
             @click="settingsStore.setLanguage(option.value)"
           >
             <span>{{ option.flag }}</span>
@@ -2525,72 +2574,87 @@ const handleLogout = () => {
           </button>
         </div>
       </div>
-
     </div>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref, h } from 'vue';
-import { useRoute } from 'vue-router';
-import { Menu, Divider, Button } from 'ant-design-vue';
+import { ref } from "vue";
+import { useRoute } from "vue-router";
+import { Menu, Divider, Button } from "ant-design-vue";
 import {
-  X, LayoutDashboard, User, Shield, LogOut,
-  FileText, PlusCircle, HelpCircle, Plus,
-  Upload, FolderOpen, Link as LinkIcon, Search,
-  Settings, Sun, Moon, Flag
-} from 'lucide-vue-next';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useSettingsStore } from '@/features/settings/stores/settingsStore';
-import type { Theme, Language } from '@/features/settings/stores/settingsStore';
-import { message } from 'ant-design-vue';
+  X,
+  LayoutDashboard,
+  User,
+  Shield,
+  LogOut,
+  FileText,
+  PlusCircle,
+  HelpCircle,
+  Plus,
+  Upload,
+  FolderOpen,
+  Link as LinkIcon,
+  Search,
+  Settings,
+  Sun,
+  Moon,
+  Flag,
+  Activity,
+  BarChart2,
+} from "lucide-vue-next";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { useSettingsStore } from "@/features/settings/stores/settingsStore";
+import type { Theme, Language } from "@/features/settings/stores/settingsStore";
+import { message } from "ant-design-vue";
 
-const AMenu      = Menu;
-const AMenuItem  = Menu.Item;
+const AMenu = Menu;
+const AMenuItem = Menu.Item;
 const AMenuDivider = Divider;
-const AButton    = Button;
+const AButton = Button;
 
 defineProps<{ isOpen: boolean }>();
-const emit = defineEmits(['close', 'logout']);
+const emit = defineEmits(["close", "logout"]);
 
-const route         = useRoute();
-const authStore     = useAuthStore();
+const route = useRoute();
+const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
-const currentRoute  = route.path;
+const currentRoute = route.path;
 
 const settingsOpen = ref(false);
 const sendingVerification = ref(false);
 
 // ── Option lists ──────────────────────────────────────────────────────────────
 const themeOptions: { value: Theme; label: string; icon: any }[] = [
-  { value: 'light', label: 'Light', icon: Sun  },
-  { value: 'dark',  label: 'Dark',  icon: Moon },
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
 ];
 
 const languageOptions: { value: Language; label: string; flag: string }[] = [
-  { value: 'en', label: 'English',    flag: '🇬🇧' },
-  { value: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
 ];
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout();
-  emit('logout');
-  emit('close');
+  emit("logout");
+  emit("close");
 };
 
 const sendVerification = async () => {
   sendingVerification.value = true;
   const success = await authStore.sendVerificationEmail();
   sendingVerification.value = false;
-  if (success) message.success('Verification email sent!');
-  else         message.error('Failed to send verification email');
+  if (success) message.success("Verification email sent!");
+  else message.error("Failed to send verification email");
 };
 </script>
 
 ===== FILE: src\lib\api\client.ts =====
 
 import axios from 'axios';
+import router from '@/router'; // import the router instance
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BACKEND_URL,
@@ -2613,10 +2677,30 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const url = error.config?.url || '';
+      
+      // List of public endpoints that may return 401 but should not trigger logout
+      const publicEndpoints = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/forgot-password',
+        '/auth/reset-password',
+        '/auth/verify-email',
+      ];
+      
+      // If the request was to a public endpoint, let the component handle the error
+      if (publicEndpoints.some(endpoint => url.includes(endpoint))) {
+        return Promise.reject(error);
+      }
+
+      // Otherwise, token is invalid/expired – clear storage and redirect to login
       localStorage.removeItem('session_token');
       localStorage.removeItem('user_id');
-      window.location.href = '/login';
+      
+      // Use Vue Router for a smooth client‑side navigation (no full reload)
+      router.push('/login');
     }
+    
     return Promise.reject(error);
   }
 );
@@ -2957,10 +3041,33 @@ const router = createRouter({
       component: () => import("@/features/report/pages/UserReportsPage.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/admin/health",
+      name: "admin-health",
+      component: () => import("@/features/admin/pages/AdminHealthPage.vue"),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: () => import("@/features/auth/pages/ResetPasswordPage.vue"),
+      meta: { requiresGuest: false },
+    },
+    {
+      path: "/verify-email",
+      name: "verify-email",
+      component: () => import("@/features/auth/pages/VerifyEmailPage.vue"),
+      meta: { requiresGuest: false },
+    },
+    {
+      path: "/admin/metrics",
+      component: () => import("@/features/admin/pages/AdminMetricsPage.vue"),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
 
   // For routes that need auth or admin, ensure user is loaded
@@ -3291,6 +3398,37 @@ ALTER TABLE ONLY public.comment_history
     ADD CONSTRAINT comment_history_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comment(id) ON DELETE CASCADE;
 
 
+--- FILE: database\tables\daily_word.sql ---
+CREATE TABLE public.daily_word (
+    id integer NOT NULL,
+    word text NOT NULL,
+    part_of_speech character varying(50),
+    vietnamese_translation text,
+    example text,
+    origin text,
+    fun_fact text,
+    target_date date NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+CREATE SEQUENCE public.daily_word_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.daily_word_id_seq OWNED BY public.daily_word.id;
+
+ALTER TABLE ONLY public.daily_word ALTER COLUMN id SET DEFAULT nextval('public.daily_word_id_seq'::regclass);
+
+ALTER TABLE ONLY public.daily_word
+    ADD CONSTRAINT daily_word_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.daily_word
+    ADD CONSTRAINT daily_word_target_date_key UNIQUE (target_date);
+
+
 --- FILE: database\tables\explanation.sql ---
 CREATE TABLE public.explanation (
     id integer NOT NULL,
@@ -3409,6 +3547,32 @@ CREATE INDEX idx_llm_log_user ON public.llm_log USING btree (user_id);
 
 ALTER TABLE ONLY public.llm_log
     ADD CONSTRAINT llm_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--- FILE: database\tables\metrics.sql ---
+CREATE TABLE public.metrics (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    "timestamp" timestamp with time zone NOT NULL,
+    value double precision NOT NULL,
+    tags text
+);
+
+CREATE SEQUENCE public.metrics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.metrics_id_seq OWNED BY public.metrics.id;
+
+ALTER TABLE ONLY public.metrics ALTER COLUMN id SET DEFAULT nextval('public.metrics_id_seq'::regclass);
+
+ALTER TABLE ONLY public.metrics
+    ADD CONSTRAINT metrics_pkey PRIMARY KEY (id);
+
+CREATE INDEX ix_metrics_name_timestamp ON public.metrics USING btree (name, "timestamp");
 
 
 --- FILE: database\tables\note.sql ---
@@ -3770,7 +3934,8 @@ CREATE TABLE public.report (
     resolved_by integer,
     resolved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT report_target_type_check CHECK (((target_type)::text = ANY ((ARRAY['quiz'::character varying, 'question'::character varying, 'comment'::character varying])::text[])))
+    attempt_id integer,
+    CONSTRAINT report_target_type_check CHECK (((target_type)::text = ANY (ARRAY['quiz'::text, 'question'::text, 'comment'::text, 'quiz_question'::text])))
 );
 
 CREATE SEQUENCE public.report_id_seq
@@ -3795,6 +3960,9 @@ CREATE INDEX idx_report_resolved ON public.report USING btree (resolved);
 CREATE INDEX idx_report_target ON public.report USING btree (target_type, target_id);
 
 CREATE INDEX idx_report_user_id ON public.report USING btree (user_id);
+
+ALTER TABLE ONLY public.report
+    ADD CONSTRAINT report_attempt_id_fkey FOREIGN KEY (attempt_id) REFERENCES public.quiz_attempt(id) ON DELETE SET NULL;
 
 ALTER TABLE ONLY public.report
     ADD CONSTRAINT report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id) ON DELETE SET NULL;
@@ -3972,48 +4140,89 @@ ALTER TABLE ONLY public.user_source_progress
 
 --- FILE: slp\infranstructure\docker-compose.yml ---
 services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  postgres:
+      image: postgres:17
+      container_name: postgres
+      restart: unless-stopped
+      environment:
+        POSTGRES_DB: postgres
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: "123"
+        PGPORT: "5433"           # ← add this
+      ports:
+        - "${POSTGRESQL_PORT}:${POSTGRESQL_PORT}"   # expands to 5433:5433 ✓
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -p 5433"]   # ← add -p 5433
+        interval: 5s
+        timeout: 5s
+        retries: 10
+
   redis:
     image: redis:7
     container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Application services ──────────────────────────────────────────────────
 
   mail:
-      build: ./mail
-      container_name: mail
-      ports:
-        - "${MAIL_PORT}:${MAIL_PORT}"
-      env_file:
-        - .env
+    build: ./mail
+    container_name: mail
+    restart: unless-stopped
+    ports:
+      - "${MAIL_PORT}:${MAIL_PORT}"
+    env_file:
+      - .env
 
   backend-dotnet-img:
     build: ../backend-dotnet
     container_name: backend-dotnet-container
+    restart: unless-stopped
     ports:
       - "${BACKEND_DOTNET_PORT}:${BACKEND_DOTNET_PORT}"
     env_file:
       - .env
     depends_on:
-      # - postgres
-      - redis
-      - mail
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mail:
+        condition: service_started
 
   frontend-vue-img:
-    build: ../frontend-vue
+    build:
+      context: ../frontend-vue
+      args:
+        VITE_API_BACKEND_URL: ${VITE_API_BACKEND_URL}
+        VITE_TTS_URL: ${VITE_TTS_URL}
+        VITE_FILESTORAGE_URL: ${VITE_FILESTORAGE_URL}
     container_name: frontend-vue-container
+    restart: unless-stopped
     ports:
       - "${VITE_FRONTEND_PORT}:${VITE_FRONTEND_PORT}"
-    env_file:
-      - .env
     depends_on:
       - backend-dotnet-img
-   
+
+  # ── AI / ML services ──────────────────────────────────────────────────────
+
   llama:
     image: ghcr.io/ggml-org/llama.cpp:server
     container_name: llama-container
+    restart: unless-stopped
     ports:
       - "${LLAMA_PORT}:${LLAMA_PORT}"
     env_file:
@@ -4022,22 +4231,30 @@ services:
       - "${LLAMA_MODEL_VOLUME_PATH}:/models"
     command: >
       -m /models/${LLAMA_MODEL_NAME}
+      --ctx-size 4096
+      --parallel 1
+      --batch-size 256
+      --threads 4
       --host 0.0.0.0
       --port ${LLAMA_PORT}
+    mem_limit: 3g
 
   piper:
     image: ${PIPER_IMAGE}
     container_name: ${PIPER_CONTAINER}
+    restart: unless-stopped
     command: >
       --voice ${PIPER_VOICE}
     volumes:
       - ${PIPER_DATA}:/data
     ports:
-      - "${PIPER_PORT}:${PIPER_PORT}"
+      # wyoming-piper always listens on 10200 internally; PIPER_PORT is the host-side port
+      - "${PIPER_PORT}:10200"
 
   piper-gateway:
     image: ${GATEWAY_IMAGE}
     container_name: ${GATEWAY_CONTAINER}
+    restart: unless-stopped
     working_dir: /app
     volumes:
       - ${GATEWAY_APP_PATH}:/app
@@ -4046,19 +4263,24 @@ services:
       uvicorn server:app --host ${GATEWAY_HOST} --port ${GATEWAY_INTERNAL_PORT}"
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_INTERNAL_PORT}"
+    depends_on:
+      - piper
+
+  # ── Supporting services ───────────────────────────────────────────────────
 
   parser:
     build: ./parser
     container_name: parser-container
+    restart: unless-stopped
     env_file:
       - .env
     ports:
       - "${PARSER_PORT}:${PARSER_PORT}"
-    restart: unless-stopped
 
   filestorage:
     build: ./filestorage
     container_name: filestorage-container
+    restart: unless-stopped
     ports:
       - "${FILESTORAGE_PORT}:3007"
     environment:
@@ -4066,9 +4288,9 @@ services:
       - UPLOAD_DIR=/data/files
     volumes:
       - filestorage_data:/data/files
-    restart: unless-stopped
 
 volumes:
+  postgres_data:
   redis_data:
   filestorage_data:
 
