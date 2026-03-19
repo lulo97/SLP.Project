@@ -33,6 +33,7 @@ public class ReportService : IReportService
             TargetType = request.TargetType,
             TargetId = request.TargetId,
             Reason = request.Reason,
+            AttemptId = request.AttemptId,
             CreatedAt = DateTime.UtcNow
         };
         var created = await _reportRepo.CreateAsync(report);

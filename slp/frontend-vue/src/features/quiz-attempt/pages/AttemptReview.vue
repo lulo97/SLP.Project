@@ -5,6 +5,17 @@
       <!-- Score card -->
       <a-card class="shadow-sm" data-testid="score-card">
         <div class="text-center py-2">
+          <div class="flex justify-end mb-2">
+            <a-button
+              size="small"
+              @click="openReportQuiz"
+              danger
+              ghost
+              data-testid="report-quiz-button"
+            >
+              <FlagOutlined /> Report Quiz
+            </a-button>
+          </div>
           <div
             class="text-3xl font-bold mb-1"
             :class="scoreColor"
@@ -84,6 +95,15 @@
               >
                 {{ getQuestionType(ans) }}
               </span>
+              <a-button
+                size="small"
+                type="text"
+                @click="openReportQuestion(ans.quizQuestionId)"
+                class="ml-auto"
+                data-testid="report-question-button"
+              >
+                <FlagOutlined />
+              </a-button>
             </div>
             <p
               class="text-sm font-medium text-gray-800"
@@ -154,14 +174,24 @@
     <div v-else class="text-center py-8 text-gray-500" data-testid="review-not-found">
       Review not found.
     </div>
+
+    <ReportModal
+      v-model:visible="reportModalVisible"
+      :target-type="reportTarget?.type ?? ''"
+      :target-id="reportTarget?.id ?? 0"
+      :attempt-id="attemptId"
+      @reported="reportModalVisible = false"
+    />
   </MobileLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, defineComponent, h } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { FlagOutlined } from '@ant-design/icons-vue';  // <-- import
 import MobileLayout from '@/layouts/MobileLayout.vue';
 import { useAttemptStore } from '../stores/attemptStore';
+import ReportModal from '@/features/report/components/ReportModal.vue';  // <-- import
 
 const route = useRoute();
 const router = useRouter();
@@ -170,6 +200,8 @@ const attemptStore = useAttemptStore();
 const attemptId = computed(() => Number(route.params.attemptId));
 const loading = ref(true);
 const review = ref<any>(null);
+const reportModalVisible = ref(false);
+const reportTarget = ref<{ type: string; id: number } | null>(null);
 
 onMounted(async () => {
   try {
@@ -385,4 +417,15 @@ const AnswerDisplay = defineComponent({
     };
   },
 });
+
+const openReportQuiz = () => {
+  reportTarget.value = { type: 'quiz', id: review.value?.quizId };
+  reportModalVisible.value = true;
+};
+
+const openReportQuestion = (quizQuestionId: number) => {
+  reportTarget.value = { type: 'quiz_question', id: quizQuestionId };
+  reportModalVisible.value = true;
+};
+
 </script>

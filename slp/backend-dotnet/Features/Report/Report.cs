@@ -32,9 +32,11 @@ public class Report
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+    [Column("attempt_id")]
+    public int? AttemptId { get; set; }
     // Navigation
     [JsonIgnore]
     public User.User? User { get; set; }
     public User.User? Resolver { get; set; }
+    public QuizAttempt.QuizAttempt? Attempt { get; set; }
 }

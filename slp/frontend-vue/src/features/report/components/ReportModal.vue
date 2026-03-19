@@ -33,6 +33,7 @@ const props = defineProps<{
   visible: boolean;
   targetType: string;
   targetId: number;
+  attemptId?: number;                 // <-- new optional prop
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +56,7 @@ const handleSubmit = async () => {
       targetType: props.targetType,
       targetId: props.targetId,
       reason: reason.value.trim(),
+      attemptId: props.attemptId,      // <-- include if provided
     });
     message.success('Report submitted');
     emit('reported');

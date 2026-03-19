@@ -15,6 +15,14 @@
             :saving="composable.saving.value"
             data-testid="auto-save-indicator"
           />
+          <!-- Report Question button (icon) -->
+          <a-button
+            size="small"
+            @click="openReportModal"
+            data-testid="report-question-button"
+          >
+            <FlagOutlined />
+          </a-button>
           <a-button
             size="small"
             @click="showSidebar = true"
@@ -126,6 +134,15 @@
           Answered: {{ composable.answeredCount.value }} / {{ attemptValue.questionCount }}
         </p>
       </a-modal>
+
+      <ReportModal
+        v-if="reportQuestionId"
+        v-model:visible="reportModalVisible"
+        target-type="quiz_question"
+        :target-id="reportQuestionId"
+        :attempt-id="Number(route.params.attemptId)"
+        @reported="reportModalVisible = false"
+      />
     </div>
 
     <div
@@ -142,13 +159,14 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
-import { MenuOutlined } from "@ant-design/icons-vue";
+import { MenuOutlined, FlagOutlined } from "@ant-design/icons-vue";  // <-- added FlagOutlined
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useAttemptStore } from "../stores/attemptStore";
 import { useAttempt } from "../composables/useAttempt";
 import QuestionDisplay from "../components/QuestionDisplay.vue";
 import AutoSaveIndicator from "../components/AutoSaveIndicator.vue";
 import { useQuizStore } from "@/features/quiz/stores/quizStore";
+import ReportModal from "@/features/report/components/ReportModal.vue";  // <-- import
 
 const route = useRoute();
 const router = useRouter();
@@ -163,6 +181,8 @@ const attemptIdParam = computed(() =>
 const showSidebar = ref(false);
 const showSubmitModal = ref(false);
 const quizTitle = ref("");
+const reportModalVisible = ref(false);
+const reportQuestionId = ref<number | null>(null);
 
 const composable = useAttempt(quizId.value);
 
@@ -249,6 +269,13 @@ const handleSubmit = async () => {
   } catch (err) {
     console.error("[QuizPlayer] submitAttempt error:", err);
     message.error("Submission failed");
+  }
+};
+
+const openReportModal = () => {
+  if (composable.currentQuestion.value) {
+    reportQuestionId.value = composable.currentQuestion.value.quizQuestionId;
+    reportModalVisible.value = true;
   }
 };
 </script>

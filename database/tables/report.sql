@@ -8,7 +8,8 @@ CREATE TABLE public.report (
     resolved_by integer,
     resolved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT report_target_type_check CHECK (((target_type)::text = ANY ((ARRAY['quiz'::character varying, 'question'::character varying, 'comment'::character varying])::text[])))
+    attempt_id integer,
+    CONSTRAINT report_target_type_check CHECK (((target_type)::text = ANY (ARRAY['quiz'::text, 'question'::text, 'comment'::text, 'quiz_question'::text])))
 );
 
 CREATE SEQUENCE public.report_id_seq
@@ -33,6 +34,9 @@ CREATE INDEX idx_report_resolved ON public.report USING btree (resolved);
 CREATE INDEX idx_report_target ON public.report USING btree (target_type, target_id);
 
 CREATE INDEX idx_report_user_id ON public.report USING btree (user_id);
+
+ALTER TABLE ONLY public.report
+    ADD CONSTRAINT report_attempt_id_fkey FOREIGN KEY (attempt_id) REFERENCES public.quiz_attempt(id) ON DELETE SET NULL;
 
 ALTER TABLE ONLY public.report
     ADD CONSTRAINT report_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id) ON DELETE SET NULL;
