@@ -95,3 +95,13 @@
   - If cache miss and `PIPER_ENABLED=false`, return 503.
   - Add env `TTS_CACHE_DIR`, `PIPER_ENABLED`.
   - Also check service call to check health from backend dotnet
+
+#### Task 5: Dashboard – Word of the Day
+- **API**: `GET /api/dashboard/word-of-day`
+  + Show a word with vietnamese definition + detail dictionary metadata
+  + Origin of word
+  + Examples of word
+  + Fun fact about word
+- **Store**: Add `dashboardStore` with `wordOfDay`, `loading`, `error`.
+- **Component**: In `DashboardPage.vue` (design later)
+- **Solution**: If no word, show fallback message.

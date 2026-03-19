@@ -8,6 +8,7 @@ using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
 using backend_dotnet.Features.FileStorage;
 using backend_dotnet.Features.Llm;
+using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Progress;
 using backend_dotnet.Features.Question;
 using backend_dotnet.Features.Queue;
@@ -73,6 +74,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IWordOfTheDayProvider, DbWordOfTheDayProvider>();
+        services.AddScoped<INoteRepository, NoteRepository>();
+        services.AddScoped<INoteService, NoteService>();
 
         // Email service with HttpClient
         services.AddHttpClient<IEmailService, EmailService>(client =>

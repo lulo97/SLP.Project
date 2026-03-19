@@ -3,7 +3,11 @@
     <div v-if="loading" class="text-center py-4">
       <a-spin size="small" data-testid="sources-loading" />
     </div>
-    <div v-else-if="sources.length === 0" class="text-gray-400 text-sm py-2" data-testid="no-sources-message">
+    <div
+      v-else-if="sources.length === 0"
+      class="text-gray-400 text-sm py-2"
+      data-testid="no-sources-message"
+    >
       No sources attached.
     </div>
     <div v-else class="flex flex-wrap gap-2 mb-3">
@@ -13,7 +17,14 @@
         :closable="!readonly && canEdit"
         @close="emit('detach', src.id)"
         :data-testid="`source-tag-${src.id}`"
+        class="flex items-center gap-1"
       >
+        <!-- View button (always visible) -->
+        <EyeOutlined
+          class="cursor-pointer hover:text-primary"
+          @click.stop="emit('view', src.id)"
+          :data-testid="`source-view-${src.id}`"
+        />
         {{ src.title }}
       </a-tag>
     </div>
@@ -67,22 +78,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { PlusOutlined } from '@ant-design/icons-vue';
-import { message } from 'ant-design-vue';
+import { ref } from "vue";
+import { PlusOutlined, EyeOutlined } from "@ant-design/icons-vue";
+import { message } from "ant-design-vue";
 
 const props = defineProps<{
   sources: any[];
   loading: boolean;
   canEdit: boolean;
-  readonly?: boolean;   // <-- new
+  readonly?: boolean;
   availableSources: any[];
   availableSourcesLoading: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'attach', sourceIds: number[]): void;
-  (e: 'detach', sourceId: number): void;
+  (e: "attach", sourceIds: number[]): void;
+  (e: "detach", sourceId: number): void;
+  (e: "view", sourceId: number): void;
 }>();
 
 const modalVisible = ref(false);
@@ -100,12 +112,12 @@ const openAttachModal = () => {
 
 const handleAttach = async () => {
   if (selectedIds.value.length === 0) {
-    message.warning('Select at least one source');
+    message.warning("Select at least one source");
     return;
   }
   attaching.value = true;
   try {
-    await emit('attach', selectedIds.value);
+    emit("attach", selectedIds.value);
     modalVisible.value = false;
   } finally {
     attaching.value = false;

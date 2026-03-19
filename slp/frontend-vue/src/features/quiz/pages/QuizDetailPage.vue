@@ -17,6 +17,7 @@
         :notes="notes"
         :loading="quizStore.notesLoading"
         @add="handleAddNote"
+        @edit="handleEditNote"
         @remove="handleRemoveNote"
       />
 
@@ -28,6 +29,7 @@
         :available-sources-loading="sourceStore.loading"
         @attach="handleAttachSources"
         @detach="handleDetachSource"
+        @view="handleViewSource"
       />
 
       <!-- Attempts Section -->
@@ -189,6 +191,18 @@ const handleAddNote = async (note: { title: string; content: string }) => {
     message.error("Failed to add note");
   }
 };
+const handleEditNote = async (
+  id: number,
+  note: { title: string; content: string },
+) => {
+  try {
+    await quizStore.updateNote(id, note);
+    message.success("Note updated");
+    await quizStore.fetchQuizNotes(quizId.value);
+  } catch (err) {
+    message.error("Failed to update note");
+  }
+};
 const handleRemoveNote = async (noteId: number) => {
   const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
   if (success) {
@@ -251,6 +265,10 @@ const openQuestionModal = (
     insertIndex.value = undefined;
   }
   showQuestionModal.value = true;
+};
+
+const handleViewSource = (sourceId: number) => {
+  router.push(`/source/${sourceId}`);
 };
 
 const handleQuestionSaved = async (

@@ -81,7 +81,7 @@ export const useQuizStore = defineStore("quiz", {
       this.pageSize = pageSize;
       try {
         const response = await apiClient.get<PaginatedResult<QuizListDto>>(
-          `/quiz?mine=true&page=${page}&pageSize=${pageSize}`
+          `/quiz?mine=true&page=${page}&pageSize=${pageSize}`,
         );
         // Backend returns PaginatedResult<QuizListDto>
         this.quizzes = response.data.items ?? (response.data as any);
@@ -107,7 +107,7 @@ export const useQuizStore = defineStore("quiz", {
         });
         if (visibility) params.set("visibility", visibility);
         const response = await apiClient.get<PaginatedResult<QuizListDto>>(
-          `/quiz?${params.toString()}`
+          `/quiz?${params.toString()}`,
         );
         this.quizzes = response.data.items ?? (response.data as any);
         this.total = response.data.total ?? 0;
@@ -127,7 +127,7 @@ export const useQuizStore = defineStore("quiz", {
       this.pageSize = pageSize;
       try {
         const response = await apiClient.get<PaginatedResult<QuizListDto>>(
-          `/quiz?search=${encodeURIComponent(searchTerm)}&page=${page}&pageSize=${pageSize}`
+          `/quiz?search=${encodeURIComponent(searchTerm)}&page=${page}&pageSize=${pageSize}`,
         );
         this.quizzes = response.data.items ?? (response.data as any);
         this.total = response.data.total ?? 0;
@@ -230,7 +230,7 @@ export const useQuizStore = defineStore("quiz", {
     async createQuizQuestion(
       quizId: number,
       snapshotJson: string,
-      displayOrder: number
+      displayOrder: number,
     ) {
       this.loading = true;
       this.error = null;
@@ -251,7 +251,7 @@ export const useQuizStore = defineStore("quiz", {
     async updateQuizQuestion(
       questionId: number,
       snapshotJson: string,
-      displayOrder: number
+      displayOrder: number,
     ) {
       this.loading = true;
       this.error = null;
@@ -288,7 +288,7 @@ export const useQuizStore = defineStore("quiz", {
       this.error = null;
       try {
         const response = await apiClient.get<NoteDto[]>(
-          `/quiz/${quizId}/notes`
+          `/quiz/${quizId}/notes`,
         );
         this.notes = response.data;
       } catch (err: any) {
@@ -300,14 +300,14 @@ export const useQuizStore = defineStore("quiz", {
 
     async addNoteToQuiz(
       quizId: number,
-      payload: { title: string; content: string }
+      payload: { title: string; content: string },
     ) {
       this.loading = true;
       this.error = null;
       try {
         const response = await apiClient.post<NoteDto>(
           `/quiz/${quizId}/notes`,
-          payload
+          payload,
         );
         return response.data;
       } catch (err: any) {
@@ -337,7 +337,7 @@ export const useQuizStore = defineStore("quiz", {
       this.error = null;
       try {
         const response = await apiClient.get<SourceDto[]>(
-          `/quiz/${quizId}/sources`
+          `/quiz/${quizId}/sources`,
         );
         this.sources = response.data;
       } catch (err: any) {
@@ -353,7 +353,7 @@ export const useQuizStore = defineStore("quiz", {
       try {
         const response = await apiClient.post<SourceDto>(
           `/quiz/${quizId}/sources`,
-          { sourceId }
+          { sourceId },
         );
         return response.data;
       } catch (err: any) {
@@ -373,6 +373,20 @@ export const useQuizStore = defineStore("quiz", {
       } catch (err: any) {
         this.error = err.response?.data?.message || "Failed to detach source";
         return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateNote(id: number, payload: { title: string; content: string }) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await apiClient.put(`/notes/${id}`, payload);
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.message || "Failed to update note";
+        throw err;
       } finally {
         this.loading = false;
       }

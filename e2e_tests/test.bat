@@ -1,1 +1,1 @@
-npx playwright test tests/dashboard/backend/dashboard.api.spec.js --headed
+npx playwright test tests/note/note.spec.js --headed

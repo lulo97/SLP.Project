@@ -18,26 +18,16 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 
 
 ### Frontend (Dev1)
-#### Task 5: Dashboard – Word of the Day
-- **API**: `GET /api/dashboard/word-of-day`
-  + Show a word with vietnamese definition + detail dictionary metadata
-  + Origin of word
-  + Examples of word
-  + Fun fact about word
-- **Store**: Add `dashboardStore` with `wordOfDay`, `loading`, `error`.
-- **Component**: In `DashboardPage.vue` (design later)
-- **Solution**: If no word, show fallback message.
 
 ### Frontend (Dev2)
 #### Task 10: Quiz Edit – Notes & Sources
 - **NotesSection**: Add edit button (pencil) emitting `edit` event. Parent (`QuizFormPage`) opens note modal in edit mode, calls `PUT /api/notes/{id}`.
-- **SourcesSection**: Add view button (eye) emitting `view` event. Parent either navigates to source detail or opens `SourcePreviewModal`.
-- **Modal**: Create `SourcePreviewModal.vue` that fetches source and displays truncated content (using TipTap render if available). Include “Read full source” button.
+- **SourcesSection**: Add view button (eye) emitting `view` event. Parent navigates to source detail
 - **Store**: Add `updateNote` action in `quizStore` (or note store).
 
 #### Task 11: Empty Quiz Attempt Prevention
 - In `QuizDetailPage` and `QuizViewPage`, bind `:disabled="questions.length === 0"` to start attempt button. Add tooltip explaining why.
-- No backend changes needed (backend will also validate).
+- backend will also validate.
 
 ---
 
