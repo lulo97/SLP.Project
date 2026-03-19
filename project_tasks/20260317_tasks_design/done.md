@@ -105,3 +105,8 @@
 - **Store**: Add `dashboardStore` with `wordOfDay`, `loading`, `error`.
 - **Component**: In `DashboardPage.vue` (design later)
 - **Solution**: If no word, show fallback message.
+
+#### Task 10: Quiz Edit – Notes & Sources
+- **NotesSection**: Add edit button (pencil) emitting `edit` event. Parent (`QuizFormPage`) opens note modal in edit mode, calls `PUT /api/notes/{id}`.
+- **SourcesSection**: Add view button (eye) emitting `view` event. Parent navigates to source detail
+- **Store**: Add `updateNote` action in `quizStore` (or note store).

@@ -30,6 +30,9 @@ public class AttemptService : IAttemptService
 
         var questions = quiz.QuizQuestions?.OrderBy(q => q.DisplayOrder).ToList() ?? new();
 
+        if (questions.Count == 0)
+            throw new InvalidOperationException("Cannot start attempt on a quiz with no questions.");
+
         // Flashcards are not scored
         int maxScore = questions.Count(q => !IsFlashcard(q.QuestionSnapshotJson));
 

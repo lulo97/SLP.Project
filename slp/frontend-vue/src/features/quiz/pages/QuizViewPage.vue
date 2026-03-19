@@ -15,20 +15,29 @@
       />
 
       <!-- Report Quiz card (visible to authenticated users) -->
-<a-card v-if="isAuthenticated" class="shadow-sm" data-testid="report-quiz-card">
-  <div class="flex items-center justify-between">
-    <span>Find something wrong with this quiz?</span>
-    <a-button @click="reportModalVisible = true" danger ghost data-testid="report-quiz-button">
-      <FlagOutlined /> Report Quiz
-    </a-button>
-  </div>
-</a-card>
+      <a-card
+        v-if="isAuthenticated"
+        class="shadow-sm"
+        data-testid="report-quiz-card"
+      >
+        <div class="flex items-center justify-between">
+          <span>Find something wrong with this quiz?</span>
+          <a-button
+            @click="reportModalVisible = true"
+            danger
+            ghost
+            data-testid="report-quiz-button"
+          >
+            <FlagOutlined /> Report Quiz
+          </a-button>
+        </div>
+      </a-card>
 
-<ReportModal
-  v-model:visible="reportModalVisible"
-  target-type="quiz"
-  :target-id="quizId"
-/>
+      <ReportModal
+        v-model:visible="reportModalVisible"
+        target-type="quiz"
+        :target-id="quizId"
+      />
 
       <!-- Notes section – only visible to owner (notes are private) -->
       <NotesSection
@@ -58,15 +67,23 @@
         data-testid="attempts-section"
       >
         <template #extra>
-          <a-button
-            type="primary"
-            size="small"
-            @click="startAttempt"
-            :loading="attemptStore.loading"
-            data-testid="start-attempt-button"
+          <a-tooltip
+            title="Cannot start attempt because this quiz has no questions"
+            :disabled="questions.length > 0"
           >
-            Start Attempt
-          </a-button>
+            <span>
+              <a-button
+                type="primary"
+                size="small"
+                @click="startAttempt"
+                :loading="attemptStore.loading"
+                :disabled="questions.length === 0"
+                data-testid="start-attempt-button"
+              >
+                Start Attempt
+              </a-button>
+            </span>
+          </a-tooltip>
         </template>
         <a-list
           :data-source="attemptStore.userAttempts"
@@ -156,8 +173,8 @@ import NotesSection from "../components/NotesSection.vue";
 import SourcesSection from "../components/SourcesSection.vue";
 import QuestionsSection from "../components/QuestionsSection.vue";
 import QuizActionsCard from "../components/QuizActionsCard.vue";
-import CommentsSection from '@/features/comment/components/CommentsSection.vue'; // add this
-import ReportModal from '@/features/report/components/ReportModal.vue';
+import CommentsSection from "@/features/comment/components/CommentsSection.vue"; // add this
+import ReportModal from "@/features/report/components/ReportModal.vue";
 
 const route = useRoute();
 const router = useRouter();

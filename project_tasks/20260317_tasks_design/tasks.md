@@ -20,10 +20,6 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 ### Frontend (Dev1)
 
 ### Frontend (Dev2)
-#### Task 10: Quiz Edit – Notes & Sources
-- **NotesSection**: Add edit button (pencil) emitting `edit` event. Parent (`QuizFormPage`) opens note modal in edit mode, calls `PUT /api/notes/{id}`.
-- **SourcesSection**: Add view button (eye) emitting `view` event. Parent navigates to source detail
-- **Store**: Add `updateNote` action in `quizStore` (or note store).
 
 #### Task 11: Empty Quiz Attempt Prevention
 - In `QuizDetailPage` and `QuizViewPage`, bind `:disabled="questions.length === 0"` to start attempt button. Add tooltip explaining why.

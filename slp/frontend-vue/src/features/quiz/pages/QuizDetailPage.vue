@@ -39,15 +39,23 @@
         data-testid="attempts-section"
       >
         <template #extra>
-          <a-button
-            type="primary"
-            size="small"
-            @click="startAttempt"
-            :loading="attemptStore.loading"
-            data-testid="start-attempt-button"
+          <a-tooltip
+            title="Cannot start attempt because this quiz has no questions"
+            :disabled="questions.length > 0"
           >
-            Start Attempt
-          </a-button>
+            <span>
+              <a-button
+                type="primary"
+                size="small"
+                @click="startAttempt"
+                :loading="attemptStore.loading"
+                :disabled="questions.length === 0"
+                data-testid="start-attempt-button"
+              >
+                Start Attempt
+              </a-button>
+            </span>
+          </a-tooltip>
         </template>
         <a-list
           :data-source="attemptStore.userAttempts"
