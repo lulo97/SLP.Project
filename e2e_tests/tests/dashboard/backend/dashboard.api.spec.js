@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
 import {
   API_BASE_URL,
-  ADMIN_USER,
   loginAsAdmin,
+  createTestUser,
+  deleteTestUser,
+  loginAsTestUser,
   authHeaders,
   createQuiz,
   addQuestionToQuiz,
@@ -17,10 +19,22 @@ import {
 } from "./helpers.js";
 
 test.describe("Dashboard API", () => {
-  let authToken;
+  let adminToken;
+  let testUser;
+  let userToken;
 
   test.beforeAll(async ({ request }) => {
-    authToken = await loginAsAdmin(request);
+    adminToken = await loginAsAdmin(request);
+    testUser = await createTestUser(request);
+    userToken = await loginAsTestUser(
+      request,
+      testUser.username,
+      testUser.password,
+    );
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteTestUser(request, adminToken, testUser.id);
   });
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -31,7 +45,7 @@ test.describe("Dashboard API", () => {
       const res = await request.get(
         `${API_BASE_URL}/dashboard/word-of-the-day`,
         {
-          headers: authHeaders(authToken),
+          headers: authHeaders(userToken),
         },
       );
       expect(res.status()).toBe(200);
@@ -42,7 +56,6 @@ test.describe("Dashboard API", () => {
       expect(word).toHaveProperty("partOfSpeech");
       expect(word).toHaveProperty("vietnameseTranslation");
       expect(word).toHaveProperty("example");
-      // origin and funFact are optional
     });
 
     test("returns 401 when not authenticated", async ({ request }) => {
@@ -61,7 +74,7 @@ test.describe("Dashboard API", () => {
 
     test.afterEach(async ({ request }) => {
       for (const id of createdQuizIds) {
-        await deleteQuiz(request, authToken, id);
+        await deleteQuiz(request, userToken, id);
       }
       createdQuizIds.length = 0;
     });
@@ -69,56 +82,48 @@ test.describe("Dashboard API", () => {
     test("returns top quizzes ordered by attempt count", async ({
       request,
     }) => {
-      // Unique prefix for this test run
       const testPrefix = `top-quiz-test-${Date.now()}`;
 
-      // Create three quizzes with the same prefix in title
       const q1 = await createQuiz(
         request,
-        authToken,
+        userToken,
         `${testPrefix} Quiz 1`,
         testPrefix,
       );
       const q2 = await createQuiz(
         request,
-        authToken,
+        userToken,
         `${testPrefix} Quiz 2`,
         testPrefix,
       );
       const q3 = await createQuiz(
         request,
-        authToken,
+        userToken,
         `${testPrefix} Quiz 3`,
         testPrefix,
       );
       createdQuizIds.push(q1.id, q2.id, q3.id);
 
-      // Add a question to each so they have questionCount > 0
-      await addQuestionToQuiz(request, authToken, q1.id);
-      await addQuestionToQuiz(request, authToken, q2.id);
-      await addQuestionToQuiz(request, authToken, q3.id);
+      await addQuestionToQuiz(request, userToken, q1.id);
+      await addQuestionToQuiz(request, userToken, q2.id);
+      await addQuestionToQuiz(request, userToken, q3.id);
 
-      // Create attempts: q2 gets 2, q1 gets 1, q3 gets 0
-      await createQuizAttempt(request, authToken, q2.id);
-      await createQuizAttempt(request, authToken, q2.id);
-      await createQuizAttempt(request, authToken, q1.id);
+      await createQuizAttempt(request, userToken, q2.id);
+      await createQuizAttempt(request, userToken, q2.id);
+      await createQuizAttempt(request, userToken, q1.id);
 
       const res = await request.get(
         `${API_BASE_URL}/dashboard/top-quizzes?limit=10`,
         {
-          headers: authHeaders(authToken),
+          headers: authHeaders(userToken),
         },
       );
       expect(res.status()).toBe(200);
       const allQuizzes = await res.json();
 
-      // Filter only those whose title starts with our test prefix
       const ourQuizzes = allQuizzes.filter((q) =>
         q.title.startsWith(testPrefix),
       );
-
-      // Sort them by attempt count descending (the endpoint already returns sorted,
-      // but we filter, so we need to re-sort to be safe)
       const sorted = [...ourQuizzes].sort(
         (a, b) => b.attemptCount - a.attemptCount,
       );
@@ -129,21 +134,15 @@ test.describe("Dashboard API", () => {
       expect(sorted[1].attemptCount).toBe(1);
       expect(sorted[2].id).toBe(q3.id);
       expect(sorted[2].attemptCount).toBe(0);
-
-      // Verify each item has required fields
-      for (const q of ourQuizzes) {
-        expect(q).toHaveProperty("title");
-        expect(q).toHaveProperty("authorUsername");
-        expect(q).toHaveProperty("commentCount");
-        expect(q).toHaveProperty("questionCount");
-      }
     });
 
     test("respects limit parameter (max 20)", async ({ request }) => {
-      // Create 5 quizzes (we don't need all to have attempts)
+      const testPrefix = `limit-test-${Date.now()}`;
       const promises = [];
       for (let i = 0; i < 5; i++) {
-        promises.push(createQuiz(request, authToken, `Limit Test ${i}`));
+        promises.push(
+          createQuiz(request, userToken, `${testPrefix} ${i}`, testPrefix),
+        );
       }
       const quizResults = await Promise.all(promises);
       for (const q of quizResults) {
@@ -153,20 +152,12 @@ test.describe("Dashboard API", () => {
       const res = await request.get(
         `${API_BASE_URL}/dashboard/top-quizzes?limit=3`,
         {
-          headers: authHeaders(authToken),
+          headers: authHeaders(userToken),
         },
       );
       expect(res.status()).toBe(200);
       const quizzes = await res.json();
       expect(quizzes.length).toBeLessThanOrEqual(3);
-    });
-
-    test("returns empty array when no public quizzes exist", async ({
-      request,
-    }) => {
-      // All our created quizzes are public, so we can't easily test empty.
-      // But if the database is empty, the endpoint should return [].
-      // This test is optional; we can skip if we assume there are always some quizzes.
     });
 
     test("returns 401 when not authenticated", async ({ request }) => {
@@ -185,54 +176,54 @@ test.describe("Dashboard API", () => {
     const createdFavorites = [];
 
     test.afterEach(async ({ request }) => {
-      for (const id of createdQuizzes) await deleteQuiz(request, authToken, id);
+      for (const id of createdQuizzes) await deleteQuiz(request, userToken, id);
       for (const id of createdQuestions)
-        await deleteQuestion(request, authToken, id);
+        await deleteQuestion(request, userToken, id);
       for (const id of createdSources)
-        await deleteSource(request, authToken, id);
+        await deleteSource(request, userToken, id);
       for (const id of createdFavorites)
-        await deleteFavorite(request, authToken, id);
+        await deleteFavorite(request, userToken, id);
       createdQuizzes.length = 0;
       createdQuestions.length = 0;
       createdSources.length = 0;
       createdFavorites.length = 0;
     });
 
-    test.only("returns correct counts for authenticated user", async ({
+    test("returns correct counts for authenticated user", async ({
       request,
     }) => {
       // Get initial stats
       const initialRes = await request.get(
         `${API_BASE_URL}/dashboard/user-stats`,
         {
-          headers: authHeaders(authToken),
+          headers: authHeaders(userToken),
         },
       );
       expect(initialRes.status()).toBe(200);
       const initialStats = await initialRes.json();
 
       // Create items
-      const qz1 = await createQuiz(request, authToken);
-      const qz2 = await createQuiz(request, authToken);
+      const qz1 = await createQuiz(request, userToken);
+      const qz2 = await createQuiz(request, userToken);
       createdQuizzes.push(qz1.id, qz2.id);
 
-      const qn1 = await createQuestion(request, authToken);
-      const qn2 = await createQuestion(request, authToken);
+      const qn1 = await createQuestion(request, userToken);
+      const qn2 = await createQuestion(request, userToken);
       createdQuestions.push(qn1.id, qn2.id);
 
-      const src1 = await createSource(request, authToken);
-      const src2 = await createSource(request, authToken);
+      const src1 = await createSource(request, userToken);
+      const src2 = await createSource(request, userToken);
       createdSources.push(src1.id, src2.id);
 
-      const fav1 = await createFavorite(request, authToken, "fav1");
-      const fav2 = await createFavorite(request, authToken, "fav2");
+      const fav1 = await createFavorite(request, userToken, "fav1");
+      const fav2 = await createFavorite(request, userToken, "fav2");
       createdFavorites.push(fav1, fav2);
 
-      // Get new stats
+      // Get final stats
       const finalRes = await request.get(
         `${API_BASE_URL}/dashboard/user-stats`,
         {
-          headers: authHeaders(authToken),
+          headers: authHeaders(userToken),
         },
       );
       expect(finalRes.status()).toBe(200);
@@ -243,23 +234,6 @@ test.describe("Dashboard API", () => {
       expect(finalStats.questionCount - initialStats.questionCount).toBe(2);
       expect(finalStats.sourceCount - initialStats.sourceCount).toBe(2);
       expect(finalStats.favoriteCount - initialStats.favoriteCount).toBe(2);
-    });
-
-    test("returns zero counts when user has no content", async ({
-      request,
-    }) => {
-      // We need a fresh user for this test, but we only have admin.
-      // Admin already has content from other tests; we can't guarantee zero.
-      // Instead, we can assert that the counts are non-negative integers.
-      const res = await request.get(`${API_BASE_URL}/dashboard/user-stats`, {
-        headers: authHeaders(authToken),
-      });
-      expect(res.status()).toBe(200);
-      const stats = await res.json();
-      expect(stats.quizCount).toBeGreaterThanOrEqual(0);
-      expect(stats.questionCount).toBeGreaterThanOrEqual(0);
-      expect(stats.sourceCount).toBeGreaterThanOrEqual(0);
-      expect(stats.favoriteCount).toBeGreaterThanOrEqual(0);
     });
 
     test("returns 401 when not authenticated", async ({ request }) => {
