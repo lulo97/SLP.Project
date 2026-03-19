@@ -14,18 +14,26 @@
     @change="handleChange"
   >
     <template v-if="tagStore.error" #notFoundContent>
-      <span class="text-red-400 text-xs px-2">{{ tagStore.error }}</span>
+      <span
+        class="text-red-400 text-xs px-2"
+        data-testid="tag-selector-not-found"
+        >{{ tagStore.error }}</span
+      >
     </template>
   </a-select>
 
-  <div v-if="atLimit" class="text-yellow-500 text-xs mt-1">
+  <div
+    v-if="atLimit"
+    class="text-yellow-500 text-xs mt-1"
+    data-testid="tag-selector-warning"
+  >
     Maximum {{ MAX_TAGS }} tags allowed.
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useTagStore } from '@/features/tag/stores/tagStore';
+import { computed, onMounted } from "vue";
+import { useTagStore } from "@/features/tag/stores/tagStore";
 
 const MAX_TAGS = 10;
 
@@ -34,11 +42,11 @@ const props = withDefaults(
     modelValue: string[];
     placeholder?: string;
   }>(),
-  { placeholder: 'Select or create tags…' },
+  { placeholder: "Select or create tags…" },
 );
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string[]): void;
+  (e: "update:modelValue", value: string[]): void;
 }>();
 
 const tagStore = useTagStore();
@@ -58,7 +66,7 @@ const options = computed(() =>
 
 const selected = computed<string[]>({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
+  set: (val) => emit("update:modelValue", val),
 });
 
 const atLimit = computed(() => props.modelValue.length >= MAX_TAGS);
@@ -66,7 +74,7 @@ const atLimit = computed(() => props.modelValue.length >= MAX_TAGS);
 // Enforce max-10 and de-duplicate on every change
 function handleChange(newVal: string[]) {
   // Normalise: trim + lowercase for de-dup comparison, but keep original casing
-  const seen  = new Set<string>();
+  const seen = new Set<string>();
   const clean = newVal
     .map((v) => v.trim())
     .filter((v) => {
@@ -78,7 +86,7 @@ function handleChange(newVal: string[]) {
     })
     .slice(0, MAX_TAGS); // hard cap
 
-  emit('update:modelValue', clean);
+  emit("update:modelValue", clean);
 }
 
 onMounted(() => tagStore.fetchTags());
