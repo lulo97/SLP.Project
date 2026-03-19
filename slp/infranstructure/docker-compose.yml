@@ -1,32 +1,66 @@
 services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  postgres:
+      image: postgres:17
+      container_name: postgres
+      restart: unless-stopped
+      environment:
+        POSTGRES_DB: postgres
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: "123"
+        PGPORT: "5433"           # ← add this
+      ports:
+        - "${POSTGRESQL_PORT}:${POSTGRESQL_PORT}"   # expands to 5433:5433 ✓
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -p 5433"]   # ← add -p 5433
+        interval: 5s
+        timeout: 5s
+        retries: 10
+
   redis:
     image: redis:7
     container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Application services ──────────────────────────────────────────────────
 
   mail:
-      build: ./mail
-      container_name: mail
-      ports:
-        - "${MAIL_PORT}:${MAIL_PORT}"
-      env_file:
-        - .env
+    build: ./mail
+    container_name: mail
+    restart: unless-stopped
+    ports:
+      - "${MAIL_PORT}:${MAIL_PORT}"
+    env_file:
+      - .env
 
   backend-dotnet-img:
     build: ../backend-dotnet
     container_name: backend-dotnet-container
+    restart: unless-stopped
     ports:
       - "${BACKEND_DOTNET_PORT}:${BACKEND_DOTNET_PORT}"
     env_file:
       - .env
     depends_on:
-      # - postgres
-      - redis
-      - mail
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mail:
+        condition: service_started
 
   frontend-vue-img:
     build:
@@ -36,14 +70,18 @@ services:
         VITE_TTS_URL: ${VITE_TTS_URL}
         VITE_FILESTORAGE_URL: ${VITE_FILESTORAGE_URL}
     container_name: frontend-vue-container
+    restart: unless-stopped
     ports:
-      - "${VITE_FRONTEND_PORT}:3000"
+      - "${VITE_FRONTEND_PORT}:${VITE_FRONTEND_PORT}"
     depends_on:
       - backend-dotnet-img
-   
+
+  # ── AI / ML services ──────────────────────────────────────────────────────
+
   llama:
     image: ghcr.io/ggml-org/llama.cpp:server
     container_name: llama-container
+    restart: unless-stopped
     ports:
       - "${LLAMA_PORT}:${LLAMA_PORT}"
     env_file:
@@ -63,16 +101,19 @@ services:
   piper:
     image: ${PIPER_IMAGE}
     container_name: ${PIPER_CONTAINER}
+    restart: unless-stopped
     command: >
       --voice ${PIPER_VOICE}
     volumes:
       - ${PIPER_DATA}:/data
     ports:
-      - "${PIPER_PORT}:${PIPER_PORT}"
+      # wyoming-piper always listens on 10200 internally; PIPER_PORT is the host-side port
+      - "${PIPER_PORT}:10200"
 
   piper-gateway:
     image: ${GATEWAY_IMAGE}
     container_name: ${GATEWAY_CONTAINER}
+    restart: unless-stopped
     working_dir: /app
     volumes:
       - ${GATEWAY_APP_PATH}:/app
@@ -81,19 +122,24 @@ services:
       uvicorn server:app --host ${GATEWAY_HOST} --port ${GATEWAY_INTERNAL_PORT}"
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_INTERNAL_PORT}"
+    depends_on:
+      - piper
+
+  # ── Supporting services ───────────────────────────────────────────────────
 
   parser:
     build: ./parser
     container_name: parser-container
+    restart: unless-stopped
     env_file:
       - .env
     ports:
       - "${PARSER_PORT}:${PARSER_PORT}"
-    restart: unless-stopped
 
   filestorage:
     build: ./filestorage
     container_name: filestorage-container
+    restart: unless-stopped
     ports:
       - "${FILESTORAGE_PORT}:3007"
     environment:
@@ -101,8 +147,8 @@ services:
       - UPLOAD_DIR=/data/files
     volumes:
       - filestorage_data:/data/files
-    restart: unless-stopped
 
 volumes:
+  postgres_data:
   redis_data:
   filestorage_data:

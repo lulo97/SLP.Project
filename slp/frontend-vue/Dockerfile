@@ -22,6 +22,6 @@ RUN npm install -g http-server
 
 COPY --from=build /app/dist ./dist
 
-EXPOSE 3000
+EXPOSE 3002
 
-CMD ["http-server", "dist", "-p", "3000"]
+CMD ["http-server", "dist", "-p", "3002"]

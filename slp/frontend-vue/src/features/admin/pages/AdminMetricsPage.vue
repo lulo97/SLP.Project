@@ -236,7 +236,7 @@ const latencyChartData = computed(() => ({
 }));
 
 // ── Chart options ─────────────────────────────────────────────────────────────
-function areaOptions(color: string) {
+function areaOptions(_color: string) {
   return {
     responsive: true,
     maintainAspectRatio: false,
