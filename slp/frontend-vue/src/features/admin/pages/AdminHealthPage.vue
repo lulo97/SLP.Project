@@ -1,10 +1,15 @@
 <template>
   <MobileLayout title="Service Health">
     <div class="space-y-4">
-      <a-card>
+      <a-card data-testid="health-card">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold">System Services</h2>
-          <a-button type="primary" @click="refresh" :loading="loading">
+          <a-button
+            type="primary"
+            @click="refresh"
+            :loading="loading"
+            data-testid="refresh-button"
+          >
             Refresh
           </a-button>
         </div>
@@ -14,6 +19,7 @@
           :pagination="false"
           :loading="loading"
           row-key="name"
+          data-testid="services-table"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'status'">
@@ -26,8 +32,9 @@
             </template>
           </template>
         </a-table>
-        <div class="mt-4 text-xs text-gray-500">
-          Last updated: {{ timestamp ? new Date(timestamp).toLocaleString() : '—' }}
+        <div class="mt-4 text-xs text-gray-500" data-testid="last-updated">
+          Last updated:
+          {{ timestamp ? new Date(timestamp).toLocaleString() : "—" }}
         </div>
       </a-card>
     </div>
@@ -35,10 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { message } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import apiClient from '@/lib/api/client';
+import { ref, onMounted } from "vue";
+import { message } from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import apiClient from "@/lib/api/client";
 
 interface ServiceHealth {
   name: string;
@@ -52,28 +59,35 @@ const services = ref<ServiceHealth[]>([]);
 const timestamp = ref<string | null>(null);
 
 const columns = [
-  { title: 'Service', dataIndex: 'name', key: 'name' },
-  { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: 'Details', dataIndex: 'details', key: 'details', ellipsis: true },
-  { title: 'Response Time', dataIndex: 'responseTimeMs', key: 'responseTimeMs' },
+  { title: "Service", dataIndex: "name", key: "name" },
+  { title: "Status", dataIndex: "status", key: "status" },
+  { title: "Details", dataIndex: "details", key: "details", ellipsis: true },
+  {
+    title: "Response Time",
+    dataIndex: "responseTimeMs",
+    key: "responseTimeMs",
+  },
 ];
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'Healthy': return 'green';
-    case 'Degraded': return 'orange';
-    default: return 'red';
+    case "Healthy":
+      return "green";
+    case "Degraded":
+      return "orange";
+    default:
+      return "red";
   }
 };
 
 const fetchHealth = async () => {
   loading.value = true;
   try {
-    const response = await apiClient.get('/HealthDashboard/services');
+    const response = await apiClient.get("/HealthDashboard/services");
     services.value = response.data.services;
     timestamp.value = response.data.timestamp;
   } catch (error) {
-    message.error('Failed to load health status');
+    message.error("Failed to load health status");
     console.error(error);
   } finally {
     loading.value = false;
