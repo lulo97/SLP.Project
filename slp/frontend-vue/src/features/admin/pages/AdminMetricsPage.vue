@@ -1,9 +1,11 @@
 <template>
   <MobileLayout title="API Metrics">
     <div class="metrics-page space-y-4">
-
       <!-- ── Time Range Controls ─────────────────────────────────────── -->
-      <a-card :bodyStyle="{ padding: '12px 16px' }">
+      <a-card
+        :bodyStyle="{ padding: '12px 16px' }"
+        data-testid="metrics-time-range-card"
+      >
         <div class="controls-row">
           <div class="preset-buttons">
             <a-button
@@ -12,6 +14,7 @@
               :type="activePreset === preset.label ? 'primary' : 'default'"
               size="small"
               @click="applyPreset(preset)"
+              :data-testid="'preset-' + preset.label.toLowerCase()"
             >
               {{ preset.label }}
             </a-button>
@@ -25,6 +28,7 @@
             :allow-clear="false"
             class="range-picker"
             @change="onRangeChange"
+            data-testid="metrics-range-picker"
           />
 
           <a-button
@@ -32,6 +36,7 @@
             size="small"
             :loading="anyLoading"
             @click="loadAll"
+            data-testid="metrics-refresh-button"
           >
             <template #icon><ReloadOutlined /></template>
             Refresh
@@ -45,14 +50,23 @@
           v-for="stat in summaryStats"
           :key="stat.label"
           :bodyStyle="{ padding: '16px' }"
+          :data-testid="
+            'stat-card-' + stat.label.toLowerCase().replace(/\s+/g, '-')
+          "
         >
           <div class="stat-inner">
             <div class="stat-icon" :style="{ background: stat.bg }">
-              <component :is="stat.icon" :size="20" :style="{ color: stat.color }" />
+              <component
+                :is="stat.icon"
+                :size="20"
+                :style="{ color: stat.color }"
+              />
             </div>
             <div class="stat-body">
               <p class="stat-label">{{ stat.label }}</p>
-              <p class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</p>
+              <p class="stat-value" :style="{ color: stat.color }">
+                {{ stat.value }}
+              </p>
               <p v-if="stat.sub" class="stat-sub">{{ stat.sub }}</p>
             </div>
           </div>
@@ -60,48 +74,89 @@
       </div>
 
       <!-- ── Requests Chart ──────────────────────────────────────────── -->
-      <a-card title="Requests / min" :bodyStyle="{ padding: '8px 16px 16px' }">
+      <a-card
+        title="Requests / min"
+        :bodyStyle="{ padding: '8px 16px 16px' }"
+        data-testid="chart-card-requests"
+      >
         <div v-if="metricsStore.loading.requests" class="chart-placeholder">
-          <a-spin />
+          <a-spin data-testid="chart-loading-requests" />
         </div>
-        <div v-else-if="metricsStore.requests.length === 0" class="chart-empty">
+        <div
+          v-else-if="metricsStore.requests.length === 0"
+          class="chart-empty"
+          data-testid="chart-empty-requests"
+        >
           No data for this period
         </div>
-        <Line v-else :data="requestsChartData" :options="areaOptions('#4f88ff')" class="chart-canvas" />
+        <Line
+          v-else
+          :data="requestsChartData"
+          :options="areaOptions('#4f88ff')"
+          class="chart-canvas"
+          data-testid="chart-canvas-requests"
+        />
       </a-card>
 
       <!-- ── Errors Chart ────────────────────────────────────────────── -->
-      <a-card title="Errors / min" :bodyStyle="{ padding: '8px 16px 16px' }">
+      <a-card
+        title="Errors / min"
+        :bodyStyle="{ padding: '8px 16px 16px' }"
+        data-testid="chart-card-errors"
+      >
         <div v-if="metricsStore.loading.errors" class="chart-placeholder">
-          <a-spin />
+          <a-spin data-testid="chart-loading-errors" />
         </div>
-        <div v-else-if="metricsStore.errors.length === 0" class="chart-empty">
+        <div
+          v-else-if="metricsStore.errors.length === 0"
+          class="chart-empty"
+          data-testid="chart-empty-errors"
+        >
           No data for this period
         </div>
-        <Line v-else :data="errorsChartData" :options="areaOptions('#ff4d4f')" class="chart-canvas" />
+        <Line
+          v-else
+          :data="errorsChartData"
+          :options="areaOptions('#ff4d4f')"
+          class="chart-canvas"
+          data-testid="chart-canvas-errors"
+        />
       </a-card>
 
       <!-- ── Latency Chart ───────────────────────────────────────────── -->
-      <a-card title="Latency (ms)" :bodyStyle="{ padding: '8px 16px 16px' }">
+      <a-card
+        title="Latency (ms)"
+        :bodyStyle="{ padding: '8px 16px 16px' }"
+        data-testid="chart-card-latency"
+      >
         <div v-if="metricsStore.loading.latency" class="chart-placeholder">
-          <a-spin />
+          <a-spin data-testid="chart-loading-latency" />
         </div>
-        <div v-else-if="metricsStore.latency.length === 0" class="chart-empty">
+        <div
+          v-else-if="metricsStore.latency.length === 0"
+          class="chart-empty"
+          data-testid="chart-empty-latency"
+        >
           No data for this period
         </div>
-        <Line v-else :data="latencyChartData" :options="latencyOptions" class="chart-canvas" />
+        <Line
+          v-else
+          :data="latencyChartData"
+          :options="latencyOptions"
+          class="chart-canvas"
+          data-testid="chart-canvas-latency"
+        />
       </a-card>
-
     </div>
   </MobileLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import dayjs, { type Dayjs } from 'dayjs';
-import { Spin, Button, Card, DatePicker } from 'ant-design-vue';
-import { ReloadOutlined } from '@ant-design/icons-vue';
-import { Activity, AlertCircle, Clock, TrendingUp } from 'lucide-vue-next';
+import { ref, computed } from "vue";
+import dayjs, { type Dayjs } from "dayjs";
+import { Spin, Button, Card, DatePicker } from "ant-design-vue";
+import { ReloadOutlined } from "@ant-design/icons-vue";
+import { Activity, AlertCircle, Clock, TrendingUp } from "lucide-vue-next";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -111,13 +166,21 @@ import {
   Filler,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Line } from 'vue-chartjs';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useMetricsStore } from '../stores/metricsStore';
+} from "chart.js";
+import { Line } from "vue-chartjs";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useMetricsStore } from "../stores/metricsStore";
 
 // Register Chart.js modules once
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+);
 
 const ARangePicker = DatePicker.RangePicker;
 const ACard = Card;
@@ -131,17 +194,17 @@ const metricsStore = useMetricsStore();
 type RangeValue = [Dayjs, Dayjs];
 
 const PRESETS = [
-  { label: 'Last 1h',  hours: 1  },
-  { label: 'Last 6h',  hours: 6  },
-  { label: 'Last 24h', hours: 24 },
+  { label: "Last 1h", hours: 1 },
+  { label: "Last 6h", hours: 6 },
+  { label: "Last 24h", hours: 24 },
 ] as const;
 
-const activePreset = ref<string>('Last 1h');
-const pickerRange  = ref<RangeValue>([dayjs().subtract(1, 'hour'), dayjs()]);
+const activePreset = ref<string>("Last 1h");
+const pickerRange = ref<RangeValue>([dayjs().subtract(1, "hour"), dayjs()]);
 
 function applyPreset(preset: { label: string; hours: number }) {
   activePreset.value = preset.label;
-  pickerRange.value  = [dayjs().subtract(preset.hours, 'hour'), dayjs()];
+  pickerRange.value = [dayjs().subtract(preset.hours, "hour"), dayjs()];
   loadAll();
 }
 
@@ -149,14 +212,17 @@ function onRangeChange(val: [Dayjs, Dayjs] | [string, string] | null) {
   if (!val) return;
   const [start, end] = val as [Dayjs, Dayjs];
   if (!start?.isValid?.() || !end?.isValid?.()) return;
-  activePreset.value = '';
-  pickerRange.value  = [start, end];
+  activePreset.value = "";
+  pickerRange.value = [start, end];
   loadAll();
 }
 
 // ── Data Loading ──────────────────────────────────────────────────────────────
 const anyLoading = computed(
-  () => metricsStore.loading.requests || metricsStore.loading.errors || metricsStore.loading.latency,
+  () =>
+    metricsStore.loading.requests ||
+    metricsStore.loading.errors ||
+    metricsStore.loading.latency,
 );
 
 function loadAll() {
@@ -166,7 +232,10 @@ function loadAll() {
 
 // ── Chart helpers ─────────────────────────────────────────────────────────────
 function formatTs(ts: string): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -181,10 +250,10 @@ const requestsChartData = computed(() => ({
   labels: metricsStore.requests.map((p) => formatTs(p.timestamp)),
   datasets: [
     {
-      label: 'Requests',
+      label: "Requests",
       data: metricsStore.requests.map((p) => p.value),
-      borderColor: '#4f88ff',
-      backgroundColor: hexToRgba('#4f88ff', 0.15),
+      borderColor: "#4f88ff",
+      backgroundColor: hexToRgba("#4f88ff", 0.15),
       borderWidth: 2,
       pointRadius: 2,
       tension: 0.4,
@@ -197,10 +266,10 @@ const errorsChartData = computed(() => ({
   labels: metricsStore.errors.map((p) => formatTs(p.timestamp)),
   datasets: [
     {
-      label: 'Errors',
+      label: "Errors",
       data: metricsStore.errors.map((p) => p.value),
-      borderColor: '#ff4d4f',
-      backgroundColor: hexToRgba('#ff4d4f', 0.12),
+      borderColor: "#ff4d4f",
+      backgroundColor: hexToRgba("#ff4d4f", 0.12),
       borderWidth: 2,
       pointRadius: 2,
       tension: 0.4,
@@ -213,20 +282,20 @@ const latencyChartData = computed(() => ({
   labels: metricsStore.latency.map((p) => formatTs(p.timestamp)),
   datasets: [
     {
-      label: 'Avg',
+      label: "Avg",
       data: metricsStore.latency.map((p) => p.avg ?? null),
-      borderColor: '#52c41a',
-      backgroundColor: 'transparent',
+      borderColor: "#52c41a",
+      backgroundColor: "transparent",
       borderWidth: 2,
       pointRadius: 2,
       tension: 0.4,
       fill: false,
     },
     {
-      label: 'p95',
+      label: "p95",
       data: metricsStore.latency.map((p) => p.p95 ?? null),
-      borderColor: '#fa8c16',
-      backgroundColor: 'transparent',
+      borderColor: "#fa8c16",
+      backgroundColor: "transparent",
       borderWidth: 2,
       pointRadius: 2,
       tension: 0.4,
@@ -251,12 +320,12 @@ function areaOptions(_color: string) {
     },
     scales: {
       x: {
-        ticks: { color: '#999', font: { size: 11 }, maxTicksLimit: 8 },
-        grid: { color: '#f0f0f0' },
+        ticks: { color: "#999", font: { size: 11 }, maxTicksLimit: 8 },
+        grid: { color: "#f0f0f0" },
       },
       y: {
-        ticks: { color: '#999', font: { size: 11 } },
-        grid: { color: '#f0f0f0' },
+        ticks: { color: "#999", font: { size: 11 } },
+        grid: { color: "#f0f0f0" },
         beginAtZero: true,
       },
     },
@@ -270,23 +339,28 @@ const latencyOptions = {
   plugins: {
     legend: {
       display: true,
-      position: 'top' as const,
+      position: "top" as const,
       labels: { boxWidth: 12, font: { size: 12 } },
     },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)} ms`,
+        label: (ctx: any) =>
+          ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)} ms`,
       },
     },
   },
   scales: {
     x: {
-      ticks: { color: '#999', font: { size: 11 }, maxTicksLimit: 8 },
-      grid: { color: '#f0f0f0' },
+      ticks: { color: "#999", font: { size: 11 }, maxTicksLimit: 8 },
+      grid: { color: "#f0f0f0" },
     },
     y: {
-      ticks: { color: '#999', font: { size: 11 }, callback: (v: any) => `${v} ms` },
-      grid: { color: '#f0f0f0' },
+      ticks: {
+        color: "#999",
+        font: { size: 11 },
+        callback: (v: any) => `${v} ms`,
+      },
+      grid: { color: "#f0f0f0" },
       beginAtZero: true,
     },
   },
@@ -295,36 +369,38 @@ const latencyOptions = {
 // ── Summary Stats ─────────────────────────────────────────────────────────────
 const summaryStats = computed(() => [
   {
-    label: 'Total Requests',
+    label: "Total Requests",
     value: metricsStore.totalRequests.toLocaleString(),
-    sub: 'in selected range',
+    sub: "in selected range",
     icon: Activity,
-    color: '#4f88ff',
-    bg: '#eff4ff',
+    color: "#4f88ff",
+    bg: "#eff4ff",
   },
   {
-    label: 'Total Errors',
+    label: "Total Errors",
     value: metricsStore.totalErrors.toLocaleString(),
     sub: `${metricsStore.errorRate}% error rate`,
     icon: AlertCircle,
-    color: '#ff4d4f',
-    bg: '#fff1f0',
+    color: "#ff4d4f",
+    bg: "#fff1f0",
   },
   {
-    label: 'Avg Latency',
-    value: metricsStore.avgLatency === '—' ? '—' : `${metricsStore.avgLatency} ms`,
-    sub: 'mean across buckets',
+    label: "Avg Latency",
+    value:
+      metricsStore.avgLatency === "—" ? "—" : `${metricsStore.avgLatency} ms`,
+    sub: "mean across buckets",
     icon: Clock,
-    color: '#52c41a',
-    bg: '#f6ffed',
+    color: "#52c41a",
+    bg: "#f6ffed",
   },
   {
-    label: 'p95 Latency',
-    value: metricsStore.p95Latency === '—' ? '—' : `${metricsStore.p95Latency} ms`,
-    sub: '95th percentile',
+    label: "p95 Latency",
+    value:
+      metricsStore.p95Latency === "—" ? "—" : `${metricsStore.p95Latency} ms`,
+    sub: "95th percentile",
     icon: TrendingUp,
-    color: '#fa8c16',
-    bg: '#fff7e6',
+    color: "#fa8c16",
+    bg: "#fff7e6",
   },
 ]);
 
@@ -355,7 +431,9 @@ loadAll();
   gap: 12px;
 }
 @media (min-width: 768px) {
-  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .stat-inner {
@@ -372,7 +450,9 @@ loadAll();
   justify-content: center;
   flex-shrink: 0;
 }
-.stat-body { min-width: 0; }
+.stat-body {
+  min-width: 0;
+}
 .stat-label {
   font-size: 12px;
   color: #8c8c8c;
