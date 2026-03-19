@@ -22,6 +22,7 @@ builder.Services.AddAuthAndCors(builder.Configuration);
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHttpClient<IParserClient, ParserClient>(client =>
 {

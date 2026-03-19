@@ -22,11 +22,18 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate">{{ authStore.user.username }}</p>
-            <p class="text-sm text-gray-500 truncate">{{ authStore.user.email }}</p>
+            <p class="text-sm text-gray-500 truncate">
+              {{ authStore.user.email }}
+            </p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
-          <a-button type="link" size="small" @click="sendVerification" :loading="sendingVerification">
+          <a-button
+            type="link"
+            size="small"
+            @click="sendVerification"
+            :loading="sendingVerification"
+          >
             Verify Email
           </a-button>
         </div>
@@ -34,7 +41,11 @@
 
       <!-- Navigation -->
       <div class="flex-1 overflow-y-auto p-2">
-        <a-menu mode="inline" :selected-keys="[currentRoute]" class="border-none">
+        <a-menu
+          mode="inline"
+          :selected-keys="[currentRoute]"
+          class="border-none"
+        >
           <a-menu-item key="/dashboard">
             <router-link to="/dashboard" class="flex items-center">
               <LayoutDashboard :size="18" class="mr-2" />Dashboard
@@ -110,6 +121,12 @@
             </router-link>
           </a-menu-item>
 
+          <a-menu-item v-if="authStore.isAdmin" key="/admin/health">
+            <router-link to="/admin/health" class="flex items-center">
+              <Activity :size="18" class="mr-2" />Service Health
+            </router-link>
+          </a-menu-item>
+
           <a-menu-divider />
 
           <!-- Settings -->
@@ -146,7 +163,6 @@
     centered
   >
     <div class="space-y-6 py-2">
-
       <!-- Theme -->
       <div>
         <p class="text-sm font-medium text-gray-600 mb-2">Theme</p>
@@ -155,9 +171,11 @@
             v-for="option in themeOptions"
             :key="option.value"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
-            :class="settingsStore.theme === option.value
-              ? 'border-blue-500 bg-blue-50 text-blue-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            :class="
+              settingsStore.theme === option.value
+                ? 'border-blue-500 bg-blue-50 text-blue-600'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            "
             @click="settingsStore.setTheme(option.value)"
           >
             <component :is="option.icon" :size="16" />
@@ -174,9 +192,11 @@
             v-for="option in languageOptions"
             :key="option.value"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
-            :class="settingsStore.language === option.value
-              ? 'border-blue-500 bg-blue-50 text-blue-600'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            :class="
+              settingsStore.language === option.value
+                ? 'border-blue-500 bg-blue-50 text-blue-600'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            "
             @click="settingsStore.setLanguage(option.value)"
           >
             <span>{{ option.flag }}</span>
@@ -184,65 +204,78 @@
           </button>
         </div>
       </div>
-
     </div>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref, h } from 'vue';
-import { useRoute } from 'vue-router';
-import { Menu, Divider, Button } from 'ant-design-vue';
+import { ref, h } from "vue";
+import { useRoute } from "vue-router";
+import { Menu, Divider, Button } from "ant-design-vue";
 import {
-  X, LayoutDashboard, User, Shield, LogOut,
-  FileText, PlusCircle, HelpCircle, Plus,
-  Upload, FolderOpen, Link as LinkIcon, Search,
-  Settings, Sun, Moon, Flag
-} from 'lucide-vue-next';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { useSettingsStore } from '@/features/settings/stores/settingsStore';
-import type { Theme, Language } from '@/features/settings/stores/settingsStore';
-import { message } from 'ant-design-vue';
+  X,
+  LayoutDashboard,
+  User,
+  Shield,
+  LogOut,
+  FileText,
+  PlusCircle,
+  HelpCircle,
+  Plus,
+  Upload,
+  FolderOpen,
+  Link as LinkIcon,
+  Search,
+  Settings,
+  Sun,
+  Moon,
+  Flag,
+  Activity
+} from "lucide-vue-next";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import { useSettingsStore } from "@/features/settings/stores/settingsStore";
+import type { Theme, Language } from "@/features/settings/stores/settingsStore";
+import { message } from "ant-design-vue";
 
-const AMenu      = Menu;
-const AMenuItem  = Menu.Item;
+const AMenu = Menu;
+const AMenuItem = Menu.Item;
 const AMenuDivider = Divider;
-const AButton    = Button;
+const AButton = Button;
 
 defineProps<{ isOpen: boolean }>();
-const emit = defineEmits(['close', 'logout']);
+const emit = defineEmits(["close", "logout"]);
 
-const route         = useRoute();
-const authStore     = useAuthStore();
+const route = useRoute();
+const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
-const currentRoute  = route.path;
+const currentRoute = route.path;
 
 const settingsOpen = ref(false);
 const sendingVerification = ref(false);
 
 // ── Option lists ──────────────────────────────────────────────────────────────
 const themeOptions: { value: Theme; label: string; icon: any }[] = [
-  { value: 'light', label: 'Light', icon: Sun  },
-  { value: 'dark',  label: 'Dark',  icon: Moon },
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
 ];
 
 const languageOptions: { value: Language; label: string; flag: string }[] = [
-  { value: 'en', label: 'English',    flag: '🇬🇧' },
-  { value: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
 ];
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
   await authStore.logout();
-  emit('logout');
-  emit('close');
+  emit("logout");
+  emit("close");
 };
 
 const sendVerification = async () => {
   sendingVerification.value = true;
   const success = await authStore.sendVerificationEmail();
   sendingVerification.value = false;
-  if (success) message.success('Verification email sent!');
-  else         message.error('Failed to send verification email');
+  if (success) message.success("Verification email sent!");
+  else message.error("Failed to send verification email");
 };
 </script>

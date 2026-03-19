@@ -110,3 +110,28 @@
 - **NotesSection**: Add edit button (pencil) emitting `edit` event. Parent (`QuizFormPage`) opens note modal in edit mode, calls `PUT /api/notes/{id}`.
 - **SourcesSection**: Add view button (eye) emitting `view` event. Parent navigates to source detail
 - **Store**: Add `updateNote` action in `quizStore` (or note store).
+
+#### Task 11: Empty Quiz Attempt Prevention
+- In `QuizDetailPage` and `QuizViewPage`, bind `:disabled="questions.length === 0"` to start attempt button. Add tooltip explaining why.
+- backend will also validate.
+
+### Backend (Dev1)
+#### Task 7: Review & Report (Core Backend)
+- **Database**:
+  - Alter `report` table: add `attempt_id` (int, nullable FK to `quiz_attempt`). Add `target_type` check constraint to include `'quiz_question'`.
+  - Add index on `target_type, target_id`.
+- **Endpoints**:
+  - `POST /api/reports` – creates report with `targetType`, `targetId`, `attemptId` (optional), `reason`. Validates target exists and (if attempt) belongs to user.
+  - `GET /api/reports` (admin) – list with `resolved` filter.
+  - `POST /api/reports/{id}/resolve` (admin).
+  - `GET /api/reports/my` – user’s own reports (already done in Task 1, but can reuse).
+- **Service**: Validate target existence: for `quiz_question`, check `QuizQuestion` exists; for `quiz`/`comment` use existing repos.
+- **Admin actions**: In `AdminReports`, implement resolve, and direct moderation (delete comment, disable quiz) with corresponding service calls.
+
+
+#### Task 2: Admin Reports – Resolved View & Undo
+- **AdminReports.vue**: Add tabs for “Unresolved” (default) and “Resolved”.
+- **Resolved tab**: Fetch from `GET /api/reports?resolved=true`. Display table with columns: ID, Reporter, Target, Reason, Resolved By, Resolved At, Undo button.
+- **Undo**: Call `POST /api/reports/{id}/undo-resolve`, then refresh both tabs.
+- **Actions**: For unresolved, add “Resolve” button (calls resolve endpoint) and direct moderation buttons (Delete Comment, Disable Quiz) – these will call existing admin endpoints.
+- **Solution**: Undo allowed for any admin, logged in `admin_log`.

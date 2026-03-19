@@ -7,6 +7,7 @@ using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
 using backend_dotnet.Features.FileStorage;
+using backend_dotnet.Features.Health;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Progress;
@@ -48,6 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IHealthCheckService, HealthCheckService>();
 
         // LLM – use AddHttpClient to register ILlmService (transient) with HttpClient
         services.AddHttpClient<ILlmService, LlmService>();
