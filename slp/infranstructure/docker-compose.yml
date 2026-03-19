@@ -29,12 +29,15 @@ services:
       - mail
 
   frontend-vue-img:
-    build: ../frontend-vue
+    build:
+      context: ../frontend-vue
+      args:
+        VITE_API_BACKEND_URL: ${VITE_API_BACKEND_URL}
+        VITE_TTS_URL: ${VITE_TTS_URL}
+        VITE_FILESTORAGE_URL: ${VITE_FILESTORAGE_URL}
     container_name: frontend-vue-container
     ports:
-      - "${VITE_FRONTEND_PORT}:${VITE_FRONTEND_PORT}"
-    env_file:
-      - .env
+      - "${VITE_FRONTEND_PORT}:3000"
     depends_on:
       - backend-dotnet-img
    
@@ -49,8 +52,13 @@ services:
       - "${LLAMA_MODEL_VOLUME_PATH}:/models"
     command: >
       -m /models/${LLAMA_MODEL_NAME}
+      --ctx-size 4096
+      --parallel 1
+      --batch-size 256
+      --threads 4
       --host 0.0.0.0
       --port ${LLAMA_PORT}
+    mem_limit: 3g
 
   piper:
     image: ${PIPER_IMAGE}

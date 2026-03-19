@@ -1,6 +1,6 @@
 <template>
   <a-form-item label="Ordered Items (from first to last)">
-    <div v-for="(item, index) in items" :key="index" class="flex items-center mb-2">
+    <div v-for="(_item, index) in items" :key="index" class="flex items-center mb-2">
       <!-- Arrow container for alignment -->
       <div class="w-6 flex justify-center">
         {{ index + 1 }}.
@@ -19,7 +19,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { RightOutlined } from '@ant-design/icons-vue';
 
 const props = defineProps<{
   modelValue: string[];

@@ -25,7 +25,7 @@ export function useQuizQuestions(quizId: number) {
           questionSnapshotJson: q.questionSnapshotJson,
         };
       })
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+      .sort((a: { displayOrder: number; }, b: { displayOrder: number; }) => a.displayOrder - b.displayOrder);
   };
 
   const createQuestion = async (
@@ -53,7 +53,7 @@ export function useQuizQuestions(quizId: number) {
     }
   };
 
-  const reorderQuestions = async (fromOrder: number, toOrder: number) => {
+  const reorderQuestions = async (_fromOrder: number, _toOrder: number) => {
     // Implement reorder logic if needed
   };
 

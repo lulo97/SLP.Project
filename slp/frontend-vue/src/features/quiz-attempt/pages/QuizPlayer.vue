@@ -161,7 +161,6 @@ import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import { MenuOutlined, FlagOutlined } from "@ant-design/icons-vue";  // <-- added FlagOutlined
 import MobileLayout from "@/layouts/MobileLayout.vue";
-import { useAttemptStore } from "../stores/attemptStore";
 import { useAttempt } from "../composables/useAttempt";
 import QuestionDisplay from "../components/QuestionDisplay.vue";
 import AutoSaveIndicator from "../components/AutoSaveIndicator.vue";
@@ -170,7 +169,7 @@ import ReportModal from "@/features/report/components/ReportModal.vue";  // <-- 
 
 const route = useRoute();
 const router = useRouter();
-const attemptStore = useAttemptStore();
+//const attemptStore = useAttemptStore();
 const quizStore = useQuizStore();
 
 const quizId = computed(() => Number(route.params.quizId));

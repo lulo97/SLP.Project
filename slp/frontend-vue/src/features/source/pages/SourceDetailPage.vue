@@ -386,7 +386,7 @@ const {
 
 // ── Refs ──────────────────────────────────────────────────────────────────────
 const scrollContainer = ref<HTMLElement | null>(null);
-const articleRef      = ref<HTMLElement | null>(null);
+//const articleRef      = ref<HTMLElement | null>(null);
 const contentRef      = ref<HTMLElement | null>(null);
 
 // ── State ─────────────────────────────────────────────────────────────────────

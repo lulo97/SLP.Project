@@ -255,7 +255,7 @@ export function useAttempt(quizId: number) {
         "[useAttempt] watch attempt triggered, forcing currentQuestion re-eval",
       );
       // Accessing the computed forces it to re-evaluate if dependencies changed
-      const q = currentQuestion.value;
+      //const q = currentQuestion.value;
     },
     { deep: true },
   );

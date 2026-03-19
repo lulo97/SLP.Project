@@ -155,3 +155,13 @@
   - Add “Report Quiz” button (top) with `targetType: 'quiz'`.
   - Add “Report Question” per question in review (similar to player).
 - **ReportModal.vue**: Reusable modal with reason textarea, emits success.
+
+#### Task 8: Password Reset & Email Verification
+- **Endpoints**:
+  - `POST /api/auth/forgot-password` – generates token, stores in `password_reset_token` with expiry (UTC+1h), sends email.
+  - `POST /api/auth/reset-password` – validates token, updates password hash, clears token, invalidates sessions.
+  - `POST /api/auth/verify-email` – validates `email_verification_token`, sets `email_confirmed = true`.
+  - `POST /api/auth/resend-verification` – generates new token, resends email.
+- **Email templates**: HTML strings with placeholders; use `IEmailService`.
+- **Rate limiting**: Extend `RateLimitingMiddleware` or use `[RateLimit]` attribute with Redis storage (5 per hour per email/IP).
+- **Session invalidation**: Call `_sessionRepo.RevokeAllForUserAsync(userId)` after password reset.

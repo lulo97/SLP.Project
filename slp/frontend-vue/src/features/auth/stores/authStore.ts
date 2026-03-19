@@ -32,11 +32,6 @@ interface User {
   avatarUrl: string | undefined; // computed from avatarFilename, never from API
 }
 
-interface ApiError {
-  code?: string;
-  message?: string;
-}
-
 function buildAvatarUrl(
   filename: string | null | undefined,
 ): string | undefined {

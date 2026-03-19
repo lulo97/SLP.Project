@@ -164,7 +164,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
 
   // For routes that need auth or admin, ensure user is loaded

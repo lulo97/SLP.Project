@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useTagStore } from '@/features/tag/stores/tagStore';
 
 const MAX_TAGS = 10;
