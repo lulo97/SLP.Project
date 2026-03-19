@@ -1,4 +1,5 @@
 using backend_dotnet.Data;
+using backend_dotnet.Features.Dashboard;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend_dotnet.Features.Quiz;
@@ -334,5 +335,37 @@ public class QuizRepository : IQuizRepository
             .Include(q => q.User)
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
+    }
+
+    public async Task<List<TopQuizDto>> GetTopQuizzesByAttemptsAsync(int limit)
+    {
+        var query = from q in _context.Quizzes
+                    where q.Visibility == "public" && !q.Disabled
+                    join user in _context.Users on q.UserId equals user.Id into userJoin
+                    from user in userJoin.DefaultIfEmpty()
+                    select new
+                    {
+                        Quiz = q,
+                        AuthorUsername = user != null ? user.Username : "[deleted]",
+                        AttemptCount = _context.QuizAttempts.Count(a => a.QuizId == q.Id && a.Status == "completed"),
+                        CommentCount = _context.Comments.Count(c => c.TargetType == "quiz" && c.TargetId == q.Id && c.DeletedAt == null),
+                        QuestionCount = _context.QuizQuestions.Count(qq => qq.QuizId == q.Id)
+                    };
+
+        var results = await query
+            .OrderByDescending(x => x.AttemptCount)
+            .Take(limit)
+            .Select(x => new TopQuizDto
+            {
+                Id = x.Quiz.Id,
+                Title = x.Quiz.Title,
+                AuthorUsername = x.AuthorUsername,
+                AttemptCount = x.AttemptCount,
+                CommentCount = x.CommentCount,
+                QuestionCount = x.QuestionCount
+            })
+            .ToListAsync();
+
+        return results;
     }
 }

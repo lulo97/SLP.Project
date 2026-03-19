@@ -1,4 +1,5 @@
 ﻿using backend_dotnet.Data;
+using backend_dotnet.Features.Dashboard;
 using backend_dotnet.Features.User;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,5 +62,32 @@ public class UserRepository : IUserRepository
         return await _db.Users
             .OrderBy(u => u.Id)
             .ToListAsync();
+    }
+
+    public async Task<UserStatsDto> GetUserStatsAsync(int userId)
+    {
+        var quizCount = await _db.Quizzes
+            .Where(q => q.UserId == userId && !q.Disabled)
+            .CountAsync();
+
+        var questionCount = await _db.Questions
+            .Where(q => q.UserId == userId)
+            .CountAsync();
+
+        var sourceCount = await _db.Sources
+            .Where(s => s.UserId == userId && s.DeletedAt == null)
+            .CountAsync();
+
+        var favoriteCount = await _db.FavoriteItems
+            .Where(f => f.UserId == userId)
+            .CountAsync();
+
+        return new UserStatsDto
+        {
+            QuizCount = quizCount,
+            QuestionCount = questionCount,
+            SourceCount = sourceCount,
+            FavoriteCount = favoriteCount
+        };
     }
 }

@@ -81,3 +81,17 @@
   - Endpoint `GET /api/comments/{id}/history` (owner/admin only).
 - **Repository**: `AddHistoryAsync`, `GetHistoryAsync`.
 - **Solution**: Record each edit; history entries immutable.
+
+
+#### Task 19: LLM & TTS Cache
+- **LLM cache**:
+  - Modify `llm_log` table: allow `user_id NULL` (remove `NOT NULL` constraint). Add unique index `(request_type, prompt) WHERE user_id IS NULL`.
+  - Update `ILlmLogRepository.FindCachedAsync` to include `user_id IS NULL` in lookup.
+  - Update service to prefer user-specific cache, fallback to global.
+  - Also check llama.cpp service call to check health from backend dotnet
+- **TTS cache**:
+  - Modify `piper-gateway` (Python) to check file cache before calling Piper.
+  - Cache key: `hashlib.sha256(text.encode()).hexdigest() + ".wav"` in `TTS_CACHE_DIR`.
+  - If cache miss and `PIPER_ENABLED=false`, return 503.
+  - Add env `TTS_CACHE_DIR`, `PIPER_ENABLED`.
+  - Also check service call to check health from backend dotnet

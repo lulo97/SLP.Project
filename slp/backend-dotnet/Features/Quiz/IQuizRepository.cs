@@ -1,3 +1,5 @@
+using backend_dotnet.Features.Dashboard;
+
 namespace backend_dotnet.Features.Quiz;
 
 public interface IQuizRepository
@@ -34,5 +36,6 @@ public interface IQuizRepository
     Task AddSourceToQuizAsync(int quizId, int sourceId);
     Task RemoveSourceFromQuizAsync(int quizId, int sourceId);
     Task<IEnumerable<Quiz>> GetAllForAdminAsync();
+    Task<List<TopQuizDto>> GetTopQuizzesByAttemptsAsync(int limit);
 
 }

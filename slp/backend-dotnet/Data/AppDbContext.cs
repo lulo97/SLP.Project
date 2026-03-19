@@ -1,5 +1,6 @@
 ﻿using backend_dotnet.Features.Admin;
 using backend_dotnet.Features.Comment;
+using backend_dotnet.Features.Dashboard;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Llm;
 using backend_dotnet.Features.Note;
@@ -46,6 +47,7 @@ public class AppDbContext : DbContext
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<AdminLog> AdminLogs => Set<AdminLog>();
     public DbSet<CommentHistory> CommentHistories => Set<CommentHistory>();
+    public DbSet<DailyWord> DailyWords => Set<DailyWord>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

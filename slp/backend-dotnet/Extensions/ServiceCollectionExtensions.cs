@@ -2,6 +2,7 @@ using backend_dotnet.Data;
 using backend_dotnet.Features.Admin;
 using backend_dotnet.Features.Auth;
 using backend_dotnet.Features.Comment;
+using backend_dotnet.Features.Dashboard;
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Explanation;
 using backend_dotnet.Features.Favorite;
@@ -70,6 +71,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IWordOfTheDayProvider, DbWordOfTheDayProvider>();
 
         // Email service with HttpClient
         services.AddHttpClient<IEmailService, EmailService>(client =>

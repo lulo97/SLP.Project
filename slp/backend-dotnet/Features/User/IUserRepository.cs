@@ -1,4 +1,6 @@
-﻿namespace backend_dotnet.Features.User
+﻿using backend_dotnet.Features.Dashboard;
+
+namespace backend_dotnet.Features.User
 {
     public interface IUserRepository
     {
@@ -11,6 +13,7 @@
         Task UpdateAsync(User user);
         Task CreateAsync(User user);
         Task DeleteAsync(User user);
-        Task<IEnumerable<User>> GetAllAsync();  // <-- ADD THIS
+        Task<IEnumerable<User>> GetAllAsync();
+        Task<UserStatsDto> GetUserStatsAsync(int userId);
     }
 }

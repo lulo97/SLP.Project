@@ -16,24 +16,16 @@ This schedule assumes a team of **4 developers** (2 backend, 2 frontend) working
 
 ### Backend (Dev2)
 
-#### Task 19: LLM & TTS Cache
-- **LLM cache**:
-  - Modify `llm_log` table: allow `user_id NULL` (remove `NOT NULL` constraint). Add unique index `(request_type, prompt) WHERE user_id IS NULL`.
-  - Update `ILlmLogRepository.FindCachedAsync` to include `user_id IS NULL` in lookup.
-  - Update service to prefer user-specific cache, fallback to global.
-  - Also check llama.cpp service call to check health from backend dotnet
-- **TTS cache**:
-  - Modify `piper-gateway` (Python) to check file cache before calling Piper.
-  - Cache key: `hashlib.sha256(text.encode()).hexdigest() + ".wav"` in `TTS_CACHE_DIR`.
-  - If cache miss and `PIPER_ENABLED=false`, return 503.
-  - Add env `TTS_CACHE_DIR`, `PIPER_ENABLED`.
-  - Also check service call to check health from backend dotnet
 
 ### Frontend (Dev1)
 #### Task 5: Dashboard – Word of the Day
-- **API**: `GET /api/dashboard/word-of-day` (implemented by backend Dev2? Actually backend Dev1 can do it, but we'll assume backend Dev2 handles it; frontend just consumes).
+- **API**: `GET /api/dashboard/word-of-day`
+  + Show a word with vietnamese definition + detail dictionary metadata
+  + Origin of word
+  + Examples of word
+  + Fun fact about word
 - **Store**: Add `dashboardStore` with `wordOfDay`, `loading`, `error`.
-- **Component**: In `DashboardPage.vue`, create card with word, definition, example, speaker icon (if TTS available). Use skeleton loading.
+- **Component**: In `DashboardPage.vue` (design later)
 - **Solution**: If no word, show fallback message.
 
 ### Frontend (Dev2)
