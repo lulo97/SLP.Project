@@ -1,4 +1,5 @@
 ﻿using backend_dotnet.Features.User;
+using backend_dotnet.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -129,6 +130,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> DeleteUser(int id)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (currentUserId == null) return NotFound();
         var currentUser = await _userService.GetByIdAsync(currentUserId);
         if (currentUser == null) return Unauthorized();
         if (currentUser.Username != "admin") return Forbid();
