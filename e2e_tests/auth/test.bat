@@ -1,1 +1,1 @@
-npx playwright test fill_fields --headed
+npx playwright test admin_login.spec --headed
