@@ -52,25 +52,39 @@
     <!-- Type-specific fields -->
     <template v-if="form.type === 'multiple_choice'">
       <MultipleChoice
+        :key="initialQuestion?.id || 'new'"
         v-model:model-value="form.options"
         v-model:correct-answers="form.correctAnswers"
       />
     </template>
 
     <template v-else-if="form.type === 'true_false'">
-      <TrueFalse v-model:answer="form.answer" />
+      <TrueFalse
+        :key="initialQuestion?.id || 'new'"
+        v-model:answer="form.answer"
+      />
     </template>
 
     <template v-else-if="form.type === 'fill_blank'">
-      <FillBlank v-model:answer="form.answer" :question-title="form.title" />
+      <FillBlank
+        :key="initialQuestion?.id || 'new'"
+        v-model:answer="form.answer"
+        :question-title="form.title"
+      />
     </template>
 
     <template v-else-if="form.type === 'ordering'">
-      <Ordering v-model:model-value="form.orderingItems" />
+      <Ordering
+        :key="initialQuestion?.id || 'new'"
+        v-model:model-value="form.orderingItems"
+      />
     </template>
 
     <template v-else-if="form.type === 'matching'">
-      <Matching v-model:model-value="form.matchingPairs" />
+      <Matching
+        :key="initialQuestion?.id || 'new'"
+        v-model:model-value="form.matchingPairs"
+      />
     </template>
 
     <!-- Explanation -->

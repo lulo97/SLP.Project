@@ -1,5 +1,5 @@
 // e2e_tests/test/utils/questionTestUtils.ts
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 const FRONTEND_URL = 'http://localhost:4000';
 const ADMIN_USERNAME = 'admin';
@@ -127,4 +127,12 @@ export async function verifyAndDeleteQuestion(page: Page, title: string): Promis
 
   // Wait for the item to disappear
   await expect(item).not.toBeVisible();
+}
+
+export async function getQuestionIdFromItem(item: Locator): Promise<string> {
+  const testId = await item.getAttribute('data-testid');
+  if (!testId) throw new Error('Item missing data-testid');
+  const match = testId.match(/question-item-(\d+)/);
+  if (!match) throw new Error(`Could not extract ID from testid: ${testId}`);
+  return match[1];
 }
