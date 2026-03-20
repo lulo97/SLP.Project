@@ -1,1 +1,1 @@
-npx playwright test add_empty_quiz_and_crud_note.spec --headed
+npx playwright test add_quiz_1_multiple_choice.spec --headed

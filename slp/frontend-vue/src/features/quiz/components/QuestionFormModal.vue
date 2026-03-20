@@ -7,20 +7,21 @@
     width="90%"
     :mask-closable="false"
     wrap-class-name="full-width-modal"
-    data-testid="question-form-modal"
   >
-    <QuestionForm
-      :initial-question="initialQuestion"
-      @save="handleSave"
-      @cancel="handleCancel"
-    />
+    <div data-testid="question-form-modal">
+      <QuestionForm
+        :initial-question="initialQuestion"
+        @save="handleSave"
+        @cancel="handleCancel"
+      />
+    </div>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import QuestionForm from '@/features/question/components/QuestionForm.vue';
-import type { CreateQuestionPayload } from '@/features/question/stores/questionStore';
+import { computed } from "vue";
+import QuestionForm from "@/features/question/components/QuestionForm.vue";
+import type { CreateQuestionPayload } from "@/features/question/stores/questionStore";
 
 const props = defineProps<{
   visible: boolean;
@@ -28,8 +29,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'saved', payload: CreateQuestionPayload, id?: number): void;
+  (e: "update:visible", value: boolean): void;
+  (e: "saved", payload: CreateQuestionPayload, id?: number): void;
 }>();
 
 // Convert the quiz question (which contains a snapshot JSON string) to the shape expected by QuestionForm
@@ -39,29 +40,31 @@ const initialQuestion = computed(() => {
   // Parse the snapshot JSON
   let snapshot: any = {};
   try {
-    snapshot = JSON.parse(props.question.questionSnapshotJson || '{}');
+    snapshot = JSON.parse(props.question.questionSnapshotJson || "{}");
   } catch {
-    console.error('Failed to parse question snapshot');
+    console.error("Failed to parse question snapshot");
   }
 
   // Build the object matching QuestionDto structure
   return {
     id: props.question.id,
-    content: snapshot.content || '',
-    type: snapshot.type || '',
-    explanation: snapshot.explanation || '',
-    metadataJson: snapshot.metadata ? JSON.stringify(snapshot.metadata) : undefined,
+    content: snapshot.content || "",
+    type: snapshot.type || "",
+    explanation: snapshot.explanation || "",
+    metadataJson: snapshot.metadata
+      ? JSON.stringify(snapshot.metadata)
+      : undefined,
     tags: snapshot.tags || [],
   };
 });
 
 const handleSave = (payload: CreateQuestionPayload) => {
-  emit('saved', payload, props.question?.id);
-  emit('update:visible', false);
+  emit("saved", payload, props.question?.id);
+  emit("update:visible", false);
 };
 
 const handleCancel = () => {
-  emit('update:visible', false);
+  emit("update:visible", false);
 };
 </script>
 
