@@ -27,6 +27,7 @@
         v-model:value="form.type"
         placeholder="Select type"
         data-testid="question-type-select"
+        @change="handleTypeChange"
       >
         <a-select-option
           value="multiple_choice"
@@ -144,6 +145,8 @@ const emit = defineEmits<{
 }>();
 
 const isEdit = ref(!!props.initialQuestion?.id);
+// Add a flag to indicate that the form is being loaded
+const isLoading = ref(true);
 
 interface QuestionForm {
   title: string;
@@ -246,7 +249,9 @@ watch(
   (newVal) => {
     if (newVal) {
       isEdit.value = true;
+      isLoading.value = true; // ⬅️ start loading
       initializeForm();
+      isLoading.value = false; // ⬅️ done loading
     } else {
       isEdit.value = false;
       resetForm();
@@ -255,29 +260,53 @@ watch(
   { immediate: true },
 );
 
-watch(
-  () => form.value.type,
-  (newType) => {
-    if (newType === "multiple_choice") {
-      form.value.options = ["", "", "", ""];
-      form.value.correctAnswers = [];
-      form.value.answer = "";
-    } else if (newType === "true_false") {
-      form.value.answer = "true";
-    } else if (newType === "fill_blank") {
-      form.value.answer = "[]";
-    } else if (newType === "ordering") {
-      form.value.orderingItems = ["", "", "", ""];
-    } else if (newType === "matching") {
-      form.value.matchingPairs = [
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-        { left: "", right: "" },
-      ];
-    }
-  },
-);
+// watch(
+//   () => form.value.type,
+//   (newType) => {
+//     if (isLoading.value) return; // ⬅️ skip during initial load
+
+//     if (newType === "multiple_choice") {
+//       form.value.options = ["", "", "", ""];
+//       form.value.correctAnswers = [];
+//       form.value.answer = "";
+//     } else if (newType === "true_false") {
+//       form.value.answer = "true";
+//     } else if (newType === "fill_blank") {
+//       form.value.answer = "[]";
+//     } else if (newType === "ordering") {
+//       form.value.orderingItems = ["", "", "", ""];
+//     } else if (newType === "matching") {
+//       form.value.matchingPairs = [
+//         { left: "", right: "" },
+//         { left: "", right: "" },
+//         { left: "", right: "" },
+//         { left: "", right: "" },
+//       ];
+//     }
+//   },
+// );
+
+const handleTypeChange = (newType: CreateQuestionPayload["type"]) => {
+  // This ONLY runs when the user clicks the dropdown
+  if (newType === "multiple_choice") {
+    form.value.options = ["", "", "", ""];
+    form.value.correctAnswers = [];
+    form.value.answer = "";
+  } else if (newType === "true_false") {
+    form.value.answer = "true";
+  } else if (newType === "fill_blank") {
+    form.value.answer = "[]";
+  } else if (newType === "ordering") {
+    form.value.orderingItems = ["", "", "", ""];
+  } else if (newType === "matching") {
+    form.value.matchingPairs = [
+      { left: "", right: "" },
+      { left: "", right: "" },
+      { left: "", right: "" },
+      { left: "", right: "" },
+    ];
+  }
+};
 
 function buildMetadata(): Record<string, any> {
   const metadata: Record<string, any> = {};
