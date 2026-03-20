@@ -7,7 +7,7 @@ import {
   submitQuestion,
   getUniqueTitle,
   verifyAndDeleteQuestion,
-} from './utils';
+} from '../utils';
 
 test('create and delete an ordering question as admin', async ({ page }) => {
   const title = getUniqueTitle('Test Ordering Question');

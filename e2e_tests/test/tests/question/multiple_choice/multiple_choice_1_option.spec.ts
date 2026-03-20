@@ -5,7 +5,7 @@ import {
   navigateToCreateQuestion,
   fillCommonFields,
   getUniqueTitle,
-} from './utils';
+} from '../utils';
 
 test('should not allow creating a multiple choice question with only one option', async ({ page }) => {
   const title = getUniqueTitle('Invalid MC Question');

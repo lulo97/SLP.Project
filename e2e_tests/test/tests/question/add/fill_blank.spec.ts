@@ -7,7 +7,7 @@ import {
   submitQuestion,
   getUniqueTitle,
   verifyAndDeleteQuestion,
-} from './utils';
+} from '../utils';
 
 test('create and delete a fill in the blank question as admin', async ({ page }) => {
   const title = getUniqueTitle('Test Fill Blank Question');

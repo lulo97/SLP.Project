@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/question/update_true_false.spec.ts
+// e2e_tests/test/tests/question/update_matching.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,
@@ -7,29 +7,43 @@ import {
   submitQuestion,
   getUniqueTitle,
   getQuestionIdFromItem,
-} from './utils';
+} from '../utils';
 
-test('admin can update a true/false question', async ({ page }) => {
-  const originalTitle = getUniqueTitle('Original TF');
-  const updatedTitle = getUniqueTitle('Updated TF');
-  const tagOriginal = `tf-original-${Date.now()}`;
-  const tagUpdated = `tf-updated-${Date.now()}`;
+test('admin can update a matching question', async ({ page }) => {
+  const originalTitle = getUniqueTitle('Original Matching');
+  const updatedTitle = getUniqueTitle('Updated Matching');
+  const tagOriginal = `match-original-${Date.now()}`;
+  const tagUpdated = `match-updated-${Date.now()}`;
 
-  // ---------- 1. Create the question ----------
+  // ---------- 1. Create the original matching question ----------
   await loginAsAdmin(page);
   await navigateToCreateQuestion(page);
 
   await fillCommonFields(page, {
     title: originalTitle,
     description: 'Original description',
-    type: 'true-false',
+    type: 'matching',
     explanation: 'Original explanation',
     tags: [tagOriginal],
   });
 
-  // True/False specific: choose "True"
-  const trueRadio = page.getByTestId('true-false-true');
-  await trueRadio.check();
+  // Fill initial matching pairs (4 default empty pairs)
+  const left0 = page.getByTestId('matching-left-0');
+  const right0 = page.getByTestId('matching-right-0');
+  await left0.fill('Apple');
+  await right0.fill('Fruit');
+
+  const left1 = page.getByTestId('matching-left-1');
+  const right1 = page.getByTestId('matching-right-1');
+  await left1.fill('Carrot');
+  await right1.fill('Vegetable');
+
+  const left2 = page.getByTestId('matching-left-2');
+  const right2 = page.getByTestId('matching-right-2');
+  await left2.fill('Milk');
+  await right2.fill('Dairy');
+
+  // Keep the fourth pair empty as a test for later removal
 
   await submitQuestion(page);
 
@@ -75,9 +89,26 @@ test('admin can update a true/false question', async ({ page }) => {
   await tagInput.press('Enter');
   await tagInput.press('Escape');
 
-  // Change answer from True to False
-  const falseRadio = page.getByTestId('true-false-false');
-  await falseRadio.check();
+  // Modify matching pairs: add, edit, delete
+  // Edit an existing pair (index 2)
+  const leftToEdit = page.getByTestId('matching-left-2');
+  const rightToEdit = page.getByTestId('matching-right-2');
+  await leftToEdit.fill('Yogurt');
+  await rightToEdit.fill('Fermented dairy');
+
+  // Add a new pair
+  const addPairButton = page.getByTestId('matching-add');
+  await addPairButton.click();
+
+  // After adding, the new pair will be at index 3 (since we started with 4 pairs)
+  const newLeft = page.getByTestId('matching-left-3');
+  const newRight = page.getByTestId('matching-right-3');
+  await newLeft.fill('Bread');
+  await newRight.fill('Bakery');
+
+  // Delete the newly added pair
+  const removeNewButton = page.getByTestId('matching-remove-3');
+  await removeNewButton.click();
 
   await submitQuestion(page);
 
@@ -91,18 +122,23 @@ test('admin can update a true/false question', async ({ page }) => {
     .first();
   await expect(updatedItem).toBeVisible();
 
-  // Optionally, verify that the answer was changed by editing again
+  // Optionally, verify that the pairs were updated by editing again
   const updatedId = await getQuestionIdFromItem(updatedItem);
   const editAgainButton = page.getByTestId(`edit-question-btn-${updatedId}`);
   await editAgainButton.click();
   await expect(page).toHaveURL(`http://localhost:4000/question/${updatedId}/edit`);
 
-  // Check that the false radio is selected
-  const falseRadioAgain = page.getByTestId('true-false-false');
-  await expect(falseRadioAgain).toBeChecked();
+  // Check that the edited pair (index 2) has the new values
+  const editedLeft = page.getByTestId('matching-left-2');
+  const editedRight = page.getByTestId('matching-right-2');
+  await expect(editedLeft).toHaveValue('Yogurt');
+  await expect(editedRight).toHaveValue('Fermented dairy');
+
+  // Check that the fourth pair (original empty) was removed; the third pair (index 2) is now the last
+  const fourthPairExists = page.getByTestId('matching-left-3');
+  await expect(fourthPairExists).not.toBeVisible();
 
   // ---------- 5. Clean up ----------
-  // Go back to list and delete
   await page.goto('http://localhost:4000/questions');
   await searchInput.fill(updatedTitle);
   await searchInput.press('Enter');

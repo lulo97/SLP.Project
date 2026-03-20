@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/question/update_ordering.spec.ts
+// e2e_tests/test/tests/question/update_true_false.spec.ts
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,
@@ -7,36 +7,29 @@ import {
   submitQuestion,
   getUniqueTitle,
   getQuestionIdFromItem,
-} from './utils';
+} from '../utils';
 
-test('admin can update an ordering question', async ({ page }) => {
-  const originalTitle = getUniqueTitle('Original Ordering');
-  const updatedTitle = getUniqueTitle('Updated Ordering');
-  const tagOriginal = `order-original-${Date.now()}`;
-  const tagUpdated = `order-updated-${Date.now()}`;
+test('admin can update a true/false question', async ({ page }) => {
+  const originalTitle = getUniqueTitle('Original TF');
+  const updatedTitle = getUniqueTitle('Updated TF');
+  const tagOriginal = `tf-original-${Date.now()}`;
+  const tagUpdated = `tf-updated-${Date.now()}`;
 
-  // ---------- 1. Create the original ordering question ----------
+  // ---------- 1. Create the question ----------
   await loginAsAdmin(page);
   await navigateToCreateQuestion(page);
 
   await fillCommonFields(page, {
     title: originalTitle,
     description: 'Original description',
-    type: 'ordering',
+    type: 'true-false',
     explanation: 'Original explanation',
     tags: [tagOriginal],
   });
 
-  // Fill initial ordering items (4 default items)
-  const item0 = page.getByTestId('ordering-item-0');
-  const item1 = page.getByTestId('ordering-item-1');
-  const item2 = page.getByTestId('ordering-item-2');
-  const item3 = page.getByTestId('ordering-item-3');
-
-  await item0.fill('First step');
-  await item1.fill('Second step');
-  await item2.fill('Third step');
-  await item3.fill('Fourth step');
+  // True/False specific: choose "True"
+  const trueRadio = page.getByTestId('true-false-true');
+  await trueRadio.check();
 
   await submitQuestion(page);
 
@@ -82,21 +75,9 @@ test('admin can update an ordering question', async ({ page }) => {
   await tagInput.press('Enter');
   await tagInput.press('Escape');
 
-  // Modify ordering items: add, edit, delete
-  // Edit the third item (index 2)
-  const itemToEdit = page.getByTestId('ordering-item-2');
-  await itemToEdit.fill('Edited third step');
-
-  // Add a new item
-  const addItemButton = page.getByTestId('ordering-add');
-  await addItemButton.click();
-  const newItemInput = page.getByTestId('ordering-item-4');
-  await newItemInput.fill('New added item');
-
-  // Delete the new item
-  const deleteNewItemButton = page.getByTestId('ordering-remove-4');
-  await deleteNewItemButton.click();
-  await expect(newItemInput).not.toBeVisible();
+  // Change answer from True to False
+  const falseRadio = page.getByTestId('true-false-false');
+  await falseRadio.check();
 
   await submitQuestion(page);
 
@@ -110,18 +91,18 @@ test('admin can update an ordering question', async ({ page }) => {
     .first();
   await expect(updatedItem).toBeVisible();
 
-  // Optionally, verify that the items were updated by editing again
+  // Optionally, verify that the answer was changed by editing again
   const updatedId = await getQuestionIdFromItem(updatedItem);
   const editAgainButton = page.getByTestId(`edit-question-btn-${updatedId}`);
   await editAgainButton.click();
   await expect(page).toHaveURL(`http://localhost:4000/question/${updatedId}/edit`);
 
-  // Check that the ordering items are as expected (the third item is edited)
-  const editedItemInput = page.getByTestId('ordering-item-2');
-  await expect(editedItemInput).toHaveValue('Edited third step');
+  // Check that the false radio is selected
+  const falseRadioAgain = page.getByTestId('true-false-false');
+  await expect(falseRadioAgain).toBeChecked();
 
   // ---------- 5. Clean up ----------
-  // Go back to list and delete the updated question
+  // Go back to list and delete
   await page.goto('http://localhost:4000/questions');
   await searchInput.fill(updatedTitle);
   await searchInput.press('Enter');

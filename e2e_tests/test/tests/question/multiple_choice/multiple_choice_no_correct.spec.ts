@@ -5,7 +5,7 @@ import {
   navigateToCreateQuestion,
   fillCommonFields,
   getUniqueTitle,
-} from './utils';
+} from '../utils';
 
 test('should not allow creating a multiple choice question with no correct answer', async ({ page }) => {
   const title = getUniqueTitle('MC No Correct Answer');

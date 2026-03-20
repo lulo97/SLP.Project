@@ -6,7 +6,7 @@ import {
   submitQuestion,
   getUniqueTitle,
   verifyAndDeleteQuestion,
-} from './utils';
+} from '../utils';
 
 test('create and delete a multiple choice question as admin', async ({ page }) => {
   const title = getUniqueTitle('Test MC Question');

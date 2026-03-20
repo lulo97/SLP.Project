@@ -8,7 +8,7 @@ import {
   getUniqueTitle,
   verifyAndDeleteQuestion,
   getQuestionIdFromItem,
-} from "./utils";
+} from "../utils";
 
 test("admin can update a multiple choice question", async ({ page }) => {
   const originalTitle = getUniqueTitle("Original MC");
