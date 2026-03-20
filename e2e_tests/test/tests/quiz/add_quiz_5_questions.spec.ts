@@ -2,7 +2,9 @@
 import { test, expect, Locator } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle } from "../question/utils";
 
-test("admin can create a quiz with 5 different question types and delete it", async ({ page }) => {
+test("admin can create a quiz with 5 different question types and delete it", async ({
+  page,
+}) => {
   const quizTitle = getUniqueTitle("Full Quiz");
   const questionMC = "What is the capital of France?";
   const optionCorrect = "Paris";
@@ -30,7 +32,9 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await expect(page).toHaveURL(/\/quiz\/new/);
 
   await page.getByTestId("quiz-title-input").fill(quizTitle);
-  await page.getByTestId("quiz-description-input").fill("Quiz with five different question types");
+  await page
+    .getByTestId("quiz-description-input")
+    .fill("Quiz with five different question types");
   await page.getByTestId("quiz-visibility-public").check();
 
   // Add a tag
@@ -78,11 +82,15 @@ test("admin can create a quiz with 5 different question types and delete it", as
   // Mark correct answer (third option, index 2)
   await modal.getByTestId("mc-option-2-checkbox").check();
 
-  await modal.getByTestId("question-explanation").fill("Paris is the capital of France.");
+  await modal
+    .getByTestId("question-explanation")
+    .fill("Paris is the capital of France.");
   await submitQuestion(modal);
 
   // Verify question appears
-  await expect(page.locator(`div:has-text("${questionMC}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${questionMC}")`).first(),
+  ).toBeVisible();
 
   // ---------- 4. Add True/False Question ----------
   modal = await openQuestionModal();
@@ -93,10 +101,14 @@ test("admin can create a quiz with 5 different question types and delete it", as
   // Choose correct answer (false)
   await modal.getByTestId("true-false-false").check();
 
-  await modal.getByTestId("question-explanation").fill("Paris is the capital, not Berlin.");
+  await modal
+    .getByTestId("question-explanation")
+    .fill("Paris is the capital, not Berlin.");
   await submitQuestion(modal);
 
-  await expect(page.locator(`div:has-text("${questionTF}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${questionTF}")`).first(),
+  ).toBeVisible();
 
   // ---------- 5. Add Fill Blank Question ----------
   modal = await openQuestionModal();
@@ -109,7 +121,9 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await modal.getByTestId("question-explanation").fill("Paris is the capital.");
   await submitQuestion(modal);
 
-  await expect(page.locator(`div:has-text("${questionFB}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${questionFB}")`).first(),
+  ).toBeVisible();
 
   // ---------- 6. Add Ordering Question ----------
   modal = await openQuestionModal();
@@ -129,12 +143,16 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await modal.getByTestId("question-explanation").fill("Closest to farthest.");
   await submitQuestion(modal);
 
-  await expect(page.locator(`div:has-text("${questionOrder}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${questionOrder}")`).first(),
+  ).toBeVisible();
 
   // ---------- 7. Add Matching Question ----------
   modal = await openQuestionModal();
   await modal.getByTestId("question-title").fill(questionMatch);
-  await page.pause()
+
+  await page.waitForTimeout(1000);
+
   await modal.getByTestId("question-type-select").click();
   await page.getByTestId("option-matching").click();
 
@@ -148,10 +166,14 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await modal.getByTestId("matching-left-1").fill(matchPairs[1].left);
   await modal.getByTestId("matching-right-1").fill(matchPairs[1].right);
 
-  await modal.getByTestId("question-explanation").fill("Countries and capitals.");
+  await modal
+    .getByTestId("question-explanation")
+    .fill("Countries and capitals.");
   await submitQuestion(modal);
 
-  await expect(page.locator(`div:has-text("${questionMatch}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${questionMatch}")`).first(),
+  ).toBeVisible();
 
   // ---------- 8. Verify total questions count ----------
   const totalSpan = page.getByTestId("questions-total");
@@ -174,7 +196,7 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await searchInput.press("Enter");
 
   const quizItem = page.locator(
-    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`
+    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`,
   );
   await expect(quizItem).not.toBeVisible();
 });
