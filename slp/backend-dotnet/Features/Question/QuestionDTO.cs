@@ -27,6 +27,7 @@ public class QuestionListDto
     public DateTime UpdatedAt { get; set; }
     public List<string> Tags { get; set; } = new();
     public string? UserName { get; set; }
+    public string? MetadataJson { get; set; }
 }
 
 public class CreateQuestionDto

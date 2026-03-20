@@ -71,7 +71,7 @@ export const useDashboardStore = defineStore('dashboard', {
         const response = await apiClient.get<WordOfTheDay>('/dashboard/word-of-the-day');
         this.wordOfTheDay = response.data;
       } catch (err: any) {
-        this.error.word = err.response?.data?.message || 'Failed to load word of the day';
+        this.error.word = err.response?.data?.error || 'Failed to load word of the day';
         console.error('[Dashboard] fetchWordOfTheDay error:', err);
       } finally {
         this.loading.word = false;
@@ -90,7 +90,7 @@ export const useDashboardStore = defineStore('dashboard', {
         });
         this.topQuizzes = response.data;
       } catch (err: any) {
-        this.error.quizzes = err.response?.data?.message || 'Failed to load top quizzes';
+        this.error.quizzes = err.response?.data?.error || 'Failed to load top quizzes';
         console.error('[Dashboard] fetchTopQuizzes error:', err);
       } finally {
         this.loading.quizzes = false;
@@ -107,7 +107,7 @@ export const useDashboardStore = defineStore('dashboard', {
         const response = await apiClient.get<UserStats>('/dashboard/user-stats');
         this.userStats = response.data;
       } catch (err: any) {
-        this.error.stats = err.response?.data?.message || 'Failed to load user stats';
+        this.error.stats = err.response?.data?.error || 'Failed to load user stats';
         console.error('[Dashboard] fetchUserStats error:', err);
       } finally {
         this.loading.stats = false;

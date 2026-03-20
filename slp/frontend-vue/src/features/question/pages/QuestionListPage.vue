@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import {
@@ -223,10 +223,9 @@ const handleDelete = async (id: number) => {
   const success = await questionStore.deleteQuestion(id);
   if (success) {
     message.success("Question deleted");
-    // Reload the same page
     handlePageChange(questionStore.currentPage);
   } else {
-    message.error("Delete failed");
+    message.error(questionStore.error || "Delete failed");
   }
 };
 
@@ -235,7 +234,12 @@ const goToCreateQuestion = () => {
 };
 
 onMounted(() => {
+  questionStore.clearError();
   questionStore.fetchQuestions({}, 1);
+});
+
+onUnmounted(() => {
+  questionStore.clearError();
 });
 </script>
 

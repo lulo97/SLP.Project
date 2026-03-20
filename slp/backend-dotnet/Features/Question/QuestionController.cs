@@ -68,15 +68,8 @@ public class QuestionController : ControllerBase
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
-        try
-        {
-            var question = await _questionService.CreateQuestionAsync(CurrentUserId.Value, dto);
-            return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var question = await _questionService.CreateQuestionAsync(CurrentUserId.Value, dto);
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
     }
 
     [HttpPut("{id}")]
@@ -85,17 +78,10 @@ public class QuestionController : ControllerBase
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
-        try
-        {
-            var updated = await _questionService.UpdateQuestionAsync(id, CurrentUserId.Value, dto);
-            if (updated == null)
-                return NotFound();
-            return Ok(updated);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var updated = await _questionService.UpdateQuestionAsync(id, CurrentUserId.Value, dto);
+        if (updated == null)
+            return NotFound();
+        return Ok(updated);
     }
 
     [HttpDelete("{id}")]

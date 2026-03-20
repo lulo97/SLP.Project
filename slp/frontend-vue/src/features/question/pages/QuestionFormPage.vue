@@ -13,50 +13,65 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { message } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import QuestionForm from '../components/QuestionForm.vue';
-import { useQuestionStore } from '../stores/questionStore';
-import type { CreateQuestionPayload, UpdateQuestionPayload } from '../stores/questionStore';
+import { computed, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import QuestionForm from "../components/QuestionForm.vue";
+import { useQuestionStore } from "../stores/questionStore";
+import type {
+  CreateQuestionPayload,
+  UpdateQuestionPayload,
+} from "../stores/questionStore";
 
-const route         = useRoute();
-const router        = useRouter();
+const route = useRoute();
+const router = useRouter();
 const questionStore = useQuestionStore();
 
-const questionId = computed(() => (route.params.id ? Number(route.params.id) : null));
-const isEdit     = computed(() => !!questionId.value);
+const questionId = computed(() =>
+  route.params.id ? Number(route.params.id) : null,
+);
+const isEdit = computed(() => !!questionId.value);
 
 const initialQuestion = computed(() =>
-  isEdit.value && questionStore.currentQuestion ? questionStore.currentQuestion : null,
+  isEdit.value && questionStore.currentQuestion
+    ? questionStore.currentQuestion
+    : null,
 );
 
 const goBack = () => router.back();
 
 const handleSave = async (payload: CreateQuestionPayload) => {
   if (isEdit.value) {
-    const updated = await questionStore.updateQuestion(questionId.value!, payload as UpdateQuestionPayload);
+    const updated = await questionStore.updateQuestion(
+      questionId.value!,
+      payload as UpdateQuestionPayload,
+    );
     if (updated) {
-      message.success('Question updated');
-      router.push('/questions');
+      message.success("Question updated");
+      router.push("/questions");
+    } else {
+      message.error(questionStore.error || "Update failed");
     }
   } else {
     const created = await questionStore.createQuestion(payload);
-    if (questionStore.error) {
-      message.error(questionStore.error);
-      return;
-    }
     if (created) {
-      message.success('Question created');
-      router.push('/questions');
+      message.success("Question created");
+      router.push("/questions");
+    } else {
+      message.error(questionStore.error || "Create failed");
     }
   }
 };
 
 onMounted(async () => {
+  questionStore.clearError();
   if (isEdit.value) {
     await questionStore.fetchQuestionById(questionId.value!);
   }
+});
+
+onUnmounted(() => {
+  questionStore.clearError();
 });
 </script>

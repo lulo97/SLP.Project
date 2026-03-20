@@ -106,7 +106,7 @@ public class QuestionService : IQuestionService
         if (!isAdmin && question.UserId != userId)
             return false;
 
-        await _questionRepository.SoftDeleteAsync(id);
+        await _questionRepository.DeleteAsync(id); // Hard delete
         return true;
     }
 

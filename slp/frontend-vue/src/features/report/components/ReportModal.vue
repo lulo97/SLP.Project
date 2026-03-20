@@ -62,7 +62,7 @@ const handleSubmit = async () => {
     emit('reported');
     handleCancel();
   } catch (err: any) {
-    message.error(err.response?.data?.message || 'Failed to submit report');
+    message.error(err.response?.data?.error || 'Failed to submit report');
   } finally {
     submitting.value = false;
   }

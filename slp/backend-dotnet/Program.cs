@@ -51,6 +51,7 @@ app.UseAuthentication();
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseMiddleware<MetricsMiddleware>();
 app.UseMiddleware<SessionMiddleware>();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

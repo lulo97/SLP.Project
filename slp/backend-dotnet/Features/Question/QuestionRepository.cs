@@ -1,3 +1,5 @@
+// D:\SLP.Project\slp\backend-dotnet\Features\Question\QuestionRepository.cs
+
 using backend_dotnet.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,9 +30,9 @@ public class QuestionRepository : IQuestionRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Question>> GetAllQuestionsAsync(bool includeDeleted = false)
+    public async Task<IEnumerable<Question>> GetAllQuestionsAsync()
     {
-        // No soft delete column on question yet, so just all
+        // No filtering by DeletedAt
         return await _context.Questions
             .Include(q => q.User)
             .Include(q => q.QuestionTags).ThenInclude(qt => qt.Tag)
@@ -52,15 +54,12 @@ public class QuestionRepository : IQuestionRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task SoftDeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
-        // If we had a deleted_at column, we'd set it. For now, just remove? But spec says soft delete.
-        // We'll assume there's a DeletedAt column (needs migration). Using hard delete temporarily? 
-        // Better to add a DeletedAt column. For now, we'll just hard delete as placeholder.
         var question = await _context.Questions.FindAsync(id);
         if (question != null)
         {
-            _context.Questions.Remove(question);
+            _context.Questions.Remove(question); // Hard delete
             await _context.SaveChangesAsync();
         }
     }
@@ -79,7 +78,7 @@ public class QuestionRepository : IQuestionRepository
         int pageSize = 20
     )
     {
-        var query = _context.Questions.AsQueryable();
+        var query = _context.Questions.AsQueryable(); // No DeletedAt filter
 
         if (userId.HasValue)
             query = query.Where(q => q.UserId == userId.Value);
@@ -102,7 +101,6 @@ public class QuestionRepository : IQuestionRepository
             }
         }
 
-        // Efficient count query – indexes on user_id, type, updated_at help here
         var totalCount = await query.CountAsync();
 
         var items = await query

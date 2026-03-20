@@ -48,7 +48,7 @@ export const useCommentStore = defineStore("comment", {
         );
         this.history = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to load history";
+        this.error = err.response?.data?.error || "Failed to load history";
       } finally {
         this.historyLoading = false;
       }
@@ -62,7 +62,7 @@ export const useCommentStore = defineStore("comment", {
         });
         this.comments = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to load comments";
+        this.error = err.response?.data?.error || "Failed to load comments";
       } finally {
         this.loading = false;
       }
@@ -76,7 +76,7 @@ export const useCommentStore = defineStore("comment", {
         await this.fetchComments(request.targetType, request.targetId);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to create comment";
+        this.error = err.response?.data?.error || "Failed to create comment";
         throw err;
       } finally {
         this.loading = false;
@@ -98,7 +98,7 @@ export const useCommentStore = defineStore("comment", {
         await this.fetchComments(targetType, targetId);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to update comment";
+        this.error = err.response?.data?.error || "Failed to update comment";
         throw err;
       } finally {
         this.loading = false;
@@ -116,7 +116,7 @@ export const useCommentStore = defineStore("comment", {
         await this.fetchComments(targetType, targetId);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to delete comment";
+        this.error = err.response?.data?.error || "Failed to delete comment";
         return false;
       } finally {
         this.loading = false;
