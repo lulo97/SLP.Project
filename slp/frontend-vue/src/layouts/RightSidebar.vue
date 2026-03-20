@@ -1,19 +1,19 @@
 <template>
   <div
-    data-test-id="sidebar-container"
+    data-testid="sidebar-container"
     class="fixed top-0 right-0 h-screen w-64 bg-white shadow-lg transform transition-transform duration-300 z-50"
     :class="{ 'translate-x-0': isOpen, 'translate-x-full': !isOpen }"
   >
-    <div class="flex flex-col h-full" data-test-id="sidebar-content">
+    <div class="flex flex-col h-full" data-testid="sidebar-content">
       <div
         class="p-4 border-b flex justify-between items-center"
-        data-test-id="sidebar-header"
+        data-testid="sidebar-header"
       >
-        <h2 class="font-semibold" data-test-id="sidebar-title">Menu</h2>
+        <h2 class="font-semibold" data-testid="sidebar-title">Menu</h2>
         <button
           @click="$emit('close')"
           class="p-2"
-          data-test-id="sidebar-close-button"
+          data-testid="sidebar-close-button"
         >
           <X :size="20" />
         </button>
@@ -22,27 +22,27 @@
       <div
         v-if="authStore.user"
         class="p-4 border-b"
-        data-test-id="user-info-section"
+        data-testid="user-info-section"
       >
         <div class="flex items-center space-x-3">
           <div
-            data-test-id="user-avatar"
+            data-testid="user-avatar"
             class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold"
           >
             {{ authStore.user.username.charAt(0).toUpperCase() }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="font-medium truncate" data-test-id="user-username">
+            <p class="font-medium truncate" data-testid="user-username">
               {{ authStore.user.username }}
             </p>
-            <p class="text-sm text-gray-500 truncate" data-test-id="user-email">
+            <p class="text-sm text-gray-500 truncate" data-testid="user-email">
               {{ authStore.user.email }}
             </p>
           </div>
         </div>
         <div v-if="!authStore.isEmailVerified" class="mt-2">
           <a-button
-            data-test-id="verify-email-button"
+            data-testid="verify-email-button"
             type="link"
             size="small"
             @click="sendVerification"
@@ -55,78 +55,78 @@
 
       <div
         class="flex-1 overflow-y-auto p-2"
-        data-test-id="navigation-menu-container"
+        data-testid="navigation-menu-container"
       >
         <a-menu
           mode="inline"
           :selected-keys="[currentRoute]"
           class="border-none"
-          data-test-id="navigation-menu"
+          data-testid="navigation-menu"
         >
-          <a-menu-item key="/dashboard" data-test-id="nav-item-dashboard">
+          <a-menu-item key="/dashboard" data-testid="nav-item-dashboard">
             <router-link to="/dashboard" class="flex items-center">
               <LayoutDashboard :size="18" class="mr-2" />Dashboard
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/quiz" data-test-id="nav-item-quizzes">
+          <a-menu-item key="/quiz" data-testid="nav-item-quizzes">
             <router-link to="/quiz" class="flex items-center">
               <FileText :size="18" class="mr-2" />My Quizzes
             </router-link>
           </a-menu-item>
-          <a-menu-item key="/quiz/new" data-test-id="nav-item-create-quiz">
+          <a-menu-item key="/quiz/new" data-testid="nav-item-create-quiz">
             <router-link to="/quiz/new" class="flex items-center">
               <PlusCircle :size="18" class="mr-2" />Create Quiz
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/questions" data-test-id="nav-item-question-bank">
+          <a-menu-item key="/questions" data-testid="nav-item-question-bank">
             <router-link to="/questions" class="flex items-center">
               <HelpCircle :size="18" class="mr-2" />Question Bank
             </router-link>
           </a-menu-item>
-          <a-menu-item key="/question/new" data-test-id="nav-item-new-question">
+          <a-menu-item key="/question/new" data-testid="nav-item-new-question">
             <router-link to="/question/new" class="flex items-center">
               <Plus :size="18" class="mr-2" />New Question
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/source" data-test-id="nav-item-sources">
+          <a-menu-item key="/source" data-testid="nav-item-sources">
             <router-link to="/source" class="flex items-center">
               <FolderOpen :size="18" class="mr-2" />My Sources
             </router-link>
           </a-menu-item>
-          <a-menu-item key="/source/upload" data-test-id="nav-item-upload">
+          <a-menu-item key="/source/upload" data-testid="nav-item-upload">
             <router-link to="/source/upload" class="flex items-center">
               <Upload :size="18" class="mr-2" />Upload File
             </router-link>
           </a-menu-item>
-          <a-menu-item key="/source/new-url" data-test-id="nav-item-add-url">
+          <a-menu-item key="/source/new-url" data-testid="nav-item-add-url">
             <router-link to="/source/new-url" class="flex items-center">
               <LinkIcon :size="18" class="mr-2" />Add from URL
             </router-link>
           </a-menu-item>
-          <a-menu-item key="/source/new-note" data-test-id="nav-item-add-text">
+          <a-menu-item key="/source/new-note" data-testid="nav-item-add-text">
             <router-link to="/source/new-note" class="flex items-center">
               <FileText :size="18" class="mr-2" />Add from Text
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/search" data-test-id="nav-item-search">
+          <a-menu-item key="/search" data-testid="nav-item-search">
             <router-link to="/search" class="flex items-center">
               <Search :size="18" class="mr-2" />Search
             </router-link>
           </a-menu-item>
 
-          <a-menu-divider data-test-id="nav-divider-1" />
+          <a-menu-divider data-testid="nav-divider-1" />
 
-          <a-menu-item key="/profile" data-test-id="nav-item-profile">
+          <a-menu-item key="/profile" data-testid="nav-item-profile">
             <router-link to="/profile" class="flex items-center">
               <User :size="18" class="mr-2" />Profile
             </router-link>
           </a-menu-item>
 
-          <a-menu-item key="/reports" data-test-id="nav-item-reports">
+          <a-menu-item key="/reports" data-testid="nav-item-reports">
             <router-link to="/reports" class="flex items-center">
               <Flag :size="18" class="mr-2" />My Reports
             </router-link>
@@ -135,7 +135,7 @@
           <a-menu-item
             v-if="authStore.isAdmin"
             key="/admin"
-            data-test-id="nav-item-admin"
+            data-testid="nav-item-admin"
           >
             <router-link to="/admin" class="flex items-center">
               <Shield :size="18" class="mr-2" />Admin
@@ -145,7 +145,7 @@
           <a-menu-item
             v-if="authStore.isAdmin"
             key="/admin/health"
-            data-test-id="nav-item-admin-health"
+            data-testid="nav-item-admin-health"
           >
             <router-link to="/admin/health" class="flex items-center">
               <Activity :size="18" class="mr-2" />Service Health
@@ -155,19 +155,19 @@
           <a-menu-item
             v-if="authStore.isAdmin"
             key="/admin/metrics"
-            data-test-id="nav-item-admin-metrics"
+            data-testid="nav-item-admin-metrics"
           >
             <router-link to="/admin/metrics" class="flex items-center">
               <BarChart2 :size="18" class="mr-2" />Metrics
             </router-link>
           </a-menu-item>
 
-          <a-menu-divider data-test-id="nav-divider-2" />
+          <a-menu-divider data-testid="nav-divider-2" />
 
           <a-menu-item
             key="settings"
             @click="settingsOpen = true"
-            data-test-id="nav-item-settings"
+            data-testid="nav-item-settings"
           >
             <div class="flex items-center">
               <Settings :size="18" class="mr-2" />Settings
@@ -177,7 +177,7 @@
           <a-menu-item
             key="logout"
             @click="handleLogout"
-            data-test-id="nav-item-logout"
+            data-testid="nav-item-logout"
           >
             <div class="flex items-center text-red-500">
               <LogOut :size="18" class="mr-2" />Logout
@@ -190,7 +190,7 @@
 
   <div
     v-if="isOpen"
-    data-test-id="sidebar-overlay"
+    data-testid="sidebar-overlay"
     class="fixed inset-0 bg-black bg-opacity-50 z-40"
     @click="$emit('close')"
   />
@@ -201,16 +201,16 @@
     :footer="null"
     width="320px"
     centered
-    data-test-id="settings-modal"
+    data-testid="settings-modal"
   >
-    <div class="space-y-6 py-2" data-test-id="settings-modal-content">
-      <div data-test-id="settings-theme-section">
+    <div class="space-y-6 py-2" data-testid="settings-modal-content">
+      <div data-testid="settings-theme-section">
         <p class="text-sm font-medium text-gray-600 mb-2">Theme</p>
         <div class="flex gap-2">
           <button
             v-for="option in themeOptions"
             :key="option.value"
-            :data-test-id="`theme-option-${option.value}`"
+            :data-testid="`theme-option-${option.value}`"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
             :class="
               settingsStore.theme === option.value
@@ -225,13 +225,13 @@
         </div>
       </div>
 
-      <div data-test-id="settings-language-section">
+      <div data-testid="settings-language-section">
         <p class="text-sm font-medium text-gray-600 mb-2">Language</p>
         <div class="flex gap-2">
           <button
             v-for="option in languageOptions"
             :key="option.value"
-            :data-test-id="`language-option-${option.value}`"
+            :data-testid="`language-option-${option.value}`"
             class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
             :class="
               settingsStore.language === option.value

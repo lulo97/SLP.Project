@@ -1,45 +1,45 @@
 <template>
-  <div class="min-h-screen bg-gray-50" data-test-id="layout-container">
+  <div class="min-h-screen bg-gray-50" data-testid="layout-container">
     <header
       class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]"
-      data-test-id="main-header"
+      data-testid="main-header"
     >
       <div
         class="flex items-center justify-between p-4"
-        data-test-id="header-content"
+        data-testid="header-content"
       >
-        <div data-test-id="header-left-section">
+        <div data-testid="header-left-section">
           <slot name="header-left">
             <BreadcrumbNav
               :fallback-title="title"
-              data-test-id="breadcrumb-nav"
+              data-testid="breadcrumb-nav"
             />
           </slot>
         </div>
 
-        <div data-test-id="header-center-section">
+        <div data-testid="header-center-section">
           <slot name="header-center" />
         </div>
 
         <div
           class="flex items-center gap-2"
-          data-test-id="header-right-section"
+          data-testid="header-right-section"
         >
           <slot name="header-right" />
 
           <button
             @click="toggleSidebar"
             class="p-2 hover:bg-gray-100 rounded-lg"
-            data-test-id="sidebar-toggle-button"
+            data-testid="sidebar-toggle-button"
             aria-label="Toggle Sidebar"
           >
-            <Menu :size="24" data-test-id="menu-icon" />
+            <Menu :size="24" data-testid="menu-icon" />
           </button>
         </div>
       </div>
     </header>
 
-    <main class="mt-[10vh] pt-4 pb-6 px-4" data-test-id="main-content-area">
+    <main class="mt-[10vh] pt-4 pb-6 px-4" data-testid="main-content-area">
       <slot></slot>
     </main>
 
@@ -47,7 +47,7 @@
       :is-open="sidebarOpen"
       @close="sidebarOpen = false"
       @logout="handleLogout"
-      data-test-id="right-sidebar-component"
+      data-testid="right-sidebar-component"
     />
   </div>
 </template>

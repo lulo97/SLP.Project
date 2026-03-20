@@ -1,1 +1,1 @@
-npx playwright test admin_login.spec --headed
+npx playwright test admin_logout.spec --headed
