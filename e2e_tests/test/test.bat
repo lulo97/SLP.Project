@@ -1,1 +1,1 @@
-npx playwright test update_matching.spec --headed
+npx playwright test add_empty_quiz.spec --headed
