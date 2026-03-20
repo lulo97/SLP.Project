@@ -75,8 +75,6 @@ test('create and delete a fill in the blank question as admin', async ({ page })
     const submitButton = page.getByTestId('submit-question');
     await submitButton.click();
 
-    page.pause();
-
     // After successful creation, we should be redirected to the question list
     await expect(page).toHaveURL(`${FRONTEND_URL}/questions`);
   });
