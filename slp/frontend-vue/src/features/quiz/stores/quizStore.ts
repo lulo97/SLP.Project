@@ -231,6 +231,7 @@ export const useQuizStore = defineStore("quiz", {
       quizId: number,
       snapshotJson: string,
       displayOrder: number,
+      originalQuestionId?: number,
     ) {
       this.loading = true;
       this.error = null;
@@ -238,6 +239,7 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.post(`/quiz/${quizId}/questions`, {
           questionSnapshotJson: snapshotJson,
           displayOrder,
+          originalQuestionId,
         });
         return response.data;
       } catch (err: any) {

@@ -1,21 +1,27 @@
 <template>
   <a-card title="Questions" class="shadow-sm" data-testid="questions-card">
-    <div
-      class="mb-2 flex justify-between items-center"
-      data-testid="questions-header-container"
-    >
-      <span class="font-medium" data-testid="questions-total"
-        >Total: {{ questions.length }}</span
-      >
-      <a-button
-        v-if="!readonly"
-        type="primary"
-        size="small"
-        @click="emit('add')"
-        data-testid="add-question-button"
-      >
-        <PlusOutlined data-testid="add-question-icon" /> Add Question
-      </a-button>
+    <div class="mb-2 flex justify-between items-center">
+      <span class="font-medium">Total: {{ questions.length }}</span>
+      <div class="space-x-2">
+        <a-button
+          v-if="!readonly"
+          type="default"
+          size="small"
+          @click="emit('find')"
+          data-testid="find-question-button"
+        >
+          <SearchOutlined /> Find Question
+        </a-button>
+        <a-button
+          v-if="!readonly"
+          type="primary"
+          size="small"
+          @click="emit('add')"
+          data-testid="add-question-button"
+        >
+          <PlusOutlined /> Add Question
+        </a-button>
+      </div>
     </div>
 
     <div
@@ -122,7 +128,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-} from "@ant-design/icons-vue";
+  SearchOutlined,
+} from "@ant-design/icons-vue"; // add SearchOutlined
 import {
   formatQuestionType,
   getQuestionSummary,
@@ -139,6 +146,7 @@ const emit = defineEmits<{
   (e: "edit", question: DisplayQuestion): void;
   (e: "delete", questionId: number): void;
   (e: "insert", index: number): void;
+  (e: "find"): void;
 }>();
 </script>
 

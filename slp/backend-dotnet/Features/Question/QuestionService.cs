@@ -1,11 +1,6 @@
 using backend_dotnet.Features.Helpers;
 using backend_dotnet.Features.Tag;
-using backend_dotnet.Helpers;   // <-- ADDED
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+using backend_dotnet.Helpers;
 
 namespace backend_dotnet.Features.Question;
 
@@ -41,7 +36,7 @@ public class QuestionService : IQuestionService
     public async Task<QuestionDto> CreateQuestionAsync(int userId, CreateQuestionDto dto)
     {
         // Validate metadata based on type
-        QuestionValidationHelper.ValidateQuestionMetadata(dto.Type, dto.Content, dto.MetadataJson);   // <-- CHANGED
+        QuestionValidationHelper.ValidateQuestionMetadata(dto.Type, dto.Content, dto.MetadataJson);
 
         var question = new Question
         {
@@ -78,7 +73,7 @@ public class QuestionService : IQuestionService
         {
             // Content might also be updated; use the new content if provided
             string effectiveContent = dto.Content ?? question.Content;
-            QuestionValidationHelper.ValidateQuestionMetadata(effectiveType, effectiveContent, dto.MetadataJson);   // <-- CHANGED
+            QuestionValidationHelper.ValidateQuestionMetadata(effectiveType, effectiveContent, dto.MetadataJson);
         }
 
         question.Type = dto.Type ?? question.Type;
@@ -160,7 +155,8 @@ public class QuestionService : IQuestionService
             CreatedAt = q.CreatedAt,
             UpdatedAt = q.UpdatedAt,
             Tags = q.QuestionTags?.Select(qt => qt.Tag?.Name ?? "").ToList() ?? new List<string>(),
-            UserName = q.User?.Username
+            UserName = q.User?.Username,
+            MetadataJson = q.MetadataJson
         };
     }
 }

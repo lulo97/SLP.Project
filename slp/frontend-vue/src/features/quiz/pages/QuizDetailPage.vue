@@ -109,6 +109,7 @@
         @edit="(q) => openQuestionModal('edit', q)"
         @delete="handleDeleteQuestion"
         @insert="(idx) => openQuestionModal('insert', undefined, idx)"
+        @find="handleFindQuestion"
       />
 
       <QuizActionsCard
@@ -132,6 +133,11 @@
       :question="editingQuestion"
       @saved="handleQuestionSaved"
     />
+
+    <QuestionPickerModal
+      v-model:visible="showQuestionPicker"
+      @select="handleSelectQuestion"
+    />
   </MobileLayout>
 </template>
 
@@ -146,6 +152,7 @@ import { useSourceStore } from "@/features/source/stores/sourceStore";
 import { useQuizQuestions } from "../composables/useQuizQuestions";
 import type { CreateQuestionPayload } from "@/features/question/stores/questionStore";
 import type { DisplayQuestion } from "../types";
+import QuestionPickerModal from "../components/QuestionPickerModal.vue";
 
 // Components
 import QuizInfoCard from "../components/QuizInfoCard.vue";
@@ -256,6 +263,38 @@ const {
 const showQuestionModal = ref(false);
 const editingQuestion = ref<DisplayQuestion | undefined>();
 const insertIndex = ref<number | undefined>();
+const showQuestionPicker = ref(false);
+
+const handleFindQuestion = () => {
+  showQuestionPicker.value = true;
+};
+
+const handleSelectQuestion = async (selectedQuestion: any) => {
+  // Build snapshot from selected question data
+  const snapshot = {
+    type: selectedQuestion.type,
+    content: selectedQuestion.content,
+    explanation: selectedQuestion.explanation,
+    metadata: selectedQuestion.metadataJson
+      ? JSON.parse(selectedQuestion.metadataJson)
+      : {},
+    tags: selectedQuestion.tags || [],
+  };
+  const snapshotJson = JSON.stringify(snapshot);
+
+  // Determine display order (append at end)
+  const newOrder = questions.value.length
+    ? Math.max(...questions.value.map((q) => q.displayOrder)) + 1
+    : 1;
+
+  try {
+    await createQuestion(snapshotJson, newOrder, selectedQuestion.id);
+    await loadQuestions();
+    message.success("Question added");
+  } catch (error) {
+    message.error("Failed to add question");
+  }
+};
 
 const openQuestionModal = (
   action: "create" | "edit" | "insert",

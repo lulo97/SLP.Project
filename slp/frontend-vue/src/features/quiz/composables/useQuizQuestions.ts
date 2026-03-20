@@ -1,9 +1,9 @@
 // src/features/quiz/composables/useQuizQuestions.ts
 
-import { ref } from 'vue';
-import { useQuizStore } from '../stores/quizStore';
-import type { DisplayQuestion, QuizQuestion } from '../types';
-import { message } from 'ant-design-vue';
+import { ref } from "vue";
+import { useQuizStore } from "../stores/quizStore";
+import type { DisplayQuestion, QuizQuestion } from "../types";
+import { message } from "ant-design-vue";
 
 export function useQuizQuestions(quizId: number) {
   const quizStore = useQuizStore();
@@ -13,11 +13,11 @@ export function useQuizQuestions(quizId: number) {
     const data = await quizStore.fetchQuizQuestions(quizId);
     questions.value = data
       .map((q: QuizQuestion) => {
-        const snapshot = JSON.parse(q.questionSnapshotJson || '{}');
+        const snapshot = JSON.parse(q.questionSnapshotJson || "{}");
         return {
           id: q.id,
-          content: snapshot.content || '',
-          type: snapshot.type || '',
+          content: snapshot.content || "",
+          type: snapshot.type || "",
           explanation: snapshot.explanation,
           metadata: snapshot.metadata || {},
           tags: snapshot.tags || [],
@@ -25,20 +25,29 @@ export function useQuizQuestions(quizId: number) {
           questionSnapshotJson: q.questionSnapshotJson,
         };
       })
-      .sort((a: { displayOrder: number; }, b: { displayOrder: number; }) => a.displayOrder - b.displayOrder);
+      .sort(
+        (a: { displayOrder: number }, b: { displayOrder: number }) =>
+          a.displayOrder - b.displayOrder,
+      );
   };
 
   const createQuestion = async (
     snapshotJson: string,
-    displayOrder: number
+    displayOrder: number,
+    originalQuestionId?: number,
   ) => {
-    await quizStore.createQuizQuestion(quizId, snapshotJson, displayOrder);
+    await quizStore.createQuizQuestion(
+      quizId,
+      snapshotJson,
+      displayOrder,
+      originalQuestionId,
+    );
   };
 
   const updateQuestion = async (
     questionId: number,
     snapshotJson: string,
-    displayOrder: number
+    displayOrder: number,
   ) => {
     await quizStore.updateQuizQuestion(questionId, snapshotJson, displayOrder);
   };
@@ -47,9 +56,9 @@ export function useQuizQuestions(quizId: number) {
     const success = await quizStore.deleteQuizQuestion(questionId);
     if (success) {
       await loadQuestions();
-      message.success('Question deleted');
+      message.success("Question deleted");
     } else {
-      message.error('Delete failed');
+      message.error("Delete failed");
     }
   };
 
