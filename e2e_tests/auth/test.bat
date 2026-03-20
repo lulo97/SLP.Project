@@ -1,1 +1,1 @@
-npx playwright test tests/login.test.ts --headed
+npx playwright test fill_fields --headed

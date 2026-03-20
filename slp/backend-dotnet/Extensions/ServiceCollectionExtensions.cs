@@ -93,15 +93,24 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCaching(this IServiceCollection services, IConfiguration configuration)
     {
         bool queueEnabled = configuration.GetValue<bool>("Queue:Enabled");
-        string redisConnectionString = configuration.GetConnectionString("Redis");
+        string redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<Program>>();
-            try { return ConnectionMultiplexer.Connect(redisConnectionString); }
+            try
+            {
+                // Dùng ConfigurationOptions để set AbortOnConnectFail = false
+                var options = ConfigurationOptions.Parse(redisConnectionString);
+                options.AbortOnConnectFail = false;
+                var multiplexer = ConnectionMultiplexer.Connect(options);
+                logger.LogInformation("Redis connection configured with AbortOnConnectFail=false");
+                return multiplexer;
+            }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Could not connect IConnectionMultiplexer to Redis");
+                // Nếu lỗi cú pháp connection string hoặc lỗi nghiêm trọng khác thì vẫn throw
+                logger.LogError(ex, "Invalid Redis connection string or critical error");
                 throw;
             }
         });
