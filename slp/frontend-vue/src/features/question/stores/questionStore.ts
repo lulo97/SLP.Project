@@ -93,7 +93,7 @@ export const useQuestionStore = defineStore("question", {
         const response = await apiClient.post<QuestionDto>("/question", payload);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to create question";
+        this.error = err.response?.data?.error || "Failed to create question";
         return null;
       } finally {
         this.loading = false;

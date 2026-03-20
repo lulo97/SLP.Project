@@ -43,6 +43,10 @@ const handleSave = async (payload: CreateQuestionPayload) => {
     }
   } else {
     const created = await questionStore.createQuestion(payload);
+    if (questionStore.error) {
+      message.error(questionStore.error);
+      return;
+    }
     if (created) {
       message.success('Question created');
       router.push('/questions');

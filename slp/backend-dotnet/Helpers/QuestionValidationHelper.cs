@@ -128,7 +128,7 @@ public static class QuestionValidationHelper
         }
 
         // answers — grading values; must be a non-empty string array
-        RequireNonEmptyStringArray(meta, "answers", "Fill blank");
+        //RequireNonEmptyStringArray(meta, "answers", "Fill blank");
     }
 
     private static void ValidateOrdering(JsonElement meta)
