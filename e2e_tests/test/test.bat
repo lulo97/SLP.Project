@@ -1,1 +1,1 @@
-npx playwright test edit_quiz_title.spec --headed
+npx playwright test add_edit_question_type.spec.ts --headed
