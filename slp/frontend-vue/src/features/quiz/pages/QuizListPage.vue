@@ -62,11 +62,11 @@
             <template #description>
               <div class="text-sm text-gray-500">
                 <div class="mb-1" :data-testid="`quiz-description-${item.id}`">
-                  {{ item.description || 'No description' }}
+                  {{ item.description || "No description" }}
                 </div>
                 <div class="flex items-center justify-between">
                   <span :data-testid="`quiz-author-${item.id}`">
-                    by {{ item.userName || 'Unknown' }}
+                    by {{ item.userName || "Unknown" }}
                   </span>
                   <span :data-testid="`quiz-question-count-${item.id}`">
                     {{ item.questionCount }} questions
@@ -86,26 +86,35 @@
             </template>
           </a-list-item-meta>
           <template #actions>
-            <span
+            <a-button
+              type="text"
+              size="small"
               @click="handleDuplicate(item.id)"
-              :data-testid="`duplicate-quiz-${item.id}`"
             >
-              <CopyOutlined /> Duplicate
-            </span>
-            <span
+              <template #icon><CopyOutlined /></template>
+              Duplicate
+            </a-button>
+
+            <a-button
               v-if="isOwnerOrAdmin(item)"
+              type="text"
+              size="small"
               @click="handleEdit(item.id)"
-              :data-testid="`edit-quiz-${item.id}`"
             >
-              <EditOutlined /> Edit
-            </span>
-            <span
+              <template #icon><EditOutlined /></template>
+              Edit
+            </a-button>
+
+            <a-button
               v-if="isOwnerOrAdmin(item)"
+              type="text"
+              size="small"
+              danger
               @click="handleDelete(item.id)"
-              :data-testid="`delete-quiz-${item.id}`"
             >
-              <DeleteOutlined /> Delete
-            </span>
+              <template #icon><DeleteOutlined /></template>
+              Delete
+            </a-button>
           </template>
         </a-list-item>
       </template>
@@ -137,7 +146,10 @@
     </div>
 
     <!-- Floating Action Button -->
-    <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
+    <a-float-button-group
+      shape="square"
+      :style="{ right: '24px', bottom: '24px' }"
+    >
       <a-float-button @click="goToCreateQuiz" data-testid="create-quiz-fab">
         <template #icon><PlusOutlined /></template>
       </a-float-button>
@@ -146,30 +158,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { message, Modal } from 'ant-design-vue';
-import { PlusOutlined, CopyOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useQuizStore } from '../stores/quizStore';
-import type { QuizListDto } from '../stores/quizStore';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { message, Modal } from "ant-design-vue";
+import {
+  PlusOutlined,
+  CopyOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useQuizStore } from "../stores/quizStore";
+import type { QuizListDto } from "../stores/quizStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 
 const router = useRouter();
 const quizStore = useQuizStore();
 const authStore = useAuthStore();
 
-const currentTab = ref<'my' | 'public'>('my');
-const searchTerm = ref('');
+const currentTab = ref<"my" | "public">("my");
+const searchTerm = ref("");
 // Track the last search term so page changes know what to search
-const activeSearchTerm = ref('');
+const activeSearchTerm = ref("");
 
-const switchTab = (tab: 'my' | 'public') => {
+const switchTab = (tab: "my" | "public") => {
   currentTab.value = tab;
-  searchTerm.value = '';
-  activeSearchTerm.value = '';
+  searchTerm.value = "";
+  activeSearchTerm.value = "";
   // Reset to page 1 on tab switch
-  if (tab === 'my') {
+  if (tab === "my") {
     quizStore.fetchMyQuizzes(1);
   } else {
     quizStore.fetchPublicQuizzes(undefined, 1);
@@ -186,7 +203,7 @@ const handleSearch = () => {
 };
 
 const handlePageChange = (page: number) => {
-  if (currentTab.value === 'my') {
+  if (currentTab.value === "my") {
     quizStore.fetchMyQuizzes(page);
   } else if (activeSearchTerm.value) {
     quizStore.searchQuizzes(activeSearchTerm.value, page);
@@ -194,20 +211,22 @@ const handlePageChange = (page: number) => {
     quizStore.fetchPublicQuizzes(undefined, page);
   }
   // Scroll to top on page change
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const isOwnerOrAdmin = (quiz: QuizListDto) => {
-  return authStore.isAdmin || (authStore.user && quiz.userId === authStore.user.id);
+  return (
+    authStore.isAdmin || (authStore.user && quiz.userId === authStore.user.id)
+  );
 };
 
 const handleDuplicate = async (id: number) => {
   const duplicated = await quizStore.duplicateQuiz(id);
   if (duplicated) {
-    message.success('Quiz duplicated');
+    message.success("Quiz duplicated");
     router.push(`/quiz/${duplicated.id}/edit`);
   } else {
-    message.error('Failed to duplicate');
+    message.error("Failed to duplicate");
   }
 };
 
@@ -217,30 +236,30 @@ const handleEdit = (id: number) => {
 
 const handleDelete = (id: number) => {
   Modal.confirm({
-    title: 'Delete Quiz',
-    content: 'Are you sure you want to delete this quiz?',
-    okText: 'Yes',
-    okType: 'danger',
-    cancelText: 'No',
+    title: "Delete Quiz",
+    content: "Are you sure you want to delete this quiz?",
+    okText: "Yes",
+    okType: "danger",
+    cancelText: "No",
     onOk: async () => {
       const success = await quizStore.deleteQuiz(id);
       if (success) {
-        message.success('Quiz deleted');
+        message.success("Quiz deleted");
         // Reload current page (or go back one page if it was the only item)
         handlePageChange(quizStore.currentPage);
       } else {
-        message.error('Failed to delete');
+        message.error("Failed to delete");
       }
     },
   });
 };
 
 const goToCreateQuiz = () => {
-  router.push('/quiz/new');
+  router.push("/quiz/new");
 };
 
 onMounted(() => {
-  switchTab('my');
+  switchTab("my");
 });
 </script>
 

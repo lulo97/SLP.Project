@@ -38,4 +38,28 @@ body {
     padding: 16px;
   }
 }
+
+/* 1. Force all buttons to use flex alignment */
+.ant-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 2. Fix the icon alignment specifically */
+.ant-btn .anticon {
+  line-height: 0;
+  vertical-align: middle;
+}
+
+/* 3. Ensure the text span is vertically centered */
+.ant-btn > span {
+  display: inline-block;
+  line-height: 1; /* Prevents text from having extra top/bottom "leading" */
+}
+
+/* 4. Fix for small buttons specifically */
+.ant-btn-sm {
+  column-gap: 4px; /* Standardizes space between icon and text */
+}
 </style>
