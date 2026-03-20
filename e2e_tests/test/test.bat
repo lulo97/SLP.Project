@@ -1,1 +1,1 @@
-npx playwright test add_quiz_1_matching.spec --headed
+npx playwright test add_quiz_1_ordering.spec --headed
