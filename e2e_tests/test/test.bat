@@ -1,1 +1,1 @@
-npx playwright test multiple_choice.spec --headed
+npx playwright test true_false.spec --headed
