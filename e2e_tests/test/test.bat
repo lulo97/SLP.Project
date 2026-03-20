@@ -1,1 +1,1 @@
-npx playwright test multiple_choice_1_option.spec --headed
+npx playwright test multiple_choice_no_correct.spec --headed
