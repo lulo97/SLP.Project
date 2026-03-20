@@ -1,1 +1,1 @@
-npx playwright test update_multiple_question.spec --headed
+npx playwright test update_true_false.spec --headed
