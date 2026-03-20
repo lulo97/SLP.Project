@@ -4,6 +4,7 @@
       <QuestionForm
         :initial-question="initialQuestion"
         :loading="questionStore.loading"
+        data-testid="question-form-add-tags"
         @save="handleSave"
         @cancel="goBack"
       />
