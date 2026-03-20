@@ -1,1 +1,1 @@
-npx playwright test update_fill_blank.spec --headed
+npx playwright test update_ordering.spec --headed
