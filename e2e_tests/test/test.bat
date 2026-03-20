@@ -1,1 +1,1 @@
-npx playwright test matching.spec --headed
+npx playwright test tests/question --headed
