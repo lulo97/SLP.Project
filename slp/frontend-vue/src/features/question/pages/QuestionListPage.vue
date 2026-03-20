@@ -18,7 +18,9 @@
           @change="handleFilterChange"
           data-testid="filter-type"
         >
-          <a-select-option value="multiple_choice">Multiple Choice</a-select-option>
+          <a-select-option value="multiple_choice"
+            >Multiple Choice</a-select-option
+          >
           <a-select-option value="true_false">True/False</a-select-option>
           <a-select-option value="fill_blank">Fill Blank</a-select-option>
           <a-select-option value="ordering">Ordering</a-select-option>
@@ -34,34 +36,67 @@
       </div>
     </div>
 
-    <!-- Questions List -->
     <a-list
       :loading="questionStore.loading"
       :data-source="questionStore.questions"
       item-layout="vertical"
+      data-testid="questions-list"
     >
       <template #renderItem="{ item }">
         <a-list-item :data-testid="`question-item-${item.id}`">
-          <a-list-item-meta>
+          <a-list-item-meta :data-testid="`question-meta-${item.id}`">
             <template #title>
-              <div class="flex items-center justify-between gap-2">
-                <span class="font-medium text-sm leading-snug">{{ item.content }}</span>
-                <a-tag class="shrink-0">{{ formatType(item.type) }}</a-tag>
+              <div
+                class="flex items-center justify-between gap-2"
+                data-testid="question-header"
+              >
+                <span
+                  class="font-medium text-sm leading-snug"
+                  :data-testid="`question-content-${item.id}`"
+                >
+                  {{ item.content }}
+                </span>
+                <a-tag
+                  class="shrink-0"
+                  :data-testid="`question-type-tag-${item.id}`"
+                >
+                  {{ formatType(item.type) }}
+                </a-tag>
               </div>
             </template>
             <template #description>
-              <div class="text-sm">
-                <p class="text-gray-500">{{ getDescription(item) || 'No description' }}</p>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <a-tag v-for="tag in item.tags" :key="tag" size="small">{{ tag }}</a-tag>
+              <div
+                class="text-sm"
+                :data-testid="`question-description-container-${item.id}`"
+              >
+                <p
+                  class="text-gray-500"
+                  :data-testid="`question-description-text-${item.id}`"
+                >
+                  {{ getDescription(item) || "No description" }}
+                </p>
+                <div
+                  class="flex flex-wrap gap-1 mt-1"
+                  data-testid="question-tags-container"
+                >
+                  <a-tag
+                    v-for="tag in item.tags"
+                    :key="tag"
+                    size="small"
+                    :data-testid="`question-tag-${tag}`"
+                  >
+                    {{ tag }}
+                  </a-tag>
                 </div>
               </div>
             </template>
           </a-list-item-meta>
+
           <template #actions>
             <span
               @click="handleEdit(item.id)"
-              :data-testid="`edit-question-${item.id}`"
+              :data-testid="`edit-question-btn-${item.id}`"
+              role="button"
             >
               <EditOutlined /> Edit
             </span>
@@ -70,8 +105,12 @@
               ok-text="Yes"
               cancel-text="No"
               @confirm="handleDelete(item.id)"
+              :data-testid="`delete-confirm-${item.id}`"
             >
-              <span :data-testid="`delete-question-${item.id}`">
+              <span
+                :data-testid="`delete-question-btn-${item.id}`"
+                role="button"
+              >
                 <DeleteOutlined /> Delete
               </span>
             </a-popconfirm>
@@ -106,7 +145,10 @@
     </div>
 
     <!-- Floating Action Button -->
-    <a-float-button-group shape="square" :style="{ right: '24px', bottom: '24px' }">
+    <a-float-button-group
+      shape="square"
+      :style="{ right: '24px', bottom: '24px' }"
+    >
       <a-float-button @click="goToCreateQuestion" data-testid="create-question">
         <template #icon><PlusOutlined /></template>
       </a-float-button>
@@ -115,19 +157,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { message } from 'ant-design-vue';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useQuestionStore } from '../stores/questionStore';
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { message } from "ant-design-vue";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useQuestionStore } from "../stores/questionStore";
 
 const router = useRouter();
 const questionStore = useQuestionStore();
 
-const search = ref('');
+const search = ref("");
 const typeFilter = ref<string | undefined>(undefined);
-const tagFilter = ref('');
+const tagFilter = ref("");
 
 // Build the current filter params object
 const buildParams = () => ({
@@ -148,24 +194,24 @@ const handleFilterChange = () => {
 
 const handlePageChange = (page: number) => {
   questionStore.fetchQuestions(buildParams(), page);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const formatType = (type: string) => {
-  if (!type) return 'Unknown';
+  if (!type) return "Unknown";
   return type
     .split(/[_\-]/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
+    .join(" ");
 };
 
 const getDescription = (item: any) => {
-  if (!item.metadataJson) return '';
+  if (!item.metadataJson) return "";
   try {
     const metadata = JSON.parse(item.metadataJson);
-    return metadata.description || '';
+    return metadata.description || "";
   } catch {
-    return '';
+    return "";
   }
 };
 
@@ -176,16 +222,16 @@ const handleEdit = (id: number) => {
 const handleDelete = async (id: number) => {
   const success = await questionStore.deleteQuestion(id);
   if (success) {
-    message.success('Question deleted');
+    message.success("Question deleted");
     // Reload the same page
     handlePageChange(questionStore.currentPage);
   } else {
-    message.error('Delete failed');
+    message.error("Delete failed");
   }
 };
 
 const goToCreateQuestion = () => {
-  router.push('/question/new');
+  router.push("/question/new");
 };
 
 onMounted(() => {
