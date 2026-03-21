@@ -342,14 +342,16 @@ public class AttemptService : IAttemptService
     }
 
     /// <summary>
-    /// Canonical fields: metadata.keywords (display only), metadata.answers (grading)
+    /// Canonical fields: metadata.keywords
     /// Answer field:     answer (string)
-    /// Graded:           user answer (trimmed, lower) ∈ answers set (trimmed, lower)
+    /// Graded:           user answer (trimmed, lower) ∈ keywords set (trimmed, lower)
     /// </summary>
     private static bool EvaluateFillBlank(JsonElement q, JsonElement a)
     {
+        //q = ValueKind = Object : "{"tags": [], "type": "fill_blank", "content": "Nhiệt độ sôi của nước là 100 độ", "metadata": {"keywords": ["100"]}, "explanation": null}"
+        //a = ValueKind = Object : "{"answer": "100"}"
         var acceptedAnswers = q.GetProperty("metadata")
-            .GetProperty("answers")                  // strictly "answers" — not "keywords"
+            .GetProperty("keywords")
             .EnumerateArray()
             .Select(x => x.GetString()?.Trim().ToLowerInvariant() ?? "")
             .ToHashSet();
