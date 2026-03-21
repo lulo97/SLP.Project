@@ -388,7 +388,7 @@ import {
   requestExplanation,
   requestGrammarCheck,
 } from "@/features/llm/llmService";
-import { Modal } from "ant-design-vue";
+import { message, Modal } from "ant-design-vue";
 import { useTts } from "@/features/tts/useTts";
 import TtsPlayer from "@/features/tts/TtsPlayer.vue";
 
@@ -659,24 +659,46 @@ async function submitExplanation(text: string) {
   }
 }
 
+const grammarLoading = ref(false);
+
 async function handleGrammar(text: string) {
+  if (grammarLoading.value) return;
+  grammarLoading.value = true;
+
+  // Clear selection
   window.getSelection()?.removeAllRanges();
+
+  const hideLoading = message.loading("Checking grammar...", 0);
+
   try {
     const corrected = await requestGrammarCheck({ text });
+    hideLoading();
+
+    // Show modal with both original and corrected text
     Modal.info({
       title: "Grammar Check Result",
-      content: h(
-        "div",
-        {
-          style: "white-space: pre-wrap; max-height: 400px; overflow-y: auto;",
-        },
-        corrected,
-      ),
+      content: h("div", { style: "white-space: pre-wrap;" }, [
+        h(
+          "p",
+          { style: "font-weight: bold; margin-bottom: 8px;" },
+          "Input text:",
+        ),
+        h("p", { style: "margin-bottom: 16px; color: #666;" }, text),
+        h(
+          "p",
+          { style: "font-weight: bold; margin-bottom: 8px;" },
+          "Corrected text:",
+        ),
+        h("p", { style: "color: #059669;" }, corrected),
+      ]),
       okText: "Close",
       width: 600,
     });
   } catch {
+    hideLoading();
     showNotif("Grammar check failed", "error", X);
+  } finally {
+    grammarLoading.value = false;
   }
 }
 
