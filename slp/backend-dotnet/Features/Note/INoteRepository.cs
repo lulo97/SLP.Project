@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace backend_dotnet.Features.Note;
+﻿using backend_dotnet.Features.Helpers;
+using backend_dotnet.Features.Note;
 
 public interface INoteRepository
 {
     Task<Note?> GetByIdAsync(int id);
-    Task<IEnumerable<Note>> GetUserNotesAsync(int userId);
+    Task<PaginatedResult<Note>> GetUserNotesAsync(int userId, string? search = null, int page = 1, int pageSize = 10);
     Task<Note> CreateAsync(Note note);
     Task UpdateAsync(Note note);
     Task<bool> DeleteAsync(int id);

@@ -88,7 +88,8 @@
     "updateSuccess": "Cập nhật ghi chú thành công!",
     "deleteSuccess": "Xóa ghi chú thành công!",
     "deleteError": "Xóa ghi chú thất bại.",
-    "updatedAt": "Cập nhật lần cuối"
+    "updatedAt": "Cập nhật lần cuối",
+    "searchPlaceholder": "Tìm kiếm..."
   },
   "favourite": {
     "myFavourites": "Mục yêu thích của tôi",

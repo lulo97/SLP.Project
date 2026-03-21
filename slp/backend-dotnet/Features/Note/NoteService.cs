@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using backend_dotnet.Features.Helpers;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,10 +22,16 @@ public class NoteService : INoteService
         return MapToDto(note);
     }
 
-    public async Task<IEnumerable<NoteDto>> GetUserNotesAsync(int userId)
+    public async Task<PaginatedResult<NoteDto>> GetUserNotesAsync(int userId, string? search = null, int page = 1, int pageSize = 10)
     {
-        var notes = await _noteRepository.GetUserNotesAsync(userId);
-        return notes.Select(MapToDto);
+        var paginated = await _noteRepository.GetUserNotesAsync(userId, search, page, pageSize);
+        return new PaginatedResult<NoteDto>
+        {
+            Items = paginated.Items.Select(MapToDto).ToList(),
+            Total = paginated.Total,
+            Page = paginated.Page,
+            PageSize = paginated.PageSize
+        };
     }
 
     public async Task<NoteDto> CreateNoteAsync(int userId, string title, string content)

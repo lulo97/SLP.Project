@@ -16,12 +16,25 @@ export const useNoteStore = defineStore('note', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  async function fetchNotes() {
+  // Pagination state
+  const currentPage = ref(1);
+  const pageSize = ref(10);
+  const totalItems = ref(0);
+  const totalPages = ref(0);
+
+   async function fetchNotes(search?: string, page: number = 1, size: number = 10) {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get('/notes');
-      notes.value = response.data;
+      const params: any = { page, pageSize: size };
+      if (search) params.search = search;
+      const response = await apiClient.get('/notes', { params });
+      const data = response.data; // PaginatedResult
+      notes.value = data.items;
+      totalItems.value = data.total;
+      currentPage.value = data.page;
+      pageSize.value = data.pageSize;
+      totalPages.value = data.totalPages;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to load notes';
       console.error(err);
@@ -105,6 +118,10 @@ export const useNoteStore = defineStore('note', () => {
     currentNote,
     loading,
     error,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
     fetchNotes,
     fetchNoteById,
     createNote,

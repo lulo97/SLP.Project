@@ -1,13 +1,22 @@
 <template>
-  <MobileLayout title="My Notes">
+  <MobileLayout :title="t('note.myNotes')">
     <div class="space-y-4">
-      <!-- Header with create button -->
-      <div class="flex justify-between items-center">
+      <!-- Header with create button and search -->
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h1 class="text-2xl font-semibold">{{ t('note.myNotes') }}</h1>
-        <a-button type="primary" @click="goToCreate">
-          <Plus :size="16" class="mr-1" />
-          {{ t('note.createNote') }}
-        </a-button>
+        <div class="flex gap-2">
+          <a-input-search
+            v-model:value="searchQuery"
+            :placeholder="t('note.searchPlaceholder')"
+            allow-clear
+            @search="handleSearch"
+            class="w-48"
+          />
+          <a-button type="primary" @click="goToCreate">
+            <Plus :size="16" class="mr-1" />
+            {{ t('note.createNote') }}
+          </a-button>
+        </div>
       </div>
 
       <!-- Loading -->
@@ -50,6 +59,17 @@
               </div>
             </div>
           </a-card>
+
+          <!-- Pagination -->
+          <div class="flex justify-center mt-4">
+            <a-pagination
+              :current="store.currentPage"
+              :total="store.totalItems"
+              :page-size="store.pageSize"
+              :show-size-changer="false"
+              @change="handlePageChange"
+            />
+          </div>
         </div>
       </a-spin>
     </div>
@@ -57,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { Plus, Edit, Trash2 } from 'lucide-vue-next';
@@ -69,9 +89,19 @@ const { t } = useI18n();
 const router = useRouter();
 const store = useNoteStore();
 
+const searchQuery = ref('');
+
 onMounted(() => {
-  store.fetchNotes();
+  store.fetchNotes(); // fetch first page
 });
+
+function handleSearch() {
+  store.fetchNotes(searchQuery.value, 1); // reset to page 1 when searching
+}
+
+function handlePageChange(page: number) {
+  store.fetchNotes(searchQuery.value, page);
+}
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
@@ -94,6 +124,8 @@ async function deleteNote(id: number) {
   try {
     await store.deleteNote(id);
     message.success(t('note.deleteSuccess'));
+    // After delete, refresh current page (or stay on same page if items remain)
+    store.fetchNotes(searchQuery.value, store.currentPage);
   } catch (err) {
     message.error(t('note.deleteError'));
   }

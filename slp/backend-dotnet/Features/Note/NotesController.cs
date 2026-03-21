@@ -23,11 +23,11 @@ public class NotesController : ControllerBase
 
     // GET /api/notes
     [HttpGet]
-    public async Task<IActionResult> GetMyNotes()
+    public async Task<IActionResult> GetMyNotes([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
-        var notes = await _noteService.GetUserNotesAsync(CurrentUserId.Value);
-        return Ok(notes);
+        var result = await _noteService.GetUserNotesAsync(CurrentUserId.Value, search, page, pageSize);
+        return Ok(result);
     }
 
     // GET /api/notes/{id}

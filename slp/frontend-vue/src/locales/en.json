@@ -88,7 +88,8 @@
     "updateSuccess": "Note updated successfully!",
     "deleteSuccess": "Note deleted successfully!",
     "deleteError": "Failed to delete note.",
-    "updatedAt": "Last updated"
+    "updatedAt": "Last updated",
+    "searchPlaceholder": "Search notes..."
   },
   "favourite": {
     "myFavourites": "My Favourites",
