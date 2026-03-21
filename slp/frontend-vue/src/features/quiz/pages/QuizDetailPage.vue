@@ -39,23 +39,33 @@
         data-testid="attempts-section"
       >
         <template #extra>
-          <a-tooltip
-            title="Cannot start attempt because this quiz has no questions"
-            :disabled="questions.length > 0"
-          >
-            <span>
-              <a-button
-                type="primary"
-                size="small"
-                @click="startAttempt"
-                :loading="attemptStore.loading"
-                :disabled="questions.length === 0"
-                data-testid="start-attempt-button"
-              >
-                Start Attempt
-              </a-button>
-            </span>
-          </a-tooltip>
+          <template v-if="questions.length === 0">
+            <a-tooltip
+              title="Cannot start attempt because this quiz has no questions"
+            >
+              <span>
+                <a-button
+                  type="primary"
+                  size="small"
+                  disabled
+                  data-testid="start-attempt-button"
+                >
+                  Start Attempt
+                </a-button>
+              </span>
+            </a-tooltip>
+          </template>
+          <template v-else>
+            <a-button
+              type="primary"
+              size="small"
+              @click="startAttempt"
+              :loading="attemptStore.loading"
+              data-testid="start-attempt-button"
+            >
+              Start Attempt
+            </a-button>
+          </template>
         </template>
         <a-list
           :data-source="attemptStore.userAttempts"
