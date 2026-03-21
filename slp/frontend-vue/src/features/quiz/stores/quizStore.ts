@@ -61,12 +61,19 @@ export const useQuizStore = defineStore("quiz", {
   state: () => ({
     quizzes: [] as QuizListDto[],
     currentQuiz: null as QuizDto | null,
+    // Only true during initial page-level fetches (fetchQuizById, fetchMyQuizzes, etc.)
     loading: false,
     error: null as string | null,
     notes: [] as NoteDto[],
+    // True only during initial notes fetch (not during add/edit/delete)
     notesLoading: false,
+    // True only during note add/edit/delete actions
+    noteSaving: false,
     sources: [] as SourceDto[],
+    // True only during initial sources fetch
     sourcesLoading: false,
+    // True only during source attach/detach actions
+    sourceSaving: false,
     // Pagination state
     currentPage: 1,
     pageSize: 10,
@@ -74,6 +81,8 @@ export const useQuizStore = defineStore("quiz", {
   }),
 
   actions: {
+    // ─── Quiz list / CRUD (keep loading flag — these are page-level navigations) ───
+
     async fetchMyQuizzes(page = 1, pageSize = 10) {
       this.loading = true;
       this.error = null;
@@ -83,7 +92,6 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.get<PaginatedResult<QuizListDto>>(
           `/quiz?mine=true&page=${page}&pageSize=${pageSize}`,
         );
-        // Backend returns PaginatedResult<QuizListDto>
         this.quizzes = response.data.items ?? (response.data as any);
         this.total = response.data.total ?? 0;
         this.currentPage = response.data.page ?? page;
@@ -208,11 +216,10 @@ export const useQuizStore = defineStore("quiz", {
       }
     },
 
-    clearError() {
-      this.error = null;
-    },
+    // ─── Quiz questions (no loading flag — caller manages its own saving ref) ───
 
     async fetchQuizQuestions(quizId: number) {
+      // Use loading here because it's called on mount (initial fetch)
       this.loading = true;
       this.error = null;
       try {
@@ -233,8 +240,7 @@ export const useQuizStore = defineStore("quiz", {
       displayOrder: number,
       originalQuestionId?: number,
     ) {
-      this.loading = true;
-      this.error = null;
+      // No loading flag — useQuizQuestions composable handles saving state
       try {
         const response = await apiClient.post(`/quiz/${quizId}/questions`, {
           questionSnapshotJson: snapshotJson,
@@ -245,8 +251,6 @@ export const useQuizStore = defineStore("quiz", {
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to create question";
         throw err;
-      } finally {
-        this.loading = false;
       }
     },
 
@@ -255,8 +259,7 @@ export const useQuizStore = defineStore("quiz", {
       snapshotJson: string,
       displayOrder: number,
     ) {
-      this.loading = true;
-      this.error = null;
+      // No loading flag — useQuizQuestions composable handles saving state
       try {
         const response = await apiClient.put(`/quiz/questions/${questionId}`, {
           questionSnapshotJson: snapshotJson,
@@ -266,24 +269,21 @@ export const useQuizStore = defineStore("quiz", {
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to update question";
         throw err;
-      } finally {
-        this.loading = false;
       }
     },
 
     async deleteQuizQuestion(questionId: number) {
-      this.loading = true;
-      this.error = null;
+      // No loading flag — useQuizQuestions composable handles saving state
       try {
         await apiClient.delete(`/quiz/questions/${questionId}`);
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to delete question";
         return false;
-      } finally {
-        this.loading = false;
       }
     },
+
+    // ─── Notes (notesLoading for initial fetch, noteSaving for mutations) ───
 
     async fetchQuizNotes(quizId: number) {
       this.notesLoading = true;
@@ -304,35 +304,61 @@ export const useQuizStore = defineStore("quiz", {
       quizId: number,
       payload: { title: string; content: string },
     ) {
-      this.loading = true;
+      this.noteSaving = true;
       this.error = null;
       try {
         const response = await apiClient.post<NoteDto>(
           `/quiz/${quizId}/notes`,
           payload,
         );
+        // Optimistic local update — no re-fetch needed
+        this.notes = [...this.notes, response.data];
         return response.data;
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to add note";
         throw err;
       } finally {
-        this.loading = false;
+        this.noteSaving = false;
+      }
+    },
+
+    async updateNote(id: number, payload: { title: string; content: string }) {
+      this.noteSaving = true;
+      this.error = null;
+      try {
+        const response = await apiClient.put<NoteDto>(`/notes/${id}`, payload);
+        // Patch in-place — no re-fetch needed
+        const idx = this.notes.findIndex((n) => n.id === id);
+        if (idx !== -1) {
+          this.notes[idx] = response.data;
+          this.notes = [...this.notes]; // trigger reactivity
+        }
+        return response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.error || "Failed to update note";
+        throw err;
+      } finally {
+        this.noteSaving = false;
       }
     },
 
     async removeNoteFromQuiz(quizId: number, noteId: number) {
-      this.loading = true;
+      this.noteSaving = true;
       this.error = null;
       try {
         await apiClient.delete(`/quiz/${quizId}/notes/${noteId}`);
+        // Optimistic removal — no re-fetch needed
+        this.notes = this.notes.filter((n) => n.id !== noteId);
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to remove note";
         return false;
       } finally {
-        this.loading = false;
+        this.noteSaving = false;
       }
     },
+
+    // ─── Sources (sourcesLoading for initial fetch, sourceSaving for mutations) ───
 
     async fetchQuizSources(quizId: number) {
       this.sourcesLoading = true;
@@ -350,48 +376,44 @@ export const useQuizStore = defineStore("quiz", {
     },
 
     async addSourceToQuiz(quizId: number, sourceId: number) {
-      this.loading = true;
+      this.sourceSaving = true;
       this.error = null;
       try {
         const response = await apiClient.post<SourceDto>(
           `/quiz/${quizId}/sources`,
           { sourceId },
         );
+        // Optimistic local update — no re-fetch needed
+        this.sources = [...this.sources, response.data];
         return response.data;
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to attach source";
         throw err;
       } finally {
-        this.loading = false;
+        this.sourceSaving = false;
       }
     },
 
     async removeSourceFromQuiz(quizId: number, sourceId: number) {
-      this.loading = true;
+      this.sourceSaving = true;
       this.error = null;
       try {
         await apiClient.delete(`/quiz/${quizId}/sources/${sourceId}`);
+        // Optimistic removal — no re-fetch needed
+        this.sources = this.sources.filter((s) => s.id !== sourceId);
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to detach source";
         return false;
       } finally {
-        this.loading = false;
+        this.sourceSaving = false;
       }
     },
 
-    async updateNote(id: number, payload: { title: string; content: string }) {
-      this.loading = true;
+    // ─── Misc ───
+
+    clearError() {
       this.error = null;
-      try {
-        const response = await apiClient.put(`/notes/${id}`, payload);
-        return response.data;
-      } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to update note";
-        throw err;
-      } finally {
-        this.loading = false;
-      }
     },
   },
 });

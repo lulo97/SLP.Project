@@ -48,7 +48,7 @@
         @remove="handleRemoveNote"
       />
 
-      <!-- Sources section – visible to all, but actions disabled for non‑owner -->
+      <!-- Sources section – visible to all, but actions disabled for non-owner -->
       <SourcesSection
         :sources="sources"
         :loading="quizStore.sourcesLoading"
@@ -141,7 +141,7 @@
         </a-list>
       </a-card>
 
-      <!-- Questions section – readonly mode for non‑owner -->
+      <!-- Questions section – readonly mode for non-owner -->
       <QuestionsSection :questions="questions" :readonly="!isOwner" />
 
       <CommentsSection target-type="quiz" :target-id="quizId" />
@@ -183,7 +183,7 @@ import NotesSection from "../components/NotesSection.vue";
 import SourcesSection from "../components/SourcesSection.vue";
 import QuestionsSection from "../components/QuestionsSection.vue";
 import QuizActionsCard from "../components/QuizActionsCard.vue";
-import CommentsSection from "@/features/comment/components/CommentsSection.vue"; // add this
+import CommentsSection from "@/features/comment/components/CommentsSection.vue";
 import ReportModal from "@/features/report/components/ReportModal.vue";
 
 const route = useRoute();
@@ -197,22 +197,70 @@ const quizId = computed(() => Number(route.params.id));
 const reportModalVisible = ref(false);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-// Determine if current user is the owner
 const isOwner = computed(() => {
   const quiz = quizStore.currentQuiz;
   return !!quiz && authStore.user?.id === quiz.userId;
 });
 
-// Notes (only fetched for owner)
+// ─── Notes ───
+
 const notes = computed(() => quizStore.notes);
 
-// Sources (always fetched)
+const handleAddNote = async (note: { title: string; content: string }) => {
+  try {
+    await quizStore.addNoteToQuiz(quizId.value, note);
+    // Store updates notes array in-place — no re-fetch needed
+    message.success("Note added");
+  } catch (err) {
+    message.error("Failed to add note");
+  }
+};
+
+const handleRemoveNote = async (noteId: number) => {
+  const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
+  // Store filters notes array in-place — no re-fetch needed
+  if (success) {
+    message.success("Note removed");
+  } else {
+    message.error("Failed to remove note");
+  }
+};
+
+// ─── Sources ───
+
 const sources = computed(() => quizStore.sources);
 
-// Questions
+const handleAttachSources = async (sourceIds: number[]) => {
+  try {
+    // Fire all attaches in parallel — no sequential blocking
+    await Promise.all(
+      sourceIds.map((sourceId) =>
+        quizStore.addSourceToQuiz(quizId.value, sourceId),
+      ),
+    );
+    // Store updates sources array in-place — no re-fetch needed
+    message.success("Sources attached");
+  } catch (err) {
+    message.error("Failed to attach some sources");
+  }
+};
+
+const handleDetachSource = async (sourceId: number) => {
+  const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
+  // Store filters sources array in-place — no re-fetch needed
+  if (success) {
+    message.success("Source detached");
+  } else {
+    message.error("Failed to detach source");
+  }
+};
+
+// ─── Questions ───
+
 const { questions, loadQuestions } = useQuizQuestions(quizId.value);
 
-// Attempts
+// ─── Attempts ───
+
 const startAttempt = async () => {
   try {
     const result = await attemptStore.startAttempt(quizId.value);
@@ -221,56 +269,17 @@ const startAttempt = async () => {
     message.error("Could not start attempt");
   }
 };
+
 const resumeAttempt = (attemptId: number) => {
   router.push(`/quiz/${quizId.value}/attempt/${attemptId}`);
 };
+
 const goToReview = (attemptId: number) => {
   router.push(`/quiz/attempt/${attemptId}/review`);
 };
 
-// Notes actions (only for owner)
-const handleAddNote = async (note: { title: string; content: string }) => {
-  try {
-    await quizStore.addNoteToQuiz(quizId.value, note);
-    message.success("Note added");
-    await quizStore.fetchQuizNotes(quizId.value);
-  } catch (err) {
-    message.error("Failed to add note");
-  }
-};
-const handleRemoveNote = async (noteId: number) => {
-  const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
-  if (success) {
-    message.success("Note removed");
-    await quizStore.fetchQuizNotes(quizId.value);
-  } else {
-    message.error("Failed to remove note");
-  }
-};
+// ─── Quiz actions ───
 
-// Sources actions (only for owner – the buttons are hidden by readonly)
-const handleAttachSources = async (sourceIds: number[]) => {
-  try {
-    for (const sourceId of sourceIds) {
-      await quizStore.addSourceToQuiz(quizId.value, sourceId);
-    }
-    message.success("Sources attached");
-    await quizStore.fetchQuizSources(quizId.value);
-  } catch (err) {
-    message.error("Failed to attach some sources");
-  }
-};
-const handleDetachSource = async (sourceId: number) => {
-  const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
-  if (success) {
-    message.success("Source detached");
-    await quizStore.fetchQuizSources(quizId.value);
-  } else {
-    message.error("Failed to detach source");
-  }
-};
-
-// Quiz actions (only for owner)
 const handleDuplicate = async () => {
   const duplicated = await quizStore.duplicateQuiz(quizId.value);
   if (duplicated) {
@@ -280,6 +289,7 @@ const handleDuplicate = async () => {
     message.error("Failed to duplicate");
   }
 };
+
 const handleDelete = async () => {
   const success = await quizStore.deleteQuiz(quizId.value);
   if (success) {
@@ -290,6 +300,8 @@ const handleDelete = async () => {
   }
 };
 
+// ─── Initial load (only runs once on mount) ───
+
 onMounted(async () => {
   await quizStore.fetchQuizById(quizId.value);
   // Only fetch notes if owner (privacy)
@@ -297,7 +309,7 @@ onMounted(async () => {
     await quizStore.fetchQuizNotes(quizId.value);
   }
   await quizStore.fetchQuizSources(quizId.value);
-  await sourceStore.fetchSources(); // for attach modal (will not be opened anyway)
+  await sourceStore.fetchSources();
   await attemptStore.fetchUserAttemptsForQuiz(quizId.value);
   await loadQuestions();
 });

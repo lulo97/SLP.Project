@@ -137,7 +137,7 @@
       Quiz not found.
     </div>
 
-    <!-- Modal – no insert-index needed -->
+    <!-- Modal -->
     <QuestionFormModal
       v-model:visible="showQuestionModal"
       :question="editingQuestion"
@@ -173,7 +173,21 @@ import QuizActionsCard from "../components/QuizActionsCard.vue";
 import QuestionFormModal from "../components/QuestionFormModal.vue";
 import { useAttemptStore } from "@/features/quiz-attempt/stores/attemptStore";
 
+const route = useRoute();
+const router = useRouter();
+const quizStore = useQuizStore();
+const authStore = useAuthStore();
+const sourceStore = useSourceStore();
 const attemptStore = useAttemptStore();
+
+const quizId = computed(() => Number(route.params.id));
+
+const canEdit = computed(() => {
+  const quiz = quizStore.currentQuiz;
+  return !!quiz && (authStore.isAdmin || quiz.userId === authStore.user?.id);
+});
+
+// ─── Attempt actions ───
 
 const startAttempt = async () => {
   try {
@@ -191,79 +205,82 @@ const resumeAttempt = (attemptId: number) => {
 const goToReview = (attemptId: number) => {
   router.push(`/quiz/attempt/${attemptId}/review`);
 };
-const route = useRoute();
-const router = useRouter();
-const quizStore = useQuizStore();
-const authStore = useAuthStore();
-const sourceStore = useSourceStore();
 
-const quizId = computed(() => Number(route.params.id));
+// ─── Notes ───
 
-// Fix: always return boolean
-const canEdit = computed(() => {
-  const quiz = quizStore.currentQuiz;
-  return !!quiz && (authStore.isAdmin || quiz.userId === authStore.user?.id);
-});
-
-// Notes
 const notes = computed(() => quizStore.notes);
+
 const handleAddNote = async (note: { title: string; content: string }) => {
   try {
     await quizStore.addNoteToQuiz(quizId.value, note);
+    // Store updates notes array in-place — no re-fetch needed
     message.success("Note added");
-    await quizStore.fetchQuizNotes(quizId.value);
   } catch (err) {
     message.error("Failed to add note");
   }
 };
+
 const handleEditNote = async (
   id: number,
   note: { title: string; content: string },
 ) => {
   try {
     await quizStore.updateNote(id, note);
+    // Store patches notes array in-place — no re-fetch needed
     message.success("Note updated");
-    await quizStore.fetchQuizNotes(quizId.value);
   } catch (err) {
     message.error("Failed to update note");
   }
 };
+
 const handleRemoveNote = async (noteId: number) => {
   const success = await quizStore.removeNoteFromQuiz(quizId.value, noteId);
+  // Store filters notes array in-place — no re-fetch needed
   if (success) {
     message.success("Note removed");
-    await quizStore.fetchQuizNotes(quizId.value);
   } else {
     message.error("Failed to remove note");
   }
 };
 
-// Sources
+// ─── Sources ───
+
 const sources = computed(() => quizStore.sources);
+
 const handleAttachSources = async (sourceIds: number[]) => {
   try {
-    for (const sourceId of sourceIds) {
-      await quizStore.addSourceToQuiz(quizId.value, sourceId);
-    }
+    // Fire all attaches in parallel — no sequential blocking
+    await Promise.all(
+      sourceIds.map((sourceId) =>
+        quizStore.addSourceToQuiz(quizId.value, sourceId),
+      ),
+    );
+    // Store updates sources array in-place — no re-fetch needed
     message.success("Sources attached");
-    await quizStore.fetchQuizSources(quizId.value);
   } catch (err) {
     message.error("Failed to attach some sources");
   }
 };
+
 const handleDetachSource = async (sourceId: number) => {
   const success = await quizStore.removeSourceFromQuiz(quizId.value, sourceId);
+  // Store filters sources array in-place — no re-fetch needed
   if (success) {
     message.success("Source detached");
-    await quizStore.fetchQuizSources(quizId.value);
   } else {
     message.error("Failed to detach source");
   }
 };
 
-// Questions
+const handleViewSource = (sourceId: number) => {
+  router.push(`/source/${sourceId}`);
+};
+
+// ─── Questions ───
+
 const {
   questions,
+  saving,
   loadQuestions,
   createQuestion,
   updateQuestion,
@@ -280,7 +297,6 @@ const handleFindQuestion = () => {
 };
 
 const handleSelectQuestion = async (selectedQuestion: any) => {
-  // Build snapshot from selected question data
   const snapshot = {
     type: selectedQuestion.type,
     content: selectedQuestion.content,
@@ -292,14 +308,13 @@ const handleSelectQuestion = async (selectedQuestion: any) => {
   };
   const snapshotJson = JSON.stringify(snapshot);
 
-  // Determine display order (append at end)
   const newOrder = questions.value.length
     ? Math.max(...questions.value.map((q) => q.displayOrder)) + 1
     : 1;
 
   try {
     await createQuestion(snapshotJson, newOrder, selectedQuestion.id);
-    await loadQuestions();
+    // createQuestion already updates local array — no loadQuestions() needed
     message.success("Question added");
   } catch (error) {
     message.error("Failed to add question");
@@ -324,14 +339,11 @@ const openQuestionModal = (
   showQuestionModal.value = true;
 };
 
-const handleViewSource = (sourceId: number) => {
-  router.push(`/source/${sourceId}`);
-};
-
 const handleQuestionSaved = async (
   payload: CreateQuestionPayload,
   existingId?: number,
 ) => {
+  saving.value = true;
   try {
     const snapshot = {
       type: payload.type,
@@ -346,38 +358,38 @@ const handleQuestionSaved = async (
       const question = questions.value.find((q) => q.id === existingId);
       if (!question) return;
       await updateQuestion(existingId, snapshotJson, question.displayOrder);
+      // updateQuestion patches local array in-place — no loadQuestions() needed
       message.success("Question updated");
     } else {
-      let newOrder = 1;
+      let newOrder: number;
       if (
         insertIndex.value !== undefined &&
         insertIndex.value >= 0 &&
         insertIndex.value <= questions.value.length
       ) {
         newOrder = insertIndex.value + 1;
-        // Shift subsequent questions
-        const toUpdate = questions.value.filter(
+        // Shift subsequent questions in parallel
+        const toShift = questions.value.filter(
           (q) => q.displayOrder >= newOrder,
         );
-        for (const q of toUpdate) {
-          await updateQuestion(
-            q.id,
-            q.questionSnapshotJson,
-            q.displayOrder + 1,
-          );
-        }
+        await Promise.all(
+          toShift.map((q) =>
+            updateQuestion(q.id, q.questionSnapshotJson, q.displayOrder + 1),
+          ),
+        );
       } else {
         newOrder = questions.value.length
           ? Math.max(...questions.value.map((q) => q.displayOrder)) + 1
           : 1;
       }
       await createQuestion(snapshotJson, newOrder);
+      // createQuestion pushes to local array — no loadQuestions() needed
       message.success("Question created");
     }
-    await loadQuestions();
   } catch (error) {
     message.error("Operation failed");
   } finally {
+    saving.value = false;
     showQuestionModal.value = false;
     editingQuestion.value = undefined;
     insertIndex.value = undefined;
@@ -385,10 +397,12 @@ const handleQuestionSaved = async (
 };
 
 const handleDeleteQuestion = async (questionId: number) => {
+  // deleteQuestion filters local array in-place — no loadQuestions() needed
   await deleteQuestion(questionId);
 };
 
-// Quiz actions
+// ─── Quiz actions ───
+
 const handleDuplicate = async () => {
   const duplicated = await quizStore.duplicateQuiz(quizId.value);
   if (duplicated) {
@@ -409,7 +423,8 @@ const handleDelete = async () => {
   }
 };
 
-// Initial load
+// ─── Initial load (only runs once on mount) ───
+
 onMounted(async () => {
   await quizStore.fetchQuizById(quizId.value);
   await loadQuestions();
