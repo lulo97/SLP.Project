@@ -103,7 +103,20 @@ public class AuthController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _userService.GetByIdAsync(userId);
         if (user == null) return NotFound();
-        return Ok(user);
+
+        var dto = new CurrentUserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            EmailConfirmed = user.EmailConfirmed,
+            Role = user.Role,
+            Status = user.Status,
+            AvatarFilename = user.AvatarFilename,
+            CreatedAt = user.CreatedAt
+        };
+
+        return Ok(dto);
     }
 
     // PUT /api/users/me

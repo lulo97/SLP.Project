@@ -102,7 +102,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useQuestionStore } from '@/features/question/stores/questionStore';
-import { formatQuestionType } from '../utils/questionHelpers';
 
 const props = defineProps<{
   visible: boolean;

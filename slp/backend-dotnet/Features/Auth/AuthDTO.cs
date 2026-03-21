@@ -30,4 +30,16 @@
         public string? ErrorCode { get; set; }   // e.g., "USER_NOT_FOUND", "INVALID_PASSWORD", "ACCOUNT_BANNED", "EMAIL_NOT_VERIFIED"
         public string? Message { get; set; }
     }
+
+    public class CurrentUserDto
+    {
+        public int Id { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public string Role { get; set; }
+        public string Status { get; set; }
+        public string? AvatarFilename { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
 }
