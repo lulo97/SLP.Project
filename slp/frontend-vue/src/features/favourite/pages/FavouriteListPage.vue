@@ -60,6 +60,17 @@
               </div>
             </div>
           </a-card>
+
+          <!-- Pagination -->
+          <div class="flex justify-center mt-4">
+            <a-pagination
+              :current="store.currentPage"
+              :total="store.totalItems"
+              :page-size="store.pageSize"
+              :show-size-changer="false"
+              @change="handlePageChange"
+            />
+          </div>
         </div>
       </a-spin>
     </div>
@@ -82,11 +93,15 @@ const store = useFavoriteStore();
 const searchQuery = ref('');
 
 onMounted(() => {
-  store.fetchFavorites();
+  store.fetchFavorites(); // fetch first page
 });
 
 function handleSearch() {
-  store.fetchFavorites(searchQuery.value);
+  store.fetchFavorites(searchQuery.value, 1); // reset to page 1 when searching
+}
+
+function handlePageChange(page: number) {
+  store.fetchFavorites(searchQuery.value, page);
 }
 
 function formatDate(dateStr: string) {
@@ -130,6 +145,8 @@ async function deleteFavorite(id: number) {
   try {
     await store.deleteFavorite(id);
     message.success(t('favourite.deleteSuccess'));
+    // After delete, refresh current page (or stay on same page if items remain)
+    store.fetchFavorites(searchQuery.value, store.currentPage);
   } catch (err) {
     message.error(t('favourite.deleteError'));
   }

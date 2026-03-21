@@ -1,8 +1,10 @@
+using backend_dotnet.Features.Helpers;
+
 namespace backend_dotnet.Features.Favorite;
 
 public interface IFavoriteService
 {
-    Task<IEnumerable<FavoriteDto>> GetUserFavoritesAsync(int userId, string? search = null);
+    Task<PaginatedResult<FavoriteDto>> GetUserFavoritesAsync(int userId, string? search = null, int page = 1, int pageSize = 10);
     Task<FavoriteDto> CreateAsync(int userId, CreateFavoriteRequest request);
     Task<FavoriteDto?> UpdateAsync(int id, int userId, UpdateFavoriteRequest request);
     Task<bool> DeleteAsync(int id, int userId);
@@ -28,10 +30,16 @@ public class FavoriteService : IFavoriteService
         return MapToDto(entity);
     }
 
-    public async Task<IEnumerable<FavoriteDto>> GetUserFavoritesAsync(int userId, string? search = null)
+    public async Task<PaginatedResult<FavoriteDto>> GetUserFavoritesAsync(int userId, string? search = null, int page = 1, int pageSize = 10)
     {
-        var items = await _repo.GetByUserAsync(userId, search);
-        return items.Select(MapToDto);
+        var paginated = await _repo.GetByUserAsync(userId, search, page, pageSize);
+        return new PaginatedResult<FavoriteDto>
+        {
+            Items = paginated.Items.Select(MapToDto).ToList(),
+            Total = paginated.Total,
+            Page = paginated.Page,
+            PageSize = paginated.PageSize
+        };
     }
 
     public async Task<FavoriteDto> CreateAsync(int userId, CreateFavoriteRequest request)

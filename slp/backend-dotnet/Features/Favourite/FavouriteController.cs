@@ -29,12 +29,12 @@ public class FavoriteController : ControllerBase
 
     // GET /api/favorites?search=...
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search)
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
 
-        var items = await _service.GetUserFavoritesAsync(CurrentUserId.Value, search);
-        return Ok(items);
+        var result = await _service.GetUserFavoritesAsync(CurrentUserId.Value, search, page, pageSize);
+        return Ok(result);
     }
 
     // POST /api/favorites
@@ -46,7 +46,7 @@ public class FavoriteController : ControllerBase
         try
         {
             var created = await _service.CreateAsync(CurrentUserId.Value, request);
-            return CreatedAtAction(nameof(GetAll), created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (ArgumentException ex)
         {

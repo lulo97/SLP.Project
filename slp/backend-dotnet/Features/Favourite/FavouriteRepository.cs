@@ -1,5 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using backend_dotnet.Data;
+using backend_dotnet.Features.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend_dotnet.Features.Favorite;
 
@@ -12,7 +13,7 @@ public class FavoriteRepository : IFavoriteRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<FavoriteItem>> GetByUserAsync(int userId, string? search = null)
+    public async Task<PaginatedResult<FavoriteItem>> GetByUserAsync(int userId, string? search = null, int page = 1, int pageSize = 10)
     {
         var query = _context.FavoriteItems.Where(f => f.UserId == userId);
 
@@ -24,7 +25,20 @@ public class FavoriteRepository : IFavoriteRepository
                 (f.Note != null && f.Note.ToLower().Contains(lower)));
         }
 
-        return await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(f => f.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<FavoriteItem>
+        {
+            Items = items,
+            Total = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<FavoriteItem?> GetByIdAsync(int id)
