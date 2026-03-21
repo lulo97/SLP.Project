@@ -10,6 +10,7 @@
   >
     <div data-testid="question-form-modal">
       <QuestionForm
+        :key="formKey"
         :initial-question="initialQuestion"
         @save="handleSave"
         @cancel="handleCancel"
@@ -19,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import QuestionForm from "@/features/question/components/QuestionForm.vue";
 import type { CreateQuestionPayload } from "@/features/question/stores/questionStore";
 
@@ -32,6 +33,15 @@ const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
   (e: "saved", payload: CreateQuestionPayload, id?: number): void;
 }>();
+
+const formKey = ref(0);
+
+// Force a new key every time the modal becomes visible
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    formKey.value++;
+  }
+});
 
 // Convert the quiz question (which contains a snapshot JSON string) to the shape expected by QuestionForm
 const initialQuestion = computed(() => {
