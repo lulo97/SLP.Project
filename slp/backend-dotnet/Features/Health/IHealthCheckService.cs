@@ -47,7 +47,6 @@ public class HealthCheckService : IHealthCheckService
             CheckBackend,
             CheckFrontend,
             CheckLlama,
-            CheckPiper,
             CheckPiperGateway
         };
 
@@ -104,7 +103,6 @@ public class HealthCheckService : IHealthCheckService
             nameof(CheckBackend) => "Backend",
             nameof(CheckFrontend) => "Frontend",
             nameof(CheckLlama) => "Llama",
-            nameof(CheckPiper) => "Piper",
             nameof(CheckPiperGateway) => "Piper Gateway",
             _ => "Unknown"
         };
@@ -147,22 +145,35 @@ public class HealthCheckService : IHealthCheckService
     private async Task<ServiceHealthDto> CheckMail()
     {
         var start = DateTime.UtcNow;
-        // SMTP port – adjust to your mail server
-        var host = "mail"; // container name
-        var port = 25; // SMTP
+        var baseUrl = _configuration["MailApi:BaseUrl"] ?? "http://mail:3000"; // adjust port
+        var healthUrl = baseUrl.TrimEnd('/') + "/health";
+        var httpClient = _httpClientFactory.CreateClient();
 
         try
         {
-            using var client = new TcpClient();
-            await client.ConnectAsync(host, port);
+            var response = await httpClient.GetAsync(healthUrl);
             var ms = (long)(DateTime.UtcNow - start).TotalMilliseconds;
-            return new ServiceHealthDto
+            if (response.IsSuccessStatusCode)
             {
-                Name = "Mail",
-                Status = "Healthy",
-                Details = $"SMTP port {port} reachable",
-                ResponseTimeMs = ms
-            };
+                var content = await response.Content.ReadAsStringAsync();
+                return new ServiceHealthDto
+                {
+                    Name = "Mail",
+                    Status = "Healthy",
+                    Details = content,
+                    ResponseTimeMs = ms
+                };
+            }
+            else
+            {
+                return new ServiceHealthDto
+                {
+                    Name = "Mail",
+                    Status = "Unhealthy",
+                    Details = $"HTTP {response.StatusCode}",
+                    ResponseTimeMs = ms
+                };
+            }
         }
         catch (Exception ex)
         {
@@ -298,39 +309,6 @@ public class HealthCheckService : IHealthCheckService
             return new ServiceHealthDto
             {
                 Name = "Llama",
-                Status = "Unhealthy",
-                Details = ex.Message,
-                ResponseTimeMs = ms
-            };
-        }
-    }
-
-    private async Task<ServiceHealthDto> CheckPiper()
-    {
-        var start = DateTime.UtcNow;
-        // Piper uses Wyoming protocol on TCP, but we just check port connectivity
-        var host = _configuration["Piper:Host"] ?? "piper";
-        var port = int.Parse(_configuration["Piper:Port"] ?? "3004");
-
-        try
-        {
-            using var client = new TcpClient();
-            await client.ConnectAsync(host, port);
-            var ms = (long)(DateTime.UtcNow - start).TotalMilliseconds;
-            return new ServiceHealthDto
-            {
-                Name = "Piper",
-                Status = "Healthy",
-                Details = $"Connected to {host}:{port}",
-                ResponseTimeMs = ms
-            };
-        }
-        catch (Exception ex)
-        {
-            var ms = (long)(DateTime.UtcNow - start).TotalMilliseconds;
-            return new ServiceHealthDto
-            {
-                Name = "Piper",
                 Status = "Unhealthy",
                 Details = ex.Message,
                 ResponseTimeMs = ms
