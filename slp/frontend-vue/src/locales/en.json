@@ -89,5 +89,31 @@
     "deleteSuccess": "Note deleted successfully!",
     "deleteError": "Failed to delete note.",
     "updatedAt": "Last updated"
+  },
+  "favourite": {
+    "myFavourites": "My Favourites",
+    "addFavourite": "Add Favourite",
+    "editFavourite": "Edit Favourite",
+    "favouriteDetail": "Favourite Detail",
+    "text": "Text",
+    "textPlaceholder": "Enter word, phrase, or idiom",
+    "textRequired": "Text is required",
+    "type": "Type",
+    "typePlaceholder": "Select type",
+    "typeWord": "Word",
+    "typePhrase": "Phrase",
+    "typeIdiom": "Idiom",
+    "typeOther": "Other",
+    "note": "Note",
+    "notePlaceholder": "Optional personal note",
+    "searchPlaceholder": "Search favourites...",
+    "noFavourites": "No favourites yet.",
+    "notFound": "Favourite not found.",
+    "createSuccess": "Favourite added successfully!",
+    "updateSuccess": "Favourite updated successfully!",
+    "deleteSuccess": "Favourite deleted successfully!",
+    "deleteError": "Failed to delete favourite.",
+    "createdAt": "Created",
+    "updatedAt": "Last updated"
   }
 }

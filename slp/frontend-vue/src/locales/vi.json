@@ -89,5 +89,31 @@
     "deleteSuccess": "Xóa ghi chú thành công!",
     "deleteError": "Xóa ghi chú thất bại.",
     "updatedAt": "Cập nhật lần cuối"
+  },
+  "favourite": {
+    "myFavourites": "Mục yêu thích của tôi",
+    "addFavourite": "Thêm mục yêu thích",
+    "editFavourite": "Sửa mục yêu thích",
+    "favouriteDetail": "Chi tiết mục yêu thích",
+    "text": "Văn bản",
+    "textPlaceholder": "Nhập từ, cụm từ hoặc thành ngữ",
+    "textRequired": "Văn bản không được để trống",
+    "type": "Loại",
+    "typePlaceholder": "Chọn loại",
+    "typeWord": "Từ",
+    "typePhrase": "Cụm từ",
+    "typeIdiom": "Thành ngữ",
+    "typeOther": "Khác",
+    "note": "Ghi chú",
+    "notePlaceholder": "Ghi chú cá nhân (tùy chọn)",
+    "searchPlaceholder": "Tìm kiếm...",
+    "noFavourites": "Chưa có mục yêu thích nào.",
+    "notFound": "Không tìm thấy mục yêu thích.",
+    "createSuccess": "Thêm mục yêu thích thành công!",
+    "updateSuccess": "Cập nhật mục yêu thích thành công!",
+    "deleteSuccess": "Xóa mục yêu thích thành công!",
+    "deleteError": "Xóa mục yêu thích thất bại.",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Cập nhật lần cuối"
   }
 }

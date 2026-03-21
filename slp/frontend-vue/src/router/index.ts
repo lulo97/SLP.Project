@@ -190,6 +190,34 @@ const router = createRouter({
       component: () => import("@/features/note/pages/NoteFormPage.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/favourites",
+      name: "favourite-list",
+      component: () =>
+        import("@/features/favourite/pages/FavouriteListPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/favourites/new",
+      name: "favourite-create",
+      component: () =>
+        import("@/features/favourite/pages/FavouriteFormPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/favourites/:id",
+      name: "favourite-detail",
+      component: () =>
+        import("@/features/favourite/pages/FavouriteDetailPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/favourites/:id/edit",
+      name: "favourite-edit",
+      component: () =>
+        import("@/features/favourite/pages/FavouriteFormPage.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 

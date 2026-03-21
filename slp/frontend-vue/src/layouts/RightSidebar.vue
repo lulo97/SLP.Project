@@ -116,6 +116,11 @@
               <FileText :size="18" class="mr-2" />My Notes
             </router-link>
           </a-menu-item>
+          <a-menu-item key="/favourites">
+            <router-link to="/favourites" class="flex items-center">
+              <Star :size="18" class="mr-2" />Favourite
+            </router-link>
+          </a-menu-item>
           <a-menu-item key="/search" data-testid="nav-item-search">
             <router-link to="/search" class="flex items-center">
               <Search :size="18" class="mr-2" />Search
@@ -277,6 +282,7 @@ import {
   Flag,
   Activity,
   BarChart2,
+  Star
 } from "lucide-vue-next";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import { useSettingsStore } from "@/features/settings/stores/settingsStore";

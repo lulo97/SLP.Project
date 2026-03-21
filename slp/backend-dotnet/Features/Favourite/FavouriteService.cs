@@ -6,6 +6,7 @@ public interface IFavoriteService
     Task<FavoriteDto> CreateAsync(int userId, CreateFavoriteRequest request);
     Task<FavoriteDto?> UpdateAsync(int id, int userId, UpdateFavoriteRequest request);
     Task<bool> DeleteAsync(int id, int userId);
+    Task<FavoriteDto?> GetByIdAsync(int id, int userId);
 }
 
 public class FavoriteService : IFavoriteService
@@ -18,6 +19,13 @@ public class FavoriteService : IFavoriteService
     public FavoriteService(IFavoriteRepository repo)
     {
         _repo = repo;
+    }
+
+    public async Task<FavoriteDto?> GetByIdAsync(int id, int userId)
+    {
+        var entity = await _repo.GetByIdAsync(id);
+        if (entity == null || entity.UserId != userId) return null;
+        return MapToDto(entity);
     }
 
     public async Task<IEnumerable<FavoriteDto>> GetUserFavoritesAsync(int userId, string? search = null)

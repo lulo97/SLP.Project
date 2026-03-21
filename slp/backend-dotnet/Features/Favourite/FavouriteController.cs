@@ -18,6 +18,15 @@ public class FavoriteController : ControllerBase
         ? int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")
         : null;
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        if (!CurrentUserId.HasValue) return Unauthorized();
+        var item = await _service.GetByIdAsync(id, CurrentUserId.Value);
+        if (item == null) return NotFound();
+        return Ok(item);
+    }
+
     // GET /api/favorites?search=...
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? search)
