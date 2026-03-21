@@ -166,6 +166,30 @@ const router = createRouter({
       component: () => import("@/features/admin/pages/AdminMetricsPage.vue"),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
+    {
+      path: "/notes",
+      name: "note-list",
+      component: () => import("@/features/note/pages/NoteListPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/notes/new",
+      name: "note-create",
+      component: () => import("@/features/note/pages/NoteFormPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/notes/:id",
+      name: "note-detail",
+      component: () => import("@/features/note/pages/NoteDetailPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/notes/:id/edit",
+      name: "note-edit",
+      component: () => import("@/features/note/pages/NoteFormPage.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 

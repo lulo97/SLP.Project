@@ -111,7 +111,11 @@
               <FileText :size="18" class="mr-2" />Add from Text
             </router-link>
           </a-menu-item>
-
+          <a-menu-item key="/notes">
+            <router-link to="/notes" class="flex items-center">
+              <FileText :size="18" class="mr-2" />My Notes
+            </router-link>
+          </a-menu-item>
           <a-menu-item key="/search" data-testid="nav-item-search">
             <router-link to="/search" class="flex items-center">
               <Search :size="18" class="mr-2" />Search

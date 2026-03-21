@@ -4202,6 +4202,8 @@ services:
         condition: service_healthy
       mail:
         condition: service_started
+      piper-gateway:
+        condition: service_started
 
   frontend-vue-img:
     build:
