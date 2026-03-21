@@ -1,9 +1,5 @@
 <template>
   <MobileLayout title="Search">
-    <template #header-left>
-      <span class="text-lg font-semibold text-gray-900">Search</span>
-    </template>
-
     <div class="max-w-2xl mx-auto">
 
       <!-- ── Search bar ─────────────────────────────────────────────────── -->

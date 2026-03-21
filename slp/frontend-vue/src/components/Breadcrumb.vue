@@ -65,6 +65,8 @@ import { useRoute } from "vue-router";
 import { ChevronRight } from "lucide-vue-next";
 import { useQuizStore } from "@/features/quiz/stores/quizStore";
 import { useSourceStore } from "@/features/source/stores/sourceStore";
+import { useNoteStore } from "@/features/note/stores/noteStore";        
+import { useFavoriteStore } from "@/features/favourite/stores/favouriteStore";
 
 interface BreadcrumbItem {
   label: string;
@@ -85,6 +87,8 @@ const props = withDefaults(
 const route = useRoute();
 const quizStore = useQuizStore();
 const sourceStore = useSourceStore();
+const noteStore = useNoteStore();        
+const favouriteStore = useFavoriteStore(); 
 
 // ── Static anchors ──────────────────────────────────────────────────────────
 const HOME: BreadcrumbItem = { label: "Home", path: "/dashboard" };
@@ -94,6 +98,8 @@ const QUESTION_LIST: BreadcrumbItem = {
   path: "/questions",
 };
 const SOURCE_LIST: BreadcrumbItem = { label: "My Sources", path: "/source" };
+const NOTE_LIST: BreadcrumbItem = { label: "My Notes", path: "/notes" };         
+const FAVOURITE_LIST: BreadcrumbItem = { label: "My Favourites", path: "/favourites" }; 
 
 // ── Route → trail mapping ────────────────────────────────────────────────────
 const items = computed<BreadcrumbItem[]>(() => {
@@ -101,6 +107,8 @@ const items = computed<BreadcrumbItem[]>(() => {
   // Dynamic labels pulled from already-loaded store state
   const quizTitle = quizStore.currentQuiz?.title || "Quiz";
   const sourceTitle = sourceStore.currentSource?.title || "Source";
+  const noteTitle = noteStore.currentNote?.title || "Note";               
+  const favouriteText = favouriteStore.currentFavorite?.text || "Favourite"; 
 
   switch (name) {
     // ── Dashboard ────────────────────────────────────────────────────────
@@ -156,7 +164,35 @@ const items = computed<BreadcrumbItem[]>(() => {
       // Note: SourceDetailPage overrides #header-left with its own back button,
       // so this entry only fires if that slot override is ever removed.
       return [HOME, SOURCE_LIST, { label: sourceTitle }];
+    // ── Notes ────────────────────────────────────────────────────────────
+    case "note-list":
+      return [HOME, NOTE_LIST];
 
+    case "note-create":
+      return [HOME, NOTE_LIST, { label: "Create" }];
+
+    case "note-detail":
+      return [HOME, NOTE_LIST, { label: noteTitle }];
+
+    case "note-edit":
+      return [HOME, NOTE_LIST, { label: noteTitle }];
+
+    // ── Favourites ───────────────────────────────────────────────────────
+    case "favourite-list":
+      return [HOME, FAVOURITE_LIST];
+
+    case "favourite-create":
+      return [HOME, FAVOURITE_LIST, { label: "Add" }];
+
+    case "favourite-detail":
+      return [HOME, FAVOURITE_LIST, { label: favouriteText }];
+
+    case "favourite-edit":
+      return [HOME, FAVOURITE_LIST, { label: favouriteText }];
+
+    // ── Profile ──────────────────────────────────────────────────────────
+    case "profile":
+      return [HOME, { label: "Profile" }];
     // ── Misc ─────────────────────────────────────────────────────────────
     case "search":
       return [HOME, { label: "Search" }];
@@ -166,7 +202,18 @@ const items = computed<BreadcrumbItem[]>(() => {
 
     case "user-reports":
       return [HOME, { label: "My Reports" }];
-
+    case "admin-health":
+      return [
+        HOME,
+        { label: "Admin", path: "/admin" },
+        { label: "Service Health" },
+      ];
+    case "admin-metrics":
+      return [
+        HOME,
+        { label: "Admin", path: "/admin" },
+        { label: "API Metrics" },
+      ];
     default:
       return []; // unknown route → fallback to plain <h1>
   }

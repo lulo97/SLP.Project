@@ -162,11 +162,6 @@ const router = createRouter({
       meta: { requiresGuest: false },
     },
     {
-      path: "/admin/metrics",
-      component: () => import("@/features/admin/pages/AdminMetricsPage.vue"),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
       path: "/notes",
       name: "note-list",
       component: () => import("@/features/note/pages/NoteListPage.vue"),
@@ -217,6 +212,12 @@ const router = createRouter({
       component: () =>
         import("@/features/favourite/pages/FavouriteFormPage.vue"),
       meta: { requiresAuth: true },
+    },
+    {
+      path: "/admin/metrics",
+      name: "admin-metrics",
+      component: () => import("@/features/admin/pages/AdminMetricsPage.vue"),
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
   ],
 });
