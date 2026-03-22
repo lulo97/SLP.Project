@@ -109,7 +109,7 @@ const router = createRouter({
       path: "/source/new-note",
       name: "SourceTextCreate",
       component: () =>
-        import("@/features/source/pages/SourceNoteCreatePage.vue"),
+        import("@/features/source/pages/SourceTextCreatePage.vue"),
       meta: { requiresAuth: true },
     },
     {

@@ -12,12 +12,12 @@ public class SourceService : ISourceService
     private static readonly Dictionary<string, string> ExtensionTypeMap =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            { "pdf",  "pdf"  },
-            { "txt",  "txt"  },
-            { "html", "txt"  },
-            { "htm",  "txt"  },
-            { "md",   "txt"  },
-            { "epub", "book" },
+        { "pdf",  "pdf"  },
+        { "txt",  "text" },
+        { "html", "text" },
+        { "htm",  "text" },
+        { "md",   "text" },
+        { "epub", "text" },
         };
 
     public SourceService(
@@ -134,7 +134,7 @@ public class SourceService : ISourceService
     }
 
     // ── Create note ──────────────────────────────────────────────────────────
-    public async Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content)
+    public async Task<SourceDto> CreateTextSourceAsync(int userId, string title, string content)
     {
         if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title is required.");
         if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Content cannot be empty.");
@@ -142,7 +142,7 @@ public class SourceService : ISourceService
         var source = new Source
         {
             UserId = userId,
-            Type = "note",
+            Type = "text",
             Title = title,
             RawText = content,
             CreatedAt = DateTime.UtcNow,

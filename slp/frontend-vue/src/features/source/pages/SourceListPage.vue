@@ -58,8 +58,8 @@
         <a-select-option value="link" data-testid="source-list-type-link"
           >URL</a-select-option
         >
-        <a-select-option value="note" data-testid="source-list-type-note"
-          >Note</a-select-option
+        <a-select-option value="text" data-testid="source-list-type-text"
+          >Text</a-select-option
         >
       </a-select>
 
@@ -206,15 +206,11 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null;
 const formatType = (type: string) => {
   const map: Record<string, string> = {
     pdf: "PDF",
-    txt: "Text",
     link: "URL",
-    url: "URL",
-    note: "Note",
-    book: "Book",
+    text: "Text",
   };
   return map[type] ?? type.toUpperCase();
 };
-
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
 // ── Fetch wrapper ─────────────────────────────────────────────────────────────

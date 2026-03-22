@@ -16,7 +16,7 @@ public class Source
 
     [Column("type")]
     [MaxLength(50)]
-    public string Type { get; set; } = "pdf"; // pdf, txt, url, etc.
+    public string Type { get; set; } = "text"; // pdf | link | text
 
     [Column("title")]
     [MaxLength(255)]

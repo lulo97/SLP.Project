@@ -452,16 +452,10 @@ const skeletonWidths = [
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 const typeLabel = computed(() => {
-  // FIX: added 'book' type; 'link' and 'url' both map to "URL" to match the
-  // backend which stores URL sources with type = "link".
   const map: Record<string, string> = {
     pdf: "PDF",
-    txt: "Text",
     link: "URL",
-    url: "URL",
-    note: "Note",
-    book: "Book",
-    unknown: "File",
+    text: "Text",
   };
   return (
     map[source.value?.type ?? ""] ?? (source.value?.type ?? "").toUpperCase()

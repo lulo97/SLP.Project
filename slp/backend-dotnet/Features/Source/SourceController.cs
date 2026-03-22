@@ -77,7 +77,7 @@ public class SourceController : ControllerBase
         if (!CurrentUserId.HasValue) return Unauthorized();
         try
         {
-            var source = await _sourceService.CreateNoteSourceAsync(
+            var source = await _sourceService.CreateTextSourceAsync(
                 CurrentUserId.Value, request.Title, request.Content);
             return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
         }

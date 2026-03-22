@@ -55,6 +55,6 @@ public class SourceQueryParams
     /// <summary>Partial, case-insensitive match on Title.</summary>
     public string? Search { get; set; }
 
-    /// <summary>Exact match on Type (pdf | txt | link | note | book).  Null = all.</summary>
+    /// <summary>Exact match on Type (pdf | link | text). Null = all.</summary>
     public string? Type { get; set; }
 }
