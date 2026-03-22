@@ -1,9 +1,15 @@
 <template>
   <MobileLayout :title="`Quiz: ${quizTitle}`">
-    <div v-if="attemptValue" class="player-container space-y-4" data-testid="player-container">
-
+    <div
+      v-if="attemptValue"
+      class="player-container space-y-4"
+      data-testid="player-container"
+    >
       <!-- Header with progress and timer -->
-      <div class="flex justify-between items-center" data-testid="player-header">
+      <div
+        class="flex justify-between items-center"
+        data-testid="player-header"
+      >
         <div>
           <span class="font-medium" data-testid="player-progress">
             Question {{ composable.currentIndex.value + 1 }} of
@@ -17,6 +23,7 @@
           />
           <!-- Report Question button (icon) -->
           <a-button
+            v-if="authStore.isAuthenticated && !isOwner"
             size="small"
             @click="openReportModal"
             data-testid="report-question-button"
@@ -44,13 +51,20 @@
           :answer="composable.currentAnswer.value"
           @answer-change="composable.handleAnswerChange"
         />
-        <div v-else class="text-center py-4 text-gray-500" data-testid="question-loading">
+        <div
+          v-else
+          class="text-center py-4 text-gray-500"
+          data-testid="question-loading"
+        >
           Loading question...
         </div>
       </div>
 
       <!-- Navigation buttons -->
-      <div class="flex justify-between items-start" data-testid="player-navigation">
+      <div
+        class="flex justify-between items-start"
+        data-testid="player-navigation"
+      >
         <a-button
           @click="composable.prevQuestion"
           :disabled="composable.currentIndex.value === 0"
@@ -87,7 +101,10 @@
             class="text-xs text-gray-400"
             data-testid="answered-count"
           >
-            {{ composable.answeredCount.value }}/{{ attemptValue.questionCount }} answered
+            {{ composable.answeredCount.value }}/{{
+              attemptValue.questionCount
+            }}
+            answered
           </span>
         </div>
       </div>
@@ -104,7 +121,9 @@
           <a-button
             v-for="(q, idx) in attemptValue.questions"
             :key="q.quizQuestionId"
-            :type="idx === composable.currentIndex.value ? 'primary' : 'default'"
+            :type="
+              idx === composable.currentIndex.value ? 'primary' : 'default'
+            "
             @click="
               composable.goToQuestion(idx);
               showSidebar = false;
@@ -128,10 +147,15 @@
         data-testid="submit-modal"
       >
         <p data-testid="submit-modal-message">
-          Are you sure you want to submit? You cannot change your answers after submission.
+          Are you sure you want to submit? You cannot change your answers after
+          submission.
         </p>
-        <p class="mt-2 text-sm text-gray-500" data-testid="submit-modal-answered-count">
-          Answered: {{ composable.answeredCount.value }} / {{ attemptValue.questionCount }}
+        <p
+          class="mt-2 text-sm text-gray-500"
+          data-testid="submit-modal-answered-count"
+        >
+          Answered: {{ composable.answeredCount.value }} /
+          {{ attemptValue.questionCount }}
         </p>
       </a-modal>
 
@@ -159,18 +183,20 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message } from "ant-design-vue";
-import { MenuOutlined, FlagOutlined } from "@ant-design/icons-vue";  // <-- added FlagOutlined
+import { MenuOutlined, FlagOutlined } from "@ant-design/icons-vue";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useAttempt } from "../composables/useAttempt";
 import QuestionDisplay from "../components/QuestionDisplay.vue";
 import AutoSaveIndicator from "../components/AutoSaveIndicator.vue";
 import { useQuizStore } from "@/features/quiz/stores/quizStore";
-import ReportModal from "@/features/report/components/ReportModal.vue";  // <-- import
+import ReportModal from "@/features/report/components/ReportModal.vue";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 
 const route = useRoute();
 const router = useRouter();
 //const attemptStore = useAttemptStore();
 const quizStore = useQuizStore();
+const authStore = useAuthStore();
 
 const quizId = computed(() => Number(route.params.quizId));
 const attemptIdParam = computed(() =>
@@ -189,12 +215,22 @@ const attemptValue = computed(() => {
   const val = composable.attempt?.value ?? null;
   if (val) {
     if (!val.questions || !Array.isArray(val.questions)) {
-      console.error("[QuizPlayer] attemptValue: questions is missing or not an array", val);
+      console.error(
+        "[QuizPlayer] attemptValue: questions is missing or not an array",
+        val,
+      );
     } else if (val.questions.length === 0) {
       console.error("[QuizPlayer] attemptValue: questions array is empty", val);
     }
   }
   return val;
+});
+
+// computed for ownership
+const isOwner = computed(() => {
+  const currentUser = authStore.user;
+  const quiz = quizStore.currentQuiz;
+  return !!quiz && currentUser?.id === quiz.userId;
 });
 
 watch(
