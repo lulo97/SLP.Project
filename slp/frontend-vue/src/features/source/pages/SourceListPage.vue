@@ -20,10 +20,10 @@
         </a-button>
         <a-button
           size="small"
-          @click="router.push('/source/new-note')"
-          data-testid="source-list-add-note-btn"
+          @click="router.push('/source/new-text')"
+          data-testid="source-list-add-text-btn"
         >
-          Add Note
+          Add Text
         </a-button>
       </a-space>
     </template>
@@ -93,7 +93,7 @@
         No sources match your filters.
       </template>
       <template v-else>
-        No sources yet. Upload a file, add a URL, or create a note to get
+        No sources yet. Upload a file, add a URL, or create a text to get
         started.
       </template>
     </div>
