@@ -105,7 +105,7 @@ public class SourceService : ISourceService
         {
             UserId = userId,
             Type = "link",
-            Title = parseResult.Title ?? title ?? url,
+            Title = title ?? parseResult.Title ?? url,
             Url = url,
             RawText = parseResult.RawText,
             RawHtml = parseResult.RawHtml,
