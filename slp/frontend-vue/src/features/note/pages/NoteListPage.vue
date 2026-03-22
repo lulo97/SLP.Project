@@ -1,5 +1,5 @@
 <template>
-  <MobileLayout :title="t('note.myNotes')" data-testid="notes-list-layout">
+  <MobileLayout :title="t('note.myNotes')">
     <div class="space-y-4" data-testid="notes-list-container">
       <div
         class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"

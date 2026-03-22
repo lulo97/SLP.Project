@@ -1,7 +1,6 @@
 <template>
   <MobileLayout
     :title="note?.title || t('note.noteDetail')"
-    data-testid="note-detail-layout"
   >
     <div
       v-if="store.loading"
