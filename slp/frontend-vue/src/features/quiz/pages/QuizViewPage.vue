@@ -16,7 +16,7 @@
 
       <!-- Report Quiz card (visible to authenticated users) -->
       <a-card
-        v-if="isAuthenticated"
+        v-if="isAuthenticated && !isOwner"
         class="shadow-sm"
         data-testid="report-quiz-card"
       >
