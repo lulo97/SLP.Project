@@ -1,1 +1,1 @@
-npx playwright test source-pdf.spec --headed
+npx playwright test read-grammar.spec --headed
