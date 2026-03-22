@@ -61,7 +61,7 @@
         </span>
 
         <span
-          v-if="isAuthenticated"
+          v-if="isAuthenticated && !isOwner"
           @click="$emit('report', comment.id)"
           data-testid="report-button"
         >
@@ -143,6 +143,11 @@ const store = useCommentStore();
 const editing = ref(false);
 const editContent = ref(props.comment.content);
 const historyModalVisible = ref(false);
+
+const isOwner = computed(() => {
+  return props.comment.userId !== undefined && 
+         props.currentUserId === props.comment.userId;
+});
 
 // Watch for missing userId (debugging)
 watch(
