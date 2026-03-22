@@ -86,6 +86,17 @@
             </template>
           </a-list-item-meta>
           <template #actions>
+            <!-- View button (always visible) -->
+            <a-button
+              type="text"
+              size="small"
+              @click="handleView(item.id)"
+              :data-testid="`view-quiz-${item.id}`"
+            >
+              <template #icon><EyeOutlined /></template>
+              View
+            </a-button>
+
             <a-button
               type="text"
               size="small"
@@ -166,6 +177,7 @@ import {
   CopyOutlined,
   EditOutlined,
   DeleteOutlined,
+  EyeOutlined
 } from "@ant-design/icons-vue";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useQuizStore } from "../stores/quizStore";
@@ -256,6 +268,10 @@ const handleDelete = (id: number) => {
 
 const goToCreateQuiz = () => {
   router.push("/quiz/new");
+};
+
+const handleView = (id: number) => {
+  router.push(`/quiz/view/${id}`);
 };
 
 onMounted(() => {

@@ -1,5 +1,9 @@
 <template>
-  <a-card title="Comments" class="shadow-sm mt-4" data-testid="comments-section">
+  <a-card
+    title="Comments"
+    class="shadow-sm mt-4"
+    data-testid="comments-section"
+  >
     <div v-if="store.loading" class="text-center py-4">
       <a-spin size="small" data-testid="comments-loading" />
     </div>
@@ -27,7 +31,11 @@
       </div>
 
       <!-- Comments list -->
-      <div v-if="store.comments.length === 0" class="text-gray-400 text-sm py-2" data-testid="no-comments-message">
+      <div
+        v-if="store.comments.length === 0"
+        class="text-gray-400 text-sm py-2"
+        data-testid="no-comments-message"
+      >
         No comments yet.
       </div>
       <div v-else class="space-y-4">
@@ -43,7 +51,7 @@
           @reply="openReplyForm"
           @edit="() => {}"
           @delete="handleDeleteComment"
-           @report="openReportModal"
+          @report="openReportModal"
         />
       </div>
     </div>
@@ -82,21 +90,21 @@
     </a-modal>
 
     <ReportModal
-  v-model:visible="reportModalVisible"
-  :target-type="'comment'"
-  :target-id="reportingCommentId!"
-  @reported="reportModalVisible = false"
-/>
+      v-model:visible="reportModalVisible"
+      :target-type="'comment'"
+      :target-id="reportingCommentId!"
+      @reported="reportModalVisible = false"
+    />
   </a-card>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { message } from 'ant-design-vue';
-import { useCommentStore } from '../stores/commentStore';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import CommentItem from './CommentItem.vue';
-import ReportModal from '@/features/report/components/ReportModal.vue';
+import { ref, computed } from "vue";
+import { message } from "ant-design-vue";
+import { useCommentStore } from "../stores/commentStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import CommentItem from "./CommentItem.vue";
+import ReportModal from "@/features/report/components/ReportModal.vue";
 
 const props = defineProps<{
   targetType: string;
@@ -110,14 +118,14 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const currentUserId = computed(() => authStore.user?.id);
 const isAdmin = computed(() => authStore.isAdmin);
 
-const newCommentContent = ref('');
+const newCommentContent = ref("");
 const replyModalVisible = ref(false);
-const replyContent = ref('');
+const replyContent = ref("");
 const replyingTo = ref<number | null>(null);
 const reportModalVisible = ref(false);
 const reportingCommentId = ref<number | null>(null);
 
-  const openReportModal = (commentId: number) => {
+const openReportModal = (commentId: number) => {
   reportingCommentId.value = commentId;
   reportModalVisible.value = true;
 };
@@ -128,7 +136,7 @@ const fetchComments = async () => {
 
 const handleAddComment = async () => {
   if (!newCommentContent.value.trim()) {
-    message.warning('Comment cannot be empty');
+    message.warning("Comment cannot be empty");
     return;
   }
   try {
@@ -137,8 +145,8 @@ const handleAddComment = async () => {
       targetId: props.targetId,
       content: newCommentContent.value,
     });
-    newCommentContent.value = '';
-    message.success('Comment added');
+    newCommentContent.value = "";
+    message.success("Comment added");
   } catch {
     // error already in store
   }
@@ -146,13 +154,13 @@ const handleAddComment = async () => {
 
 const openReplyForm = (commentId: number) => {
   replyingTo.value = commentId;
-  replyContent.value = '';
+  replyContent.value = "";
   replyModalVisible.value = true;
 };
 
 const handleReplySubmit = async () => {
   if (!replyContent.value.trim()) {
-    message.warning('Reply cannot be empty');
+    message.warning("Reply cannot be empty");
     return;
   }
   try {
@@ -163,18 +171,22 @@ const handleReplySubmit = async () => {
       content: replyContent.value,
     });
     replyModalVisible.value = false;
-    message.success('Reply added');
+    message.success("Reply added");
   } catch {
     // handled
   }
 };
 
 const handleDeleteComment = async (commentId: number) => {
-  const success = await store.deleteComment(commentId, props.targetType, props.targetId);
+  const success = await store.deleteComment(
+    commentId,
+    props.targetType,
+    props.targetId,
+  );
   if (success) {
-    message.success('Comment deleted');
+    message.success("Comment deleted");
   } else {
-    message.error('Failed to delete comment');
+    message.error("Failed to delete comment");
   }
 };
 
