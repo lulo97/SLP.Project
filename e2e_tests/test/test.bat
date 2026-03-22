@@ -1,1 +1,1 @@
-npx playwright test read-tts.spec --headed
+npx playwright test read-favourite.spec --headed
