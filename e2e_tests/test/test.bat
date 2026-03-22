@@ -1,1 +1,1 @@
-npx playwright test add_edit_question_type.spec.ts --headed
+npx playwright test note-list.spec --headed
