@@ -246,6 +246,24 @@ CREATE TABLE public.sessions (
     user_agent text
 );
 
+-- FILE: source.sql
+CREATE TABLE public.source (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    type character varying(20) NOT NULL,
+    title character varying(255) NOT NULL,
+    url text,
+    content jsonb,
+    raw_html text,
+    raw_text text,
+    file_path text,
+    metadata jsonb,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT source_type_check CHECK (((type)::text = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])))
+);
+
 -- FILE: tag.sql
 CREATE TABLE public.tag (
     id integer NOT NULL,
@@ -611,7 +629,6 @@ ALTER TABLE ONLY public.sessions
     ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
 
 -- FILE: source.sql
--- 1. Create the sequence first
 CREATE SEQUENCE public.source_id_seq
     AS integer
     START WITH 1
@@ -621,36 +638,14 @@ CREATE SEQUENCE public.source_id_seq
     CACHE 1;
 
 -- FILE: source.sql
--- 2. Create the table with the sequence linked as the default
-CREATE TABLE public.source (
-    id integer NOT NULL DEFAULT nextval('public.source_id_seq'),
-    user_id integer NOT NULL,
-    type character varying(20) NOT NULL,
-    title character varying(255) NOT NULL,
-    url text,
-    content jsonb,
-    raw_html text,
-    raw_text text,
-    file_path text,
-    metadata jsonb,
-    deleted_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT source_type_check CHECK (((type)::text = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])))
-);
-
--- FILE: source.sql
--- 3. Ensure the sequence is dropped if the table is dropped
 ALTER SEQUENCE public.source_id_seq OWNED BY public.source.id;
 
 -- FILE: source.sql
--- 4. Primary Key and Constraints
-ALTER TABLE ONLY public.source
-    ADD CONSTRAINT source_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.source ALTER COLUMN id SET DEFAULT nextval('public.source_id_seq'::regclass);
 
 -- FILE: source.sql
--- 5. Indexes
-CREATE INDEX idx_source_deleted ON public.source USING btree (deleted_at) WHERE (deleted_at IS NULL);
+ALTER TABLE ONLY public.source
+    ADD CONSTRAINT source_pkey PRIMARY KEY (id);
 
 -- FILE: tag.sql
 CREATE SEQUENCE public.tag_id_seq
@@ -875,6 +870,9 @@ CREATE INDEX idx_report_target ON public.report USING btree (target_type, target
 
 -- FILE: report.sql
 CREATE INDEX idx_report_user_id ON public.report USING btree (user_id);
+
+-- FILE: source.sql
+CREATE INDEX idx_source_deleted ON public.source USING btree (deleted_at) WHERE (deleted_at IS NULL);
 
 -- FILE: source.sql
 CREATE INDEX idx_source_fts ON public.source USING gin (to_tsvector('english'::regconfig, raw_text));
