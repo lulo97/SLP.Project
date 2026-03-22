@@ -1,17 +1,17 @@
 // e2e_tests/test/tests/source/create-delete-note.spec.ts
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, FRONTEND_URL } from '../note/noteHelper'; // reuse login and base URL
+import { loginAsAdmin, FRONTEND_URL } from '../note/noteHelper';
 
 test.describe('Source (Note) – create and delete via UI', () => {
   test('should create a note source and delete it', async ({ page }) => {
     // 1. Login and go to the sources list
     await loginAsAdmin(page);
     await page.goto(`${FRONTEND_URL}/source`);
-    await expect(page.getByTestId('source-list')).toBeVisible();
+    await expect(page.getByTestId('source-list-add-text-btn')).toBeVisible();
 
-    // 2. Click "Add Note" button → navigate to note creation page
-    await page.getByTestId('source-list-add-note-btn').click();
-    await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-note`);
+    // 2. Click "Add Text" button → navigate to note creation page
+    await page.getByTestId('source-list-add-text-btn').click();
+    await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
     await expect(page.getByTestId('source-note-create-card')).toBeVisible();
 
     // 3. Fill in the note form
@@ -40,7 +40,7 @@ test.describe('Source (Note) – create and delete via UI', () => {
     await expect(sourceItem).toContainText(uniqueTitle);
 
     // 8. Delete the source
-    const deleteBtn = sourceItem.locator('[data-testid^="source-list-delete-btn-"]');
+    const deleteBtn = sourceItem.locator(`[data-testid="source-list-delete-btn-${sourceId}"]`);
     await deleteBtn.click();
 
     // 9. Confirm the deletion in the popconfirm dialog

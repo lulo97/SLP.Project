@@ -1,1 +1,1 @@
-npx playwright test source-note.spec --headed
+npx playwright test source-text.spec --headed
