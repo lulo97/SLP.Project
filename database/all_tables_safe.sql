@@ -34,7 +34,7 @@ CREATE TABLE public.comment (
     deleted_at timestamp with time zone,
     edited_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT comment_target_type_check CHECK (((target_type)::text = ANY ((ARRAY['quiz'::character varying, 'source'::character varying, 'question'::character varying])::text[])))
+    CONSTRAINT comment_target_type_check CHECK (((target_type)::text = ANY (ARRAY[('quiz'::character varying)::text, ('source'::character varying)::text, ('question'::character varying)::text])))
 );
 
 -- FILE: daily_word.sql
@@ -61,7 +61,7 @@ CREATE TABLE public.explanation (
     editable boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone,
-    CONSTRAINT explanation_author_type_check CHECK (((author_type)::text = ANY ((ARRAY['system'::character varying, 'user'::character varying])::text[])))
+    CONSTRAINT explanation_author_type_check CHECK (((author_type)::text = ANY (ARRAY[('system'::character varying)::text, ('user'::character varying)::text])))
 );
 
 -- FILE: favorite_item.sql
@@ -73,7 +73,7 @@ CREATE TABLE public.favorite_item (
     note text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT favorite_item_type_check CHECK (((type)::text = ANY ((ARRAY['word'::character varying, 'phrase'::character varying, 'idiom'::character varying, 'other'::character varying])::text[])))
+    CONSTRAINT favorite_item_type_check CHECK (((type)::text = ANY (ARRAY[('word'::character varying)::text, ('phrase'::character varying)::text, ('idiom'::character varying)::text, ('other'::character varying)::text])))
 );
 
 -- FILE: llm_log.sql
@@ -89,7 +89,7 @@ CREATE TABLE public.llm_log (
     status character varying(20),
     completed_at timestamp with time zone,
     error text,
-    CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY ((ARRAY['explain'::character varying, 'generate_questions'::character varying, 'summarize'::character varying, 'grammar_check'::character varying])::text[])))
+    CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY (ARRAY[('explain'::character varying)::text, ('generate_questions'::character varying)::text, ('summarize'::character varying)::text, ('grammar_check'::character varying)::text])))
 );
 
 -- FILE: metrics.sql
@@ -127,7 +127,7 @@ CREATE TABLE public.question (
     metadata jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT question_type_check CHECK (((type)::text = ANY ((ARRAY['multiple_choice'::character varying, 'single_choice'::character varying, 'fill_blank'::character varying, 'ordering'::character varying, 'matching'::character varying, 'true_false'::character varying, 'flashcard'::character varying])::text[])))
+    CONSTRAINT question_type_check CHECK (((type)::text = ANY (ARRAY[('multiple_choice'::character varying)::text, ('single_choice'::character varying)::text, ('fill_blank'::character varying)::text, ('ordering'::character varying)::text, ('matching'::character varying)::text, ('true_false'::character varying)::text, ('flashcard'::character varying)::text])))
 );
 
 -- FILE: quiz_attempt_answer.sql
@@ -155,7 +155,7 @@ CREATE TABLE public.quiz_attempt (
     status character varying(20) DEFAULT 'in_progress'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT quiz_attempt_status_check CHECK (((status)::text = ANY ((ARRAY['in_progress'::character varying, 'completed'::character varying, 'abandoned'::character varying])::text[])))
+    CONSTRAINT quiz_attempt_status_check CHECK (((status)::text = ANY (ARRAY[('in_progress'::character varying)::text, ('completed'::character varying)::text, ('abandoned'::character varying)::text])))
 );
 
 -- FILE: quiz_note.sql
@@ -207,7 +207,7 @@ CREATE TABLE public.quiz (
     note_id integer,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT quiz_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['public'::character varying, 'private'::character varying])::text[])))
+    CONSTRAINT quiz_visibility_check CHECK (((visibility)::text = ANY (ARRAY[('public'::character varying)::text, ('private'::character varying)::text])))
 );
 
 -- FILE: report.sql
@@ -252,9 +252,7 @@ CREATE TABLE public.source (
     deleted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    
-    CONSTRAINT source_type_check CHECK (type = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])),
-    CONSTRAINT source_pkey PRIMARY KEY (id)
+    CONSTRAINT source_type_check CHECK (((type)::text = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])))
 );
 
 -- FILE: tag.sql
@@ -287,8 +285,8 @@ CREATE TABLE public.users (
     password_reset_expiry timestamp with time zone,
     email_verification_token text,
     avatar_filename text,
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['user'::character varying, 'admin'::character varying])::text[]))),
-    CONSTRAINT users_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'banned'::character varying])::text[])))
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY (ARRAY[('user'::character varying)::text, ('admin'::character varying)::text]))),
+    CONSTRAINT users_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('banned'::character varying)::text])))
 );
 
 
@@ -633,6 +631,10 @@ CREATE SEQUENCE public.source_id_seq
 
 -- FILE: source.sql
 ALTER SEQUENCE public.source_id_seq OWNED BY public.source.id;
+
+-- FILE: source.sql
+ALTER TABLE ONLY public.source
+    ADD CONSTRAINT source_pkey PRIMARY KEY (id);
 
 -- FILE: tag.sql
 CREATE SEQUENCE public.tag_id_seq
