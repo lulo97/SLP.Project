@@ -3,7 +3,7 @@
     <div
       v-if="store.loading"
       class="flex justify-center py-12"
-      data-test-id="loading-spinner-container"
+      data-testid="loading-spinner-container"
     >
       <a-spin />
     </div>
@@ -11,17 +11,17 @@
     <div
       v-else-if="favorite"
       class="space-y-4"
-      data-test-id="favorite-detail-container"
+      data-testid="favorite-detail-container"
     >
       <div
         class="bg-white rounded-lg p-4 shadow-sm"
-        data-test-id="favorite-card"
+        data-testid="favorite-card"
       >
         <div
           class="flex items-center gap-2 mb-2"
-          data-test-id="favorite-header"
+          data-testid="favorite-header"
         >
-          <h1 class="text-2xl font-semibold" data-test-id="favorite-title">
+          <h1 class="text-2xl font-semibold" data-testid="favorite-title">
             {{ favorite.text }}
           </h1>
           <a-tag :color="getTypeColor(favorite.type)">{{
@@ -29,13 +29,13 @@
           }}</a-tag>
         </div>
 
-        <p class="text-gray-500 text-sm" data-test-id="favorite-created-at">
+        <p class="text-gray-500 text-sm" data-testid="favorite-created-at">
           {{ t("favourite.createdAt") }}: {{ formatDate(favorite.createdAt) }}
         </p>
 
         <p
           class="text-gray-500 text-sm mb-4"
-          data-test-id="favorite-updated-at"
+          data-testid="favorite-updated-at"
         >
           {{ t("favourite.updatedAt") }}: {{ formatDate(favorite.updatedAt) }}
         </p>
@@ -43,18 +43,18 @@
         <div
           v-if="favorite.note"
           class="mt-4"
-          data-test-id="favorite-note-section"
+          data-testid="favorite-note-section"
         >
-          <h3 class="font-semibold mb-2" data-test-id="favorite-note-title">
+          <h3 class="font-semibold mb-2" data-testid="favorite-note-title">
             {{ t("favourite.note") }}:
           </h3>
-          <p class="whitespace-pre-wrap" data-test-id="favorite-note-content">
+          <p class="whitespace-pre-wrap" data-testid="favorite-note-content">
             {{ favorite.note }}
           </p>
         </div>
       </div>
 
-      <div class="flex justify-end space-x-2" data-test-id="favorite-actions">
+      <div class="flex justify-end space-x-2" data-testid="favorite-actions">
         <a-button @click="router.push(`/favourites/${favorite.id}/edit`)">
           <Edit :size="16" class="mr-1" />
           {{ t("common.edit") }}

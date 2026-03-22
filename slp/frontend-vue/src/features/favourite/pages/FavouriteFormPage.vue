@@ -2,13 +2,15 @@
   <MobileLayout
     :title="isEdit ? t('favourite.editFavourite') : t('favourite.addFavourite')"
   >
-    <div class="space-y-4" data-test-id="favorite-form-container">
+    <div class="space-y-4" data-testid="favorite-form-container">
       <a-form layout="vertical">
         <a-form-item :label="t('favourite.text')" required>
           <a-input
             v-model:value="form.text"
             :placeholder="t('favourite.textPlaceholder')"
             :maxlength="255"
+            +
+            data-testid="favourite-text-input"
           />
         </a-form-item>
 
@@ -16,6 +18,8 @@
           <a-select
             v-model:value="form.type"
             :placeholder="t('favourite.typePlaceholder')"
+            +
+            data-testid="favourite-type-select"
           >
             <a-select-option value="word">{{
               t("favourite.typeWord")
@@ -37,19 +41,23 @@
             v-model:value="form.note"
             :placeholder="t('favourite.notePlaceholder')"
             :rows="4"
+            +
+            data-testid="favourite-note-textarea"
           />
         </a-form-item>
 
         <a-form-item>
           <div
             class="flex justify-end space-x-2"
-            data-test-id="form-actions-wrapper"
+            data-testid="form-actions-wrapper"
           >
             <a-button @click="router.back()">{{ t("common.cancel") }}</a-button>
             <a-button
               type="primary"
               @click="handleSubmit"
               :loading="store.loading"
+              +
+              data-testid="submit-form-button"
             >
               {{ isEdit ? t("common.save") : t("common.create") }}
             </a-button>

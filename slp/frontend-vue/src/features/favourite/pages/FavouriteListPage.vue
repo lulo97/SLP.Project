@@ -1,22 +1,27 @@
 <template>
   <MobileLayout :title="t('favourite.myFavourites')">
-    <div class="space-y-4" data-test-id="favourites-list-container">
+    <div class="space-y-4" data-testid="favourites-list-container">
       <div
         class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
-        data-test-id="list-header"
+        data-testid="list-header"
       >
-        <h1 class="text-2xl font-semibold" data-test-id="list-title">
+        <h1 class="text-2xl font-semibold" data-testid="list-title">
           {{ t("favourite.myFavourites") }}
         </h1>
-        <div class="flex gap-2" data-test-id="list-controls">
+        <div class="flex gap-2" data-testid="list-controls">
           <a-input-search
             v-model:value="searchQuery"
             :placeholder="t('favourite.searchPlaceholder')"
             allow-clear
             @search="handleSearch"
             class="w-48"
+            data-testid="favourite-search-input"
           />
-          <a-button type="primary" @click="goToCreate">
+          <a-button
+            data-testid="create-favourite-button"
+            type="primary"
+            @click="goToCreate"
+          >
             <Plus :size="16" class="mr-1" />
             {{ t("favourite.addFavourite") }}
           </a-button>
@@ -24,7 +29,7 @@
       </div>
 
       <a-spin :spinning="store.loading" tip="Loading...">
-        <div class="space-y-3" data-test-id="list-content-wrapper">
+        <div class="space-y-3" data-testid="list-content-wrapper">
           <a-empty
             v-if="!store.loading && store.favorites.length === 0"
             :description="t('favourite.noFavourites')"
@@ -39,19 +44,20 @@
             :key="fav.id"
             class="cursor-pointer hover:shadow-md transition-shadow"
             @click="viewFavorite(fav.id)"
+            :data-testid="`favourite-card-${fav.id}`"
           >
             <div
               class="flex justify-between items-start"
-              :data-test-id="`favorite-item-${fav.id}`"
+              :data-testid="`favorite-item-${fav.id}`"
             >
-              <div class="flex-1" data-test-id="favorite-item-info">
+              <div class="flex-1" data-testid="favorite-item-info">
                 <div
                   class="flex items-center gap-2"
-                  data-test-id="favorite-item-header"
+                  data-testid="favorite-item-header"
                 >
                   <h3
                     class="text-lg font-semibold"
-                    data-test-id="favorite-item-text"
+                    data-testid="favorite-item-text"
                   >
                     {{ fav.text }}
                   </h3>
@@ -62,25 +68,26 @@
                 <p
                   v-if="fav.note"
                   class="text-gray-500 text-sm mt-1 line-clamp-2"
-                  data-test-id="favorite-item-note"
+                  data-testid="favorite-item-note"
                 >
                   {{ fav.note }}
                 </p>
                 <p
                   class="text-gray-400 text-xs mt-1"
-                  data-test-id="favorite-item-date"
+                  data-testid="favorite-item-date"
                 >
                   {{ formatDate(fav.updatedAt) }}
                 </p>
               </div>
               <div
                 class="flex space-x-2 ml-4"
-                data-test-id="favorite-item-actions"
+                data-testid="favorite-item-actions"
               >
                 <a-button
                   type="text"
                   size="small"
                   @click.stop="editFavorite(fav.id)"
+                  :data-testid="`edit-favourite-icon-${fav.id}`"
                 >
                   <Edit :size="16" />
                 </a-button>
@@ -90,7 +97,13 @@
                   :cancel-text="t('common.cancel')"
                   @confirm="deleteFavorite(fav.id)"
                 >
-                  <a-button type="text" danger size="small" @click.stop>
+                  <a-button
+                    type="text"
+                    danger
+                    size="small"
+                    @click.stop
+                    :data-testid="`delete-favourite-icon-${fav.id}`"
+                  >
                     <Trash2 :size="16" />
                   </a-button>
                 </a-popconfirm>
@@ -100,7 +113,7 @@
 
           <div
             class="flex justify-center mt-4"
-            data-test-id="pagination-wrapper"
+            data-testid="pagination-wrapper"
           >
             <a-pagination
               :current="store.currentPage"
