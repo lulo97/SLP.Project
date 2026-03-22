@@ -1,1 +1,1 @@
-npx playwright test source-link.spec --headed
+npx playwright test source-pdf.spec --headed

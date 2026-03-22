@@ -210,19 +210,9 @@
           </div>
         </Transition>
 
-        <!-- Body: TipTap JSON (article-body class needed for :deep CSS selectors) -->
-        <div
-          v-if="source.contentJson"
-          class="article-body leading-[1.82] text-[#2d2926] font-serif"
-          :class="fontSizeClass"
-          ref="contentRef"
-          v-html="renderedContent"
-          data-testid="source-detail-content-rich"
-        />
-
         <!-- Body: plain text -->
         <div
-          v-else-if="source.rawText"
+          v-if="source.rawText"
           class="article-body leading-[1.82] text-[#2d2926] font-serif"
           :class="fontSizeClass"
           ref="contentRef"
