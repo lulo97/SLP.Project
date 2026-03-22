@@ -1,3 +1,5 @@
+using backend_dotnet.Features.Helpers;
+
 namespace backend_dotnet.Features.Source;
 
 public class SourceService : ISourceService
@@ -7,17 +9,16 @@ public class SourceService : ISourceService
     private readonly string _uploadPath;
     private readonly IParserClient _parserClient;
 
-    // FIX: map file extensions to DB-allowed type values
-    // DB constraint: book | link | note | pdf | txt
-    private static readonly Dictionary<string, string> ExtensionTypeMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "pdf",  "pdf"  },
-        { "txt",  "txt"  },
-        { "html", "txt"  },   // HTML files stored under the "txt" bucket
-        { "htm",  "txt"  },
-        { "md",   "txt"  },
-        { "epub", "book" },
-    };
+    private static readonly Dictionary<string, string> ExtensionTypeMap =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "pdf",  "pdf"  },
+            { "txt",  "txt"  },
+            { "html", "txt"  },
+            { "htm",  "txt"  },
+            { "md",   "txt"  },
+            { "epub", "book" },
+        };
 
     public SourceService(
         ISourceRepository sourceRepository,
@@ -33,48 +34,49 @@ public class SourceService : ISourceService
         _parserClient = parserClient;
     }
 
+    // ── GET single ───────────────────────────────────────────────────────────
     public async Task<SourceDto?> GetSourceByIdAsync(int id, int? currentUserId)
     {
         var source = await _sourceRepository.GetByIdAsync(id);
-        if (source == null)
+        if (source == null || source.UserId != currentUserId)
             return null;
-
-        if (source.UserId != currentUserId)
-            return null;
-
         return MapToDto(source);
     }
 
-    public async Task<IEnumerable<SourceListDto>> GetUserSourcesAsync(int userId)
+    // ── GET paged list ───────────────────────────────────────────────────────
+    public async Task<PaginatedResult<SourceListDto>> GetUserSourcesAsync(
+        int userId,
+        SourceQueryParams query)
     {
-        var sources = await _sourceRepository.GetUserSourcesAsync(userId);
-        return sources.Select(MapToListDto);
+        var (items, total) = await _sourceRepository.GetUserSourcesAsync(userId, query);
+
+        return new PaginatedResult<SourceListDto>
+        {
+            Items = items.Select(MapToListDto).ToList(),
+            Total = total,
+            Page = Math.Max(query.Page, 1),
+            PageSize = Math.Clamp(query.PageSize, 1, 100),
+        };
     }
 
+    // ── Upload file ──────────────────────────────────────────────────────────
     public async Task<SourceDto> UploadSourceAsync(int userId, IFormFile file, string? title)
     {
         if (file == null || file.Length == 0)
             throw new ArgumentException("No file uploaded.");
-
         if (file.Length > 20 * 1024 * 1024)
             throw new ArgumentException("File too large.");
 
-        // Parse first (uses the form-file stream internally)
         using var parseStream = file.OpenReadStream();
         var parseResult = await _parserClient.ParseFileAsync(parseStream, file.FileName, title);
 
-        // Persist a copy of the original file
         var ext = Path.GetExtension(file.FileName).TrimStart('.');
         var fileName = $"{Guid.NewGuid()}.{ext}";
         var filePath = Path.Combine(_uploadPath, fileName);
 
-        // FIX: use async copy to avoid blocking the thread
-        using (var fileStream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(fileStream);
-        }
+        using (var fs = new FileStream(filePath, FileMode.Create))
+            await file.CopyToAsync(fs);
 
-        // FIX: map extension to a DB-allowed type value
         var sourceType = ExtensionTypeMap.TryGetValue(ext, out var mapped) ? mapped : "txt";
 
         var source = new Source
@@ -88,13 +90,13 @@ public class SourceService : ISourceService
             ContentJson = parseResult.ContentJson?.ToString(),
             MetadataJson = parseResult.Metadata?.ToString(),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
 
-        var created = await _sourceRepository.CreateAsync(source);
-        return MapToDto(created);
+        return MapToDto(await _sourceRepository.CreateAsync(source));
     }
 
+    // ── Create from URL ──────────────────────────────────────────────────────
     public async Task<SourceDto> CreateSourceFromUrlAsync(int userId, string url, string? title)
     {
         var parseResult = await _parserClient.ParseUrlAsync(url, title);
@@ -110,36 +112,32 @@ public class SourceService : ISourceService
             ContentJson = parseResult.ContentJson?.ToString(),
             MetadataJson = parseResult.Metadata?.ToString(),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
 
-        var created = await _sourceRepository.CreateAsync(source);
-        return MapToDto(created);
+        return MapToDto(await _sourceRepository.CreateAsync(source));
     }
 
+    // ── Delete ───────────────────────────────────────────────────────────────
     public async Task<bool> DeleteSourceAsync(int id, int userId, bool isAdmin)
     {
         var source = await _sourceRepository.GetByIdAsync(id);
         if (source == null) return false;
-
         if (!isAdmin && source.UserId != userId) return false;
 
         await _sourceRepository.SoftDeleteAsync(id);
 
         if (!string.IsNullOrEmpty(source.FilePath) && File.Exists(source.FilePath))
-        {
             try { File.Delete(source.FilePath); } catch { /* ignore */ }
-        }
 
         return true;
     }
 
+    // ── Create note ──────────────────────────────────────────────────────────
     public async Task<SourceDto> CreateNoteSourceAsync(int userId, string title, string content)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.");
-        if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("Content cannot be empty.");
+        if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title is required.");
+        if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Content cannot be empty.");
 
         var source = new Source
         {
@@ -148,15 +146,13 @@ public class SourceService : ISourceService
             Title = title,
             RawText = content,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
 
-        var created = await _sourceRepository.CreateAsync(source);
-        return MapToDto(created);
+        return MapToDto(await _sourceRepository.CreateAsync(source));
     }
 
     // ── Mappers ──────────────────────────────────────────────────────────────
-
     private static SourceDto MapToDto(Source s) => new()
     {
         Id = s.Id,
@@ -169,7 +165,7 @@ public class SourceService : ISourceService
         FilePath = s.FilePath,
         CreatedAt = s.CreatedAt,
         UpdatedAt = s.UpdatedAt,
-        Metadata = s.MetadataJson
+        Metadata = s.MetadataJson,
     };
 
     private static SourceListDto MapToListDto(Source s) => new()
@@ -179,6 +175,6 @@ public class SourceService : ISourceService
         Title = s.Title,
         Url = s.Url,
         CreatedAt = s.CreatedAt,
-        UpdatedAt = s.UpdatedAt
+        UpdatedAt = s.UpdatedAt,
     };
 }

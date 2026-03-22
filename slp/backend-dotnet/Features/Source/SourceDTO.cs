@@ -46,3 +46,15 @@ public class CreateNoteSourceRequest
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
 }
+
+public class SourceQueryParams
+{
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+
+    /// <summary>Partial, case-insensitive match on Title.</summary>
+    public string? Search { get; set; }
+
+    /// <summary>Exact match on Type (pdf | txt | link | note | book).  Null = all.</summary>
+    public string? Type { get; set; }
+}

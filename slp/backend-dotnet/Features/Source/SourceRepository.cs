@@ -10,23 +10,47 @@ public class SourceRepository : ISourceRepository
 {
     private readonly AppDbContext _context;
 
-    public SourceRepository(AppDbContext context)
-    {
-        _context = context;
-    }
+    public SourceRepository(AppDbContext context) => _context = context;
 
-    public async Task<Source?> GetByIdAsync(int id)
-    {
-        return await _context.Sources
-            .FirstOrDefaultAsync(s => s.Id == id && s.DeletedAt == null);
-    }
+    public async Task<Source?> GetByIdAsync(int id) =>
+        await _context.Sources.FirstOrDefaultAsync(s => s.Id == id && s.DeletedAt == null);
 
-    public async Task<IEnumerable<Source>> GetUserSourcesAsync(int userId, bool includeDeleted = false)
+    public async Task<(IEnumerable<Source> Items, int Total)> GetUserSourcesAsync(
+        int userId,
+        SourceQueryParams query,
+        bool includeDeleted = false)
     {
-        var query = _context.Sources.Where(s => s.UserId == userId);
+        var q = _context.Sources.Where(s => s.UserId == userId);
+
         if (!includeDeleted)
-            query = query.Where(s => s.DeletedAt == null);
-        return await query.OrderByDescending(s => s.CreatedAt).ToListAsync();
+            q = q.Where(s => s.DeletedAt == null);
+
+        // ── Filter: title search (case-insensitive) ─────────────────────────
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var term = query.Search.Trim().ToLower();
+            q = q.Where(s => s.Title.ToLower().Contains(term));
+        }
+
+        // ── Filter: type exact match ────────────────────────────────────────
+        if (!string.IsNullOrWhiteSpace(query.Type))
+        {
+            var type = query.Type.Trim().ToLower();
+            q = q.Where(s => s.Type == type);
+        }
+
+        var total = await q.CountAsync();
+
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+        var page = Math.Max(query.Page, 1);
+
+        var items = await q
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, total);
     }
 
     public async Task<Source> CreateAsync(Source source)
@@ -53,8 +77,6 @@ public class SourceRepository : ISourceRepository
         }
     }
 
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _context.Sources.AnyAsync(s => s.Id == id && s.DeletedAt == null);
-    }
+    public async Task<bool> ExistsAsync(int id) =>
+        await _context.Sources.AnyAsync(s => s.Id == id && s.DeletedAt == null);
 }

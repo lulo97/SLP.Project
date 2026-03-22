@@ -6,7 +6,13 @@ namespace backend_dotnet.Features.Source;
 public interface ISourceRepository
 {
     Task<Source?> GetByIdAsync(int id);
-    Task<IEnumerable<Source>> GetUserSourcesAsync(int userId, bool includeDeleted = false);
+
+    /// <summary>Returns a paged, filtered slice of the user's sources.</summary>
+    Task<(IEnumerable<Source> Items, int Total)> GetUserSourcesAsync(
+        int userId,
+        SourceQueryParams query,
+        bool includeDeleted = false);
+
     Task<Source> CreateAsync(Source source);
     Task UpdateAsync(Source source);
     Task SoftDeleteAsync(int id);

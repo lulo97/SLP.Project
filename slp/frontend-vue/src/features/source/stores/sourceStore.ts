@@ -25,6 +25,23 @@ export interface SourceListDto {
   updatedAt: string;
 }
 
+// NEW: mirrors backend PagedResult<SourceListDto>
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// NEW: mirrors backend SourceQueryParams
+export interface SourceQueryParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  type?: string;
+}
+
 export interface ProgressDto {
   userId: number;
   sourceId: number;
@@ -45,18 +62,39 @@ export const useSourceStore = defineStore("source", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
+  // NEW: pagination meta
+  const pagination = ref<Omit<PagedResult<never>, "items">>({
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    totalPages: 0,
+  });
+
   // ── Error helpers ────────────────────────────────────────────────────────
   function clearError() {
     error.value = null;
   }
 
   // ── Sources ──────────────────────────────────────────────────────────────
-  async function fetchSources() {
+  async function fetchSources(params: SourceQueryParams = {}) {
     loading.value = true;
     error.value = null;
     try {
-      const res = await apiClient.get<SourceListDto[]>("/source");
-      sources.value = res.data;
+      const res = await apiClient.get<PagedResult<SourceListDto>>("/source", {
+        params: {
+          page: params.page ?? 1,
+          pageSize: params.pageSize ?? 20,
+          search: params.search || undefined,
+          type: params.type || undefined,
+        },
+      });
+      sources.value = res.data.items;
+      pagination.value = {
+        total: res.data.total,
+        page: res.data.page,
+        pageSize: res.data.pageSize,
+        totalPages: res.data.totalPages,
+      };
     } catch (e: any) {
       error.value = e.response?.data || "Failed to load sources";
     } finally {
@@ -73,14 +111,17 @@ export const useSourceStore = defineStore("source", () => {
       return res.data;
     } catch (e: any) {
       error.value = e.response?.data || "Failed to load source";
-      throw e; 
+      throw e;
     } finally {
       loading.value = false;
     }
   }
 
   // ── Upload file ──────────────────────────────────────────────────────────
-  async function uploadSource(file: File, title: string): Promise<SourceDto | null> {
+  async function uploadSource(
+    file: File,
+    title: string,
+  ): Promise<SourceDto | null> {
     loading.value = true;
     error.value = null;
     try {
@@ -100,12 +141,9 @@ export const useSourceStore = defineStore("source", () => {
   }
 
   // ── Create from URL ──────────────────────────────────────────────────────
-  // Accepts either (url, title?) or ({ url, title? }) to support both call styles:
-  //   SourceUrlCreatePage  → createSourceFromUrl({ url, title })
-  //   SourceDetailPage     → createFromUrl(url, title?)
   async function createSourceFromUrl(
     urlOrObj: string | { url: string; title?: string },
-    title?: string
+    title?: string,
   ): Promise<SourceDto | null> {
     loading.value = true;
     error.value = null;
@@ -123,17 +161,12 @@ export const useSourceStore = defineStore("source", () => {
       loading.value = false;
     }
   }
-
-  // Alias — keeps SourceDetailPage happy if it ever calls createFromUrl directly
   const createFromUrl = createSourceFromUrl;
 
   // ── Create note ──────────────────────────────────────────────────────────
-  // Accepts either ({ title, content }) or (title, content) to support both call styles:
-  //   SourceNoteCreatePage → createSourceFromNote({ title, content })
-  //   SourceDetailPage     → createNote(title, content)
   async function createSourceFromNote(
     titleOrObj: string | { title: string; content: string },
-    content?: string
+    content?: string,
   ): Promise<SourceDto | null> {
     loading.value = true;
     error.value = null;
@@ -152,17 +185,19 @@ export const useSourceStore = defineStore("source", () => {
     }
   }
 
-  // Alias — SourceDetailPage calls createNote(title, content)
-  async function createNote(title: string, content: string): Promise<SourceDto | null> {
+  async function createNote(
+    title: string,
+    content: string,
+  ): Promise<SourceDto | null> {
     return createSourceFromNote(title, content);
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────
-  // Returns boolean so SourceListPage can branch: if (success) { ... }
   async function deleteSource(id: number): Promise<boolean> {
     try {
       await apiClient.delete(`/source/${id}`);
       sources.value = sources.value.filter((s) => s.id !== id);
+      pagination.value.total = Math.max(0, pagination.value.total - 1);
       return true;
     } catch (e: any) {
       error.value = e.response?.data || "Failed to delete source";
@@ -173,7 +208,9 @@ export const useSourceStore = defineStore("source", () => {
   // ── Progress ─────────────────────────────────────────────────────────────
   async function fetchProgress(sourceId: number): Promise<ProgressDto | null> {
     try {
-      const res = await apiClient.get<ProgressDto>(`/source/${sourceId}/progress`);
+      const res = await apiClient.get<ProgressDto>(
+        `/source/${sourceId}/progress`,
+      );
       currentProgress.value = res.data;
       return res.data;
     } catch {
@@ -184,37 +221,36 @@ export const useSourceStore = defineStore("source", () => {
 
   async function updateProgress(
     sourceId: number,
-    payload: UpdateProgressRequest
+    payload: UpdateProgressRequest,
   ): Promise<void> {
     try {
       const res = await apiClient.put<ProgressDto>(
         `/source/${sourceId}/progress`,
-        payload
+        payload,
       );
       currentProgress.value = res.data;
     } catch {
-      // Progress save is non-critical — fail silently.
+      /* non-critical */
     }
   }
 
   return {
-    // State
     sources,
     currentSource,
     currentProgress,
+    pagination, // NEW
     loading,
     error,
 
-    // Methods
     clearError,
     fetchSources,
     fetchSource,
     uploadSource,
-    createSourceFromUrl, // SourceUrlCreatePage: createSourceFromUrl({ url, title })
-    createFromUrl,       // alias: createFromUrl(url, title?)
-    createSourceFromNote, // SourceNoteCreatePage: createSourceFromNote({ title, content })
-    createNote,          // alias: createNote(title, content)
-    deleteSource,        // returns boolean
+    createSourceFromUrl,
+    createFromUrl,
+    createSourceFromNote,
+    createNote,
+    deleteSource,
     fetchProgress,
     updateProgress,
   };

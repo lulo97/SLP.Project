@@ -29,14 +29,15 @@ public class SourceController : ControllerBase
 
     private bool IsAdmin => User.IsInRole("admin");
 
-    // ── Sources ─────────────────────────────────────────────────────────────
+    // ── Sources ──────────────────────────────────────────────────────────────
 
+    // GET /api/source?page=1&pageSize=20&search=hello&type=pdf
     [HttpGet]
-    public async Task<IActionResult> GetMySources()
+    public async Task<IActionResult> GetMySources([FromQuery] SourceQueryParams query)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
-        var sources = await _sourceService.GetUserSourcesAsync(CurrentUserId.Value);
-        return Ok(sources);
+        var result = await _sourceService.GetUserSourcesAsync(CurrentUserId.Value, query);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
@@ -54,7 +55,8 @@ public class SourceController : ControllerBase
         if (!CurrentUserId.HasValue) return Unauthorized();
         try
         {
-            var source = await _sourceService.UploadSourceAsync(CurrentUserId.Value, request.File, request.Title);
+            var source = await _sourceService.UploadSourceAsync(
+                CurrentUserId.Value, request.File, request.Title);
             return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
@@ -64,7 +66,8 @@ public class SourceController : ControllerBase
     public async Task<IActionResult> CreateFromUrl([FromBody] UrlSourceDto dto)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
-        var source = await _sourceService.CreateSourceFromUrlAsync(CurrentUserId.Value, dto.Url, dto.Title);
+        var source = await _sourceService.CreateSourceFromUrlAsync(
+            CurrentUserId.Value, dto.Url, dto.Title);
         return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
     }
 
@@ -74,7 +77,8 @@ public class SourceController : ControllerBase
         if (!CurrentUserId.HasValue) return Unauthorized();
         try
         {
-            var source = await _sourceService.CreateNoteSourceAsync(CurrentUserId.Value, request.Title, request.Content);
+            var source = await _sourceService.CreateNoteSourceAsync(
+                CurrentUserId.Value, request.Title, request.Content);
             return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
@@ -91,29 +95,22 @@ public class SourceController : ControllerBase
 
     // ── Progress ─────────────────────────────────────────────────────────────
 
-    // GET /api/source/{id}/progress
     [HttpGet("{id}/progress")]
     public async Task<IActionResult> GetProgress(int id)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
-
-        // Verify source ownership
         var source = await _sourceService.GetSourceByIdAsync(id, CurrentUserId.Value);
         if (source == null) return NotFound();
-
         var progress = await _progressService.GetProgressAsync(CurrentUserId.Value, id);
         return Ok(progress);
     }
 
-    // PUT /api/source/{id}/progress
     [HttpPut("{id}/progress")]
     public async Task<IActionResult> UpdateProgress(int id, [FromBody] UpdateProgressRequest request)
     {
         if (!CurrentUserId.HasValue) return Unauthorized();
-
         var source = await _sourceService.GetSourceByIdAsync(id, CurrentUserId.Value);
         if (source == null) return NotFound();
-
         var result = await _progressService.UpdateProgressAsync(CurrentUserId.Value, id, request);
         return Ok(result);
     }

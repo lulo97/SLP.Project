@@ -1,1 +1,1 @@
-npx playwright test edit-favourite.spec --headed
+npx playwright test source-note.spec --headed
