@@ -1,1 +1,1 @@
-npx playwright test read-grammar.spec --headed
+npx playwright test read-tts.spec --headed
