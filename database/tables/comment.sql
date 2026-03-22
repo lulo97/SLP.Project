@@ -8,7 +8,7 @@ CREATE TABLE public.comment (
     deleted_at timestamp with time zone,
     edited_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT comment_target_type_check CHECK (((target_type)::text = ANY ((ARRAY['quiz'::character varying, 'source'::character varying, 'question'::character varying])::text[])))
+    CONSTRAINT comment_target_type_check CHECK (((target_type)::text = ANY (ARRAY[('quiz'::character varying)::text, ('source'::character varying)::text, ('question'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.comment_id_seq

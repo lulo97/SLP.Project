@@ -252,7 +252,9 @@ CREATE TABLE public.source (
     deleted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT source_type_check CHECK (((type)::text = ANY ((ARRAY['book'::character varying, 'link'::character varying, 'note'::character varying, 'pdf'::character varying, 'txt'::character varying])::text[])))
+    
+    CONSTRAINT source_type_check CHECK (type = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])),
+    CONSTRAINT source_pkey PRIMARY KEY (id)
 );
 
 -- FILE: tag.sql
@@ -631,13 +633,6 @@ CREATE SEQUENCE public.source_id_seq
 
 -- FILE: source.sql
 ALTER SEQUENCE public.source_id_seq OWNED BY public.source.id;
-
--- FILE: source.sql
-ALTER TABLE ONLY public.source ALTER COLUMN id SET DEFAULT nextval('public.source_id_seq'::regclass);
-
--- FILE: source.sql
-ALTER TABLE ONLY public.source
-    ADD CONSTRAINT source_pkey PRIMARY KEY (id);
 
 -- FILE: tag.sql
 CREATE SEQUENCE public.tag_id_seq

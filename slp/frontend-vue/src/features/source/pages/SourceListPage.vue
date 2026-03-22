@@ -55,17 +55,11 @@
         <a-select-option value="pdf" data-testid="source-list-type-pdf"
           >PDF</a-select-option
         >
-        <a-select-option value="txt" data-testid="source-list-type-txt"
-          >Text</a-select-option
-        >
         <a-select-option value="link" data-testid="source-list-type-link"
           >URL</a-select-option
         >
         <a-select-option value="note" data-testid="source-list-type-note"
           >Note</a-select-option
-        >
-        <a-select-option value="book" data-testid="source-list-type-book"
-          >Book</a-select-option
         >
       </a-select>
 

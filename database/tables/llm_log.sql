@@ -10,7 +10,7 @@ CREATE TABLE public.llm_log (
     status character varying(20),
     completed_at timestamp with time zone,
     error text,
-    CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY ((ARRAY['explain'::character varying, 'generate_questions'::character varying, 'summarize'::character varying, 'grammar_check'::character varying])::text[])))
+    CONSTRAINT llm_log_request_type_check CHECK (((request_type)::text = ANY (ARRAY[('explain'::character varying)::text, ('generate_questions'::character varying)::text, ('summarize'::character varying)::text, ('grammar_check'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.llm_log_id_seq

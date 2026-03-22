@@ -8,7 +8,7 @@ CREATE TABLE public.quiz (
     note_id integer,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT quiz_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['public'::character varying, 'private'::character varying])::text[])))
+    CONSTRAINT quiz_visibility_check CHECK (((visibility)::text = ANY (ARRAY[('public'::character varying)::text, ('private'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.quiz_id_seq

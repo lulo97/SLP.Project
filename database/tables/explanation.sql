@@ -8,7 +8,7 @@ CREATE TABLE public.explanation (
     editable boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone,
-    CONSTRAINT explanation_author_type_check CHECK (((author_type)::text = ANY ((ARRAY['system'::character varying, 'user'::character varying])::text[])))
+    CONSTRAINT explanation_author_type_check CHECK (((author_type)::text = ANY (ARRAY[('system'::character varying)::text, ('user'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.explanation_id_seq

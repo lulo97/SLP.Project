@@ -12,7 +12,7 @@ CREATE TABLE public.source (
     deleted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT source_type_check CHECK (((type)::text = ANY ((ARRAY['book'::character varying, 'link'::character varying, 'note'::character varying, 'pdf'::character varying, 'txt'::character varying])::text[])))
+    CONSTRAINT source_type_check CHECK (((type)::text = ANY (ARRAY['pdf'::text, 'link'::text, 'text'::text])))
 );
 
 CREATE SEQUENCE public.source_id_seq
@@ -24,8 +24,6 @@ CREATE SEQUENCE public.source_id_seq
     CACHE 1;
 
 ALTER SEQUENCE public.source_id_seq OWNED BY public.source.id;
-
-ALTER TABLE ONLY public.source ALTER COLUMN id SET DEFAULT nextval('public.source_id_seq'::regclass);
 
 ALTER TABLE ONLY public.source
     ADD CONSTRAINT source_pkey PRIMARY KEY (id);

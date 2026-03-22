@@ -7,7 +7,7 @@ CREATE TABLE public.question (
     metadata jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT question_type_check CHECK (((type)::text = ANY ((ARRAY['multiple_choice'::character varying, 'single_choice'::character varying, 'fill_blank'::character varying, 'ordering'::character varying, 'matching'::character varying, 'true_false'::character varying, 'flashcard'::character varying])::text[])))
+    CONSTRAINT question_type_check CHECK (((type)::text = ANY (ARRAY[('multiple_choice'::character varying)::text, ('single_choice'::character varying)::text, ('fill_blank'::character varying)::text, ('ordering'::character varying)::text, ('matching'::character varying)::text, ('true_false'::character varying)::text, ('flashcard'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.question_id_seq

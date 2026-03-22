@@ -10,7 +10,7 @@ CREATE TABLE public.quiz_attempt (
     status character varying(20) DEFAULT 'in_progress'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT quiz_attempt_status_check CHECK (((status)::text = ANY ((ARRAY['in_progress'::character varying, 'completed'::character varying, 'abandoned'::character varying])::text[])))
+    CONSTRAINT quiz_attempt_status_check CHECK (((status)::text = ANY (ARRAY[('in_progress'::character varying)::text, ('completed'::character varying)::text, ('abandoned'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.quiz_attempt_id_seq

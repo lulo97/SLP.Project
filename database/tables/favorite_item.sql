@@ -6,7 +6,7 @@ CREATE TABLE public.favorite_item (
     note text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT favorite_item_type_check CHECK (((type)::text = ANY ((ARRAY['word'::character varying, 'phrase'::character varying, 'idiom'::character varying, 'other'::character varying])::text[])))
+    CONSTRAINT favorite_item_type_check CHECK (((type)::text = ANY (ARRAY[('word'::character varying)::text, ('phrase'::character varying)::text, ('idiom'::character varying)::text, ('other'::character varying)::text])))
 );
 
 CREATE SEQUENCE public.favorite_item_id_seq
