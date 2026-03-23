@@ -197,6 +197,12 @@
         </div>
       </a-card>
 
+      <CommentsSection
+        v-if="review.quizId"
+        target-type="quiz"
+        :target-id="review.quizId"
+      />
+
       <div class="flex justify-center mt-2">
         <a-button type="primary" @click="goToQuiz" data-testid="back-to-quiz">
           Back to Quiz
@@ -231,6 +237,7 @@ import { useAttemptStore } from "../stores/attemptStore";
 import ReportModal from "@/features/report/components/ReportModal.vue";
 import { useQuizStore } from "@/features/quiz/stores/quizStore";
 import { useAuthStore } from "@/features/auth/stores/authStore";
+import CommentsSection from "@/features/comment/components/CommentsSection.vue";
 
 const route = useRoute();
 const router = useRouter();
