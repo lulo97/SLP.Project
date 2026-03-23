@@ -1,1 +1,1 @@
-npx playwright test edit-1-comment.spec --headed
+npx playwright test edit-multiple-times.spec --headed
