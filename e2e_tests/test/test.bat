@@ -1,1 +1,1 @@
-npx playwright test delete-1-comment.spec --headed
+npx playwright test delete-comment-has-reply.spec --headed
