@@ -396,7 +396,7 @@ function formatDate(iso: string): string {
 function navigateTo(item: SearchResultItem) {
   switch (item.resultType) {
     case "quiz":
-      router.push(`/quiz/${item.id}`);
+      router.push(`/quiz/view/${item.id}`);
       break;
     case "question":
       router.push(`/question/${item.id}/edit`);

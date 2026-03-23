@@ -1,1 +1,1 @@
-npx playwright test add-1-comment.spec --headed
+npx playwright test add-1-reply.spec --headed
