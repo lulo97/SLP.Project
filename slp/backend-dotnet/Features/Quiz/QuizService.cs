@@ -2,14 +2,8 @@ using backend_dotnet.Features.Helpers;
 using backend_dotnet.Features.Note;
 using backend_dotnet.Features.Source;
 using backend_dotnet.Features.Tag;
-using backend_dotnet.Helpers;          // <-- ADDED
-using backend_dotnet.Helpers;          // <-- ADDED (if your helper is in Helpers namespace)
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using backend_dotnet.Helpers;          
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.Quiz;
 
@@ -105,7 +99,7 @@ public class QuizService : IQuizService
         if (dto.TagNames != null)
         {
             // Remove existing tags
-            _tagRepository.RemoveQuizTags(quiz.Id);
+            await _tagRepository.RemoveQuizTags(quiz.Id);
             var tags = await _tagRepository.GetOrCreateTagsAsync(dto.TagNames);
             quiz.QuizTags = tags.Select(t => new QuizTag { QuizId = quiz.Id, TagId = t.Id }).ToList();
         }
@@ -223,6 +217,7 @@ public class QuizService : IQuizService
             Id = quiz.Id,
             Title = quiz.Title,
             Description = quiz.Description,
+            UserId = quiz.UserId,
             Visibility = quiz.Visibility,
             Disabled = quiz.Disabled,
             CreatedAt = quiz.CreatedAt,
@@ -278,7 +273,7 @@ public class QuizService : IQuizService
         // Validate snapshot if provided
         if (!string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
         {
-            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);   // <-- ADDED
+            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);
         }
 
         var question = new QuizQuestion
@@ -305,7 +300,7 @@ public class QuizService : IQuizService
         // Validate snapshot if provided
         if (dto.QuestionSnapshotJson != null && !string.IsNullOrWhiteSpace(dto.QuestionSnapshotJson))
         {
-            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);   // <-- ADDED
+            ValidateQuestionSnapshot(dto.QuestionSnapshotJson);
         }
 
         question.OriginalQuestionId = dto.OriginalQuestionId ?? question.OriginalQuestionId;
@@ -409,7 +404,7 @@ public class QuizService : IQuizService
         if (quiz.UserId != userId)
             throw new UnauthorizedAccessException("You do not own this quiz");
 
-        Note.Note note;
+        Note.Note? note;
         if (dto.NoteId.HasValue)
         {
             // Attach existing note – verify it belongs to the user

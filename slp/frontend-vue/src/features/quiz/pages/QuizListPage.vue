@@ -227,8 +227,11 @@ const handlePageChange = (page: number) => {
 };
 
 const isOwnerOrAdmin = (quiz: QuizListDto) => {
+  const isAdmin = authStore.isAdmin;
+  const userId = authStore.user?.id;
+  const quizUserId = quiz.userId;
   return (
-    authStore.isAdmin || (authStore.user && quiz.userId === authStore.user.id)
+    isAdmin || (quizUserId === userId)
   );
 };
 

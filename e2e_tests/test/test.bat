@@ -1,1 +1,1 @@
-npx playwright test read-favourite.spec --headed
+npx playwright test add-1-comment.spec --headed
