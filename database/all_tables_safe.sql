@@ -1032,11 +1032,11 @@ ALTER TABLE ONLY public.user_source_progress
 -- ===============================
 -- 5) SEED DATA
 -- ===============================
-delete from users where id = '1';
+delete from users where username = 'admin';
 
 INSERT INTO public.users
-(id, username, password_hash, email, email_confirmed, "role", status, created_at, updated_at, password_reset_token, password_reset_expiry, email_verification_token, avatar_filename)
-VALUES(1, 'admin', 'QJ/Y63lvp9XojMnTHtuMeg==.nfg0oSWRRpU91U9j5s8C5jttA5HjMUUXvAYzAkyn6wk=', 'admin@gmail.com', false, 'admin', 'active', '2026-03-21 10:07:33.595', '2026-03-21 10:07:33.595', NULL, NULL, NULL, NULL);
+(username, password_hash, email, email_confirmed, "role", status, created_at, updated_at, password_reset_token, password_reset_expiry, email_verification_token, avatar_filename)
+VALUES('admin', 'QJ/Y63lvp9XojMnTHtuMeg==.nfg0oSWRRpU91U9j5s8C5jttA5HjMUUXvAYzAkyn6wk=', 'admin@gmail.com', false, 'admin', 'active', '2026-03-21 10:07:33.595', '2026-03-21 10:07:33.595', NULL, NULL, NULL, NULL);
 
 truncate table daily_word;
 
