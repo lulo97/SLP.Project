@@ -469,56 +469,6 @@ const readTime = computed(() =>
 );
 const fontSizeClass = computed(() => fontSizes[fontSizeIndex.value]);
 
-const renderedContent = computed(() => {
-  if (!source.value?.contentJson) return "";
-  try {
-    return renderNode(JSON.parse(source.value.contentJson));
-  } catch {
-    return `<p>${source.value.contentJson}</p>`;
-  }
-});
-
-function renderNode(node: any): string {
-  if (!node) return "";
-  if (node.type === "text") {
-    let text = node.text ?? "";
-    for (const mark of node.marks ?? []) {
-      if (mark.type === "bold") text = `<strong>${text}</strong>`;
-      else if (mark.type === "italic") text = `<em>${text}</em>`;
-      else if (mark.type === "underline") text = `<u>${text}</u>`;
-      else if (mark.type === "code") text = `<code>${text}</code>`;
-      else if (mark.type === "link")
-        text = `<a href="${mark.attrs?.href}" target="_blank">${text}</a>`;
-    }
-    return text;
-  }
-  const children = (node.content ?? []).map(renderNode).join("");
-  switch (node.type) {
-    case "doc":
-      return children;
-    case "paragraph":
-      return `<p>${children || "<br>"}</p>`;
-    case "heading":
-      return `<h${node.attrs?.level ?? 2}>${children}</h${node.attrs?.level ?? 2}>`;
-    case "bulletList":
-      return `<ul>${children}</ul>`;
-    case "orderedList":
-      return `<ol>${children}</ol>`;
-    case "listItem":
-      return `<li>${children}</li>`;
-    case "blockquote":
-      return `<blockquote>${children}</blockquote>`;
-    case "codeBlock":
-      return `<pre><code>${children}</code></pre>`;
-    case "hardBreak":
-      return "<br>";
-    case "horizontalRule":
-      return "<hr>";
-    default:
-      return children;
-  }
-}
-
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadSource() {
   loading.value = true;
