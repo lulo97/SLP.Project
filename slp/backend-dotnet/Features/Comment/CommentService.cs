@@ -50,21 +50,99 @@ public class CommentService : ICommentService
         return MapToDto(created);
     }
 
+    /// <summary>
+    /// Updates the content of an existing comment and appends the new version to its edit history.
+    /// Only the comment's owner is permitted to perform this operation.
+    /// </summary>
+    /// <param name="userId">
+    /// The ID of the authenticated user attempting the update.
+    /// Must match the comment's <see cref="Comment.UserId"/>; otherwise the request is rejected.
+    /// </param>
+    /// <param name="commentId">
+    /// The ID of the comment to update.
+    /// </param>
+    /// <param name="request">
+    /// The update payload containing the new <see cref="UpdateCommentRequest.Content"/>.
+    /// </param>
+    /// <returns>
+    /// A <see cref="CommentDto"/> reflecting the updated state of the comment,
+    /// or <c>null</c> if the comment does not exist or the caller is not the owner.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// <b>Ownership check:</b> If the comment is not found or <paramref name="userId"/> does not
+    /// match <c>comment.UserId</c>, the method returns <c>null</c> immediately without modifying
+    /// any data. The controller maps this to <c>403 Forbidden</c>.
+    /// </para>
+    /// <para>
+    /// <b>Edit timestamp:</b> <c>EditedAt</c> is set inside <see cref="ICommentRepository.UpdateAsync"/>
+    /// so the persisted value and the history snapshot share the exact same timestamp.
+    /// </para>
+    /// <para>
+    /// <b>History strategy:</b> The new content is snapshotted <i>after</i> the comment is saved,
+    /// so every <see cref="CommentHistory"/> row always represents a version that was actually
+    /// persisted — never a stale intermediate state.
+    /// </para>
+    ///
+    /// <b>Example — three-step edit flow for comment #29:</b>
+    /// <code>
+    /// // ── Step 1: Comment is created ──────────────────────────────────────────
+    /// // CreateAsync saves initial content and writes the first history entry.
+    /// //
+    /// // comment table          comment_history table
+    /// // ┌──────────────────┐   ┌─────────────────────────────────────────────┐
+    /// // │ id │ content     │   │ id │ comment_id │ content │ edited_at       │
+    /// // │ 29 │ "c1"        │   │ 42 │ 29         │ "c1"    │ 01:44:31 (v1)   │
+    /// // └──────────────────┘   └─────────────────────────────────────────────┘
+    ///
+    /// // ── Step 2: UpdateAsync(userId:7, commentId:29, { Content:"c1 e1" }) ───
+    /// // 1. GetByIdAsync(29)           → comment.Content = "c1"
+    /// // 2. comment.Content = "c1 e1"
+    /// // 3. UpdateAsync(comment)       → DB content = "c1 e1", EditedAt = 01:44:38
+    /// // 4. AddHistoryAsync            → appends new content "c1 e1"
+    /// //
+    /// // comment table          comment_history table
+    /// // ┌──────────────────┐   ┌─────────────────────────────────────────────┐
+    /// // │ id │ content     │   │ id │ comment_id │ content  │ edited_at      │
+    /// // │ 29 │ "c1 e1"     │   │ 42 │ 29         │ "c1"     │ 01:44:31 (v1)  │
+    /// // └──────────────────┘   │ 43 │ 29         │ "c1 e1"  │ 01:44:38 (v2)  │
+    /// //                        └─────────────────────────────────────────────┘
+    ///
+    /// // ── Step 3: UpdateAsync(userId:7, commentId:29, { Content:"c1 e1 e2" }) 
+    /// // 1. GetByIdAsync(29)           → comment.Content = "c1 e1"
+    /// // 2. comment.Content = "c1 e1 e2"
+    /// // 3. UpdateAsync(comment)       → DB content = "c1 e1 e2", EditedAt = 01:44:49
+    /// // 4. AddHistoryAsync            → appends new content "c1 e1 e2"
+    /// //
+    /// // comment table          comment_history table
+    /// // ┌──────────────────┐   ┌─────────────────────────────────────────────┐
+    /// // │ id │ content     │   │ id │ comment_id │ content    │ edited_at    │
+    /// // │ 29 │ "c1 e1 e2"  │   │ 42 │ 29         │ "c1"       │ 01:44:31(v1) │
+    /// // └──────────────────┘   │ 43 │ 29         │ "c1 e1"    │ 01:44:38(v2) │
+    /// //                        │ 44 │ 29         │ "c1 e1 e2" │ 01:44:49(v3) │
+    /// //                        └─────────────────────────────────────────────┘
+    ///
+    /// // GET /api/comments/29/history now returns:
+    /// // [ { content:"c1" }, { content:"c1 e1" }, { content:"c1 e1 e2" } ]
+    /// // Modal renders: "Original" → "Edit 1" → "Edit 2 (Latest saved)"
+    /// </code>
+    /// </remarks>
     public async Task<CommentDto?> UpdateAsync(int userId, int commentId, UpdateCommentRequest request)
     {
         var comment = await _commentRepo.GetByIdAsync(commentId);
         if (comment == null || comment.UserId != userId) return null;
 
-        // Snapshot current content before overwriting
+        comment.Content = request.Content;
+        await _commentRepo.UpdateAsync(comment); // sets EditedAt inside repo
+
+        // Snapshot the new content AFTER updating, so history = what was saved
         await _commentRepo.AddHistoryAsync(new CommentHistory
         {
             CommentId = comment.Id,
-            Content = comment.Content,
-            EditedAt = DateTime.UtcNow
+            Content = comment.Content,          // new value ✓
+            EditedAt = comment.EditedAt ?? DateTime.UtcNow
         });
 
-        comment.Content = request.Content;
-        await _commentRepo.UpdateAsync(comment); // sets EditedAt inside repo
         return MapToDto(comment);
     }
 
