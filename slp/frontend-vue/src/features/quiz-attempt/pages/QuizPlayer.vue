@@ -176,6 +176,33 @@
     >
       Attempt not found.
     </div>
+
+    <!-- ── Start options modal (new attempts only) ─────────────────────── -->
+    <a-modal
+      v-model:open="showStartModal"
+      title="Start quiz"
+      ok-text="Start"
+      :cancel-button-props="{ style: 'display:none' }"
+      :closable="false"
+      :mask-closable="false"
+      @ok="handleStartModalOk"
+      data-testid="start-options-modal"
+    >
+      <div class="space-y-4 py-2">
+        <p class="text-sm text-gray-500">
+          Choose your attempt settings before starting.
+        </p>
+        <a-checkbox
+          v-model:checked="randomizeOrder"
+          data-testid="randomize-order-checkbox"
+        >
+          Shuffle question order
+          <span class="text-xs text-gray-400 ml-1">
+            (so you can't memorise answers by position)
+          </span>
+        </a-checkbox>
+      </div>
+    </a-modal>
   </MobileLayout>
 </template>
 
@@ -208,6 +235,8 @@ const showSubmitModal = ref(false);
 const quizTitle = ref("");
 const reportModalVisible = ref(false);
 const reportQuestionId = ref<number | null>(null);
+const showStartModal = ref(false);
+const randomizeOrder = ref(false);
 
 const composable = useAttempt(quizId.value);
 
@@ -274,8 +303,16 @@ onMounted(async () => {
   try {
     await quizStore.fetchQuizById(quizId.value);
     quizTitle.value = quizStore.currentQuiz?.title || "Quiz";
-    await composable.loadAttempt(attemptIdParam.value);
-    if (!composable.attempt.value) {
+
+    if (attemptIdParam.value) {
+      // Resume — load directly, no modal
+      await composable.loadAttempt(attemptIdParam.value);
+    } else {
+      // New attempt — show settings modal first
+      showStartModal.value = true;
+    }
+
+    if (attemptIdParam.value && !composable.attempt.value) {
       throw new Error("loadAttempt completed but attempt.value is null");
     }
   } catch (err) {
@@ -313,4 +350,18 @@ const openReportModal = () => {
     reportModalVisible.value = true;
   }
 };
+
+async function handleStartModalOk() {
+  showStartModal.value = false;
+  try {
+    await composable.loadAttempt(undefined, randomizeOrder.value);
+    if (!composable.attempt.value) {
+      throw new Error("loadAttempt completed but attempt.value is null");
+    }
+  } catch (err) {
+    console.error("[QuizPlayer] handleStartModalOk error:", err);
+    message.error("Failed to start attempt");
+    router.push(`/quiz/${quizId.value}`);
+  }
+}
 </script>

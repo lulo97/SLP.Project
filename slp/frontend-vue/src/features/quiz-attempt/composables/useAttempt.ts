@@ -56,7 +56,7 @@ export function useAttempt(quizId: number) {
     });
   };
 
-  const loadAttempt = async (attemptId?: number) => {
+  const loadAttempt = async (attemptId?: number, randomizeOrder = false) => {
     loading.value = true;
     try {
       if (attemptId) {
@@ -170,10 +170,8 @@ export function useAttempt(quizId: number) {
         currentIndex.value = 0;
       } else {
         // Start new attempt
-        attempt.value = await attemptStore.startAttempt(quizId);
-        if (!attempt.value) {
-          throw new Error("startAttempt returned null");
-        }
+        attempt.value = await attemptStore.startAttempt(quizId, randomizeOrder); // ← pass flag
+        if (!attempt.value) throw new Error("startAttempt returned null");
         validateQuestions(attempt.value.questions);
         attempt.value.questions.forEach((q) => {
           const snapshot = JSON.parse(q.questionSnapshotJson);

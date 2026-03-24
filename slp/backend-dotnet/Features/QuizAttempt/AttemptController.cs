@@ -1,7 +1,5 @@
-﻿using backend_dotnet.Features.Auth;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace backend_dotnet.Features.QuizAttempt;
 
@@ -26,28 +24,20 @@ public class AttemptController : ControllerBase
 
     // POST /api/quizzes/{quizId}/attempts
     [HttpPost]
-    public async Task<IActionResult> StartAttempt(int quizId)
+    public async Task<IActionResult> StartAttempt(int quizId, [FromBody] StartAttemptRequestDto? dto)
     {
         if (!CurrentUserId.HasValue)
             return Unauthorized();
 
         try
         {
-            var result = await _attemptService.StartAttemptAsync(quizId, CurrentUserId.Value);
+            var result = await _attemptService.StartAttemptAsync(
+                quizId, CurrentUserId.Value, dto?.RandomizeOrder ?? false);
             return Ok(result);
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
     // GET /api/attempts/{id}

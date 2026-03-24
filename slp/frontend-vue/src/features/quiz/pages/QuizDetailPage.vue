@@ -191,8 +191,9 @@ const canEdit = computed(() => {
 
 const startAttempt = async () => {
   try {
-    const result = await attemptStore.startAttempt(quizId.value);
-    router.push(`/quiz/${quizId.value}/attempt/${result.attemptId}`);
+    //just navigate, don't start the attempt yet
+    //const result = await attemptStore.startAttempt(quizId.value);
+    router.push(`/quiz/${quizId.value}/attempt`);
   } catch (err) {
     message.error("Could not start attempt");
   }

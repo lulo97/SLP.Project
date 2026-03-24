@@ -56,28 +56,28 @@ export const useAttemptStore = defineStore("attempt", {
   }),
 
   actions: {
-    async startAttempt(quizId: number) {
+    async startAttempt(quizId: number, randomizeOrder = false) {
       this.loading = true;
       this.error = null;
       try {
         const response = await apiClient.post<StartAttemptResponse>(
           `/quizzes/${quizId}/attempts`,
+          { randomizeOrder }, // ← send as JSON body
         );
         const data = response.data;
-        console.log('[attemptStore] startAttempt response:', {
+        console.log("[attemptStore] startAttempt response:", {
           attemptId: data.attemptId,
           questionCount: data.questionCount,
-          firstQuestionSnapshot: data.questions?.[0]?.questionSnapshotJson?.slice(0, 50)
+          firstQuestionSnapshot:
+            data.questions?.[0]?.questionSnapshotJson?.slice(0, 50),
         });
         if (!data) throw new Error("startAttempt returned null data");
-        if (!data.questions || !Array.isArray(data.questions)) {
+        if (!data.questions || !Array.isArray(data.questions))
           throw new Error(
             `startAttempt: questions missing or not array: ${JSON.stringify(data)}`,
           );
-        }
-        if (data.questions.length === 0) {
+        if (data.questions.length === 0)
           throw new Error("startAttempt: questions array is empty");
-        }
         this.currentAttempt = data;
         return data;
       } catch (err: any) {
@@ -94,11 +94,14 @@ export const useAttemptStore = defineStore("attempt", {
       try {
         const response = await apiClient.get<Attempt>(`/attempts/${attemptId}`);
         const data = response.data;
-        console.log('[attemptStore] fetchAttempt response:', {
+        console.log("[attemptStore] fetchAttempt response:", {
           id: data.id,
           status: data.status,
           answersLength: data.answers?.length,
-          firstAnswerSnapshot: data.answers?.[0]?.questionSnapshotJson?.slice(0, 50)
+          firstAnswerSnapshot: data.answers?.[0]?.questionSnapshotJson?.slice(
+            0,
+            50,
+          ),
         });
         if (!data) throw new Error("fetchAttempt returned null data");
         if (!data.answers) console.warn("fetchAttempt: answers missing", data);

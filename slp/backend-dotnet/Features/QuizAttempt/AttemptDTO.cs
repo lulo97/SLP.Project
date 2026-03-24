@@ -65,3 +65,8 @@ public class AttemptAnswerReviewDto : AttemptAnswerDto
     public bool IsCorrect { get; set; }
     // Could also include correct answer snapshot for display
 }
+
+public class StartAttemptRequestDto
+{
+    public bool RandomizeOrder { get; set; } = false;
+}

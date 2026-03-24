@@ -5,7 +5,7 @@ namespace backend_dotnet.Features.QuizAttempt;
 
 public interface IAttemptService
 {
-    Task<StartAttemptResponseDto> StartAttemptAsync(int quizId, int userId);
+    Task<StartAttemptResponseDto> StartAttemptAsync(int quizId, int userId, bool randomizeOrder = false);
     Task<AttemptDto?> GetAttemptAsync(int attemptId, int userId, bool isAdmin);
     Task SubmitAnswerAsync(int attemptId, int userId, SubmitAnswerDto dto);
     Task<AttemptDto> SubmitAttemptAsync(int attemptId, int userId);
