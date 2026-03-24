@@ -1,0 +1,35 @@
+<div class="min-h-screen bg-gray-50" data-testid="layout-container">
+  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]">
+    <div class="flex items-center justify-between p-4">
+      <div>
+        <ng-content select="[header-left]"></ng-content>
+        <ng-container *ngIf="!(hasHeaderLeft | async)">
+          <app-breadcrumb [fallbackTitle]="title"></app-breadcrumb>
+        </ng-container>
+      </div>
+      <div>
+        <ng-content select="[header-center]"></ng-content>
+      </div>
+      <div class="flex items-center gap-2">
+        <ng-content select="[header-right]"></ng-content>
+        <button
+          (click)="toggleSidebar()"
+          class="p-2 hover:bg-gray-100 rounded-lg"
+          aria-label="Toggle Sidebar"
+        >
+          <i nz-icon nzType="menu" nzTheme="outline"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mt-[10vh] pt-4 pb-6 px-4">
+    <ng-content></ng-content>
+  </main>
+
+  <app-right-sidebar
+    [isOpen]="sidebarOpen"
+    (close)="sidebarOpen = false"
+    (logout)="handleLogout()"
+  ></app-right-sidebar>
+</div>

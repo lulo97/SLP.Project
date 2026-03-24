@@ -1,0 +1,165 @@
+<div
+  class="fixed top-0 right-0 h-screen w-64 bg-white shadow-lg transform transition-transform duration-300 z-50"
+  [class.translate-x-0]="isOpen"
+  [class.translate-x-full]="!isOpen"
+>
+  <div class="flex flex-col h-full">
+    <div class="p-4 border-b flex justify-between items-center">
+      <h2 class="font-semibold">{{ 'nav.menu' | translate }}</h2>
+      <button (click)="close()" class="p-2">
+        <i nz-icon nzType="close" nzTheme="outline"></i>
+      </button>
+    </div>
+
+    <div *ngIf="user$ | async as user" class="p-4 border-b">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+          {{ user.username.charAt(0).toUpperCase() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium truncate">{{ user.username }}</p>
+          <p class="text-sm text-gray-500 truncate">{{ user.email }}</p>
+        </div>
+      </div>
+      <div *ngIf="!user.emailVerified" class="mt-2">
+        <button nz-button nzType="link" size="small" (click)="sendVerification()" [nzLoading]="sendingVerification">
+          {{ 'auth.verifyEmail' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-2">
+      <ul nz-menu nzMode="inline" class="border-none">
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/dashboard'">
+          <i nz-icon nzType="dashboard" nzTheme="outline"></i>
+          <span>{{ 'nav.dashboard' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/quiz'">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          <span>{{ 'nav.myQuizzes' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/quiz/new'">
+          <i nz-icon nzType="plus-circle" nzTheme="outline"></i>
+          <span>{{ 'nav.createQuiz' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/questions'">
+          <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+          <span>{{ 'nav.questionBank' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/question/new'">
+          <i nz-icon nzType="plus" nzTheme="outline"></i>
+          <span>{{ 'nav.newQuestion' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/source'">
+          <i nz-icon nzType="folder-open" nzTheme="outline"></i>
+          <span>{{ 'nav.mySources' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/source/upload'">
+          <i nz-icon nzType="upload" nzTheme="outline"></i>
+          <span>{{ 'nav.uploadFile' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/source/new-url'">
+          <i nz-icon nzType="link" nzTheme="outline"></i>
+          <span>{{ 'nav.addFromUrl' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/source/new-text'">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          <span>{{ 'nav.addFromText' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/notes'">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          <span>{{ 'nav.myNotes' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/favourites'">
+          <i nz-icon nzType="star" nzTheme="outline"></i>
+          <span>{{ 'nav.favourites' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/search'">
+          <i nz-icon nzType="search" nzTheme="outline"></i>
+          <span>{{ 'nav.search' | translate }}</span>
+        </li>
+
+        <li nz-menu-divider></li>
+
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/profile'">
+          <i nz-icon nzType="user" nzTheme="outline"></i>
+          <span>{{ 'nav.profile' | translate }}</span>
+        </li>
+        <li nz-menu-item nzMatchRouter [nzRouterLink]="'/reports'">
+          <i nz-icon nzType="flag" nzTheme="outline"></i>
+          <span>{{ 'nav.reports' | translate }}</span>
+        </li>
+
+        <li *ngIf="isAdmin$ | async" nz-menu-item nzMatchRouter [nzRouterLink]="'/admin'">
+          <i nz-icon nzType="security-scan" nzTheme="outline"></i>
+          <span>{{ 'nav.admin' | translate }}</span>
+        </li>
+
+        <li nz-menu-divider></li>
+
+        <li nz-menu-item (click)="openSettings()">
+          <i nz-icon nzType="setting" nzTheme="outline"></i>
+          <span>{{ 'settings.title' | translate }}</span>
+        </li>
+        <li nz-menu-item (click)="logout()" class="text-red-500">
+          <i nz-icon nzType="logout" nzTheme="outline"></i>
+          <span>{{ 'auth.logout' | translate }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 bg-black bg-opacity-50 z-40"
+  (click)="close()"
+></div>
+
+<!-- Settings Modal -->
+<nz-modal
+  [(nzVisible)]="settingsVisible"
+  nzTitle="{{ 'settings.title' | translate }}"
+  [nzFooter]="null"
+  nzWidth="320px"
+  nzCentered
+>
+  <div class="space-y-6 py-2">
+    <div>
+      <p class="text-sm font-medium text-gray-600 mb-2">{{ 'settings.theme' | translate }}</p>
+      <div class="flex gap-2">
+        <button
+          *ngFor="let theme of themeOptions"
+          class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+          [class.border-blue-500]="settingsService.theme === theme.value"
+          [class.bg-blue-50]="settingsService.theme === theme.value"
+          [class.text-blue-600]="settingsService.theme === theme.value"
+          [class.border-gray-200]="settingsService.theme !== theme.value"
+          [class.text-gray-600]="settingsService.theme !== theme.value"
+          (click)="settingsService.setTheme(theme.value)"
+        >
+          <i nz-icon [nzType]="theme.icon" nzTheme="outline"></i>
+          {{ theme.label | translate }}
+        </button>
+      </div>
+    </div>
+    <div>
+      <p class="text-sm font-medium text-gray-600 mb-2">{{ 'settings.language' | translate }}</p>
+      <div class="flex gap-2">
+        <button
+          *ngFor="let lang of languageOptions"
+          class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
+          [class.border-blue-500]="translateService.currentLang === lang.value"
+          [class.bg-blue-50]="translateService.currentLang === lang.value"
+          [class.text-blue-600]="translateService.currentLang === lang.value"
+          [class.border-gray-200]="translateService.currentLang !== lang.value"
+          [class.text-gray-600]="translateService.currentLang !== lang.value"
+          (click)="changeLanguage(lang.value)"
+        >
+          <span>{{ lang.flag }}</span>
+          {{ lang.label | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+</nz-modal>

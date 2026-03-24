@@ -1,3 +1,43 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import 'ng-zorro-antd/ng-zorro-antd.css';
 
-@import 'tailwindcss';
+/* Custom global styles */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 640px) {
+  .ant-card-body {
+    padding: 16px;
+  }
+}
+
+/* Force all buttons to use flex alignment */
+.ant-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Fix icon alignment */
+.ant-btn .anticon {
+  line-height: 0;
+  vertical-align: middle;
+}
+
+/* Ensure text span is vertically centered */
+.ant-btn > span {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Small buttons spacing */
+.ant-btn-sm {
+  column-gap: 4px;
+}

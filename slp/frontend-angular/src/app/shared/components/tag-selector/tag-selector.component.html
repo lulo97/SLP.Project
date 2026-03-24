@@ -1,0 +1,20 @@
+<nz-select
+  nzMode="tags"
+  [nzPlaceHolder]="placeholder"
+  [nzLoading]="loading"
+  [nzOptions]="options"
+  [nzMaxTagCount]="maxTags"
+  [nzStatus]="atLimit ? 'warning' : undefined"
+  [nzAllowClear]="true"
+  style="width: 100%"
+  [(ngModel)]="selected"
+  (ngModelChange)="handleChange($event)"
+>
+  <nz-option *ngFor="let opt of options" [nzValue]="opt.value" [nzLabel]="opt.label"></nz-option>
+  <ng-container *nzNotFoundContent>
+    <span *ngIf="error" class="text-red-400 text-xs px-2">{{ error }}</span>
+  </ng-container>
+</nz-select>
+<div *ngIf="atLimit" class="text-yellow-500 text-xs mt-1">
+  Maximum {{ maxTags }} tags allowed.
+</div>
