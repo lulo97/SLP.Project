@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const token = authService.getSessionToken();
+  const token = authService.sessionToken;
 
   const clonedReq = token
     ? req.clone({ headers: req.headers.set('X-Session-Token', token) })

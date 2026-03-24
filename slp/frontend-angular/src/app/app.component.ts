@@ -1,21 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NzConfigProviderComponent } from 'ng-zorro-antd/core/config';
-import { AuthService } from './core/services/auth.service'; // will be created
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NzConfigProviderComponent],
+  imports: [RouterOutlet], // Removed NzConfigProviderComponent
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  constructor(private authService: AuthService) {}
+  // Using inject() as we discussed for Angular 21
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
-    // Check if user is already logged in (e.g., via token)
-    if (this.authService.getSessionToken()) {
+    if (this.authService.sessionToken) {
       this.authService.fetchCurrentUser().subscribe();
     }
   }

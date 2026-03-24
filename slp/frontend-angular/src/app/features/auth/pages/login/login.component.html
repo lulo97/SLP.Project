@@ -1,0 +1,101 @@
+<div class="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+  <nz-card class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Welcome Back</h1>
+      <p class="text-gray-600 mt-2">Sign in to your account</p>
+    </div>
+
+    <form nz-form (ngSubmit)="handleLogin()" layout="vertical">
+      <nz-form-item>
+        <nz-form-label>Username</nz-form-label>
+        <nz-form-control [nzErrorTip]="usernameError">
+          <nz-input-group nzPrefixIcon="user">
+            <input
+              nz-input
+              [(ngModel)]="form.username"
+              name="username"
+              placeholder="Enter your username"
+              (input)="clearFieldError('username')"
+            />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label>Password</nz-form-label>
+        <nz-form-control [nzErrorTip]="passwordError">
+          <nz-input-group nzPrefixIcon="lock">
+            <input
+              nz-input
+              type="password"
+              [(ngModel)]="form.password"
+              name="password"
+              placeholder="Enter your password"
+              (input)="clearFieldError('password')"
+            />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="text-right mb-4">
+        <a (click)="showForgotPassword = true" class="text-blue-600 hover:text-blue-700">
+          Forgot password?
+        </a>
+      </div>
+
+      <button
+        nz-button
+        nzType="primary"
+        [nzLoading]="(loading$ | async)!"
+        block
+        nzSize="large"
+        class="mb-4"
+      >
+        Sign In
+      </button>
+
+      <div class="text-center">
+        <span class="text-gray-600">Don't have an account? </span>
+        <a routerLink="/register" class="text-blue-600 hover:text-blue-700">
+          Sign up
+        </a>
+      </div>
+
+      <nz-alert
+        *ngIf="showVerificationAlert"
+        nzType="warning"
+        nzShowIcon
+        [nzCloseable]="true"
+        (nzOnClose)="showVerificationAlert = false"
+        class="mb-4"
+      >
+        <span>Your email is not verified. </span>
+        <a (click)="resendVerification()" [nzLoading]="resending">
+          Resend verification email
+        </a>
+      </nz-alert>
+
+      <nz-alert
+        *ngIf="(error$ | async) && !usernameError && !passwordError"
+        [nzMessage]="error$ | async"
+        nzType="error"
+        nzShowIcon
+        [nzCloseable]="true"
+        (nzOnClose)="authService.clearError()"
+        class="mt-4"
+      />
+    </form>
+  </nz-card>
+
+  <nz-modal
+    [(nzVisible)]="showForgotPassword"
+    nzTitle="Reset Password"
+    (nzOnOk)="handleForgotPassword()"
+    [nzConfirmLoading]="resetLoading"
+  >
+    <p class="mb-4">
+      Enter your email address to receive a password reset link.
+    </p>
+    <input nz-input [(ngModel)]="resetEmail" placeholder="Email address" type="email" />
+  </nz-modal>
+</div>

@@ -1,9 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, map } from 'rxjs';
+import { Component, Input, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { RouterModule, Router } from "@angular/router";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { TranslateService } from "@ngx-translate/core";
+import { combineLatest, map } from "rxjs";
 
 interface BreadcrumbItem {
   label: string;
@@ -12,20 +12,23 @@ interface BreadcrumbItem {
 }
 
 @Component({
-  selector: 'app-breadcrumb',
+  selector: "app-breadcrumb",
   standalone: true,
   imports: [CommonModule, RouterModule, NzIconModule],
-  templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss']
+  templateUrl: "./breadcrumb.component.html",
+  styleUrls: ["./breadcrumb.component.scss"],
 })
 export class BreadcrumbComponent implements OnInit {
-  @Input() fallbackTitle = '';
+  @Input() fallbackTitle = "";
   @Input() maxItems = 3;
 
   items: BreadcrumbItem[] = [];
   displayItems: BreadcrumbItem[] = [];
 
-  constructor(private router: Router, private translate: TranslateService) {}
+  constructor(
+    private router: Router,
+    private translate: TranslateService,
+  ) {}
 
   ngOnInit(): void {
     this.router.events.subscribe(() => {
@@ -43,7 +46,9 @@ export class BreadcrumbComponent implements OnInit {
       if (data?.breadcrumb) {
         items.unshift({ label: data.breadcrumb, path: this.getPath(current) });
       }
-      current = current.firstChild;
+      if (current.firstChild) {
+        current = current.firstChild;
+      }
     }
     if (items.length === 0) {
       items = [{ label: this.fallbackTitle }];
@@ -53,15 +58,15 @@ export class BreadcrumbComponent implements OnInit {
   }
 
   private getPath(route: any): string {
-    let url = '';
+    let url = "";
     let current = route;
     while (current) {
       if (current.url && current.url.length) {
-        url = '/' + current.url.map((seg: any) => seg.path).join('/') + url;
+        url = "/" + current.url.map((seg: any) => seg.path).join("/") + url;
       }
       current = current.parent;
     }
-    return url || '/';
+    return url || "/";
   }
 
   private updateDisplayItems(): void {
@@ -72,7 +77,7 @@ export class BreadcrumbComponent implements OnInit {
       const tailCount = this.maxItems - 2;
       const first = all[0];
       const tail = all.slice(-tailCount);
-      this.displayItems = [first, { label: '…', ellipsis: true }, ...tail];
+      this.displayItems = [first, { label: "…", ellipsis: true }, ...tail];
     }
   }
 }

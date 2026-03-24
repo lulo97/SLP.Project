@@ -1,18 +1,17 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
-export const AdminGuard: CanActivateFn = () => {
+export const AdminGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.currentUser$.pipe(
-    map(user => {
-      if (user && user.role === 'admin') {
-        return true;
-      }
-      return router.parseUrl('/dashboard');
-    })
-  );
+  if (authService.isAuthenticated) {
+    await authService.ensureUserLoaded();
+    if (authService.isAdmin) {
+      return true;
+    }
+  }
+  return router.parseUrl('/dashboard');
 };
