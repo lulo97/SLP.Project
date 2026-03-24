@@ -111,13 +111,13 @@
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">Password</p>
                 <p class="text-xs text-gray-500 truncate">
-                  Last changed recently
+                  Keep your account secure
                 </p>
               </div>
             </div>
             <a-button
               type="link"
-              @click="showChangePassword = true"
+              @click="openChangePassword"
               class="ml-2 flex-shrink-0 text-xs px-2 h-auto"
             >
               Change
@@ -151,24 +151,60 @@
       </a-card>
     </div>
 
-    <!-- Change Password Modal -->
+    <!-- ── Change Password Modal ─────────────────────────────────────────── -->
     <a-modal
       v-model:open="showChangePassword"
       title="Change Password"
+      :confirm-loading="passwordLoading"
+      :ok-text="'Update Password'"
       @ok="handleChangePassword"
+      @cancel="resetPasswordForm"
     >
-      <a-form layout="vertical">
-        <a-form-item label="Current Password" required>
-          <a-input-password v-model:value="passwordForm.current" />
+      <a-form layout="vertical" class="pt-2">
+        <!-- Current password -->
+        <a-form-item
+          label="Current Password"
+          :validate-status="pwErrors.current ? 'error' : undefined"
+          :help="pwErrors.current"
+          required
+        >
+          <a-input-password
+            v-model:value="passwordForm.current"
+            placeholder="Enter your current password"
+            @input="pwErrors.current = ''"
+          />
         </a-form-item>
-        <a-form-item label="New Password" required>
-          <a-input-password v-model:value="passwordForm.new" />
+
+        <!-- New password -->
+        <a-form-item
+          label="New Password"
+          :validate-status="pwErrors.new ? 'error' : undefined"
+          :help="pwErrors.new"
+          required
+        >
+          <a-input-password
+            v-model:value="passwordForm.new"
+            placeholder="At least 8 characters"
+            @input="pwErrors.new = ''"
+          />
         </a-form-item>
-        <a-form-item label="Confirm New Password" required>
-          <a-input-password v-model:value="passwordForm.confirm" />
+
+        <!-- Confirm new password -->
+        <a-form-item
+          label="Confirm New Password"
+          :validate-status="pwErrors.confirm ? 'error' : undefined"
+          :help="pwErrors.confirm"
+          required
+        >
+          <a-input-password
+            v-model:value="passwordForm.confirm"
+            placeholder="Repeat new password"
+            @input="pwErrors.confirm = ''"
+          />
         </a-form-item>
       </a-form>
     </a-modal>
+    <!-- ─────────────────────────────────────────────────────────────────── -->
   </MobileLayout>
 </template>
 
@@ -281,19 +317,80 @@ const sendVerification = async () => {
   }
 };
 
-// ── Password ──────────────────────────────────────────────────────────────────
+// ── Change Password ───────────────────────────────────────────────────────────
 
 const showChangePassword = ref(false);
-const passwordForm = ref({ current: "", new: "", confirm: "" });
+const passwordLoading = ref(false);
 
-const handleChangePassword = () => {
-  if (passwordForm.value.new !== passwordForm.value.confirm) {
-    message.error("New passwords do not match");
-    return;
+const passwordForm = ref({ current: "", new: "", confirm: "" });
+const pwErrors = ref({ current: "", new: "", confirm: "" });
+
+function openChangePassword() {
+  resetPasswordForm();
+  showChangePassword.value = true;
+}
+
+function resetPasswordForm() {
+  passwordForm.value = { current: "", new: "", confirm: "" };
+  pwErrors.value = { current: "", new: "", confirm: "" };
+}
+
+/** Front-end validation — returns true when all fields are valid. */
+function validatePasswordForm(): boolean {
+  let valid = true;
+
+  if (!passwordForm.value.current) {
+    pwErrors.value.current = "Current password is required.";
+    valid = false;
   }
-  message.info("Password change feature coming soon");
-  showChangePassword.value = false;
-};
+
+  if (!passwordForm.value.new) {
+    pwErrors.value.new = "New password is required.";
+    valid = false;
+  } else if (passwordForm.value.new.length < 8) {
+    pwErrors.value.new = "Password must be at least 8 characters.";
+    valid = false;
+  }
+
+  if (!passwordForm.value.confirm) {
+    pwErrors.value.confirm = "Please confirm your new password.";
+    valid = false;
+  } else if (passwordForm.value.new !== passwordForm.value.confirm) {
+    pwErrors.value.confirm = "Passwords do not match.";
+    valid = false;
+  }
+
+  return valid;
+}
+
+async function handleChangePassword() {
+  if (!validatePasswordForm()) return;
+
+  passwordLoading.value = true;
+  const result = await authStore.changePassword(
+    passwordForm.value.current,
+    passwordForm.value.new,
+  );
+  passwordLoading.value = false;
+
+  if (result.success) {
+    message.success("Password updated successfully!");
+    showChangePassword.value = false;
+    resetPasswordForm();
+  } else {
+    // Map API error codes back to the relevant field
+    switch (result.code) {
+      case "INVALID_CURRENT_PASSWORD":
+        pwErrors.value.current = "Current password is incorrect.";
+        break;
+      case "WEAK_PASSWORD":
+        pwErrors.value.new = result.message ?? "Password is too weak.";
+        break;
+      default:
+        message.error(result.message ?? "Failed to change password.");
+    }
+  }
+}
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 

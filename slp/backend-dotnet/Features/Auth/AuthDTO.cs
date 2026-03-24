@@ -10,6 +10,8 @@
 
     public record UpdateUserRequest(string Name, string AvatarUrl);
 
+    public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+
     public class LoginResponse
     {
         public string Token { get; set; } = "";
@@ -41,5 +43,12 @@
         public string Status { get; set; }
         public string? AvatarFilename { get; set; }
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class ChangePasswordResult
+    {
+        public bool Success { get; set; }
+        public string? ErrorCode { get; set; }  // "USER_NOT_FOUND" | "INVALID_CURRENT_PASSWORD"
+        public string? Message { get; set; }
     }
 }

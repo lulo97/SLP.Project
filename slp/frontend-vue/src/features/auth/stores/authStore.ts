@@ -32,6 +32,13 @@ interface User {
   avatarUrl: string | undefined; // computed from avatarFilename, never from API
 }
 
+export interface ChangePasswordResult {
+  success: boolean;
+  /** e.g. "INVALID_CURRENT_PASSWORD" | "WEAK_PASSWORD" */
+  code?: string;
+  message?: string;
+}
+
 function buildAvatarUrl(
   filename: string | null | undefined,
 ): string | undefined {
@@ -160,7 +167,7 @@ export const useAuthStore = defineStore("auth", {
 
     async requestPasswordReset(email: string) {
       try {
-        await apiClient.post("/auth/forgot-password", { email }); // changed
+        await apiClient.post("/auth/forgot-password", { email });
         return true;
       } catch (error) {
         return false;
@@ -170,7 +177,6 @@ export const useAuthStore = defineStore("auth", {
     async confirmPasswordReset(token: string, newPassword: string) {
       try {
         await apiClient.post("/auth/reset-password", {
-          // changed
           token,
           newPassword,
         });
@@ -194,12 +200,39 @@ export const useAuthStore = defineStore("auth", {
 
     async sendVerificationEmail() {
       try {
-        await apiClient.post("/auth/resend-verification"); // changed from /users/me/verify-email/send
+        await apiClient.post("/auth/resend-verification");
         return true;
       } catch (error) {
         return false;
       }
     },
+
+    // ── NEW ────────────────────────────────────────────────────────────────
+    /**
+     * Change the password of the currently logged-in user.
+     * The backend revokes all other sessions on success, but keeps the
+     * current session alive so the user is not logged out immediately.
+     */
+    async changePassword(
+      currentPassword: string,
+      newPassword: string,
+    ): Promise<ChangePasswordResult> {
+      try {
+        await apiClient.post("/users/me/change-password", {
+          currentPassword,
+          newPassword,
+        });
+        return { success: true };
+      } catch (error: any) {
+        const data = error.response?.data;
+        return {
+          success: false,
+          code: data?.code,
+          message: data?.message || "Failed to change password.",
+        };
+      }
+    },
+    // ──────────────────────────────────────────────────────────────────────
 
     clearError() {
       this.error = null;

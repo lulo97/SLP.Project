@@ -1,9 +1,14 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
-import { UserRepository } from './user.repository';
-import { User } from './user.entity';
-import { RegisterUserRequest } from './dto/register-user.dto';
-import { UpdateUserRequest } from './dto/update-user.dto';
-import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { UserRepository } from "./user.repository";
+import { User } from "./user.entity";
+import { RegisterUserRequest } from "./dto/register-user.dto";
+import { UpdateUserRequest } from "./dto/update-user.dto";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UserService {
@@ -15,7 +20,7 @@ export class UserService {
 
   async getByIdOrFail(id: number): Promise<User> {
     const user = await this.userRepo.getById(id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
     return user;
   }
 
@@ -29,7 +34,7 @@ export class UserService {
 
   async register(dto: RegisterUserRequest): Promise<User> {
     const existing = await this.userRepo.getByEmail(dto.email);
-    if (existing) throw new ConflictException('Email already exists');
+    if (existing) throw new ConflictException("Email already exists");
 
     const user = new User();
     user.username = dto.username;
@@ -37,8 +42,8 @@ export class UserService {
     user.passwordHash = await bcrypt.hash(dto.password, 10);
     user.createdAt = new Date();
     user.updatedAt = new Date();
-    user.role = 'user';
-    user.status = 'active';
+    user.role = "user";
+    user.status = "active";
 
     await this.userRepo.create(user);
     return user;
@@ -46,6 +51,9 @@ export class UserService {
 
   async delete(id: number): Promise<void> {
     const user = await this.getByIdOrFail(id);
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
     await this.userRepo.delete(user);
   }
 }

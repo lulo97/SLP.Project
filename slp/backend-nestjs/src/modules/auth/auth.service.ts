@@ -1,13 +1,14 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IUserRepository } from '../user/user.repository';
-import { ISessionRepository } from '../session/session.repository';
+import * as userRepository from '../user/user.repository';
+import * as sessionRepository from '../session/session.repository';
 import { IEmailService } from '../email/email.service.interface';
 import { PasswordHasher } from './password-hasher';
 import { SessionTokenService } from '../session/session-token.service';
 import { Session } from '../session/session.entity';
 import { LoginResult } from './dto/login-result.dto';
 import { LoginRequest } from './dto/login-request.dto';
+import { IAuthService } from './auth.service.interface';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -15,8 +16,8 @@ export class AuthService implements IAuthService {
   private readonly frontendBaseUrl: string;
 
   constructor(
-    @Inject('IUserRepository') private userRepo: IUserRepository,
-    @Inject('ISessionRepository') private sessionRepo: ISessionRepository,
+    @Inject('IUserRepository') private userRepo: userRepository.IUserRepository,
+    @Inject('ISessionRepository') private sessionRepo: sessionRepository.ISessionRepository,
     @Inject('IEmailService') private emailService: IEmailService,
     private configService: ConfigService,
   ) {

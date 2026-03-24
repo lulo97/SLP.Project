@@ -17,7 +17,7 @@ public class AuthService : IAuthService
         IUserRepository users,
         ISessionRepository sessions,
         IEmailService email,
-        IConfiguration configuration) // Add IConfiguration parameter
+        IConfiguration configuration)
     {
         _users = users;
         _sessions = sessions;
@@ -58,17 +58,6 @@ public class AuthService : IAuthService
                 Message = "Invalid credentials"
             };
         }
-
-        // Optional: require email verification before allowing login
-        //if (!user.EmailConfirmed)
-        //{
-        //    return new LoginResult
-        //    {
-        //        Success = false,
-        //        ErrorCode = "EMAIL_NOT_VERIFIED",
-        //        Message = "Please verify your email before logging in."
-        //    };
-        //}
 
         var token = SessionTokenService.GenerateToken();
         var tokenHash = SessionTokenService.HashToken(token);
@@ -165,5 +154,53 @@ public class AuthService : IAuthService
         var htmlBody = EmailTemplates.GetEmailVerificationEmail(verifyLink);
 
         await _email.SendHtmlAsync(user.Email, "Verify Your Email", htmlBody);
+    }
+
+    public async Task<ChangePasswordResult> ChangePasswordAsync(
+        string userId,
+        string currentPassword,
+        string newPassword)
+    {
+        if (!int.TryParse(userId, out var id))
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "USER_NOT_FOUND",
+                Message = "User not found."
+            };
+        }
+
+        var user = await _users.GetByIdAsync(id);
+        if (user == null)
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "USER_NOT_FOUND",
+                Message = "User not found."
+            };
+        }
+
+        if (!PasswordHasher.Verify(currentPassword, user.PasswordHash))
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "INVALID_CURRENT_PASSWORD",
+                Message = "Current password is incorrect."
+            };
+        }
+
+        user.PasswordHash = PasswordHasher.Hash(newPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _users.UpdateAsync(user);
+
+        // Revoke all sessions so other devices must re-login.
+        // The current session is intentionally kept alive so the user
+        // is not immediately logged out on this device.
+        await _sessions.RevokeAllForUserAsync(user.Id);
+
+        return new ChangePasswordResult { Success = true };
     }
 }

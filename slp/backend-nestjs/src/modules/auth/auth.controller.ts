@@ -145,10 +145,7 @@ export class AuthController {
   @Roles('admin')
   async deleteUser(@Param('id') id: string, @Request() req) {
     const userId = parseInt(id, 10);
-    const success = await this.userService.delete(userId);
-    if (!success) {
-      throw new UnauthorizedException('User not found');
-    }
+    await this.userService.delete(userId);
     return { message: 'User deleted successfully' };
   }
 }

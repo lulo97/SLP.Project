@@ -95,6 +95,38 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Verification email sent." });
     }
 
+    // POST /api/users/me/change-password
+    [Authorize]
+    [HttpPost("users/me/change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        // Basic length guard – real validation lives in the service
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+            return BadRequest(new
+            {
+                code = "WEAK_PASSWORD",
+                message = "New password must be at least 8 characters."
+            });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var result = await _authService.ChangePasswordAsync(
+            userId!,
+            request.CurrentPassword,
+            request.NewPassword);
+
+        if (!result.Success)
+        {
+            return result.ErrorCode switch
+            {
+                "INVALID_CURRENT_PASSWORD" => BadRequest(new { code = result.ErrorCode, message = result.Message }),
+                "USER_NOT_FOUND" => NotFound(new { code = result.ErrorCode, message = result.Message }),
+                _ => StatusCode(500, new { message = "An unexpected error occurred." })
+            };
+        }
+
+        return Ok(new { message = "Password changed successfully." });
+    }
+
     // GET /api/users/me
     [Authorize]
     [HttpGet("users/me")]
