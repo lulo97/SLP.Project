@@ -5,12 +5,11 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet], // Removed NzConfigProviderComponent
+  imports: [RouterOutlet], // No more ng-zorro config imports needed here!
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  // Using inject() as we discussed for Angular 21
   private authService = inject(AuthService);
 
   ngOnInit(): void {

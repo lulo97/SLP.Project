@@ -25,12 +25,11 @@ import { firstValueFrom } from 'rxjs';
     NzAlertModule
   ],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
 })
 export class ResetPasswordComponent implements OnInit {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  public router = inject(Router);
   private message = inject(NzMessageService);
 
   token: string | null = null;

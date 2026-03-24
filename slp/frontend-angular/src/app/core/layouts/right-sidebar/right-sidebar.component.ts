@@ -8,8 +8,9 @@ import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { AuthService } from "../../services/auth.service";
-import { Language, SettingsService } from "../../services/settings.service";
+import { Language, SettingsService, Theme } from "../../services/settings.service";
 import { Observable, map } from "rxjs";
+import { RouterModule } from "@angular/router"; // 1. Import this
 
 @Component({
   selector: "app-right-sidebar",
@@ -21,6 +22,7 @@ import { Observable, map } from "rxjs";
     NzModalModule,
     NzButtonModule,
     TranslateModule,
+    RouterModule,
   ],
   templateUrl: "./right-sidebar.component.html",
   styleUrls: ["./right-sidebar.component.scss"],
@@ -35,23 +37,26 @@ export class RightSidebarComponent implements OnInit {
   sendingVerification = false;
   settingsVisible = false;
 
-  themeOptions = [
+  // Explicitly type the array so the 'value' is seen as Theme, not just string
+  themeOptions: { value: Theme; label: string; icon: string }[] = [
     { value: "light", label: "settings.themeLight", icon: "sun" },
     { value: "dark", label: "settings.themeDark", icon: "moon" },
   ];
-  languageOptions = [
+
+  // Do the same for languageOptions to prevent the next error!
+  languageOptions: { value: Language; label: string; flag: string }[] = [
     { value: "en", label: "English", flag: "🇬🇧" },
     { value: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
   ];
 
   constructor(
     private authService: AuthService,
-    private settingsService: SettingsService,
-    private translateService: TranslateService,
+    public settingsService: SettingsService,
+    public translateService: TranslateService,
     private message: NzMessageService,
     private router: Router,
   ) {
-    this.user$ = this.authService.currentUser$;
+    this.user$ = this.authService.user$;
     this.isAdmin$ = this.user$.pipe(map((user) => user?.role === "admin"));
   }
 

@@ -48,7 +48,6 @@ export class AuthService {
 
   private errorSubject = new BehaviorSubject<string | null>(null);
   public error$ = this.errorSubject.asObservable();
-  currentUser$: Observable<any>;
 
   constructor(
     private apiClient: ApiClientService,

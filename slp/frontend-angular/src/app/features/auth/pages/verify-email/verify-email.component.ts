@@ -19,12 +19,11 @@ import { firstValueFrom } from 'rxjs';
     NzButtonModule
   ],
   templateUrl: './verify-email.component.html',
-  styleUrls: ['./verify-email.component.scss']
 })
 export class VerifyEmailComponent implements OnInit {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  public router = inject(Router);
   private message = inject(NzMessageService);
 
   token: string | null = null;

@@ -29,11 +29,10 @@ import { firstValueFrom } from "rxjs";
     NzIconModule,
   ],
   templateUrl: "./login.component.html",
-  styleUrls: ["./login.component.scss"],
 })
 export class LoginComponent {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  public authService = inject(AuthService);
+  public router = inject(Router);
   private message = inject(NzMessageService);
 
   form = {

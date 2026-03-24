@@ -1,34 +1,34 @@
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TagService } from '../../../features/tag/tag.service'; // adjust path
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Component, forwardRef, Input, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
+import { TagService, TagDto } from "../../../features/tag/tag.service";
+import { of } from "rxjs";
+import { catchError, tap } from "rxjs/operators";
 
 @Component({
-  selector: 'app-tag-selector',
+  selector: "app-tag-selector",
   standalone: true,
   imports: [CommonModule, FormsModule, NzSelectModule],
-  templateUrl: './tag-selector.component.html',
-  styleUrls: ['./tag-selector.component.scss'],
+  templateUrl: "./tag-selector.component.html",
+  styleUrls: ["./tag-selector.component.scss"],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => TagSelectorComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class TagSelectorComponent implements OnInit, ControlValueAccessor {
-  @Input() placeholder = 'Select or create tags…';
+  @Input() placeholder = "Select or create tags…";
   @Input() maxTags = 10;
 
   selected: string[] = [];
   options: Array<{ value: string; label: string }> = [];
   loading = false;
-  error = '';
+  error = "";
   atLimit = false;
 
   private onChange: (value: any) => void = () => {};
@@ -42,23 +42,29 @@ export class TagSelectorComponent implements OnInit, ControlValueAccessor {
 
   loadTags(): void {
     this.loading = true;
-    this.tagService.getTags().pipe(
-      catchError(err => {
-        this.error = err.message;
-        return of([]);
-      })
-    ).subscribe(tags => {
-      this.options = tags.map(tag => ({ value: tag.name, label: tag.name }));
-      this.loading = false;
-    });
+    this.tagService
+      .fetchTags()
+      .pipe(
+        catchError((err) => {
+          this.error = err.message || "Failed to load tags";
+          return of([]);
+        }),
+        tap(() => (this.loading = false)),
+      )
+      .subscribe((tags) => {
+        this.options = tags.map((tag: { name: any }) => ({
+          value: tag.name,
+          label: tag.name,
+        }));
+      });
   }
 
   handleChange(newVal: string[]): void {
     // normalize: trim, deduplicate, limit
     const seen = new Set<string>();
     const clean = newVal
-      .map(v => v.trim())
-      .filter(v => {
+      .map((v) => v.trim())
+      .filter((v) => {
         if (!v) return false;
         const key = v.toLowerCase();
         if (seen.has(key)) return false;
@@ -78,7 +84,11 @@ export class TagSelectorComponent implements OnInit, ControlValueAccessor {
       this.atLimit = this.selected.length >= this.maxTags;
     }
   }
-  registerOnChange(fn: any): void { this.onChange = fn; }
-  registerOnTouched(fn: any): void { this.onTouched = fn; }
-  setDisabledState?(isDisabled: boolean): void { }
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+  setDisabledState?(isDisabled: boolean): void {}
 }

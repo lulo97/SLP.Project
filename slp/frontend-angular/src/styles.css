@@ -1,6 +1,7 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+/* Replace the 3 tailwind imports with this */
+@import "tailwindcss";
+
+/* Keep your NG-ZORRO and custom styles below */
 @import 'ng-zorro-antd/ng-zorro-antd.css';
 
 /* Custom global styles */

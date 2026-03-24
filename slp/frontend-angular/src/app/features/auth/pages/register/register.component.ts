@@ -27,11 +27,10 @@ import { firstValueFrom } from 'rxjs';
     NzIconModule
   ],
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  public authService = inject(AuthService);
+  public router = inject(Router);
   private message = inject(NzMessageService);
 
   form = {
