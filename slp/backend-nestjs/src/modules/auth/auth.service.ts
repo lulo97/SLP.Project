@@ -1,14 +1,16 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as userRepository from '../user/user.repository';
-import * as sessionRepository from '../session/session.repository';
-import { IEmailService } from '../email/email.service.interface';
-import { PasswordHasher } from './password-hasher';
-import { SessionTokenService } from '../session/session-token.service';
-import { Session } from '../session/session.entity';
-import { LoginResult } from './dto/login-result.dto';
-import { LoginRequest } from './dto/login-request.dto';
-import { IAuthService } from './auth.service.interface';
+import { Injectable, Inject, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { UserRepository } from "../user/user.repository";
+import { SessionRepository } from "../session/session.repository";
+import type { IEmailService } from "../email/email.service.interface";
+import { PasswordHasher } from "./password-hasher";
+import { SessionTokenService } from "../session/session-token.service";
+import { Session } from "../session/session.entity";
+import { LoginResult } from "./dto/login-result.dto";
+import { LoginRequest } from "./dto/login-request.dto";
+import { IAuthService } from "./auth.service.interface";
+import { ChangePasswordResult } from "./dto/change-password-result.dto";
+import { EmailTemplates } from "../email/email-templates";
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -16,12 +18,14 @@ export class AuthService implements IAuthService {
   private readonly frontendBaseUrl: string;
 
   constructor(
-    @Inject('IUserRepository') private userRepo: userRepository.IUserRepository,
-    @Inject('ISessionRepository') private sessionRepo: sessionRepository.ISessionRepository,
-    @Inject('IEmailService') private emailService: IEmailService,
+    private userRepo: UserRepository,
+    private sessionRepo: SessionRepository,
+    @Inject("IEmailService") private emailService: IEmailService,
     private configService: ConfigService,
   ) {
-    this.frontendBaseUrl = this.configService.get<string>('frontend.baseUrlForEmail') || 'http://localhost:3002';
+    this.frontendBaseUrl =
+      this.configService.get<string>("frontend.baseUrlForEmail") ||
+      "http://localhost:3002";
   }
 
   async login(loginDto: LoginRequest): Promise<LoginResult> {
@@ -29,25 +33,28 @@ export class AuthService implements IAuthService {
     if (!user) {
       return {
         success: false,
-        errorCode: 'USER_NOT_FOUND',
-        message: 'Invalid credentials',
+        errorCode: "USER_NOT_FOUND",
+        message: "Invalid credentials",
       };
     }
 
-    if (user.status !== 'active') {
+    if (user.status !== "active") {
       return {
         success: false,
-        errorCode: 'ACCOUNT_BANNED',
-        message: 'Your account has been banned. Please contact support.',
+        errorCode: "ACCOUNT_BANNED",
+        message: "Your account has been banned. Please contact support.",
       };
     }
 
-    const valid = await PasswordHasher.verify(loginDto.password, user.passwordHash);
+    const valid = await PasswordHasher.verify(
+      loginDto.password,
+      user.passwordHash,
+    );
     if (!valid) {
       return {
         success: false,
-        errorCode: 'INVALID_PASSWORD',
-        message: 'Invalid credentials',
+        errorCode: "INVALID_PASSWORD",
+        message: "Invalid credentials",
       };
     }
 
@@ -90,29 +97,38 @@ export class AuthService implements IAuthService {
     const user = await this.userRepo.getByEmail(email);
     if (!user) return;
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
     user.passwordResetToken = token;
     user.passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await this.userRepo.update(user);
 
     const resetLink = `${this.frontendBaseUrl}/reset-password?token=${token}`;
-    const htmlBody = `
-      <h1>Reset Your Password</h1>
-      <p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 1 hour.</p>
-      <p>If you did not request this, please ignore this email.</p>
-    `;
-    await this.emailService.sendHtml(user.email, 'Reset Your Password', htmlBody);
+    const htmlBody = EmailTemplates.getPasswordResetEmail(resetLink);
+    await this.emailService.sendHtmlAsync(
+      user.email,
+      "Reset Your Password",
+      htmlBody,
+    );
   }
 
-  async confirmPasswordReset(token: string, newPassword: string): Promise<boolean> {
+  async confirmPasswordReset(
+    token: string,
+    newPassword: string,
+  ): Promise<boolean> {
     const user = await this.userRepo.getByResetToken(token);
-    if (!user || !user.passwordResetExpiry || user.passwordResetExpiry < new Date()) {
+    if (
+      !user ||
+      !user.passwordResetExpiry ||
+      user.passwordResetExpiry < new Date()
+    ) {
       return false;
     }
 
     user.passwordHash = await PasswordHasher.hash(newPassword);
-    user.passwordResetToken = null;
-    user.passwordResetExpiry = null;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiry = undefined;
     await this.userRepo.update(user);
 
     // Revoke all sessions
@@ -125,7 +141,7 @@ export class AuthService implements IAuthService {
     if (!user) return false;
 
     user.emailConfirmed = true;
-    user.emailVerificationToken = null;
+    user.emailVerificationToken = undefined;
     await this.userRepo.update(user);
     return true;
   }
@@ -134,16 +150,55 @@ export class AuthService implements IAuthService {
     const user = await this.userRepo.getById(userId);
     if (!user) return;
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
     user.emailVerificationToken = token;
     await this.userRepo.update(user);
 
     const verifyLink = `${this.frontendBaseUrl}/verify-email?token=${token}`;
-    const htmlBody = `
-      <h1>Verify Your Email</h1>
-      <p>Click <a href="${verifyLink}">here</a> to verify your email address.</p>
-      <p>If you did not create an account, please ignore this email.</p>
-    `;
-    await this.emailService.sendHtml(user.email, 'Verify Your Email', htmlBody);
+    const htmlBody = EmailTemplates.getEmailVerificationEmail(verifyLink);
+    await this.emailService.sendHtmlAsync(
+      user.email,
+      "Verify Your Email",
+      htmlBody,
+    );
+  }
+
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<ChangePasswordResult> {
+    const user = await this.userRepo.getById(userId);
+    if (!user) {
+      return {
+        success: false,
+        errorCode: "USER_NOT_FOUND",
+        message: "User not found.",
+      };
+    }
+
+    const valid = await PasswordHasher.verify(
+      currentPassword,
+      user.passwordHash,
+    );
+    if (!valid) {
+      return {
+        success: false,
+        errorCode: "INVALID_CURRENT_PASSWORD",
+        message: "Current password is incorrect.",
+      };
+    }
+
+    user.passwordHash = await PasswordHasher.hash(newPassword);
+    user.updatedAt = new Date();
+    await this.userRepo.update(user);
+
+    // Revoke all sessions except the current one? .NET revokes all sessions.
+    // The current session remains active (user stays logged in on this device).
+    await this.sessionRepo.revokeAllForUser(user.id);
+
+    return { success: true };
   }
 }
