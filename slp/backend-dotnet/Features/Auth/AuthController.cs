@@ -101,12 +101,12 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         // Basic length guard – real validation lives in the service
-        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
-            return BadRequest(new
-            {
-                code = "WEAK_PASSWORD",
-                message = "New password must be at least 8 characters."
-            });
+        //if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+        //    return BadRequest(new
+        //    {
+        //        code = "WEAK_PASSWORD",
+        //        message = "New password must be at least 8 characters."
+        //    });
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var result = await _authService.ChangePasswordAsync(

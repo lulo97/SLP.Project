@@ -347,9 +347,6 @@ function validatePasswordForm(): boolean {
   if (!passwordForm.value.new) {
     pwErrors.value.new = "New password is required.";
     valid = false;
-  } else if (passwordForm.value.new.length < 8) {
-    pwErrors.value.new = "Password must be at least 8 characters.";
-    valid = false;
   }
 
   if (!passwordForm.value.confirm) {
