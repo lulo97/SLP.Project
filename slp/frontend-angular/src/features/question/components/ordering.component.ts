@@ -1,25 +1,49 @@
-// src/features/question/components/ordering.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzFormModule } from 'ng-zorro-antd/form'; // ✅ Added
+import { NzFormModule } from 'ng-zorro-antd/form';
 
 @Component({
   selector: 'app-ordering',
   standalone: true,
-  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzFormModule], // ✅ Added NzFormModule
+  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzFormModule],
   template: `
     <nz-form-item>
       <nz-form-label>Ordered Items (from first to last)</nz-form-label>
       <nz-form-control>
-        <div *ngFor="let item of items; let i = index" class="flex items-center mb-2">
+        <div
+          *ngFor="let item of items; let i = index; trackBy: trackByIndex"
+          class="flex items-center mb-2"
+        >
           <span class="w-6 text-right">{{ i+1 }}.</span>
-          <input nz-input [(ngModel)]="items[i]" placeholder="Item {{ i+1 }}" class="flex-1" (ngModelChange)="onItemsChange()" />
-          <button nz-button nzType="text" nzDanger (click)="removeItem(i)" type="button">Remove</button>
+          <input
+            nz-input
+            [(ngModel)]="items[i]"
+            placeholder="Item {{ i+1 }}"
+            class="flex-1"
+            (ngModelChange)="onItemsChange()"
+          />
+          <button
+            nz-button
+            nzType="text"
+            nzDanger
+            (click)="removeItem(i)"
+            type="button"
+          >
+            Remove
+          </button>
         </div>
-        <button nz-button nzType="dashed" block (click)="addItem()" type="button">Add Item</button>
+        <button
+          nz-button
+          nzType="dashed"
+          block
+          (click)="addItem()"
+          type="button"
+        >
+          Add Item
+        </button>
       </nz-form-control>
     </nz-form-item>
   `,
@@ -34,6 +58,11 @@ export class OrderingComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.items.length) this.items = ['', '', '', ''];
+  }
+
+  // ✅ Thêm hàm trackBy để tránh re-render toàn bộ danh sách
+  trackByIndex(index: number, item: string): number {
+    return index;
   }
 
   addItem(): void {

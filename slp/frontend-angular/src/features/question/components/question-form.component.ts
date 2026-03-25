@@ -208,7 +208,7 @@ export class QuestionFormComponent implements OnInit, OnChanges {
 
   multipleChoiceOptions: string[] = [];
   multipleChoiceCorrect: string[] = [];
-  trueFalseAnswer = "true";
+  trueFalseAnswer = true;
   fillBlankAnswer = "[]";
   orderingItems: string[] = [];
   matchingPairs: { left: string; right: string }[] = [];
@@ -264,7 +264,7 @@ export class QuestionFormComponent implements OnInit, OnChanges {
         break;
       case "true_false":
         this.trueFalseAnswer =
-          metadata.correctAnswer === true ? "true" : "false";
+          metadata.correctAnswer === true ? true : false;
         break;
       case "fill_blank":
         this.fillBlankAnswer = JSON.stringify(metadata.keywords || []);
@@ -287,12 +287,12 @@ export class QuestionFormComponent implements OnInit, OnChanges {
     if (newType === "multiple_choice") {
       this.multipleChoiceOptions = ["", "", "", ""];
       this.multipleChoiceCorrect = [];
-      this.trueFalseAnswer = "true";
+      this.trueFalseAnswer = true;
       this.fillBlankAnswer = "[]";
       this.orderingItems = [];
       this.matchingPairs = [];
     } else if (newType === "true_false") {
-      this.trueFalseAnswer = "true";
+      this.trueFalseAnswer = true;
     } else if (newType === "fill_blank") {
       this.fillBlankAnswer = "[]";
     } else if (newType === "ordering") {
@@ -341,7 +341,7 @@ export class QuestionFormComponent implements OnInit, OnChanges {
         break;
       }
       case "true_false":
-        metadata.correctAnswer = this.trueFalseAnswer === "true";
+        metadata.correctAnswer = this.trueFalseAnswer === true;
         break;
       case "fill_blank": {
         let keywords: string[] = [];
