@@ -38,6 +38,7 @@ export const routes: Routes = [
           ),
       },
       {
+        data: { breadcrumb: 'Questions' },
         path: "questions",
         loadComponent: () =>
           import("../features/question/pages/question-list.component").then(

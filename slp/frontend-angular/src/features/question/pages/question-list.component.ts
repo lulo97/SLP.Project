@@ -36,7 +36,7 @@ import { QuestionListDto } from "../question.model";
     MobileLayoutComponent,
   ],
   template: `
-    <app-mobile-layout title="Questions">
+    <div>
       <!-- Search & Filter -->
       <div class="flex flex-col gap-2 mb-4">
         <input
@@ -134,7 +134,7 @@ import { QuestionListDto } from "../question.model";
       <ng-template #iconTemplate>
         <i nz-icon nzType="plus"></i>
       </ng-template>
-    </app-mobile-layout>
+    </div>
   `,
   styles: [
     `
@@ -223,6 +223,7 @@ export class QuestionListComponent implements OnInit, OnDestroy {
   private searchDebounce: any;
 
   ngOnInit(): void {
+    console.log('QuestionListComponent initialized');
     this.loadQuestions();
   }
 

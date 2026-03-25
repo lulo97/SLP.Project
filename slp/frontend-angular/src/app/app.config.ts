@@ -44,6 +44,8 @@ import {
   CheckCircleOutline,
   CloseCircleOutline,
   LoadingOutline,
+  SunOutline,
+  MoonOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -82,6 +84,8 @@ const icons = [
   CheckCircleOutline,
   CloseCircleOutline,
   LoadingOutline,
+  SunOutline, // thêm dòng này
+  MoonOutline, // thêm dòng này
 ];
 
 const ngZorroConfig: NzConfig = {
@@ -102,9 +106,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(
-      withInterceptors([authInterceptor]),
-    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimations(),
 
     provideNzIcons(icons),

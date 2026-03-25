@@ -1,4 +1,3 @@
-// src/common/middleware/metrics.middleware.ts
 import { Injectable, NestMiddleware, Inject } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { METRICS_COLLECTOR } from '../../modules/metrics/metrics.module';

@@ -1,5 +1,3 @@
-// src/modules/question/question.entity.ts
-
 import {
   Entity,
   Column,

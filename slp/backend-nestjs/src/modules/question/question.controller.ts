@@ -1,5 +1,3 @@
-// src/modules/question/question.controller.ts
-
 import {
   Controller,
   Get,

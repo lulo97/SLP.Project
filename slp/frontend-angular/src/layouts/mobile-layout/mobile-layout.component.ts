@@ -6,6 +6,7 @@ import { BreadcrumbComponent } from "../../components/breadcrumb/breadcrumb.comp
 import { RightSidebarComponent } from "../right-sidebar/right-sidebar.component";
 import { AuthService } from "../../features/auth/auth.service";
 import { BehaviorSubject } from "rxjs";
+import { RouterOutlet } from "@angular/router"; // 1. Import this
 
 @Component({
   selector: "app-mobile-layout",
@@ -15,6 +16,7 @@ import { BehaviorSubject } from "rxjs";
     NzIconModule,
     BreadcrumbComponent,
     RightSidebarComponent,
+    RouterOutlet,
   ],
   templateUrl: "./mobile-layout.component.html",
   styleUrls: ["./mobile-layout.component.scss"],

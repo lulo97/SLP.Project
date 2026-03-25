@@ -4,7 +4,7 @@ import { User } from "./user.entity";
 import { UserRepository } from "./user.repository";
 import { UserService } from "./user.service";
 import { UserController } from "./user.controller";
-import { SessionModule } from "../session/session.module"; // Thêm import
+import { SessionModule } from "../session/session.module";
 
 @Module({
   imports: [

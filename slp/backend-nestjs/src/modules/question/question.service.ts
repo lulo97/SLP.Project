@@ -1,5 +1,3 @@
-// src/modules/question/question.service.ts
-
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { QuestionRepository } from './question.repository';
 import { TagService } from '../tag/tag.service';

@@ -1,19 +1,39 @@
-<nav *ngIf="items.length > 1" class="flex items-center min-w-0" aria-label="Breadcrumb">
+<nav
+  *ngIf="items.length > 0"
+  class="flex items-center min-w-0"
+  aria-label="Breadcrumb"
+>
   <ol class="flex items-center min-w-0">
-    <li *ngFor="let item of displayItems; let i = index" class="flex items-center min-w-0">
-      <span *ngIf="item.ellipsis" class="text-gray-400 text-xs px-1 shrink-0">…</span>
-      <a *ngIf="!item.ellipsis && item.path && i < displayItems.length - 1"
-         [routerLink]="item.path"
-         class="text-gray-400 text-xs font-medium hover:text-blue-500 transition-colors shrink-0 max-w-[64px] truncate">
+    <li
+      *ngFor="let item of displayItems; let i = index"
+      class="flex items-center min-w-0"
+    >
+      <span *ngIf="item.ellipsis" class="text-gray-400 text-xs px-1 shrink-0"
+        >…</span
+      >
+      <a
+        *ngIf="!item.ellipsis && item.path && i < displayItems.length - 1"
+        [routerLink]="item.path"
+        class="text-gray-400 text-xs font-medium hover:text-blue-500 transition-colors shrink-0 max-w-[64px] truncate"
+      >
         {{ item.label }}
       </a>
-      <span *ngIf="!item.ellipsis && (!item.path || i === displayItems.length - 1)"
-            class="text-gray-800 text-sm font-semibold truncate max-w-[160px]"
-            aria-current="page">
+      <span
+        *ngIf="!item.ellipsis && (!item.path || i === displayItems.length - 1)"
+        class="text-gray-800 text-sm font-semibold truncate max-w-[160px]"
+        aria-current="page"
+      >
         {{ item.label }}
       </span>
-      <i *ngIf="i < displayItems.length - 1" nz-icon nzType="right" class="text-gray-300 shrink-0 mx-0.5"></i>
+      <i
+        *ngIf="i < displayItems.length - 1"
+        nz-icon
+        nzType="right"
+        class="text-gray-300 shrink-0 mx-0.5"
+      ></i>
     </li>
   </ol>
 </nav>
-<h1 *ngIf="items.length <= 1" class="text-xl font-semibold truncate">{{ fallbackTitle }}</h1>
+<h1 *ngIf="items.length === 0" class="text-xl font-semibold truncate">
+  {{ fallbackTitle }}
+</h1>

@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { QuizTag } from '../quiz/quiz-tag.entity';
+import { QuestionTag } from '../question/question-tag.entity';
 
 @Entity('tag')
 export class Tag {
@@ -8,9 +10,9 @@ export class Tag {
   @Column({ unique: true, length: 100 })
   name: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  @OneToMany(() => QuizTag, (quizTag) => quizTag.tag)
+  quizTags: QuizTag[];
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  @OneToMany(() => QuestionTag, (questionTag) => questionTag.tag)
+  questionTags: QuestionTag[];
 }

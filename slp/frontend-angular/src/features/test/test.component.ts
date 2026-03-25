@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
 
 @Component({
-  selector: 'app-test',
+  selector: "app-test",
   standalone: true,
   imports: [CommonModule],
   template: `
     <div class="">
-      test
+      test <br />
+      test <br />test <br />test <br />test <br />test <br />test <br />test
+      <br />
     </div>
   `,
-  styles: [] // optional, Tailwind handles styling
+  styles: [], // optional, Tailwind handles styling
 })
 export class TestComponent {}
