@@ -23,11 +23,11 @@ export class TagRepository {
     // Build base query with counts
     const queryBuilder = this.repo
       .createQueryBuilder("tag")
-      .leftJoin("tag.quizTags", "quizTag")
-      .leftJoin("tag.questionTags", "questionTag")
+      .leftJoin("tag.quizTags", "quiz_tag")
+      .leftJoin("tag.questionTags", "question_tag")
       .select(["tag.id", "tag.name"])
-      .addSelect("COUNT(DISTINCT quizTag.id)", "quizCount")
-      .addSelect("COUNT(DISTINCT questionTag.id)", "questionCount")
+      .addSelect("COUNT(DISTINCT quiz_tag.quiz_id)", "quizCount") // sửa: dùng quiz_id
+      .addSelect("COUNT(DISTINCT question_tag.question_id)", "questionCount") // sửa: dùng question_id
       .groupBy("tag.id");
 
     if (q) {
@@ -40,7 +40,7 @@ export class TagRepository {
     } else {
       queryBuilder
         .orderBy(
-          "COUNT(DISTINCT quizTag.id) + COUNT(DISTINCT questionTag.id)",
+          "COUNT(DISTINCT quiz_tag.quiz_id) + COUNT(DISTINCT question_tag.question_id)", // sửa
           "DESC",
         )
         .addOrderBy("tag.name", "ASC");
@@ -72,14 +72,14 @@ export class TagRepository {
   async getPopularTags(limit: number): Promise<TagDto[]> {
     const rawTags = await this.repo
       .createQueryBuilder("tag")
-      .leftJoin("tag.quizTags", "quizTag")
-      .leftJoin("tag.questionTags", "questionTag")
+      .leftJoin("tag.quizTags", "quiz_tag")
+      .leftJoin("tag.questionTags", "question_tag")
       .select(["tag.id", "tag.name"])
-      .addSelect("COUNT(DISTINCT quizTag.id)", "quizCount")
-      .addSelect("COUNT(DISTINCT questionTag.id)", "questionCount")
+      .addSelect("COUNT(DISTINCT quiz_tag.quiz_id)", "quizCount")
+      .addSelect("COUNT(DISTINCT question_tag.question_id)", "questionCount")
       .groupBy("tag.id")
       .orderBy(
-        "COUNT(DISTINCT quizTag.id) + COUNT(DISTINCT questionTag.id)",
+        "COUNT(DISTINCT quiz_tag.quiz_id) + COUNT(DISTINCT question_tag.question_id)",
         "DESC",
       )
       .addOrderBy("tag.name", "ASC")
@@ -101,15 +101,15 @@ export class TagRepository {
   async searchTags(q: string, limit: number): Promise<TagDto[]> {
     const rawTags = await this.repo
       .createQueryBuilder("tag")
-      .leftJoin("tag.quizTags", "quizTag")
-      .leftJoin("tag.questionTags", "questionTag")
+      .leftJoin("tag.quizTags", "quiz_tag")
+      .leftJoin("tag.questionTags", "question_tag")
       .select(["tag.id", "tag.name"])
-      .addSelect("COUNT(DISTINCT quizTag.id)", "quizCount")
-      .addSelect("COUNT(DISTINCT questionTag.id)", "questionCount")
+      .addSelect("COUNT(DISTINCT quiz_tag.quiz_id)", "quizCount")
+      .addSelect("COUNT(DISTINCT question_tag.question_id)", "questionCount")
       .where("tag.name ILIKE :q", { q: `%${q}%` })
       .groupBy("tag.id")
       .orderBy(
-        "COUNT(DISTINCT quizTag.id) + COUNT(DISTINCT questionTag.id)",
+        "COUNT(DISTINCT quiz_tag.quiz_id) + COUNT(DISTINCT question_tag.question_id)",
         "DESC",
       )
       .addOrderBy("tag.name", "ASC")
@@ -131,11 +131,11 @@ export class TagRepository {
   async findTagById(id: number): Promise<TagDto | null> {
     const rawTag = await this.repo
       .createQueryBuilder("tag")
-      .leftJoin("tag.quizTags", "quizTag")
-      .leftJoin("tag.questionTags", "questionTag")
+      .leftJoin("tag.quizTags", "quiz_tag")
+      .leftJoin("tag.questionTags", "question_tag")
       .select(["tag.id", "tag.name"])
-      .addSelect("COUNT(DISTINCT quizTag.id)", "quizCount")
-      .addSelect("COUNT(DISTINCT questionTag.id)", "questionCount")
+      .addSelect("COUNT(DISTINCT quiz_tag.quiz_id)", "quizCount")
+      .addSelect("COUNT(DISTINCT question_tag.question_id)", "questionCount")
       .where("tag.id = :id", { id })
       .groupBy("tag.id")
       .getRawOne();

@@ -13,7 +13,6 @@ import { NzPopconfirmModule } from "ng-zorro-antd/popconfirm";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { NzFloatButtonModule } from "ng-zorro-antd/float-button";
-import { MobileLayoutComponent } from "../../../layouts/mobile-layout/mobile-layout.component";
 import { QuestionService } from "../question.service";
 import { QuestionListDto } from "../question.model";
 
@@ -33,7 +32,6 @@ import { QuestionListDto } from "../question.model";
     NzPopconfirmModule,
     NzIconModule,
     NzFloatButtonModule,
-    MobileLayoutComponent,
   ],
   template: `
     <div>

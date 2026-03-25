@@ -1,18 +1,33 @@
-import { Component, forwardRef, Input, OnInit } from "@angular/core";
+import { Component, forwardRef, OnInit } from "@angular/core";
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  FormControl,
+  ReactiveFormsModule,
+} from "@angular/forms";
 import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
 import { NzSelectModule } from "ng-zorro-antd/select";
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import { TagService, TagDto } from "../../features/tag/tag.service";
-import { of } from "rxjs";
-import { catchError, tap } from "rxjs/operators";
+import { finalize } from "rxjs/operators";
 
 @Component({
   selector: "app-tag-selector",
   standalone: true,
-  imports: [CommonModule, FormsModule, NzSelectModule],
-  templateUrl: "./tag-selector.component.html",
-  styleUrls: ["./tag-selector.component.scss"],
+  imports: [CommonModule, ReactiveFormsModule, NzSelectModule],
+  template: `
+    <nz-select
+      nzMode="multiple"
+      nzPlaceHolder="Select tags"
+      [formControl]="control"
+      [nzLoading]="loading"
+    >
+      <nz-option
+        *ngFor="let tag of tags"
+        [nzValue]="tag.name"
+        [nzLabel]="tag.name"
+      ></nz-option>
+    </nz-select>
+  `,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -21,69 +36,58 @@ import { catchError, tap } from "rxjs/operators";
     },
   ],
 })
-export class TagSelectorComponent implements OnInit, ControlValueAccessor {
-  @Input() placeholder = "Select or create tags…";
-  @Input() maxTags = 10;
-
-  selected: string[] = [];
-  options: Array<{ value: string; label: string }> = [];
+export class TagSelectorComponent implements ControlValueAccessor, OnInit {
+  tags: TagDto[] = [];
   loading = false;
-  error = "";
-  atLimit = false;
+  control = new FormControl<string[]>([]);
 
-  // Change from 'any' to 'string[]' for better type safety
-  private onChange: (value: string[]) => void = () => {};
-  private onTouched: () => void = () => {};
+  private onChange: any = () => {};
+  private onTouched: any = () => {};
 
   constructor(private tagService: TagService) {}
 
   ngOnInit(): void {
     this.loadTags();
+    // Đồng bộ giá trị từ control ra ngoài
+    this.control.valueChanges.subscribe((value) => {
+      this.onChange(value);
+      this.onTouched();
+    });
   }
 
   loadTags(): void {
     this.loading = true;
     this.tagService
       .fetchTags()
-      .pipe(
-        catchError((err) => {
-          this.error = err.message || "Failed to load tags";
-          return of([]);
-        }),
-        tap(() => (this.loading = false)),
-      )
-      .subscribe((tags) => {
-        this.options = tags.map((tag: { name: any }) => ({
-          value: tag.name,
-          label: tag.name,
-        }));
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (tags) => (this.tags = tags),
+        error: (err) => console.error("Failed to load tags", err),
       });
   }
 
-  // This is called by nz-select's (ngModelChange) in your .html file
-  handleChange(newVal: string[]): void {
-    const clean = Array.from(
-      new Set(newVal.map((v) => v.trim()).filter((v) => !!v)),
-    ).slice(0, this.maxTags);
-
-    this.selected = clean;
-    this.atLimit = clean.length >= this.maxTags;
-    this.onChange(clean); // Notify the parent form
-    this.onTouched();
-  }
-
+  // ControlValueAccessor methods
   writeValue(value: string[] | null): void {
-    // Standard CVA practice: handle null/undefined
-    this.selected = value || [];
-    this.atLimit = this.selected.length >= this.maxTags;
+    if (value) {
+      this.control.setValue(value, { emitEvent: false });
+    } else {
+      this.control.setValue([], { emitEvent: false });
+    }
   }
 
-  registerOnChange(fn: (value: string[]) => void): void {
+  registerOnChange(fn: any): void {
     this.onChange = fn;
   }
 
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
   }
-  setDisabledState?(isDisabled: boolean): void {}
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.control.disable();
+    } else {
+      this.control.enable();
+    }
+  }
 }
