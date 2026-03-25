@@ -16,11 +16,7 @@ import {
 @Component({
   selector: "app-question-form-page",
   standalone: true,
-  imports: [
-    CommonModule,
-    NzCardModule,
-    QuestionFormComponent,
-  ],
+  imports: [CommonModule, NzCardModule, QuestionFormComponent],
   template: `
     <nz-card class="shadow-sm">
       <app-question-form
@@ -28,6 +24,7 @@ import {
         [loading]="(loading$ | async) ?? false"
         (save)="onSave($event)"
         (cancel)="goBack()"
+        data-testid="question-form-add-tags"
       ></app-question-form>
     </nz-card>
   `,
@@ -60,20 +57,20 @@ export class QuestionFormPageComponent implements OnInit {
     });
   }
 
- async loadQuestion(): Promise<void> {
-  if (this.questionId) {
-    // 🔧 Reset before fetching
-    this.questionService.currentQuestionSubject.next(null);
-    
-    this.questionService.fetchQuestionById(this.questionId);
-    this.initialQuestion = await firstValueFrom(
-      this.questionService.currentQuestion$.pipe(
-        filter(q => q !== null),
-        first(),
-      )
-    );
+  async loadQuestion(): Promise<void> {
+    if (this.questionId) {
+      // 🔧 Reset before fetching
+      this.questionService.currentQuestionSubject.next(null);
+
+      this.questionService.fetchQuestionById(this.questionId);
+      this.initialQuestion = await firstValueFrom(
+        this.questionService.currentQuestion$.pipe(
+          filter((q) => q !== null),
+          first(),
+        ),
+      );
+    }
   }
-}
 
   onSave(payload: CreateQuestionPayload): void {
     if (this.isEdit && this.questionId) {

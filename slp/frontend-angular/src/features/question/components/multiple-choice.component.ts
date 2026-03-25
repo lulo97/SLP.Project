@@ -32,6 +32,7 @@ import { NzFormModule } from "ng-zorro-antd/form";
             (ngModelChange)="toggleCorrect(opt, $event)"
             class="mr-2"
             [disabled]="!opt.trim()"
+            [attr.data-testid]="'mc-option-' + i + '-checkbox'"
           >
           </label>
           <input
@@ -40,6 +41,7 @@ import { NzFormModule } from "ng-zorro-antd/form";
             placeholder="Option"
             class="flex-1 mr-2"
             (ngModelChange)="onOptionsChange()"
+            [attr.data-testid]="'mc-option-' + i + '-input'"
           />
           <button
             nz-button
@@ -47,6 +49,7 @@ import { NzFormModule } from "ng-zorro-antd/form";
             nzDanger
             (click)="removeOption(i)"
             type="button"
+            [attr.data-testid]="'mc-option-' + i + '-remove'"
           >
             Remove
           </button>
@@ -57,6 +60,7 @@ import { NzFormModule } from "ng-zorro-antd/form";
           block
           (click)="addOption()"
           type="button"
+          data-testid="mc-add-option"
         >
           Add Option
         </button>

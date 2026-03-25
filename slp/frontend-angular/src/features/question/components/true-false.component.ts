@@ -15,9 +15,14 @@ import { NzFormModule } from "ng-zorro-antd/form";
         <nz-radio-group
           [(ngModel)]="answer"
           (ngModelChange)="onValueChange($event)"
+          data-testid="true-false-group"
         >
-          <label nz-radio [nzValue]="true">True</label>
-          <label nz-radio [nzValue]="false">False</label>
+          <label nz-radio [nzValue]="true" data-testid="true-false-true"
+            >True</label
+          >
+          <label nz-radio [nzValue]="false" data-testid="true-false-false"
+            >False</label
+          >
         </nz-radio-group>
       </nz-form-control>
     </nz-form-item>

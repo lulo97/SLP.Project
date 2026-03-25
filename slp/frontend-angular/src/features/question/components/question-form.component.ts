@@ -61,6 +61,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
             nz-input
             formControlName="content"
             placeholder="Enter question title"
+            data-testid="question-title"
           />
         </nz-form-control>
       </nz-form-item>
@@ -74,6 +75,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
             formControlName="description"
             rows="3"
             placeholder="Additional description"
+            data-testid="question-description"
           ></textarea>
         </nz-form-control>
       </nz-form-item>
@@ -85,18 +87,33 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
           <nz-select
             formControlName="type"
             (ngModelChange)="onTypeChange($event)"
+            data-testid="question-type-select"
           >
             <nz-option
               nzValue="multiple_choice"
               nzLabel="Multiple Choice"
+              data-testid="option-multiple-choice"
             ></nz-option>
-            <nz-option nzValue="true_false" nzLabel="True/False"></nz-option>
+            <nz-option
+              nzValue="true_false"
+              nzLabel="True/False"
+              data-testid="option-true-false"
+            ></nz-option>
             <nz-option
               nzValue="fill_blank"
               nzLabel="Fill in the Blank"
+              data-testid="option-fill-blank"
             ></nz-option>
-            <nz-option nzValue="ordering" nzLabel="Ordering"></nz-option>
-            <nz-option nzValue="matching" nzLabel="Matching"></nz-option>
+            <nz-option
+              nzValue="ordering"
+              nzLabel="Ordering"
+              data-testid="option-ordering"
+            ></nz-option>
+            <nz-option
+              nzValue="matching"
+              nzLabel="Matching"
+              data-testid="option-matching"
+            ></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -151,6 +168,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
             formControlName="explanation"
             rows="3"
             placeholder="Explain the correct answer"
+            data-testid="question-explanation"
           ></textarea>
         </nz-form-control>
       </nz-form-item>
@@ -159,7 +177,11 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
       <nz-form-item>
         <nz-form-label>Tags</nz-form-label>
         <nz-form-control>
-          <app-tag-selector [formControl]="tagsControl"> </app-tag-selector>
+          <app-tag-selector
+            [formControl]="tagsControl"
+            data-testid="question-tags"
+          >
+          </app-tag-selector>
         </nz-form-control>
       </nz-form-item>
 
@@ -171,6 +193,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
           nzType="primary"
           [disabled]="loading || form.invalid"
           [nzLoading]="loading"
+          data-testid="submit-question"
         >
           {{ initialQuestion ? "Update" : "Create" }}
         </button>
@@ -263,8 +286,7 @@ export class QuestionFormComponent implements OnInit, OnChanges {
           .map((opt: any) => opt.text);
         break;
       case "true_false":
-        this.trueFalseAnswer =
-          metadata.correctAnswer === true ? true : false;
+        this.trueFalseAnswer = metadata.correctAnswer === true ? true : false;
         break;
       case "fill_blank":
         this.fillBlankAnswer = JSON.stringify(metadata.keywords || []);

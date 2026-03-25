@@ -42,6 +42,7 @@ import { QuestionListDto } from "../question.model";
           placeholder="Search by title..."
           [(ngModel)]="search"
           (ngModelChange)="onSearchChange()"
+          data-testid="question-search"
         />
         <div class="flex gap-2">
           <nz-select
@@ -50,6 +51,7 @@ import { QuestionListDto } from "../question.model";
             allowClear
             (ngModelChange)="handleFilterChange()"
             class="flex-1"
+            data-testid="filter-type"
           >
             <nz-option
               nzValue="multiple_choice"
@@ -69,30 +71,68 @@ import { QuestionListDto } from "../question.model";
             [(ngModel)]="tagFilter"
             (ngModelChange)="onTagFilterChange()"
             class="flex-1"
+            data-testid="filter-tag"
           />
         </div>
       </div>
 
       <!-- List -->
-      <nz-list nzBordered [nzLoading]="(loading$ | async) ?? false">
-        <nz-list-item *ngFor="let q of (questions$ | async) ?? []">
+      <nz-list
+        nzBordered
+        [nzLoading]="(loading$ | async) ?? false"
+        data-testid="questions-list"
+      >
+        <nz-list-item
+          *ngFor="let q of (questions$ | async) ?? []"
+          [attr.data-testid]="'question-item-' + q.id"
+        >
           <div class="flex flex-col w-full">
             <div class="flex justify-between items-start">
               <div class="flex-1">
-                <h4 class="mb-1">{{ q.content }}</h4>
-                <div class="text-sm text-gray-500 mb-2">
-                  <span
-                    class="inline-block px-2 py-1 bg-gray-100 rounded mr-2"
-                    >{{ formatType(q.type) }}</span
+                <div
+                  class="flex items-center justify-between gap-2"
+                  data-testid="question-header"
+                >
+                  <h4
+                    class="mb-1"
+                    [attr.data-testid]="'question-content-' + q.id"
                   >
-                  <span>{{ getDescription(q) }}</span>
+                    {{ q.content }}
+                  </h4>
+                  <span
+                    class="inline-block px-2 py-1 bg-gray-100 rounded mr-2 text-sm text-gray-500"
+                    [attr.data-testid]="'question-type-tag-' + q.id"
+                  >
+                    {{ formatType(q.type) }}
+                  </span>
                 </div>
-                <div class="flex flex-wrap gap-1">
-                  <nz-tag *ngFor="let tag of q.tags">{{ tag }}</nz-tag>
+                <div
+                  class="text-sm text-gray-500 mb-2"
+                  [attr.data-testid]="'question-description-container-' + q.id"
+                >
+                  <p [attr.data-testid]="'question-description-text-' + q.id">
+                    {{ getDescription(q) || "No description" }}
+                  </p>
+                </div>
+                <div
+                  class="flex flex-wrap gap-1"
+                  data-testid="question-tags-container"
+                >
+                  <nz-tag
+                    *ngFor="let tag of q.tags"
+                    [attr.data-testid]="'question-tag-' + tag"
+                  >
+                    {{ tag }}
+                  </nz-tag>
                 </div>
               </div>
               <div class="flex gap-1">
-                <button nz-button nzType="text" (click)="editQuestion(q.id)">
+                <button
+                  nz-button
+                  nzType="text"
+                  (click)="editQuestion(q.id)"
+                  [attr.data-testid]="'edit-question-btn-' + q.id"
+                >
                   <i nz-icon nzType="edit"></i>
                 </button>
                 <button
@@ -104,8 +144,13 @@ import { QuestionListDto } from "../question.model";
                   nzOkText="Delete"
                   nzCancelText="Cancel"
                   (nzOnConfirm)="deleteQuestion(q.id)"
+                  [attr.data-testid]="'delete-confirm-' + q.id"
                 >
-                  <i nz-icon nzType="delete"></i>
+                  <i
+                    nz-icon
+                    nzType="delete"
+                    [attr.data-testid]="'delete-question-btn-' + q.id"
+                  ></i>
                 </button>
               </div>
             </div>
@@ -122,13 +167,24 @@ import { QuestionListDto } from "../question.model";
         (nzPageIndexChange)="onPageChange($event)"
         nzShowSizeChanger
         nzShowQuickJumper
+        data-testid="question-pagination"
       ></nz-pagination>
+
+      <!-- Empty state -->
+      <div
+        *ngIf="!(loading$ | async) && ((questions$ | async) ?? []).length === 0"
+        class="text-center py-12 text-gray-400"
+        data-testid="question-list-empty"
+      >
+        <p class="text-base">No questions found.</p>
+      </div>
 
       <!-- Create button -->
       <nz-float-button
         nzType="primary"
         [nzIcon]="iconTemplate"
         (click)="goToCreate()"
+        data-testid="create-question"
       ></nz-float-button>
 
       <ng-template #iconTemplate>
