@@ -38,7 +38,7 @@ export const routes: Routes = [
           ),
       },
       {
-        data: { breadcrumb: 'Questions' },
+        data: { breadcrumb: "Questions" },
         path: "questions",
         loadComponent: () =>
           import("../features/question/pages/question-list.component").then(
@@ -51,6 +51,7 @@ export const routes: Routes = [
           import("../features/question/pages/question-form-page.component").then(
             (m) => m.QuestionFormPageComponent,
           ),
+        data: { breadcrumb: "New Question" }, // <-- add this
       },
       {
         path: "question/:id/edit",
@@ -58,6 +59,7 @@ export const routes: Routes = [
           import("../features/question/pages/question-form-page.component").then(
             (m) => m.QuestionFormPageComponent,
           ),
+        data: { breadcrumb: "Edit Question" }, // <-- add this
       },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
       // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },

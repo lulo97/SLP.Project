@@ -24,7 +24,6 @@ import {
     QuestionFormComponent,
   ],
   template: `
-    <app-mobile-layout [title]="isEdit ? 'Edit Question' : 'Create Question'">
       <nz-card class="shadow-sm">
         <app-question-form
           [initialQuestion]="initialQuestion"
@@ -33,7 +32,6 @@ import {
           (cancel)="goBack()"
         ></app-question-form>
       </nz-card>
-    </app-mobile-layout>
   `,
 })
 export class QuestionFormPageComponent implements OnInit {
