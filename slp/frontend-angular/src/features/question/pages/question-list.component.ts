@@ -95,16 +95,18 @@ import { QuestionListDto } from "../question.model";
                 <button nz-button nzType="text" (click)="editQuestion(q.id)">
                   <i nz-icon nzType="edit"></i>
                 </button>
-                <nz-popconfirm
-                  nzTitle="Delete this question?"
+                <button
+                  nz-button
+                  nzType="text"
+                  nzDanger
+                  nz-popconfirm
+                  nzPopconfirmTitle="Delete this question?"
                   nzOkText="Delete"
                   nzCancelText="Cancel"
                   (nzOnConfirm)="deleteQuestion(q.id)"
                 >
-                  <button nz-button nzType="text" nzDanger>
-                    <i nz-icon nzType="delete"></i>
-                  </button>
-                </nz-popconfirm>
+                  <i nz-icon nzType="delete"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -221,7 +223,7 @@ export class QuestionListComponent implements OnInit, OnDestroy {
   private searchDebounce: any;
 
   ngOnInit(): void {
-    console.log('QuestionListComponent initialized');
+    console.log("QuestionListComponent initialized");
     this.loadQuestions();
   }
 

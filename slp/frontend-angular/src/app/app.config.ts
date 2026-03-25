@@ -46,6 +46,7 @@ import {
   LoadingOutline,
   SunOutline,
   MoonOutline,
+  DeleteOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -84,8 +85,9 @@ const icons = [
   CheckCircleOutline,
   CloseCircleOutline,
   LoadingOutline,
-  SunOutline, // thêm dòng này
-  MoonOutline, // thêm dòng này
+  SunOutline,
+  MoonOutline,
+  DeleteOutline,
 ];
 
 const ngZorroConfig: NzConfig = {
