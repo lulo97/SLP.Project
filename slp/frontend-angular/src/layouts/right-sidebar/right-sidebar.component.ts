@@ -1,6 +1,12 @@
-import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnDestroy,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { Router } from "@angular/router";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { NzMenuModule } from "ng-zorro-antd/menu";
 import { NzModalModule } from "ng-zorro-antd/modal";
@@ -15,6 +21,8 @@ import {
 } from "../../services/settings.service";
 import { Observable, map } from "rxjs";
 import { RouterModule } from "@angular/router"; // 1. Import this
+import { Router, NavigationEnd } from "@angular/router"; // Add NavigationEnd
+import { filter, Subscription } from "rxjs"; // Add filter and Subscription
 
 @Component({
   selector: "app-right-sidebar",
@@ -31,7 +39,7 @@ import { RouterModule } from "@angular/router"; // 1. Import this
   templateUrl: "./right-sidebar.component.html",
   styleUrls: ["./right-sidebar.component.scss"],
 })
-export class RightSidebarComponent implements OnInit {
+export class RightSidebarComponent implements OnInit, OnDestroy {
   @Input() isOpen = false;
   @Output() close = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
@@ -52,7 +60,7 @@ export class RightSidebarComponent implements OnInit {
     { value: "en", label: "English", flag: "🇬🇧" },
     { value: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
   ];
-
+  private routerSubscription?: Subscription;
   constructor(
     private authService: AuthService,
     public settingsService: SettingsService,
@@ -62,13 +70,27 @@ export class RightSidebarComponent implements OnInit {
   ) {
     this.user$ = this.authService.user$;
     this.isAdmin$ = this.user$.pipe(map((user) => user?.role === "admin"));
+
+    // Listen for navigation success and close the sidebar
+    this.routerSubscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.isOpen) {
+          this.closeSidebar();
+        }
+      });
   }
 
   ngOnInit(): void {
     // sync language from settings
     this.translateService.use(this.settingsService.language());
   }
-
+  // Clean up the subscription to prevent memory leaks
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
   closeSidebar(): void {
     this.close.emit();
   }
