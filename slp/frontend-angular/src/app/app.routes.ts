@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { MobileLayoutComponent } from './core/layouts/mobile-layout/mobile-layout.component';
-import { AuthGuard } from './core/guards/auth.guard';
-import { AdminGuard } from './core/guards/admin.guard';
+import { AuthGuard } from './features/auth/auth.guard';
+import { AdminGuard } from './features/admin/admin.guard';
 
 export const routes: Routes = [
   {
@@ -17,10 +17,13 @@ export const routes: Routes = [
   {
     path: '',
     component: MobileLayoutComponent,
-    canActivate: [AuthGuard],
+    //canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      // { path: 'dashboard', loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule) },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/pages/dashboard.component').then(m => m.DashboardComponent)
+      },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
       // { path: 'questions', loadChildren: () => import('./features/question/question.module').then(m => m.QuestionModule) },
       // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },

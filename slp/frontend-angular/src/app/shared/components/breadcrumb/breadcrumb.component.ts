@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { RouterModule, Router } from "@angular/router";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { TranslateService } from "@ngx-translate/core";
-import { combineLatest, map } from "rxjs";
+import { combineLatest, map, Subject, takeUntil } from "rxjs";
 
 interface BreadcrumbItem {
   label: string;
@@ -21,6 +21,7 @@ interface BreadcrumbItem {
 export class BreadcrumbComponent implements OnInit {
   @Input() fallbackTitle = "";
   @Input() maxItems = 3;
+  private destroy$ = new Subject<void>();
 
   items: BreadcrumbItem[] = [];
   displayItems: BreadcrumbItem[] = [];
@@ -31,9 +32,9 @@ export class BreadcrumbComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.router.events.subscribe(() => {
-      this.updateBreadcrumb();
-    });
+    this.router.events
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.updateBreadcrumb());
     this.updateBreadcrumb();
   }
 
@@ -79,5 +80,10 @@ export class BreadcrumbComponent implements OnInit {
       const tail = all.slice(-tailCount);
       this.displayItems = [first, { label: "…", ellipsis: true }, ...tail];
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

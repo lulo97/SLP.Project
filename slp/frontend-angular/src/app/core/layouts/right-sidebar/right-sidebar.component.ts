@@ -7,7 +7,7 @@ import { NzModalModule } from "ng-zorro-antd/modal";
 import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import { AuthService } from "../../services/auth.service";
+import { AuthService } from "../../../features/auth/auth.service";
 import { Language, SettingsService, Theme } from "../../services/settings.service";
 import { Observable, map } from "rxjs";
 import { RouterModule } from "@angular/router"; // 1. Import this

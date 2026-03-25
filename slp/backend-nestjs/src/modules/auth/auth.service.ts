@@ -69,7 +69,8 @@ export class AuthService implements IAuthService {
 
     const token = SessionTokenService.generateToken();
     const tokenHash = SessionTokenService.hashToken(token);
-
+    console.log("[AuthService] New token:", token);
+    console.log("[AuthService] Token hash:", tokenHash);
     const session = new Session();
     session.userId = user.id;
     session.tokenHash = tokenHash;

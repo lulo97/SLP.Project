@@ -1,5 +1,9 @@
 import { ApplicationConfig, importProvidersFrom } from "@angular/core";
-import { provideHttpClient, HttpClient } from "@angular/common/http";
+import {
+  provideHttpClient,
+  HttpClient,
+  withInterceptors,
+} from "@angular/common/http"; // ✅ thêm withInterceptors
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { TranslateModule, TranslateLoader } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
@@ -14,6 +18,7 @@ import { UserOutline, LockOutline } from "@ant-design/icons-angular/icons";
 // Your Routes
 import { routes } from "./app.routes";
 import { provideRouter } from "@angular/router";
+import { authInterceptor } from "./features/auth/auth.interceptor";
 
 // --- YOUR OLD STUFF RESTORED ---
 const icons = [UserOutline, LockOutline];
@@ -37,7 +42,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(
+      withInterceptors([authInterceptor]), // ✅ đăng ký interceptor
+    ),
     provideAnimations(),
 
     // Modern way to provide your Zorro config and Icons
