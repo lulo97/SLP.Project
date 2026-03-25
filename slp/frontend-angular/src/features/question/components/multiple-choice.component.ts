@@ -27,9 +27,9 @@ import { NzFormModule } from 'ng-zorro-antd/form'; // ✅ Added
             placeholder="Option"
             class="flex-1 mr-2"
             (ngModelChange)="onOptionsChange()" />
-          <button nz-button nzType="text" nzDanger (click)="removeOption(i)">Remove</button>
+          <button nz-button nzType="text" nzDanger (click)="removeOption(i)" type="button">Remove</button>
         </div>
-        <button nz-button nzType="dashed" block (click)="addOption()">Add Option</button>
+        <button nz-button nzType="dashed" block (click)="addOption()" type="button">Add Option</button>
       </nz-form-control>
     </nz-form-item>
   `,

@@ -17,9 +17,9 @@ import { NzFormModule } from 'ng-zorro-antd/form'; // ✅ Added
         <div *ngFor="let item of items; let i = index" class="flex items-center mb-2">
           <span class="w-6 text-right">{{ i+1 }}.</span>
           <input nz-input [(ngModel)]="items[i]" placeholder="Item {{ i+1 }}" class="flex-1" (ngModelChange)="onItemsChange()" />
-          <button nz-button nzType="text" nzDanger (click)="removeItem(i)">Remove</button>
+          <button nz-button nzType="text" nzDanger (click)="removeItem(i)" type="button">Remove</button>
         </div>
-        <button nz-button nzType="dashed" block (click)="addItem()">Add Item</button>
+        <button nz-button nzType="dashed" block (click)="addItem()" type="button">Add Item</button>
       </nz-form-control>
     </nz-form-item>
   `,

@@ -47,7 +47,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
     MatchingComponent,
   ],
   template: `
-    <form nz-form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form nz-form [formGroup]="form" (ngSubmit)="onSubmit()" (keydown.enter)="$event.preventDefault()">
       <!-- Title -->
       <nz-form-item>
         <nz-form-label [nzRequired]="true">Title</nz-form-label>

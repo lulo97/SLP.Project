@@ -24,9 +24,9 @@ export interface MatchingPair {
           <span class="pair-index">{{ i+1 }}.</span>
           <input nz-input [(ngModel)]="pair.left" placeholder="Left" class="input-left flex-1" (ngModelChange)="onPairsChange()" />
           <input nz-input [(ngModel)]="pair.right" placeholder="Right" class="input-right flex-1" (ngModelChange)="onPairsChange()" />
-          <button nz-button nzType="text" nzDanger (click)="removePair(i)"><i nz-icon nzType="close"></i></button>
+          <button nz-button nzType="text" nzDanger (click)="removePair(i)" type="button"><i nz-icon nzType="close"></i></button>
         </div>
-        <button nz-button nzType="dashed" block (click)="addPair()">Add Pair</button>
+        <button nz-button nzType="dashed" block (click)="addPair()" type="button">Add Pair</button>
       </nz-form-control>
     </nz-form-item>
   `,
