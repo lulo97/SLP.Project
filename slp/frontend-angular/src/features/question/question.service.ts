@@ -18,7 +18,7 @@ import {
 export class QuestionService {
   // State
   private questionsSubject = new BehaviorSubject<QuestionListDto[]>([]);
-  private currentQuestionSubject = new BehaviorSubject<QuestionDto | null>(null);
+  public currentQuestionSubject = new BehaviorSubject<QuestionDto | null>(null);
   private loadingSubject = new BehaviorSubject<boolean>(false);
   public errorSubject = new BehaviorSubject<string | null>(null);
   private totalSubject = new BehaviorSubject<number>(0);

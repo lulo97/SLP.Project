@@ -1,42 +1,78 @@
 // src/features/question/components/multiple-choice.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzFormModule } from 'ng-zorro-antd/form'; // ✅ Added
+import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { NzCheckboxModule } from "ng-zorro-antd/checkbox";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzFormModule } from "ng-zorro-antd/form";
 
 @Component({
-  selector: 'app-multiple-choice',
+  selector: "app-multiple-choice",
   standalone: true,
-  imports: [CommonModule, FormsModule, NzCheckboxModule, NzInputModule, NzButtonModule, NzFormModule], // ✅ Added NzFormModule
+  imports: [
+    CommonModule,
+    FormsModule,
+    NzCheckboxModule,
+    NzInputModule,
+    NzButtonModule,
+    NzFormModule,
+  ],
   template: `
     <nz-form-item>
       <nz-form-label>Options</nz-form-label>
       <nz-form-control>
-        <div *ngFor="let opt of options; let i = index" class="flex items-center mb-2">
-          <label nz-checkbox
+        <div
+          *ngFor="let opt of options; let i = index; trackBy: trackByIndex"
+          class="flex items-center mb-2"
+        >
+          <label
+            nz-checkbox
             [ngModel]="isCorrect(opt)"
             (ngModelChange)="toggleCorrect(opt, $event)"
             class="mr-2"
-            [disabled]="!opt.trim()">
+            [disabled]="!opt.trim()"
+          >
           </label>
-          <input nz-input
+          <input
+            nz-input
             [(ngModel)]="options[i]"
             placeholder="Option"
             class="flex-1 mr-2"
-            (ngModelChange)="onOptionsChange()" />
-          <button nz-button nzType="text" nzDanger (click)="removeOption(i)" type="button">Remove</button>
+            (ngModelChange)="onOptionsChange()"
+          />
+          <button
+            nz-button
+            nzType="text"
+            nzDanger
+            (click)="removeOption(i)"
+            type="button"
+          >
+            Remove
+          </button>
         </div>
-        <button nz-button nzType="dashed" block (click)="addOption()" type="button">Add Option</button>
+        <button
+          nz-button
+          nzType="dashed"
+          block
+          (click)="addOption()"
+          type="button"
+        >
+          Add Option
+        </button>
       </nz-form-control>
     </nz-form-item>
   `,
-  styles: [`
-    .flex.items-center { gap: 8px; }
-    .flex-1 { flex: 1; }
-  `]
+  styles: [
+    `
+      .flex.items-center {
+        gap: 8px;
+      }
+      .flex-1 {
+        flex: 1;
+      }
+    `,
+  ],
 })
 export class MultipleChoiceComponent implements OnInit {
   @Input() options: string[] = [];
@@ -45,7 +81,12 @@ export class MultipleChoiceComponent implements OnInit {
   @Output() correctAnswersChange = new EventEmitter<string[]>();
 
   ngOnInit(): void {
-    if (!this.options.length) this.options = ['', '', '', ''];
+    if (!this.options.length) this.options = ["", "", "", ""];
+  }
+
+  // Add trackBy function
+  trackByIndex(index: number, item: string): number {
+    return index;
   }
 
   isCorrect(opt: string): boolean {
@@ -57,13 +98,13 @@ export class MultipleChoiceComponent implements OnInit {
     if (checked) {
       if (!newCorrect.includes(opt)) newCorrect.push(opt);
     } else {
-      newCorrect = newCorrect.filter(item => item !== opt);
+      newCorrect = newCorrect.filter((item) => item !== opt);
     }
     this.correctAnswersChange.emit(newCorrect);
   }
 
   addOption(): void {
-    this.options.push('');
+    this.options.push("");
     this.optionsChange.emit(this.options);
   }
 
@@ -72,7 +113,9 @@ export class MultipleChoiceComponent implements OnInit {
     this.options.splice(index, 1);
     this.optionsChange.emit(this.options);
     if (removed && this.correctAnswers.includes(removed)) {
-      this.correctAnswersChange.emit(this.correctAnswers.filter(ans => ans !== removed));
+      this.correctAnswersChange.emit(
+        this.correctAnswers.filter((ans) => ans !== removed),
+      );
     }
   }
 

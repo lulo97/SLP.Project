@@ -2,10 +2,9 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Subscription, take } from "rxjs";
+import { filter, first, firstValueFrom, Subscription, take } from "rxjs";
 import { NzCardModule } from "ng-zorro-antd/card";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { MobileLayoutComponent } from "../../../layouts/mobile-layout/mobile-layout.component";
 import { QuestionFormComponent } from "../components/question-form.component";
 import { QuestionService } from "../question.service";
 import {
@@ -20,18 +19,17 @@ import {
   imports: [
     CommonModule,
     NzCardModule,
-    MobileLayoutComponent,
     QuestionFormComponent,
   ],
   template: `
-      <nz-card class="shadow-sm">
-        <app-question-form
-          [initialQuestion]="initialQuestion"
-          [loading]="(loading$ | async) ?? false"
-          (save)="onSave($event)"
-          (cancel)="goBack()"
-        ></app-question-form>
-      </nz-card>
+    <nz-card class="shadow-sm">
+      <app-question-form
+        [initialQuestion]="initialQuestion"
+        [loading]="(loading$ | async) ?? false"
+        (save)="onSave($event)"
+        (cancel)="goBack()"
+      ></app-question-form>
+    </nz-card>
   `,
 })
 export class QuestionFormPageComponent implements OnInit {
@@ -62,16 +60,20 @@ export class QuestionFormPageComponent implements OnInit {
     });
   }
 
-  loadQuestion(): void {
-    if (this.questionId) {
-      this.questionService.fetchQuestionById(this.questionId);
-
-      // Use take(1) or takeUntil to avoid multiple active subscriptions
-      this.questionService.currentQuestion$.pipe(take(1)).subscribe((q) => {
-        this.initialQuestion = q;
-      });
-    }
+ async loadQuestion(): Promise<void> {
+  if (this.questionId) {
+    // 🔧 Reset before fetching
+    this.questionService.currentQuestionSubject.next(null);
+    
+    this.questionService.fetchQuestionById(this.questionId);
+    this.initialQuestion = await firstValueFrom(
+      this.questionService.currentQuestion$.pipe(
+        filter(q => q !== null),
+        first(),
+      )
+    );
   }
+}
 
   onSave(payload: CreateQuestionPayload): void {
     if (this.isEdit && this.questionId) {

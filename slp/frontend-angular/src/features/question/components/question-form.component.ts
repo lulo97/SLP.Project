@@ -47,7 +47,12 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
     MatchingComponent,
   ],
   template: `
-    <form nz-form [formGroup]="form" (ngSubmit)="onSubmit()" (keydown.enter)="$event.preventDefault()">
+    <form
+      nz-form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      (keydown.enter)="$event.preventDefault()"
+    >
       <!-- Title -->
       <nz-form-item>
         <nz-form-label [nzRequired]="true">Title</nz-form-label>
@@ -252,8 +257,8 @@ export class QuestionFormComponent implements OnInit, OnChanges {
           (opt: any) => opt.text,
         );
         this.multipleChoiceCorrect = (metadata.options || [])
-          .filter((opt: any) =>
-            (metadata.correctAnswers || []).includes(opt.id),
+          .filter(
+            (opt: any) => (metadata.correctAnswers || []).includes(opt.id), // ✅ sửa: so sánh id
           )
           .map((opt: any) => opt.text);
         break;
@@ -318,17 +323,21 @@ export class QuestionFormComponent implements OnInit, OnChanges {
     const type = this.form.get("type")?.value;
     switch (type) {
       case "multiple_choice": {
-        const options = this.multipleChoiceOptions.filter((opt) => opt.trim());
-        metadata.options = options.map((text, idx) => ({
-          id: idx.toString(),
-          text: text.trim(),
-        }));
-        const correctTexts = this.multipleChoiceCorrect.filter((ans) =>
-          ans.trim(),
-        );
-        metadata.correctAnswers = metadata.options
-          .filter((opt: any) => correctTexts.includes(opt.text))
-          .map((opt: any) => opt.id);
+        const options = this.multipleChoiceOptions
+          .filter((opt) => opt.trim())
+          .map((text, idx) => ({ id: idx.toString(), text: text.trim() }));
+
+        // Map correct texts to ids
+        const correctIds = this.multipleChoiceCorrect
+          .filter((correctText) => correctText.trim())
+          .map((correctText) => {
+            const idx = options.findIndex((opt) => opt.text === correctText);
+            return idx !== -1 ? idx.toString() : null;
+          })
+          .filter((id) => id !== null);
+
+        metadata.options = options;
+        metadata.correctAnswers = correctIds;
         break;
       }
       case "true_false":
