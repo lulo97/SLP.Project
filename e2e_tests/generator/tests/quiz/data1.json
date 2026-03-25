@@ -1,0 +1,124 @@
+{
+  "account": {
+    "username": "question1",
+    "password": "1"
+  },
+  "frontendUrl": "http://localhost:4000",
+  "quizzes": [
+    {
+      "title": "World Geography Mega Quiz",
+      "description": "A comprehensive quiz covering capitals, matching, ordering and more.",
+      "visibility": "public",
+      "tags": ["geography", "capitals", "world"],
+      "questions": [
+        {
+          "type": "multiple-choice",
+          "title": "What is the capital of France?",
+          "description": "Choose the one correct capital city.",
+          "explanation": "Paris has been the capital of France since the 10th century.",
+          "tags": ["geography", "europe"],
+          "options": [
+            { "text": "Berlin",  "correct": false },
+            { "text": "Madrid",  "correct": false },
+            { "text": "Paris",   "correct": true  },
+            { "text": "Lisbon",  "correct": false }
+          ]
+        },
+        {
+          "type": "true-false",
+          "title": "The capital of Australia is Sydney.",
+          "description": "Decide whether this statement is true or false.",
+          "explanation": "Canberra, not Sydney, is the capital of Australia.",
+          "tags": ["geography", "australia"],
+          "answer": false
+        },
+        {
+          "type": "fill-blank",
+          "title": "The capital of Japan is Tokyo.",
+          "description": "Fill in the blank with the correct city name.",
+          "explanation": "Tokyo became the capital of Japan in 1869.",
+          "tags": ["geography", "asia"],
+          "keyword": "Tokyo"
+        },
+        {
+          "type": "ordering",
+          "title": "Arrange these countries by land area, smallest to largest.",
+          "description": "Put the countries in ascending order of total area.",
+          "explanation": "Vatican < Monaco < Liechtenstein < Luxembourg.",
+          "tags": ["geography", "area"],
+          "items": ["Vatican", "Monaco", "Liechtenstein", "Luxembourg"]
+        },
+        {
+          "type": "matching",
+          "title": "Match each country to its capital city.",
+          "description": "Draw a line from each country to the correct capital.",
+          "explanation": "These are the official capitals of each listed country.",
+          "tags": ["geography", "capitals"],
+          "pairs": [
+            { "left": "Germany",  "right": "Berlin"   },
+            { "left": "Brazil",   "right": "Brasília" },
+            { "left": "Canada",   "right": "Ottawa"   },
+            { "left": "Egypt",    "right": "Cairo"    }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Science & Technology Quiz",
+      "description": "Questions spanning chemistry, astronomy, programming and more.",
+      "visibility": "public",
+      "tags": ["science", "technology", "programming"],
+      "questions": [
+        {
+          "type": "multiple-choice",
+          "title": "Which of these are programming languages?",
+          "description": "Select all that apply.",
+          "explanation": "Python and Rust are programming languages; HTML is a markup language and JSON is a data format.",
+          "tags": ["programming"],
+          "options": [
+            { "text": "Python", "correct": true  },
+            { "text": "Rust",   "correct": true  },
+            { "text": "HTML",   "correct": false },
+            { "text": "JSON",   "correct": false }
+          ]
+        },
+        {
+          "type": "true-false",
+          "title": "Water boils at 100°C at standard sea-level pressure.",
+          "description": "Is this statement correct?",
+          "explanation": "Water boils at exactly 100°C (212°F) at 1 atm pressure.",
+          "tags": ["science", "chemistry"],
+          "answer": true
+        },
+        {
+          "type": "fill-blank",
+          "title": "The chemical symbol for gold is Au.",
+          "description": "Fill in the chemical symbol.",
+          "explanation": "Au comes from the Latin word Aurum meaning gold.",
+          "tags": ["chemistry", "science"],
+          "keyword": "Au"
+        },
+        {
+          "type": "ordering",
+          "title": "Order the planets from closest to the Sun.",
+          "description": "Arrange these four planets in the correct order starting from the closest.",
+          "explanation": "The order is Mercury, Venus, Earth, Mars.",
+          "tags": ["astronomy", "science"],
+          "items": ["Mercury", "Venus", "Earth", "Mars"]
+        },
+        {
+          "type": "matching",
+          "title": "Match each programming language to its primary creator.",
+          "description": "Pair each language with the person who created it.",
+          "explanation": "These inventors shaped modern software development.",
+          "tags": ["programming", "history"],
+          "pairs": [
+            { "left": "Python", "right": "Guido van Rossum" },
+            { "left": "C",      "right": "Dennis Ritchie"   },
+            { "left": "Java",   "right": "James Gosling"    }
+          ]
+        }
+      ]
+    }
+  ]
+}

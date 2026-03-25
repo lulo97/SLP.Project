@@ -1,0 +1,1 @@
+npx playwright test quiz.spec.ts --headed

@@ -1,0 +1,108 @@
+{
+  "account": {
+    "username": "question1",
+    "password": "1"
+  },
+  "frontendUrl": "http://localhost:4000",
+  "questions": [
+    {
+      "type": "multiple-choice",
+      "title": "What is the capital of France?",
+      "description": "Choose the correct capital city.",
+      "explanation": "Paris has been the capital of France since the 10th century.",
+      "tags": ["geography", "europe"],
+      "options": [
+        { "text": "Paris",  "correct": true  },
+        { "text": "London", "correct": false },
+        { "text": "Berlin", "correct": false },
+        { "text": "Madrid", "correct": false }
+      ]
+    },
+    {
+      "type": "multiple-choice",
+      "title": "Which of these are programming languages?",
+      "description": "Select all that apply.",
+      "explanation": "Python and Rust are programming languages; HTML is a markup language.",
+      "tags": ["programming"],
+      "options": [
+        { "text": "Python", "correct": true  },
+        { "text": "Rust",   "correct": true  },
+        { "text": "HTML",   "correct": false },
+        { "text": "JSON",   "correct": false }
+      ]
+    },
+    {
+      "type": "true-false",
+      "title": "The sun rises in the east.",
+      "description": "Determine whether this statement is true or false.",
+      "explanation": "The Earth rotates west to east, so the sun always rises in the east.",
+      "tags": ["science"],
+      "answer": true
+    },
+    {
+      "type": "true-false",
+      "title": "Water boils at 90°C at sea level.",
+      "description": "Is this statement correct?",
+      "explanation": "Water boils at 100°C (212°F) at standard sea-level pressure.",
+      "tags": ["science", "chemistry"],
+      "answer": false
+    },
+    {
+      "type": "fill-blank",
+      "title": "The chemical symbol for gold is Au.",
+      "description": "Fill in the correct chemical symbol.",
+      "explanation": "Gold's symbol Au comes from the Latin word 'Aurum'.",
+      "tags": ["chemistry", "science"],
+      "keyword": "Au"
+    },
+    {
+      "type": "fill-blank",
+      "title": "The largest planet in our solar system is Jupiter.",
+      "description": "Name the planet.",
+      "explanation": "Jupiter is the largest planet, with a mass greater than all other planets combined.",
+      "tags": ["astronomy", "science"],
+      "keyword": "Jupiter"
+    },
+    {
+      "type": "ordering",
+      "title": "Order the planets from closest to the Sun.",
+      "description": "Arrange these planets in the correct order, starting from the one closest to the Sun.",
+      "explanation": "The order is Mercury, Venus, Earth, Mars.",
+      "tags": ["astronomy"],
+      "items": ["Mercury", "Venus", "Earth", "Mars"]
+    },
+    {
+      "type": "ordering",
+      "title": "Arrange the steps to make a cup of tea.",
+      "description": "Put the steps in the correct order.",
+      "explanation": "Boil water first, then steep the tea bag, then remove it, then enjoy.",
+      "tags": ["general"],
+      "items": ["Boil water", "Place tea bag in cup", "Pour hot water", "Wait 3 minutes", "Remove tea bag"]
+    },
+    {
+      "type": "matching",
+      "title": "Match each country to its capital city.",
+      "description": "Draw a line from each country to its correct capital.",
+      "explanation": "These are the official capitals of each country listed.",
+      "tags": ["geography"],
+      "pairs": [
+        { "left": "France",  "right": "Paris"   },
+        { "left": "Germany", "right": "Berlin"  },
+        { "left": "Japan",   "right": "Tokyo"   },
+        { "left": "Brazil",  "right": "Brasília" }
+      ]
+    },
+    {
+      "type": "matching",
+      "title": "Match the programming language to its creator.",
+      "description": "Pair each language with the person who created it.",
+      "explanation": "These inventors shaped modern software development.",
+      "tags": ["programming", "history"],
+      "pairs": [
+        { "left": "Python", "right": "Guido van Rossum" },
+        { "left": "C",      "right": "Dennis Ritchie"   },
+        { "left": "Java",   "right": "James Gosling"    }
+      ]
+    }
+  ]
+}
