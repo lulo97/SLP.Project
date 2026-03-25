@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 
-namespace backend_dotnet.Helpers;
+namespace backend_dotnet.Features.Question;
 
 /// <summary>
 /// Validates a question snapshot against the canonical schema.

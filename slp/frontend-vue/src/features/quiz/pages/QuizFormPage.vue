@@ -36,7 +36,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import MobileLayout from '@/layouts/MobileLayout.vue';
-import TagSelector from '@/components/TagSelector.vue';
+import TagSelector from '@/components/tag/TagSelector.vue';
 import { useQuizStore } from '../stores/quizStore';
 import type { CreateQuizPayload, UpdateQuizPayload } from '../stores/quizStore';
 

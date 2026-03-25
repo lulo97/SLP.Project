@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
-import { useTagStore } from "@/features/tag/stores/tagStore";
+import { useTagStore } from "@/components/tag/stores/tagStore";
 
 const MAX_TAGS = 10;
 

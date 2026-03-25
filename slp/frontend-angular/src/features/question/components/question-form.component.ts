@@ -53,7 +53,6 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
       (ngSubmit)="onSubmit()"
       (keydown.enter)="$event.preventDefault()"
     >
-      <!-- Title -->
       <nz-form-item>
         <nz-form-label [nzRequired]="true">Title</nz-form-label>
         <nz-form-control>
@@ -66,7 +65,6 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Description -->
       <nz-form-item>
         <nz-form-label>Description (optional)</nz-form-label>
         <nz-form-control>
@@ -80,7 +78,6 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Type -->
       <nz-form-item>
         <nz-form-label [nzRequired]="true">Type</nz-form-label>
         <nz-form-control>
@@ -92,74 +89,85 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
             <nz-option
               nzValue="multiple_choice"
               nzLabel="Multiple Choice"
-              data-testid="option-multiple-choice"
-            ></nz-option>
+              [nzCustomContent]="true"
+            >
+              <span data-testid="option-multiple-choice">Multiple Choice</span>
+            </nz-option>
             <nz-option
               nzValue="true_false"
               nzLabel="True/False"
-              data-testid="option-true-false"
-            ></nz-option>
+              [nzCustomContent]="true"
+            >
+              <span data-testid="option-true-false">True/False</span>
+            </nz-option>
             <nz-option
               nzValue="fill_blank"
               nzLabel="Fill in the Blank"
-              data-testid="option-fill-blank"
-            ></nz-option>
+              [nzCustomContent]="true"
+            >
+              <span data-testid="option-fill-blank">Fill in the Blank</span>
+            </nz-option>
             <nz-option
               nzValue="ordering"
               nzLabel="Ordering"
-              data-testid="option-ordering"
-            ></nz-option>
+              [nzCustomContent]="true"
+            >
+              <span data-testid="option-ordering">Ordering</span>
+            </nz-option>
             <nz-option
               nzValue="matching"
               nzLabel="Matching"
-              data-testid="option-matching"
-            ></nz-option>
+              [nzCustomContent]="true"
+            >
+              <span data-testid="option-matching">Matching</span>
+            </nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Type‑specific components -->
-      <div [ngSwitch]="form.get('type')?.value">
+      <div
+        [ngSwitch]="form.get('type')?.value"
+        data-testid="dynamic-component-container"
+      >
         <app-multiple-choice
           *ngSwitchCase="'multiple_choice'"
           [options]="multipleChoiceOptions"
           [correctAnswers]="multipleChoiceCorrect"
           (optionsChange)="setMultipleChoiceOptions($event)"
           (correctAnswersChange)="setMultipleChoiceCorrect($event)"
-        >
-        </app-multiple-choice>
+          data-testid="mcq-component"
+        ></app-multiple-choice>
 
         <app-true-false
           *ngSwitchCase="'true_false'"
           [answer]="trueFalseAnswer"
           (answerChange)="trueFalseAnswer = $event"
-        >
-        </app-true-false>
+          data-testid="tf-component"
+        ></app-true-false>
 
         <app-fill-blank
           *ngSwitchCase="'fill_blank'"
           [answer]="fillBlankAnswer"
           [questionTitle]="form.get('content')?.value"
           (answerChange)="fillBlankAnswer = $event"
-        >
-        </app-fill-blank>
+          data-testid="fb-component"
+        ></app-fill-blank>
 
         <app-ordering
           *ngSwitchCase="'ordering'"
           [items]="orderingItems"
           (itemsChange)="orderingItems = $event"
-        >
-        </app-ordering>
+          data-testid="ord-component"
+        ></app-ordering>
 
         <app-matching
           *ngSwitchCase="'matching'"
           [pairs]="matchingPairs"
           (pairsChange)="matchingPairs = $event"
-        >
-        </app-matching>
+          data-testid="mat-component"
+        ></app-matching>
       </div>
 
-      <!-- Explanation -->
       <nz-form-item>
         <nz-form-label>Explanation (optional)</nz-form-label>
         <nz-form-control>
@@ -173,27 +181,26 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Tags -->
       <nz-form-item>
         <nz-form-label>Tags</nz-form-label>
         <nz-form-control>
           <app-tag-selector
             [formControl]="tagsControl"
-            data-testid="question-tags"
-          >
-          </app-tag-selector>
+            data-testid="question-tags-selector"
+          ></app-tag-selector>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Actions -->
       <div class="flex justify-end gap-2 mt-4">
-        <button nz-button (click)="onCancel()">Cancel</button>
+        <button nz-button (click)="onCancel()" data-testid="cancel-button">
+          Cancel
+        </button>
         <button
           nz-button
           nzType="primary"
           [disabled]="loading || form.invalid"
           [nzLoading]="loading"
-          data-testid="submit-question"
+          data-testid="submit-question-button"
         >
           {{ initialQuestion ? "Update" : "Create" }}
         </button>

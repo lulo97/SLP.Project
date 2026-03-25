@@ -128,7 +128,7 @@ import TrueFalse from "./TrueFalse.vue";
 import FillBlank from "./FillBlank.vue";
 import Ordering from "./Ordering.vue";
 import Matching from "./Matching.vue";
-import TagSelector from "@/components/TagSelector.vue";
+import TagSelector from "@/components/tag/TagSelector.vue";
 import type {
   QuestionDto,
   CreateQuestionPayload,
