@@ -1,17 +1,28 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-  <nz-card class="w-full max-w-md shadow-lg">
-
+<div
+  data-testid="login-container"
+  class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+>
+  <nz-card data-testid="login-card" class="w-full max-w-md shadow-lg">
     <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">Welcome Back</h1>
-      <p class="text-gray-500 mt-1">Sign in to your account</p>
+    <div data-testid="login-header" class="text-center mb-8">
+      <h1 data-testid="login-title" class="text-2xl font-bold text-gray-900">
+        Welcome Back
+      </h1>
+      <p data-testid="login-subtitle" class="text-gray-500 mt-1">
+        Sign in to your account
+      </p>
     </div>
 
     <!-- Login Form -->
-    <form nz-form [formGroup]="form" (ngSubmit)="handleLogin()" nzLayout="vertical">
-
+    <form
+      data-testid="login-form"
+      nz-form
+      [formGroup]="form"
+      (ngSubmit)="handleLogin()"
+      nzLayout="vertical"
+    >
       <!-- Username -->
-      <nz-form-item>
+      <nz-form-item data-testid="form-item-username">
         <nz-form-label nzRequired>Username</nz-form-label>
         <nz-form-control
           [nzValidateStatus]="usernameError ? 'error' : ''"
@@ -19,6 +30,7 @@
         >
           <nz-input-group nzSize="large" [nzPrefix]="prefixUser">
             <input
+              data-testid="input-username"
               nz-input
               formControlName="username"
               placeholder="Enter your username"
@@ -26,20 +38,30 @@
             />
           </nz-input-group>
           <ng-template #prefixUser>
-            <i nz-icon nzType="user" nzTheme="outline" class="text-gray-400"></i>
+            <i
+              nz-icon
+              nzType="user"
+              nzTheme="outline"
+              class="text-gray-400"
+            ></i>
           </ng-template>
         </nz-form-control>
       </nz-form-item>
 
       <!-- Password -->
-      <nz-form-item>
+      <nz-form-item data-testid="form-item-password">
         <nz-form-label nzRequired>Password</nz-form-label>
         <nz-form-control
           [nzValidateStatus]="passwordError ? 'error' : ''"
           [nzErrorTip]="passwordError"
         >
-          <nz-input-group nzSize="large" [nzPrefix]="prefixLock" [nzSuffix]="suffixEye">
+          <nz-input-group
+            nzSize="large"
+            [nzPrefix]="prefixLock"
+            [nzSuffix]="suffixEye"
+          >
             <input
+              data-testid="input-password"
               nz-input
               [type]="showPassword ? 'text' : 'password'"
               formControlName="password"
@@ -48,7 +70,12 @@
             />
           </nz-input-group>
           <ng-template #prefixLock>
-            <i nz-icon nzType="lock" nzTheme="outline" class="text-gray-400"></i>
+            <i
+              nz-icon
+              nzType="lock"
+              nzTheme="outline"
+              class="text-gray-400"
+            ></i>
           </ng-template>
           <ng-template #suffixEye>
             <i
@@ -64,13 +91,21 @@
 
       <!-- Forgot password link -->
       <div class="text-right -mt-2 mb-4">
-        <button nz-button nzType="link" type="button" class="!p-0" (click)="showForgotPassword = true">
+        <button
+          data-testid="forgot-password-link"
+          nz-button
+          nzType="link"
+          type="button"
+          class="!p-0"
+          (click)="showForgotPassword = true"
+        >
           Forgot password?
         </button>
       </div>
 
       <!-- Submit -->
       <button
+        data-testid="button-submit"
         nz-button
         nzType="primary"
         nzBlock
@@ -83,15 +118,26 @@
       </button>
 
       <!-- Register link -->
-      <div class="text-center text-sm">
-        <span class="text-gray-500">Don't have an account? </span>
-        <a routerLink="/register" class="text-blue-600 hover:text-blue-700 font-medium">Sign up</a>
+      <div
+        data-testid="register-redirect-container"
+        class="text-center text-sm"
+      >
+        <span data-testid="register-redirect-text" class="text-gray-500"
+          >Don't have an account?
+        </span>
+        <a
+          data-testid="link-register"
+          routerLink="/register"
+          class="text-blue-600 hover:text-blue-700 font-medium"
+          >Sign up</a
+        >
       </div>
     </form>
 
     <!-- Email not verified alert -->
     <nz-alert
       *ngIf="showVerificationAlert"
+      data-testid="verification-alert"
       nzType="warning"
       nzShowIcon
       nzCloseable
@@ -101,7 +147,13 @@
     ></nz-alert>
     <ng-template #verifyAlertMsg>
       <span>Your email is not verified. </span>
-      <button nz-button nzType="link" class="!p-0" (click)="resendVerification()" [nzLoading]="resending">
+      <button
+        nz-button
+        nzType="link"
+        class="!p-0"
+        (click)="resendVerification()"
+        [nzLoading]="resending"
+      >
         Resend verification email
       </button>
     </ng-template>
@@ -109,6 +161,7 @@
     <!-- General error alert -->
     <nz-alert
       *ngIf="generalError"
+      data-testid="error-alert"
       [nzMessage]="generalError"
       nzType="error"
       nzShowIcon
@@ -116,12 +169,12 @@
       (nzOnClose)="generalError = ''"
       class="mt-4"
     ></nz-alert>
-
   </nz-card>
 </div>
 
 <!-- Forgot Password Modal -->
 <nz-modal
+  data-testid="forgot-password-modal"
   [(nzVisible)]="showForgotPassword"
   nzTitle="Reset Password"
   (nzOnOk)="handleForgotPassword()"
@@ -129,7 +182,15 @@
   nzOkText="Send Reset Link"
 >
   <ng-container *nzModalContent>
-    <p class="mb-4 text-gray-600">Enter your email address to receive a password reset link.</p>
-    <input nz-input [(ngModel)]="resetEmail" placeholder="Email address" type="email" />
+    <p class="mb-4 text-gray-600">
+      Enter your email address to receive a password reset link.
+    </p>
+    <input
+      data-testid="reset-email-input"
+      nz-input
+      [(ngModel)]="resetEmail"
+      placeholder="Email address"
+      type="email"
+    />
   </ng-container>
 </nz-modal>

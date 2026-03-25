@@ -1,8 +1,13 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-  <nz-card class="w-full max-w-md shadow-lg text-center">
-
+<div
+  data-testid="verify-email-container"
+  class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+>
+  <nz-card
+    data-testid="verify-email-card"
+    class="w-full max-w-md shadow-lg text-center"
+  >
     <!-- Loading state -->
-    <div *ngIf="loading" class="py-12">
+    <div data-testid="loading-state" *ngIf="loading" class="py-12">
       <nz-spin nzSize="large"></nz-spin>
       <p class="mt-4 text-gray-500">Verifying your email...</p>
     </div>
@@ -10,12 +15,19 @@
     <!-- Success state -->
     <nz-result
       *ngIf="!loading && verified"
+      data-testid="success-state"
       nzStatus="success"
       nzTitle="Email Verified!"
       nzSubTitle="Your email has been successfully verified. You can now access all features."
     >
       <div nz-result-extra>
-        <button nz-button nzType="primary" nzSize="large" (click)="router.navigate(['/dashboard'])">
+        <button
+          data-testid="dashboard-button"
+          nz-button
+          nzType="primary"
+          nzSize="large"
+          (click)="router.navigate(['/dashboard'])"
+        >
           Go to Dashboard
         </button>
       </div>
@@ -24,16 +36,22 @@
     <!-- Error state -->
     <nz-result
       *ngIf="!loading && !verified"
+      data-testid="error-state"
       nzStatus="error"
       nzTitle="Verification Failed"
       [nzSubTitle]="error"
     >
       <div nz-result-extra>
-        <button nz-button nzType="primary" nzSize="large" (click)="router.navigate(['/login'])">
+        <button
+          data-testid="login-button"
+          nz-button
+          nzType="primary"
+          nzSize="large"
+          (click)="router.navigate(['/login'])"
+        >
           Back to Login
         </button>
       </div>
     </nz-result>
-
   </nz-card>
 </div>
