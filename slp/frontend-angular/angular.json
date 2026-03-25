@@ -16,6 +16,8 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/frontend-angular",
+            "index": "src/index.html",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -53,6 +55,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
+            "buildTarget": "frontend-angular:build",
             "port": 3009
           },
           "configurations": {
