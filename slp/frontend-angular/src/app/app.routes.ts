@@ -1,28 +1,39 @@
-import { Routes } from '@angular/router';
-import { MobileLayoutComponent } from './core/layouts/mobile-layout/mobile-layout.component';
-import { AuthGuard } from './features/auth/auth.guard';
-import { AdminGuard } from './features/admin/admin.guard';
+import { Routes } from "@angular/router";
+import { MobileLayoutComponent } from "./core/layouts/mobile-layout/mobile-layout.component";
+import { AuthGuard } from "./features/auth/auth.guard";
 
 export const routes: Routes = [
   {
-    path: 'login',
-    loadComponent: () => import('./features/auth/pages/login/login.component').then(m => m.LoginComponent),
-    canActivate: [() => !localStorage.getItem('session_token')] // guest guard
+    path: "login",
+    loadComponent: () =>
+      import("./features/auth/login.component").then((m) => m.LoginComponent),
+    canActivate: [() => !localStorage.getItem("session_token")], // guest guard
   },
   {
-    path: 'register',
-    loadComponent: () => import('./features/auth/pages/register/register.component').then(m => m.RegisterComponent),
-    canActivate: [() => !localStorage.getItem('session_token')]
+    path: "register",
+    loadComponent: () =>
+      import("./features/auth/register.component").then(
+        (m) => m.RegisterComponent,
+      ),
+    canActivate: [() => !localStorage.getItem("session_token")],
   },
   {
-    path: '',
+    path: "",
     component: MobileLayoutComponent,
     //canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
-        path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/pages/dashboard.component').then(m => m.DashboardComponent)
+        path: "test",
+        loadComponent: () =>
+          import("./features/test/test.component").then((m) => m.TestComponent),
+      },
+      { path: "", redirectTo: "dashboard", pathMatch: "full" },
+      {
+        path: "dashboard",
+        loadComponent: () =>
+          import("./features/dashboard/pages/dashboard.component").then(
+            (m) => m.DashboardComponent,
+          ),
       },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
       // { path: 'questions', loadChildren: () => import('./features/question/question.module').then(m => m.QuestionModule) },
@@ -37,15 +48,21 @@ export const routes: Routes = [
       //   canActivate: [AdminGuard],
       //   loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule)
       // }
-    ]
+    ],
   },
   {
-    path: 'reset-password',
-    loadComponent: () => import('./features/auth/pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+    path: "reset-password",
+    loadComponent: () =>
+      import("./features/auth/reset-password.component").then(
+        (m) => m.ResetPasswordComponent,
+      ),
   },
   {
-    path: 'verify-email',
-    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+    path: "verify-email",
+    loadComponent: () =>
+      import("./features/auth/verify-email.component").then(
+        (m) => m.VerifyEmailComponent,
+      ),
   },
-  { path: '**', redirectTo: '' }
+  { path: "**", redirectTo: "" },
 ];

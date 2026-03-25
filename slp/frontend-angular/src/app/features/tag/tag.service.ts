@@ -1,37 +1,20 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
-import { ApiClientService } from '../../core/services/api-client.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface TagDto {
   id: number;
   name: string;
-  quizCount: number;
-  questionCount: number;
-  totalCount: number;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TagService {
-  private tagsCache: TagDto[] | null = null;
+  private readonly baseUrl = environment.apiBackendUrl;
 
-  constructor(private apiClient: ApiClientService) {}
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Fetch tags from the backend.
-   * @param force - if true, bypass cache and fetch fresh data.
-   */
-  fetchTags(force = false): Observable<TagDto[]> {
-    if (this.tagsCache !== null && !force) {
-      return of(this.tagsCache);
-    }
-    return this.apiClient.get<{ tags: TagDto[]; total: number }>('/tags', {
-      params: { sort: 'name', pageSize: 100 }
-    }).pipe(
-      map(response => response.tags),
-      tap(tags => this.tagsCache = tags)
-    );
+  fetchTags(): Observable<TagDto[]> {
+    return this.http.get<TagDto[]>(`${this.baseUrl}/tags`);
   }
 }

@@ -3,7 +3,7 @@ import {
   provideHttpClient,
   HttpClient,
   withInterceptors,
-} from "@angular/common/http"; // ✅ thêm withInterceptors
+} from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { TranslateModule, TranslateLoader } from "@ngx-translate/core";
 import { TranslateHttpLoader } from "@ngx-translate/http-loader";
@@ -13,15 +13,76 @@ import { NZ_I18N, en_US } from "ng-zorro-antd/i18n";
 import { NzMessageModule } from "ng-zorro-antd/message";
 import { provideNzConfig, NzConfig } from "ng-zorro-antd/core/config";
 import { provideNzIcons } from "ng-zorro-antd/icon";
-import { UserOutline, LockOutline } from "@ant-design/icons-angular/icons";
+
+import {
+  // Auth / form icons
+  UserOutline,
+  LockOutline,
+  MailOutline,
+  EyeOutline,
+  EyeInvisibleOutline,
+  // Layout icons
+  MenuOutline,
+  CloseOutline,
+  RightOutline,
+  // Navigation icons
+  DashboardOutline,
+  FileTextOutline,
+  PlusCircleOutline,
+  QuestionCircleOutline,
+  PlusOutline,
+  FolderOpenOutline,
+  UploadOutline,
+  LinkOutline,
+  StarOutline,
+  SearchOutline,
+  FlagOutline,
+  SecurityScanOutline,
+  SettingOutline,
+  LogoutOutline,
+  // Status icons
+  CheckCircleOutline,
+  CloseCircleOutline,
+  LoadingOutline,
+} from "@ant-design/icons-angular/icons";
 
 // Your Routes
 import { routes } from "./app.routes";
 import { provideRouter } from "@angular/router";
 import { authInterceptor } from "./features/auth/auth.interceptor";
 
-// --- YOUR OLD STUFF RESTORED ---
-const icons = [UserOutline, LockOutline];
+// --- Icons Registration ---
+const icons = [
+  // Auth / form
+  UserOutline,
+  LockOutline,
+  MailOutline,
+  EyeOutline,
+  EyeInvisibleOutline,
+  // Layout
+  MenuOutline,
+  CloseOutline,
+  RightOutline,
+  // Navigation
+  DashboardOutline,
+  FileTextOutline,
+  PlusCircleOutline,
+  QuestionCircleOutline,
+  PlusOutline,
+  FolderOpenOutline,
+  UploadOutline,
+  LinkOutline,
+  StarOutline,
+  SearchOutline,
+  FlagOutline,
+  SecurityScanOutline,
+  SettingOutline,
+  LogoutOutline,
+  // Status
+  CheckCircleOutline,
+  CloseCircleOutline,
+  LoadingOutline,
+];
 
 const ngZorroConfig: NzConfig = {
   theme: {
@@ -35,7 +96,6 @@ const ngZorroConfig: NzConfig = {
 };
 
 export function HttpLoaderFactory(http: HttpClient) {
-  // In v19/v16, we don't need the "as any" hack anymore
   return new TranslateHttpLoader(http, "./assets/i18n/", ".json");
 }
 
@@ -43,11 +103,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([authInterceptor]), // ✅ đăng ký interceptor
+      withInterceptors([authInterceptor]),
     ),
     provideAnimations(),
 
-    // Modern way to provide your Zorro config and Icons
     provideNzIcons(icons),
     provideNzConfig(ngZorroConfig),
 

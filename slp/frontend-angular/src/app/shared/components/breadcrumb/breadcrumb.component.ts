@@ -49,6 +49,8 @@ export class BreadcrumbComponent implements OnInit {
       }
       if (current.firstChild) {
         current = current.firstChild;
+      } else {
+        break; // or set current = null;
       }
     }
     if (items.length === 0) {

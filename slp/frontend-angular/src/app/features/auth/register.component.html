@@ -1,0 +1,166 @@
+<div
+  data-testid="registration-container"
+  class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+>
+  <nz-card data-testid="registration-card" class="w-full max-w-md shadow-lg">
+
+    <!-- Header -->
+    <div data-testid="registration-header" class="text-center mb-8">
+      <h1 data-testid="registration-title" class="text-2xl font-bold text-gray-900">
+        Create Account
+      </h1>
+      <p data-testid="registration-subtitle" class="text-gray-500 mt-1">
+        Sign up to get started
+      </p>
+    </div>
+
+    <!-- Register Form -->
+    <form
+      data-testid="registration-form"
+      nz-form
+      [formGroup]="form"
+      (ngSubmit)="handleRegister()"
+      nzLayout="vertical"
+    >
+      <!-- Username -->
+      <nz-form-item data-testid="form-item-username">
+        <nz-form-label nzRequired>Username</nz-form-label>
+        <nz-form-control
+          [nzValidateStatus]="form.get('username')?.invalid && form.get('username')?.dirty ? 'error' : ''"
+          nzErrorTip="Username must be at least 3 characters"
+        >
+          <nz-input-group nzSize="large" [nzPrefix]="prefixUser">
+            <input
+              data-testid="input-username"
+              nz-input
+              formControlName="username"
+              placeholder="Choose a username"
+            />
+          </nz-input-group>
+          <ng-template #prefixUser>
+            <i nz-icon nzType="user" nzTheme="outline" class="text-gray-400"></i>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Email -->
+      <nz-form-item data-testid="form-item-email">
+        <nz-form-label nzRequired>Email</nz-form-label>
+        <nz-form-control
+          [nzValidateStatus]="form.get('email')?.invalid && form.get('email')?.dirty ? 'error' : ''"
+          nzErrorTip="Please enter a valid email address"
+        >
+          <nz-input-group nzSize="large" [nzPrefix]="prefixMail">
+            <input
+              data-testid="input-email"
+              nz-input
+              formControlName="email"
+              placeholder="Enter your email"
+              type="email"
+            />
+          </nz-input-group>
+          <ng-template #prefixMail>
+            <i nz-icon nzType="mail" nzTheme="outline" class="text-gray-400"></i>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Password -->
+      <nz-form-item data-testid="form-item-password">
+        <nz-form-label nzRequired>Password</nz-form-label>
+        <nz-form-control
+          [nzValidateStatus]="form.get('password')?.invalid && form.get('password')?.dirty ? 'error' : ''"
+          nzErrorTip="Password must be at least 6 characters"
+        >
+          <nz-input-group nzSize="large" [nzPrefix]="prefixLock" [nzSuffix]="suffixEye1">
+            <input
+              data-testid="input-password"
+              nz-input
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Create a password"
+            />
+          </nz-input-group>
+          <ng-template #prefixLock>
+            <i nz-icon nzType="lock" nzTheme="outline" class="text-gray-400"></i>
+          </ng-template>
+          <ng-template #suffixEye1>
+            <i
+              nz-icon
+              [nzType]="showPassword ? 'eye' : 'eye-invisible'"
+              nzTheme="outline"
+              class="text-gray-400 cursor-pointer"
+              (click)="showPassword = !showPassword"
+            ></i>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Confirm Password -->
+      <nz-form-item data-testid="form-item-confirm-password">
+        <nz-form-label nzRequired>Confirm Password</nz-form-label>
+        <nz-form-control
+          [nzValidateStatus]="passwordMismatch ? 'error' : ''"
+          nzErrorTip="Passwords do not match"
+        >
+          <nz-input-group nzSize="large" [nzPrefix]="prefixLock2" [nzSuffix]="suffixEye2">
+            <input
+              data-testid="input-confirm-password"
+              nz-input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="Confirm your password"
+            />
+          </nz-input-group>
+          <ng-template #prefixLock2>
+            <i nz-icon nzType="lock" nzTheme="outline" class="text-gray-400"></i>
+          </ng-template>
+          <ng-template #suffixEye2>
+            <i
+              nz-icon
+              [nzType]="showConfirmPassword ? 'eye' : 'eye-invisible'"
+              nzTheme="outline"
+              class="text-gray-400 cursor-pointer"
+              (click)="showConfirmPassword = !showConfirmPassword"
+            ></i>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Submit -->
+      <button
+        data-testid="button-submit"
+        nz-button
+        nzType="primary"
+        nzBlock
+        nzSize="large"
+        [nzLoading]="loading"
+        type="submit"
+        class="mb-4"
+      >
+        Sign Up
+      </button>
+
+      <!-- Login link -->
+      <div data-testid="login-redirect-container" class="text-center text-sm">
+        <span data-testid="login-redirect-text" class="text-gray-500">Already have an account? </span>
+        <a data-testid="link-login" routerLink="/login" class="text-blue-600 hover:text-blue-700 font-medium">
+          Sign in
+        </a>
+      </div>
+    </form>
+
+    <!-- Error alert -->
+    <nz-alert
+      *ngIf="error"
+      data-testid="error-alert"
+      [nzMessage]="error"
+      nzType="error"
+      nzShowIcon
+      nzCloseable
+      (nzOnClose)="error = ''"
+      class="mt-4"
+    ></nz-alert>
+
+  </nz-card>
+</div>
