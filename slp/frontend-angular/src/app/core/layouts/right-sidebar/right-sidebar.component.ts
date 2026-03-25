@@ -8,7 +8,11 @@ import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { AuthService } from "../../../features/auth/auth.service";
-import { Language, SettingsService, Theme } from "../../services/settings.service";
+import {
+  Language,
+  SettingsService,
+  Theme,
+} from "../../services/settings.service";
 import { Observable, map } from "rxjs";
 import { RouterModule } from "@angular/router"; // 1. Import this
 
@@ -30,7 +34,7 @@ import { RouterModule } from "@angular/router"; // 1. Import this
 export class RightSidebarComponent implements OnInit {
   @Input() isOpen = false;
   @Output() close = new EventEmitter<void>();
-  @Output() onLogout = new EventEmitter<void>();
+  @Output() logout = new EventEmitter<void>();
 
   user$: Observable<any>;
   isAdmin$: Observable<boolean>;
@@ -69,9 +73,8 @@ export class RightSidebarComponent implements OnInit {
     this.close.emit();
   }
 
-  logout(): void {
-    this.authService.logout();
-    this.onLogout.emit();
+  onLogoutClick(): void {
+    this.logout.emit();
     this.closeSidebar();
   }
 

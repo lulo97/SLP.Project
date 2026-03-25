@@ -29,7 +29,7 @@
 
   <app-right-sidebar
     [isOpen]="sidebarOpen"
-    (close)="sidebarOpen = false"
+    (close)="handleCloseSidebar()"
     (logout)="handleLogout()"
   ></app-right-sidebar>
 </div>
