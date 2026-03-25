@@ -20,7 +20,7 @@ export const routes: Routes = [
   {
     path: "",
     component: MobileLayoutComponent,
-    //canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
     children: [
       {
         path: "test",

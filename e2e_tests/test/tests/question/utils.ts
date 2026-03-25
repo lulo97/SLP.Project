@@ -1,9 +1,9 @@
 // e2e_tests/test/utils/questionTestUtils.ts
 import { Locator, Page, expect } from '@playwright/test';
 
-const FRONTEND_URL = 'http://localhost:4000';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = '123';
+const FRONTEND_URL = 'http://localhost:3009';
+const ADMIN_USERNAME = 'test1';
+const ADMIN_PASSWORD = '2';
 
 /**
  * Log in as the admin user.
