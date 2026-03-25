@@ -31,7 +31,8 @@ export class TagSelectorComponent implements OnInit, ControlValueAccessor {
   error = "";
   atLimit = false;
 
-  private onChange: (value: any) => void = () => {};
+  // Change from 'any' to 'string[]' for better type safety
+  private onChange: (value: string[]) => void = () => {};
   private onTouched: () => void = () => {};
 
   constructor(private tagService: TagService) {}
@@ -59,34 +60,28 @@ export class TagSelectorComponent implements OnInit, ControlValueAccessor {
       });
   }
 
+  // This is called by nz-select's (ngModelChange) in your .html file
   handleChange(newVal: string[]): void {
-    // normalize: trim, deduplicate, limit
-    const seen = new Set<string>();
-    const clean = newVal
-      .map((v) => v.trim())
-      .filter((v) => {
-        if (!v) return false;
-        const key = v.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, this.maxTags);
+    const clean = Array.from(
+      new Set(newVal.map((v) => v.trim()).filter((v) => !!v)),
+    ).slice(0, this.maxTags);
+
     this.selected = clean;
     this.atLimit = clean.length >= this.maxTags;
-    this.onChange(clean);
+    this.onChange(clean); // Notify the parent form
+    this.onTouched();
   }
 
-  // ControlValueAccessor
-  writeValue(value: any): void {
-    if (value !== undefined && value !== null) {
-      this.selected = value;
-      this.atLimit = this.selected.length >= this.maxTags;
-    }
+  writeValue(value: string[] | null): void {
+    // Standard CVA practice: handle null/undefined
+    this.selected = value || [];
+    this.atLimit = this.selected.length >= this.maxTags;
   }
-  registerOnChange(fn: any): void {
+
+  registerOnChange(fn: (value: string[]) => void): void {
     this.onChange = fn;
   }
+
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
   }

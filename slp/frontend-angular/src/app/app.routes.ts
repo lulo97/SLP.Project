@@ -25,7 +25,9 @@ export const routes: Routes = [
       {
         path: "test",
         loadComponent: () =>
-          import("../features/test/test.component").then((m) => m.TestComponent),
+          import("../features/test/test.component").then(
+            (m) => m.TestComponent,
+          ),
       },
       { path: "", redirectTo: "dashboard", pathMatch: "full" },
       {
@@ -35,8 +37,28 @@ export const routes: Routes = [
             (m) => m.DashboardComponent,
           ),
       },
+      {
+        path: "questions",
+        loadComponent: () =>
+          import("../features/question/pages/question-list.component").then(
+            (m) => m.QuestionListComponent,
+          ),
+      },
+      {
+        path: "question/new",
+        loadComponent: () =>
+          import("../features/question/pages/question-form-page.component").then(
+            (m) => m.QuestionFormPageComponent,
+          ),
+      },
+      {
+        path: "question/:id/edit",
+        loadComponent: () =>
+          import("../features/question/pages/question-form-page.component").then(
+            (m) => m.QuestionFormPageComponent,
+          ),
+      },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
-      // { path: 'questions', loadChildren: () => import('./features/question/question.module').then(m => m.QuestionModule) },
       // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },
       // { path: 'notes', loadChildren: () => import('./features/note/note.module').then(m => m.NoteModule) },
       // { path: 'favourites', loadChildren: () => import('./features/favourite/favourite.module').then(m => m.FavouriteModule) },
