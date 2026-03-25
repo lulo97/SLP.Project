@@ -62,7 +62,7 @@ interface Config {
 
 // ─── Load config ──────────────────────────────────────────────────────────────
 
-const DATA_FILE = path.resolve(__dirname, 'data1.json');
+const DATA_FILE = path.resolve(__dirname, 'bee1.json');
 const config: Config = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 const { frontendUrl: BASE_URL, account } = config;
 

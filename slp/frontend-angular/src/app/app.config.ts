@@ -6,10 +6,13 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
+import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { UserOutline, LockOutline } from '@ant-design/icons-angular/icons';
+
+const icons = [ UserOutline, LockOutline ];
 
 // Define your design tokens here
 const ngZorroConfig: NzConfig = {
@@ -26,6 +29,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideNzIcons(icons),
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([authInterceptor])

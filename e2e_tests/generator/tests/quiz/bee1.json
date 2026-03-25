@@ -1,0 +1,72 @@
+{
+  "account": {
+    "username": "question1",
+    "password": "1"
+  },
+  "frontendUrl": "http://localhost:4000",
+  "quizzes": [
+    {
+      "title": "Bee Biology & Evolution Quiz",
+      "description": "Test your knowledge about bee evolution, social behavior, and unique adaptations.",
+      "visibility": "public",
+      "tags": ["bees", "biology", "evolution", "pollination"],
+      "questions": [
+        {
+          "type": "multiple-choice",
+          "title": "Which of the following bee species are considered social insects?",
+          "description": "Select all that apply.",
+          "explanation": "Honey bees, bumblebees, and stingless bees live in hierarchical colonies. Mason bees, like over 90% of bee species, are solitary.",
+          "tags": ["behavior", "social insects"],
+          "options": [
+            { "text": "Honey bees", "correct": true },
+            { "text": "Bumblebees", "correct": true },
+            { "text": "Stingless bees", "correct": true },
+            { "text": "Mason bees", "correct": false }
+          ]
+        },
+        {
+          "type": "true-false",
+          "title": "All bees are herbivores, feeding on nectar and pollen.",
+          "description": "Decide whether this statement is true or false.",
+          "explanation": "Unlike wasps and ants (which are carnivorous/omnivorous), bees are exclusively herbivorous, consuming nectar for energy and pollen for protein.",
+          "tags": ["diet", "herbivore"],
+          "answer": true
+        },
+        {
+          "type": "fill-blank",
+          "title": "The immediate ancestors of bees were stinging wasps in the family Ammoplanidae.",
+          "description": "Fill in the blank with the correct family name.",
+          "explanation": "Phylogenetic studies indicate that bees evolved from predatory wasps of the family Ammoplanidae.",
+          "tags": ["evolution", "ancestry"],
+          "keyword": "Ammoplanidae"
+        },
+        {
+          "type": "ordering",
+          "title": "Arrange these evolutionary milestones in chronological order, from earliest to most recent.",
+          "description": "Order the events based on the timeline provided in the text.",
+          "explanation": "Bees originated in the Early Cretaceous (~124 mya). All modern families diverged by the end of the Cretaceous (~66 mya). South American bees colonized North America by the end of the Cretaceous, and eusocial diversity flourished in the Eocene (~45 mya).",
+          "tags": ["evolution", "timeline"],
+          "items": [
+            "Origin of bees (Early Cretaceous)",
+            "Divergence of all modern bee families (by end of Cretaceous)",
+            "Colonization of North America by South American bees (end of Cretaceous)",
+            "Diversity of eusocial bee lineages (Eocene)"
+          ]
+        },
+        {
+          "type": "matching",
+          "title": "Match each bee group to its characteristic.",
+          "description": "Draw a line from the bee group to the correct description.",
+          "explanation": "Honey bees build hives; sweat bees are the most common in the Northern Hemisphere; Megachile pluto is the largest bee; some stingless bees are extremely tiny.",
+          "tags": ["identification", "characteristics"],
+          "pairs": [
+            { "left": "Honey bees", "right": "Construct hexagonally celled waxy nests called hives" },
+            { "left": "Sweat bees (Halictidae)", "right": "Most common bees in the Northern Hemisphere, often mistaken for wasps or flies" },
+            { "left": "Leafcutter bee (Megachile pluto)", "right": "Largest species of bee, females up to 39 mm long" },
+            { "left": "Stingless bees", "right": "Workers less than 2 mm long in some species" }
+          ]
+        }
+      ]
+    }
+  ]
+}
