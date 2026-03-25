@@ -200,7 +200,7 @@ import { QuestionDto, CreateQuestionPayload } from "../question.model";
           nzType="primary"
           [disabled]="loading || form.invalid"
           [nzLoading]="loading"
-          data-testid="submit-question-button"
+          data-testid="submit-question"
         >
           {{ initialQuestion ? "Update" : "Create" }}
         </button>

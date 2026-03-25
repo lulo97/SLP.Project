@@ -141,7 +141,7 @@ import { QuestionListDto } from "../question.model";
                   nzDanger
                   nz-popconfirm
                   nzPopconfirmTitle="Delete this question?"
-                  nzOkText="Delete"
+                  nzOkText="Yes"
                   nzCancelText="Cancel"
                   (nzOnConfirm)="deleteQuestion(q.id)"
                   [attr.data-testid]="'delete-confirm-' + q.id"

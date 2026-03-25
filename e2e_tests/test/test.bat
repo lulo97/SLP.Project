@@ -1,1 +1,1 @@
-npx playwright test fill_blank.spec.ts --headed
+npx playwright test tests/question/add/fill_blank.spec.ts --headed

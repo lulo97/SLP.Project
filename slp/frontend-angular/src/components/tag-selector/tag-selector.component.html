@@ -3,10 +3,11 @@
   [nzPlaceHolder]="placeholder"
   [nzLoading]="loading"
   [nzStatus]="atLimit ? 'warning' : ''"
-  [(ngModel)]="selected"
+  [formControl]="control"
   (ngModelChange)="handleChange($event)"
   style="width: 100%"
   [nzNotFoundContent]="notFoundTpl"
+  data-testid="tag-selector"
 >
   <nz-option
     *ngFor="let opt of options"
@@ -14,9 +15,21 @@
     [nzLabel]="opt.label"
   ></nz-option>
 </nz-select>
+
 <ng-template #notFoundTpl>
-  <span *ngIf="error" class="text-red-400 text-xs px-2">{{ error }}</span>
+  <span
+    *ngIf="error"
+    class="text-red-400 text-xs px-2"
+    data-testid="tag-selector-not-found"
+  >
+    {{ error }}
+  </span>
 </ng-template>
-<div *ngIf="atLimit" class="text-yellow-500 text-xs mt-1">
+
+<div
+  *ngIf="atLimit"
+  class="text-yellow-500 text-xs mt-1"
+  data-testid="tag-selector-warning"
+>
   Maximum {{ maxTags }} tags allowed.
 </div>
