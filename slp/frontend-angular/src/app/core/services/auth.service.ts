@@ -5,6 +5,8 @@ import { catchError, map, tap } from "rxjs/operators";
 import { Router } from "@angular/router";
 import { environment } from "../../../environments/environment";
 import { ApiClientService } from "./api-client.service";
+import { NzMessageService } from "ng-zorro-antd/message";
+import { TranslateService } from "@ngx-translate/core";
 
 export interface User {
   id: number;
@@ -52,6 +54,8 @@ export class AuthService {
   constructor(
     private apiClient: ApiClientService,
     private router: Router,
+    private message: NzMessageService,
+    private translate: TranslateService,
   ) {
     if (this.sessionTokenSubject.value) {
       this.fetchCurrentUser().subscribe();
@@ -93,16 +97,33 @@ export class AuthService {
           localStorage.setItem("session_token", token);
           localStorage.setItem("user_id", userId);
           this.fetchCurrentUser().subscribe();
+          this.message.success(this.translate.instant("auth.loginSuccess"));
         }),
         map(() => ({ success: true })),
         catchError((error) => {
           const errorData = error.error;
-          const message = errorData?.message || "Login failed";
-          this.errorSubject.next(message);
+          let messageKey = "auth.loginFailed";
+          switch (errorData?.code) {
+            case "USER_NOT_FOUND":
+            case "INVALID_PASSWORD":
+              messageKey = "auth.invalidCredentials";
+              break;
+            case "ACCOUNT_BANNED":
+              messageKey = "auth.accountBanned";
+              break;
+            case "EMAIL_NOT_VERIFIED":
+              messageKey = "auth.emailNotVerified";
+              break;
+            default:
+              messageKey = "auth.loginFailed";
+          }
+          const msg = this.translate.instant(messageKey);
+          this.message.error(msg);
+          this.errorSubject.next(msg);
           return throwError(() => ({
             success: false,
             code: errorData?.code,
-            message,
+            message: msg,
           }));
         }),
         tap(() => this.loadingSubject.next(false)),
@@ -122,9 +143,17 @@ export class AuthService {
     return this.apiClient
       .post("/auth/register", { username, email, password })
       .pipe(
-        map(() => true),
+        map(() => {
+          this.message.success(
+            this.translate.instant("auth.registrationSuccess"),
+          );
+          return true;
+        }),
         catchError((error) => {
-          const message = error.error?.message || "Registration failed";
+          const message =
+            error.error?.message ||
+            this.translate.instant("auth.registrationFailed");
+          this.message.error(message);
           this.errorSubject.next(message);
           return throwError(() => false);
         }),
@@ -156,6 +185,14 @@ export class AuthService {
         const user: User = { ...raw, avatarUrl };
         this.userSubject.next(user);
       }),
+      catchError((err) => {
+        if (err.status === 401) {
+          this.clearSession();
+        } else {
+          this.message.error(this.translate.instant("common.error"));
+        }
+        return throwError(() => err);
+      }),
     );
   }
 
@@ -177,10 +214,14 @@ export class AuthService {
           : undefined;
         const user: User = { ...updated, avatarUrl };
         this.userSubject.next(user);
+        this.message.success(this.translate.instant("profile.updateSuccess"));
       }),
       map(() => true),
       catchError((error) => {
-        const message = error.error?.message || "Update failed";
+        const message =
+          error.error?.message ||
+          this.translate.instant("profile.updateFailed");
+        this.message.error(message);
         this.errorSubject.next(message);
         return throwError(() => false);
       }),
@@ -193,8 +234,18 @@ export class AuthService {
    */
   requestPasswordReset(email: string): Observable<boolean> {
     return this.apiClient.post("/auth/forgot-password", { email }).pipe(
-      map(() => true),
-      catchError(() => throwError(() => false)),
+      map(() => {
+        this.message.success(
+          this.translate.instant("auth.passwordResetEmailSent"),
+        );
+        return true;
+      }),
+      catchError(() => {
+        this.message.error(
+          this.translate.instant("auth.passwordResetRequestFailed"),
+        );
+        return throwError(() => false);
+      }),
     );
   }
 
@@ -208,8 +259,18 @@ export class AuthService {
     return this.apiClient
       .post("/auth/reset-password", { token, newPassword })
       .pipe(
-        map(() => true),
-        catchError(() => throwError(() => false)),
+        map(() => {
+          this.message.success(
+            this.translate.instant("auth.passwordResetSuccess"),
+          );
+          return true;
+        }),
+        catchError(() => {
+          this.message.error(
+            this.translate.instant("auth.passwordResetFailed"),
+          );
+          return throwError(() => false);
+        }),
       );
   }
 
@@ -220,12 +281,21 @@ export class AuthService {
     return this.apiClient.post("/auth/verify-email", { token }).pipe(
       tap(() => {
         if (this.userSubject.value) {
-          const updated = { ...this.userSubject.value, emailConfirmed: true };
+          const updated = {
+            ...this.userSubject.value,
+            emailConfirmed: true,
+          };
           this.userSubject.next(updated);
         }
+        this.message.success(this.translate.instant("auth.emailVerified"));
       }),
       map(() => true),
-      catchError(() => throwError(() => false)),
+      catchError(() => {
+        this.message.error(
+          this.translate.instant("auth.emailVerificationFailed"),
+        );
+        return throwError(() => false);
+      }),
     );
   }
 
@@ -234,8 +304,18 @@ export class AuthService {
    */
   sendVerificationEmail(): Observable<boolean> {
     return this.apiClient.post("/auth/resend-verification", {}).pipe(
-      map(() => true),
-      catchError(() => throwError(() => false)),
+      map(() => {
+        this.message.success(
+          this.translate.instant("auth.verificationEmailSent"),
+        );
+        return true;
+      }),
+      catchError(() => {
+        this.message.error(
+          this.translate.instant("auth.verificationEmailFailed"),
+        );
+        return throwError(() => false);
+      }),
     );
   }
 
@@ -249,13 +329,21 @@ export class AuthService {
     return this.apiClient
       .post("/users/me/change-password", { currentPassword, newPassword })
       .pipe(
-        map(() => ({ success: true })),
+        map(() => {
+          this.message.success(this.translate.instant("auth.passwordChanged"));
+          return { success: true };
+        }),
         catchError((error) => {
           const data = error.error;
+          let message = this.translate.instant("auth.passwordChangeFailed");
+          if (data?.code === "INVALID_CURRENT_PASSWORD") {
+            message = this.translate.instant("auth.invalidCurrentPassword");
+          }
+          this.message.error(message);
           return throwError(() => ({
             success: false,
             code: data?.code,
-            message: data?.message || "Failed to change password.",
+            message,
           }));
         }),
       );
