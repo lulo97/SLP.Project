@@ -1,18 +1,18 @@
 import { Routes } from "@angular/router";
-import { MobileLayoutComponent } from "./core/layouts/mobile-layout/mobile-layout.component";
-import { AuthGuard } from "./features/auth/auth.guard";
+import { MobileLayoutComponent } from "../layouts/mobile-layout/mobile-layout.component";
+import { AuthGuard } from "../features/auth/auth.guard";
 
 export const routes: Routes = [
   {
     path: "login",
     loadComponent: () =>
-      import("./features/auth/login.component").then((m) => m.LoginComponent),
+      import("../features/auth/login.component").then((m) => m.LoginComponent),
     canActivate: [() => !localStorage.getItem("session_token")], // guest guard
   },
   {
     path: "register",
     loadComponent: () =>
-      import("./features/auth/register.component").then(
+      import("../features/auth/register.component").then(
         (m) => m.RegisterComponent,
       ),
     canActivate: [() => !localStorage.getItem("session_token")],
@@ -25,13 +25,13 @@ export const routes: Routes = [
       {
         path: "test",
         loadComponent: () =>
-          import("./features/test/test.component").then((m) => m.TestComponent),
+          import("../features/test/test.component").then((m) => m.TestComponent),
       },
       { path: "", redirectTo: "dashboard", pathMatch: "full" },
       {
         path: "dashboard",
         loadComponent: () =>
-          import("./features/dashboard/pages/dashboard.component").then(
+          import("../features/dashboard/pages/dashboard.component").then(
             (m) => m.DashboardComponent,
           ),
       },
@@ -53,14 +53,14 @@ export const routes: Routes = [
   {
     path: "reset-password",
     loadComponent: () =>
-      import("./features/auth/reset-password.component").then(
+      import("../features/auth/reset-password.component").then(
         (m) => m.ResetPasswordComponent,
       ),
   },
   {
     path: "verify-email",
     loadComponent: () =>
-      import("./features/auth/verify-email.component").then(
+      import("../features/auth/verify-email.component").then(
         (m) => m.VerifyEmailComponent,
       ),
   },

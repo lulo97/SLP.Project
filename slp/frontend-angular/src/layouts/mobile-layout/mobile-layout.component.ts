@@ -2,9 +2,9 @@ import { Component, Input, ChangeDetectorRef, NgZone } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 import { NzIconModule } from "ng-zorro-antd/icon";
-import { BreadcrumbComponent } from "../../../shared/components/breadcrumb/breadcrumb.component";
+import { BreadcrumbComponent } from "../../components/breadcrumb/breadcrumb.component";
 import { RightSidebarComponent } from "../right-sidebar/right-sidebar.component";
-import { AuthService } from "../../../features/auth/auth.service";
+import { AuthService } from "../../features/auth/auth.service";
 import { BehaviorSubject } from "rxjs";
 
 @Component({

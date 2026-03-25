@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { NzSelectModule } from "ng-zorro-antd/select";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
-import { TagService, TagDto } from "../../../features/tag/tag.service";
+import { TagService, TagDto } from "../../features/tag/tag.service";
 import { of } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 

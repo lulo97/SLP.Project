@@ -49,7 +49,7 @@ import {
 // Your Routes
 import { routes } from "./app.routes";
 import { provideRouter } from "@angular/router";
-import { authInterceptor } from "./features/auth/auth.interceptor";
+import { authInterceptor } from "../features/auth/auth.interceptor";
 
 // --- Icons Registration ---
 const icons = [
@@ -96,7 +96,7 @@ const ngZorroConfig: NzConfig = {
 };
 
 export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, "./assets/i18n/", ".json");
+  return new TranslateHttpLoader(http, "./i18n/", ".json");
 }
 
 export const appConfig: ApplicationConfig = {

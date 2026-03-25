@@ -7,7 +7,7 @@ import { NzModalModule } from "ng-zorro-antd/modal";
 import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import { AuthService } from "../../../features/auth/auth.service";
+import { AuthService } from "../../features/auth/auth.service";
 import {
   Language,
   SettingsService,
