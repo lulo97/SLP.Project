@@ -11,7 +11,6 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { NoteService } from "./note.service";
-import { MobileLayoutComponent } from "../../layouts/mobile-layout/mobile-layout.component";
 
 @Component({
   selector: "app-note-detail",
@@ -25,69 +24,64 @@ import { MobileLayoutComponent } from "../../layouts/mobile-layout/mobile-layout
     NzPopconfirmModule,
     NzIconModule,
     TranslateModule,
-    MobileLayoutComponent,
   ],
   template: `
-    <app-mobile-layout
-      [title]="(currentNote$ | async)?.title || ('note.noteDetail' | translate)"
+    <div
+      *ngIf="loading$ | async"
+      class="flex justify-center py-12"
+      data-testid="note-loading-spinner"
     >
-      <div
-        *ngIf="loading$ | async"
-        class="flex justify-center py-12"
-        data-testid="note-loading-spinner"
-      >
-        <nz-spin data-testid="spinner-icon"></nz-spin>
-      </div>
+      <nz-spin data-testid="spinner-icon"></nz-spin>
+    </div>
 
-      <div
-        *ngIf="!(loading$ | async) && (currentNote$ | async) as note"
-        class="space-y-4"
-        data-testid="note-content-container"
-      >
-        <nz-card class="shadow-sm" data-testid="note-card">
-          <h1 class="text-2xl font-semibold" data-testid="note-title">
-            {{ note.title }}
-          </h1>
-          <p class="text-gray-500 text-sm mt-1" data-testid="note-updated-at">
-            {{ "note.updatedAt" | translate }}: {{ formatDate(note.updatedAt) }}
-          </p>
-          <div class="mt-4 whitespace-pre-wrap" data-testid="note-body">
-            {{ note.content }}
-          </div>
-        </nz-card>
-
-        <div class="flex justify-end space-x-2" data-testid="note-actions">
-          <button
-            nz-button
-            (click)="editNote(note.id)"
-            data-testid="edit-note-button"
-          >
-            <i nz-icon nzType="edit" class="mr-1"></i>
-            {{ "common.edit" | translate }}
-          </button>
-
-          <button
-            nz-button
-            nzDanger
-            nz-popconfirm
-            [nzPopconfirmTitle]="'common.confirm' | translate"
-            nzOkText="{{ 'common.delete' | translate }}"
-            nzCancelText="{{ 'common.cancel' | translate }}"
-            (nzOnConfirm)="deleteNote(note.id)"
-            data-testid="delete-note-confirm"
-          >
-            <i nz-icon nzType="delete" class="mr-1"></i>
-            {{ "common.delete" | translate }}
-          </button>
+    <div
+      *ngIf="!(loading$ | async) && (currentNote$ | async) as note"
+      class="space-y-4"
+      data-testid="note-content-container"
+    >
+      <nz-card class="shadow-sm" data-testid="note-card">
+        <h1 class="text-2xl font-semibold" data-testid="note-title">
+          {{ note.title }}
+        </h1>
+        <p class="text-gray-500 text-sm mt-1" data-testid="note-updated-at">
+          {{ "note.updatedAt" | translate }}: {{ formatDate(note.updatedAt) }}
+        </p>
+        <div class="mt-4 whitespace-pre-wrap" data-testid="note-body">
+          {{ note.content }}
         </div>
-      </div>
+      </nz-card>
 
-      <nz-empty
-        *ngIf="!(loading$ | async) && !(currentNote$ | async)"
-        [nzNotFoundContent]="'note.notFound' | translate"
-        data-testid="note-empty-state"
-      ></nz-empty>
-    </app-mobile-layout>
+      <div class="flex justify-end space-x-2" data-testid="note-actions">
+        <button
+          nz-button
+          (click)="editNote(note.id)"
+          data-testid="edit-note-button"
+        >
+          <i nz-icon nzType="edit" class="mr-1"></i>
+          {{ "common.edit" | translate }}
+        </button>
+
+        <button
+          nz-button
+          nzDanger
+          nz-popconfirm
+          [nzPopconfirmTitle]="'common.confirm' | translate"
+          nzOkText="{{ 'common.delete' | translate }}"
+          nzCancelText="{{ 'common.cancel' | translate }}"
+          (nzOnConfirm)="deleteNote(note.id)"
+          data-testid="delete-note-confirm"
+        >
+          <i nz-icon nzType="delete" class="mr-1"></i>
+          {{ "common.delete" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <nz-empty
+      *ngIf="!(loading$ | async) && !(currentNote$ | async)"
+      [nzNotFoundContent]="'note.notFound' | translate"
+      data-testid="note-empty-state"
+    ></nz-empty>
   `,
 })
 export class NoteDetailComponent implements OnInit {
