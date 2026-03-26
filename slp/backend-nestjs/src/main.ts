@@ -17,7 +17,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Global pipes/filters
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // tự động chuyển đổi string sang number, boolean...
+      whitelist: true, // loại bỏ các thuộc tính không có trong DTO
+      forbidNonWhitelisted: true, // nếu muốn chặt chẽ hơn
+    }),
+  );
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Retrieve dependencies

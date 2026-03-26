@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 
 export class SourceQueryParams {
@@ -6,6 +7,7 @@ export class SourceQueryParams {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Type(() => Number)
   page?: number = 1;
 
   @ApiPropertyOptional({ default: 20 })
@@ -13,6 +15,7 @@ export class SourceQueryParams {
   @IsInt()
   @Min(1)
   @Max(100)
+  @Type(() => Number)
   pageSize?: number = 20;
 
   @ApiPropertyOptional()

@@ -58,6 +58,8 @@
           <i nz-icon nzType="plus" nzTheme="outline"></i>
           <span>{{ "nav.newQuestion" | translate }}</span>
         </li>
+
+        <!-- Source section -->
         <li nz-menu-item nzMatchRouter [routerLink]="'/source'">
           <i nz-icon nzType="folder-open" nzTheme="outline"></i>
           <span>{{ "nav.mySources" | translate }}</span>
@@ -74,6 +76,8 @@
           <i nz-icon nzType="file-text" nzTheme="outline"></i>
           <span>{{ "nav.addFromText" | translate }}</span>
         </li>
+
+        <!-- Notes & Favourites -->
         <li nz-menu-item nzMatchRouter [routerLink]="'/notes'">
           <i nz-icon nzType="file-text" nzTheme="outline"></i>
           <span>{{ "nav.myNotes" | translate }}</span>
@@ -85,10 +89,6 @@
         <li nz-menu-item nzMatchRouter [routerLink]="'/search'">
           <i nz-icon nzType="search" nzTheme="outline"></i>
           <span>{{ "nav.search" | translate }}</span>
-        </li>
-        <li nz-menu-item nzMatchRouter [routerLink]="'/notes'">
-          <i nz-icon nzType="file-text" nzTheme="outline"></i>
-          <span>{{ "nav.myNotes" | translate }}</span>
         </li>
 
         <li nz-menu-divider></li>
@@ -149,11 +149,16 @@
       <div class="flex gap-2">
         <button
           *ngFor="let themeOption of themeOptions"
-          class="..."
+          class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-sm font-medium transition-all"
           [class.border-blue-500]="
             settingsService.theme() === themeOption.value
           "
           [class.bg-blue-50]="settingsService.theme() === themeOption.value"
+          [class.text-blue-600]="settingsService.theme() === themeOption.value"
+          [class.border-gray-200]="
+            settingsService.theme() !== themeOption.value
+          "
+          [class.text-gray-600]="settingsService.theme() !== themeOption.value"
           (click)="settingsService.setTheme(themeOption.value)"
         >
           <i nz-icon [nzType]="themeOption.icon"></i>

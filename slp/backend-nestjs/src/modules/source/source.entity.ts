@@ -28,7 +28,7 @@ export class Source {
   @Column({ type: "varchar", nullable: true })
   url: string | null;
 
-  @Column({ name: "content_json", type: "jsonb", nullable: true })
+  @Column({ name: "content", type: "jsonb", nullable: true })
   contentJson: string | null;
 
   @Column({ name: "raw_html", type: "text", nullable: true })

@@ -80,13 +80,6 @@
     "createQuestion": "Create Question",
     "updateQuestion": "Update Question"
   },
-  "source": {
-    "mySources": "My Sources",
-    "uploadFile": "Upload File",
-    "addUrl": "Add from URL",
-    "addNote": "Add from Text",
-    "noSources": "No sources yet."
-  },
   "settings": {
     "title": "Settings",
     "theme": "Theme",
@@ -138,5 +131,38 @@
     "deleteError": "Failed to delete favourite.",
     "createdAt": "Created",
     "updatedAt": "Last updated"
+  },
+  "source": {
+    "mySources": "My Sources",
+    "uploadFile": "Upload File",
+    "addUrl": "Add from URL",
+    "addText": "Add Text",
+    "title": "Title",
+    "titlePlaceholder": "Enter a descriptive title",
+    "content": "Content",
+    "contentPlaceholder": "Paste or type your text here...",
+    "url": "URL",
+    "dragText": "Click or drag file to this area to upload",
+    "uploadHint": "Supports PDF, TXT, HTML. Max 20 MB.",
+    "upload": "Upload",
+    "create": "Create Source",
+    "type_pdf": "PDF",
+    "type_link": "URL",
+    "type_text": "Text",
+    "added": "Added",
+    "sourcesCount": "sources",
+    "searchPlaceholder": "Search by title…",
+    "typeFilterPlaceholder": "All types",
+    "noSources": "No sources yet. Upload a file, add a URL, or create text to get started.",
+    "noMatch": "No sources match your filters.",
+    "deleteSuccess": "Source deleted successfully",
+    "deleteError": "Failed to delete source",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Upload failed",
+    "createSuccess": "Source created successfully",
+    "createError": "Failed to create source",
+    "fillRequired": "Please fill in all required fields",
+    "fileTooBig": "File must be smaller than 20 MB",
+    "fileTypeError": "Only PDF, TXT, HTML files are allowed"
   }
 }

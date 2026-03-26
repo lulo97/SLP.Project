@@ -80,13 +80,6 @@
     "createQuestion": "Tạo câu hỏi",
     "updateQuestion": "Cập nhật câu hỏi"
   },
-  "source": {
-    "mySources": "Tài liệu của tôi",
-    "uploadFile": "Tải file lên",
-    "addUrl": "Thêm từ URL",
-    "addNote": "Thêm từ văn bản",
-    "noSources": "Chưa có tài liệu."
-  },
   "settings": {
     "title": "Cài đặt",
     "theme": "Giao diện",
@@ -138,5 +131,38 @@
     "deleteError": "Xóa mục yêu thích thất bại.",
     "createdAt": "Ngày tạo",
     "updatedAt": "Cập nhật lần cuối"
+  },
+  "source": {
+    "mySources": "Tài liệu của tôi",
+    "uploadFile": "Tải file lên",
+    "addUrl": "Thêm từ URL",
+    "addText": "Thêm văn bản",
+    "title": "Tiêu đề",
+    "titlePlaceholder": "Nhập tiêu đề mô tả",
+    "content": "Nội dung",
+    "contentPlaceholder": "Dán hoặc nhập văn bản của bạn ở đây...",
+    "url": "URL",
+    "dragText": "Nhấp hoặc kéo file vào đây để tải lên",
+    "uploadHint": "Hỗ trợ PDF, TXT, HTML. Tối đa 20 MB.",
+    "upload": "Tải lên",
+    "create": "Tạo tài liệu",
+    "type_pdf": "PDF",
+    "type_link": "URL",
+    "type_text": "Văn bản",
+    "added": "Thêm lúc",
+    "sourcesCount": "tài liệu",
+    "searchPlaceholder": "Tìm theo tiêu đề…",
+    "typeFilterPlaceholder": "Tất cả loại",
+    "noSources": "Chưa có tài liệu. Hãy tải file, thêm URL hoặc tạo văn bản để bắt đầu.",
+    "noMatch": "Không có tài liệu phù hợp.",
+    "deleteSuccess": "Xóa tài liệu thành công",
+    "deleteError": "Xóa tài liệu thất bại",
+    "uploadSuccess": "Tải file lên thành công",
+    "uploadError": "Tải file thất bại",
+    "createSuccess": "Tạo tài liệu thành công",
+    "createError": "Tạo tài liệu thất bại",
+    "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc",
+    "fileTooBig": "File phải nhỏ hơn 20 MB",
+    "fileTypeError": "Chỉ chấp nhận file PDF, TXT, HTML"
   }
 }

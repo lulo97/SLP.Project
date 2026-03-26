@@ -1,6 +1,10 @@
 import { Routes } from "@angular/router";
 import { MobileLayoutComponent } from "../layouts/mobile-layout/mobile-layout.component";
 import { AuthGuard } from "../features/auth/auth.guard";
+import { SourceListComponent } from "../features/source/pages/source-list.component";
+import { SourceUploadComponent } from "../features/source/pages/source-upload.component";
+import { SourceUrlCreateComponent } from "../features/source/pages/source-url-create.component";
+import { SourceTextCreateComponent } from "../features/source/pages/source-text-create.component";
 
 export const routes: Routes = [
   {
@@ -92,6 +96,42 @@ export const routes: Routes = [
             (m) => m.NoteFormComponent,
           ),
         data: { breadcrumb: "Edit Note" },
+      },
+      {
+        path: "source",
+        loadComponent: () =>
+          import("../features/source/pages/source-list.component").then(
+            (m) => m.SourceListComponent,
+          ),
+        canActivate: [AuthGuard],
+        data: { breadcrumb: "Sources" }, 
+      },
+      {
+        path: "source/upload",
+        loadComponent: () =>
+          import("../features/source/pages/source-upload.component").then(
+            (m) => m.SourceUploadComponent,
+          ),
+        canActivate: [AuthGuard],
+        data: { breadcrumb: "Upload File" }, 
+      },
+      {
+        path: "source/new-url",
+        loadComponent: () =>
+          import("../features/source/pages/source-url-create.component").then(
+            (m) => m.SourceUrlCreateComponent,
+          ),
+        canActivate: [AuthGuard],
+        data: { breadcrumb: "Add URL" }, 
+      },
+      {
+        path: "source/new-text",
+        loadComponent: () =>
+          import("../features/source/pages/source-text-create.component").then(
+            (m) => m.SourceTextCreateComponent,
+          ),
+        canActivate: [AuthGuard],
+        data: { breadcrumb: "Add Text" }, 
       },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
       // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },
