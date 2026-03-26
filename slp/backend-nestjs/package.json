@@ -38,6 +38,7 @@
     "@types/argon2": "^0.14.1",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.7",
     "globals": "^16.0.0",
     "source-map-support": "^0.5.21",

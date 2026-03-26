@@ -1,6 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Note } from "../note/note.entity";
+import { Quiz } from "../quiz/quiz.entity";
 
-@Entity('users')
+@Entity("users")
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -8,36 +17,46 @@ export class User {
   @Column({ unique: true })
   username: string;
 
-  @Column({ name: 'password_hash' })
+  @Column({ name: "password_hash" })
   passwordHash: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({ name: 'email_confirmed', default: false })
+  @Column({ name: "email_confirmed", default: false })
   emailConfirmed: boolean;
 
-  @Column({ default: 'user' })
+  @Column({ default: "user" })
   role: string;
 
-  @Column({ default: 'active' })
+  @Column({ default: "active" })
   status: string;
 
-  @Column({ name: 'avatar_filename', nullable: true })
+  @Column({ name: "avatar_filename", nullable: true })
   avatarFilename?: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 
-  @Column({ name: 'password_reset_token', nullable: true })
+  @Column({ name: "password_reset_token", nullable: true })
   passwordResetToken?: string;
 
-  @Column({ name: 'password_reset_expiry', nullable: true, type: 'timestamptz' })
+  @Column({
+    name: "password_reset_expiry",
+    nullable: true,
+    type: "timestamptz",
+  })
   passwordResetExpiry?: Date;
 
-  @Column({ name: 'email_verification_token', nullable: true })
+  @Column({ name: "email_verification_token", nullable: true })
   emailVerificationToken?: string;
+
+  @OneToMany(() => Note, (note) => note.user)
+  notes: Note[];
+
+  @OneToMany(() => Quiz, (quiz) => quiz.user)
+  quizzes: Quiz[];
 }
