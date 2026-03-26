@@ -1,3 +1,5 @@
+// src/app/app.routes.ts (phần liên quan)
+
 import { Routes } from "@angular/router";
 import { MobileLayoutComponent } from "../layouts/mobile-layout/mobile-layout.component";
 import { AuthGuard } from "../features/auth/auth.guard";
@@ -5,13 +7,18 @@ import { SourceListComponent } from "../features/source/pages/source-list.compon
 import { SourceUploadComponent } from "../features/source/pages/source-upload.component";
 import { SourceUrlCreateComponent } from "../features/source/pages/source-url-create.component";
 import { SourceTextCreateComponent } from "../features/source/pages/source-text-create.component";
+// Import các component Quiz
+import { QuizListComponent } from "../features/quiz/pages/quiz-list.component";
+import { QuizFormComponent } from "../features/quiz/pages/quiz-form.component";
+import { QuizDetailComponent } from "../features/quiz/pages/quiz-detail.component";
+import { QuizEditComponent } from "../features/quiz/pages/quiz-edit.component";
 
 export const routes: Routes = [
   {
     path: "login",
     loadComponent: () =>
       import("../features/auth/login.component").then((m) => m.LoginComponent),
-    canActivate: [() => !localStorage.getItem("session_token")], // guest guard
+    canActivate: [() => !localStorage.getItem("session_token")],
   },
   {
     path: "register",
@@ -55,7 +62,7 @@ export const routes: Routes = [
           import("../features/question/pages/question-form-page.component").then(
             (m) => m.QuestionFormPageComponent,
           ),
-        data: { breadcrumb: "New Question" }, // <-- add this
+        data: { breadcrumb: "New Question" },
       },
       {
         path: "question/:id/edit",
@@ -63,7 +70,7 @@ export const routes: Routes = [
           import("../features/question/pages/question-form-page.component").then(
             (m) => m.QuestionFormPageComponent,
           ),
-        data: { breadcrumb: "Edit Question" }, // <-- add this
+        data: { breadcrumb: "Edit Question" },
       },
       {
         path: "notes",
@@ -104,7 +111,7 @@ export const routes: Routes = [
             (m) => m.SourceListComponent,
           ),
         canActivate: [AuthGuard],
-        data: { breadcrumb: "Sources" }, 
+        data: { breadcrumb: "Sources" },
       },
       {
         path: "source/upload",
@@ -113,7 +120,7 @@ export const routes: Routes = [
             (m) => m.SourceUploadComponent,
           ),
         canActivate: [AuthGuard],
-        data: { breadcrumb: "Upload File" }, 
+        data: { breadcrumb: "Upload File" },
       },
       {
         path: "source/new-url",
@@ -122,7 +129,7 @@ export const routes: Routes = [
             (m) => m.SourceUrlCreateComponent,
           ),
         canActivate: [AuthGuard],
-        data: { breadcrumb: "Add URL" }, 
+        data: { breadcrumb: "Add URL" },
       },
       {
         path: "source/new-text",
@@ -131,20 +138,35 @@ export const routes: Routes = [
             (m) => m.SourceTextCreateComponent,
           ),
         canActivate: [AuthGuard],
-        data: { breadcrumb: "Add Text" }, 
+        data: { breadcrumb: "Add Text" },
       },
-      // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
-      // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },
-      // { path: 'notes', loadChildren: () => import('./features/note/note.module').then(m => m.NoteModule) },
-      // { path: 'favourites', loadChildren: () => import('./features/favourite/favourite.module').then(m => m.FavouriteModule) },
-      // { path: 'search', loadChildren: () => import('./features/search/search.module').then(m => m.SearchModule) },
-      // { path: 'profile', loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule) },
-      // { path: 'reports', loadChildren: () => import('./features/report/report.module').then(m => m.ReportModule) },
-      // {
-      //   path: 'admin',
-      //   canActivate: [AdminGuard],
-      //   loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule)
-      // }
+      // ========== QUIZ ROUTES ==========
+      {
+        path: "quiz",
+        children: [
+          {
+            path: "",
+            component: QuizListComponent,
+            data: { breadcrumb: "Quizzes" },
+          },
+          {
+            path: "new",
+            component: QuizFormComponent,
+            data: { breadcrumb: "Create Quiz" },
+          },
+          {
+            path: ":id",
+            component: QuizDetailComponent,
+            data: { breadcrumb: "Quiz Details" },
+          },
+          {
+            path: ":id/edit",
+            component: QuizEditComponent,
+            data: { breadcrumb: "Edit Quiz" },
+          },
+        ],
+      },
+      // ========== END QUIZ ==========
     ],
   },
   {
