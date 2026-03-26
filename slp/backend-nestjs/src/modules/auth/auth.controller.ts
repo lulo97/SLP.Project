@@ -17,7 +17,7 @@ import {
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserService } from "../user/user.service";
-import { SessionGuard } from "../../common/guards/session.guard";
+import { SessionGuard } from "../session/session.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { LoginRequest } from "./dto/login-request.dto";

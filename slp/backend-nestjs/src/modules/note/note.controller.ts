@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { NoteService } from './note.service';
-import { SessionGuard } from '../../common/guards/session.guard';
+import { SessionGuard } from '../session/session.guard';
 import { CreateNoteRequest } from './dto/create-note-request.dto';
 import { UpdateNoteRequest } from './dto/update-note-request.dto';
 import { NoteDto } from './dto/note.dto';

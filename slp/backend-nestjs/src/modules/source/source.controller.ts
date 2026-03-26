@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { SessionGuard } from '../../common/guards/session.guard';
+import { SessionGuard } from '../session/session.guard';
 import { SourceService } from './source.service';
 import { ProgressService } from './progress.service';
 import {

@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { SessionGuard } from '../../common/guards/session.guard';
+import { SessionGuard } from '../session/session.guard';
 import { TagService } from './tag.service';
 import { TagDto, TagListResponse } from './dto/tag.dto';
 

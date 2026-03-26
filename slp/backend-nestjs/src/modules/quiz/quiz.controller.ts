@@ -14,7 +14,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { QuizService } from "./quiz.service";
-import { SessionGuard } from "../../common/guards/session.guard";
+import { SessionGuard } from "../session/session.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CreateQuizDto } from "./dto/create-quiz.dto";

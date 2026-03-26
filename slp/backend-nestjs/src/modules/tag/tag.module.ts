@@ -16,6 +16,6 @@ import { SessionModule } from '../session/session.module';
   ],
   providers: [TagRepository, TagService],
   controllers: [TagController],
-  exports: [TagService],
+  exports: [TagService, TagRepository],
 })
 export class TagModule {}

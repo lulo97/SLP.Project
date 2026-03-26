@@ -27,7 +27,7 @@ import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { QuestionDto, QuestionListDto } from "./dto/question.dto";
 import { QuestionSearchDto } from "./dto/question-search.dto";
 import { PaginatedQuestionListDto } from "./dto/paginated-question-list.dto";
-import { SessionGuard } from "../../common/guards/session.guard";
+import { SessionGuard } from "../session/session.guard";
 import { User } from "../../common/decorators/user.decorator";
 import { isAdmin } from "../../helpers/admin.helper";
 

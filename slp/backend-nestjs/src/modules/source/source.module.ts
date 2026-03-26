@@ -9,13 +9,14 @@ import { SourceController } from './source.controller';
 import { ParserClient } from './parser-client.service';
 import { ProgressService } from './progress.service';
 import { UserModule } from '../user/user.module';
+import { SessionModule } from '../session/session.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Source]),
     HttpModule,
     ConfigModule,
-    UserModule,
+    UserModule,SessionModule
   ],
   providers: [
     SourceRepository,
@@ -24,6 +25,6 @@ import { UserModule } from '../user/user.module';
     ProgressService,
   ],
   controllers: [SourceController],
-  exports: [SourceService],
+  exports: [SourceService, SourceRepository],
 })
 export class SourceModule {}

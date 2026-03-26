@@ -10,7 +10,10 @@ import { QuizNote } from "./quiz-note.entity";
 import { QuizSource } from "./quiz-source.entity";
 import { TagModule } from "../tag/tag.module";
 import { SourceModule } from "../source/source.module";
-import { NoteModule } from "../note/note.module"; // if needed
+import { NoteModule } from "../note/note.module";
+import { Note } from "../note/note.entity";
+import { Source } from "../source/source.entity";
+import { SessionModule } from "../session/session.module";
 
 @Module({
   imports: [
@@ -20,13 +23,16 @@ import { NoteModule } from "../note/note.module"; // if needed
       QuizTag,
       QuizNote,
       QuizSource,
+      Note,
+      Source,
     ]),
     TagModule,
     SourceModule,
     NoteModule,
+    SessionModule,
   ],
   controllers: [QuizController],
   providers: [QuizService, QuizRepository],
-  exports: [QuizService],
+  exports: [QuizService, QuizRepository],
 })
 export class QuizModule {}

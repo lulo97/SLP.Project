@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
-import { SessionGuard } from '../../common/guards/session.guard';
+import { SessionGuard } from '../session/session.guard';
 import { UserStatsDto } from './dto/user-stats.dto';
 import { TopQuizDto } from './dto/top-quiz.dto';
 import { WordOfTheDayDto } from './dto/word-of-the-day.dto';

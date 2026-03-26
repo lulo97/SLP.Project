@@ -1,7 +1,7 @@
 import { Controller, Get, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserRequest } from './dto/update-user.dto';
-import { SessionGuard } from '../../common/guards/session.guard';
+import { SessionGuard } from '../session/session.guard';
 import { User } from './user.entity';
 
 @Controller('api/users')
