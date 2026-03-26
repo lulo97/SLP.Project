@@ -210,5 +210,29 @@
     "attachError": "Failed to attach sources",
     "detachSuccess": "Source detached",
     "detachError": "Failed to detach source"
+  },
+  "comment": {
+    "title": "Comments",
+    "writeComment": "Write a comment...",
+    "addComment": "Add Comment",
+    "loginToComment": "Log in to comment.",
+    "noComments": "No comments yet.",
+    "reply": "Reply",
+    "edit": "Edit",
+    "history": "History",
+    "delete": "Delete",
+    "report": "Report",
+    "edited": "edited",
+    "deleteConfirm": "Delete this comment?",
+    "contentRequired": "Content cannot be empty",
+    "addSuccess": "Comment added",
+    "updateSuccess": "Comment updated",
+    "deleteSuccess": "Comment deleted",
+    "deleteError": "Failed to delete comment",
+    "replySuccess": "Reply added",
+    "editHistory": "Edit History",
+    "original": "Original",
+    "latestSaved": "Latest saved",
+    "noHistory": "No history available."
   }
 }

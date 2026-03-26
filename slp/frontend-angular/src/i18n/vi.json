@@ -210,5 +210,29 @@
     "attachError": "Gắn nguồn thất bại",
     "detachSuccess": "Gỡ nguồn thành công",
     "detachError": "Gỡ nguồn thất bại"
+  },
+  "comment": {
+    "title": "Bình luận",
+    "writeComment": "Viết bình luận...",
+    "addComment": "Thêm bình luận",
+    "loginToComment": "Đăng nhập để bình luận.",
+    "noComments": "Chưa có bình luận nào.",
+    "reply": "Trả lời",
+    "edit": "Sửa",
+    "history": "Lịch sử",
+    "delete": "Xóa",
+    "report": "Báo cáo",
+    "edited": "đã chỉnh sửa",
+    "deleteConfirm": "Xóa bình luận này?",
+    "contentRequired": "Nội dung không được để trống",
+    "addSuccess": "Đã thêm bình luận",
+    "updateSuccess": "Đã cập nhật bình luận",
+    "deleteSuccess": "Đã xóa bình luận",
+    "deleteError": "Xóa bình luận thất bại",
+    "replySuccess": "Đã thêm phản hồi",
+    "editHistory": "Lịch sử chỉnh sửa",
+    "original": "Bản gốc",
+    "latestSaved": "Đã lưu gần nhất",
+    "noHistory": "Không có lịch sử."
   }
 }
