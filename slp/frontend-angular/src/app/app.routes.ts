@@ -61,6 +61,38 @@ export const routes: Routes = [
           ),
         data: { breadcrumb: "Edit Question" }, // <-- add this
       },
+      {
+        path: "notes",
+        loadComponent: () =>
+          import("../features/note/note-list.component").then(
+            (m) => m.NoteListComponent,
+          ),
+        data: { breadcrumb: "My Notes" },
+      },
+      {
+        path: "notes/new",
+        loadComponent: () =>
+          import("../features/note/note-form.component").then(
+            (m) => m.NoteFormComponent,
+          ),
+        data: { breadcrumb: "Create Note" },
+      },
+      {
+        path: "notes/:id",
+        loadComponent: () =>
+          import("../features/note/note-detail.component").then(
+            (m) => m.NoteDetailComponent,
+          ),
+        data: { breadcrumb: "Note Detail" },
+      },
+      {
+        path: "notes/:id/edit",
+        loadComponent: () =>
+          import("../features/note/note-form.component").then(
+            (m) => m.NoteFormComponent,
+          ),
+        data: { breadcrumb: "Edit Note" },
+      },
       // { path: 'quiz', loadChildren: () => import('./features/quiz/quiz.module').then(m => m.QuizModule) },
       // { path: 'source', loadChildren: () => import('./features/source/source.module').then(m => m.SourceModule) },
       // { path: 'notes', loadChildren: () => import('./features/note/note.module').then(m => m.NoteModule) },

@@ -86,6 +86,10 @@
           <i nz-icon nzType="search" nzTheme="outline"></i>
           <span>{{ "nav.search" | translate }}</span>
         </li>
+        <li nz-menu-item nzMatchRouter [routerLink]="'/notes'">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          <span>{{ "nav.myNotes" | translate }}</span>
+        </li>
 
         <li nz-menu-divider></li>
 
