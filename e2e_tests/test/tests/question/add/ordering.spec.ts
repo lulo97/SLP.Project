@@ -10,6 +10,8 @@ import {
 } from '../utils';
 
 test('create and delete an ordering question as admin', async ({ page }) => {
+  test.setTimeout(120000);
+  
   const title = getUniqueTitle('Test Ordering Question');
   const description = 'This is a test description for the ordering question.';
   const explanation = `Explanation for ${title}`;

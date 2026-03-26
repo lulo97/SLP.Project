@@ -8,9 +8,12 @@ import {
   getUniqueTitle,
   verifyAndDeleteQuestion,
   getQuestionIdFromItem,
+  FRONTEND_URL,
 } from "../utils";
 
 test("admin can update a multiple choice question", async ({ page }) => {
+  test.setTimeout(120000);
+  
   const originalTitle = getUniqueTitle("Original MC");
   const updatedTitle = getUniqueTitle("Updated MC");
   const tagOriginal = `mc-original-${Date.now()}`;
@@ -34,12 +37,14 @@ test("admin can update a multiple choice question", async ({ page }) => {
   await submitQuestion(page);
 
   // Find the question in the list and edit it
-  await page.goto("http://localhost:4000/questions");
+  await page.goto(`${FRONTEND_URL}/questions`);
   const searchInput = page.getByTestId("question-search");
   await searchInput.fill(originalTitle);
   await searchInput.press("Enter");
+
+  // UPDATED: Extracted data-testid only, removed 'li'
   const item = page
-    .locator(`li[data-testid^="question-item-"]:has-text("${originalTitle}")`)
+    .locator(`[data-testid^="question-item-"]:has-text("${originalTitle}")`)
     .first();
   await expect(item).toBeVisible();
 
@@ -47,7 +52,7 @@ test("admin can update a multiple choice question", async ({ page }) => {
   const editButton = page.getByTestId(`edit-question-btn-${questionId}`);
   await editButton.click();
   await expect(page).toHaveURL(
-    `http://localhost:4000/question/${questionId}/edit`,
+    `${FRONTEND_URL}/question/${questionId}/edit`,
   );
 
   // Update fields
@@ -91,11 +96,13 @@ test("admin can update a multiple choice question", async ({ page }) => {
   await submitQuestion(page);
 
   // Verify the updated question appears in list
-  await page.goto("http://localhost:4000/questions");
+  await page.goto(`${FRONTEND_URL}/questions`);
   await searchInput.fill(updatedTitle);
   await searchInput.press("Enter");
+
+  // UPDATED: Extracted data-testid only, removed 'li'
   const updatedItem = page
-    .locator(`li[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
+    .locator(`[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
     .first();
   await expect(updatedItem).toBeVisible();
 

@@ -4,7 +4,7 @@ import {
   loginAsAdmin,
   navigateToCreateQuestion,
   fillCommonFields,
-  getUniqueTitle,
+  getUniqueTitle, FRONTEND_URL
 } from '../utils';
 
 test('should not allow creating a multiple choice question with only one option', async ({ page }) => {
@@ -42,7 +42,7 @@ test('should not allow creating a multiple choice question with only one option'
   const submitButton = page.getByTestId('submit-question');
   await submitButton.click();
 
- // Wait for the warning message to appear
+  // Wait for the warning message to appear
   const warningMessage = page.locator('.ant-message-warning');
   await expect(warningMessage).toBeVisible({ timeout: 5000 });
   await expect(warningMessage).toContainText('At least two options are required');
@@ -51,7 +51,7 @@ test('should not allow creating a multiple choice question with only one option'
   await expect(page).toHaveURL(/\/question\/new/);
 
   // Optional: verify the question was not created by going to the list and searching
-  await page.goto('http://localhost:4000/questions');
+  await page.goto(`${FRONTEND_URL}/questions`);
   const searchInput = page.getByTestId('question-search');
   await searchInput.fill(title);
   await searchInput.press('Enter');

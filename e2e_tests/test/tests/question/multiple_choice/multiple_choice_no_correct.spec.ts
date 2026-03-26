@@ -5,6 +5,7 @@ import {
   navigateToCreateQuestion,
   fillCommonFields,
   getUniqueTitle,
+  FRONTEND_URL,
 } from '../utils';
 
 test('should not allow creating a multiple choice question with no correct answer', async ({ page }) => {
@@ -48,7 +49,7 @@ test('should not allow creating a multiple choice question with no correct answe
   await expect(page).toHaveURL(/\/question\/new/);
 
   // Verify the question was not created by going to the list and searching
-  await page.goto('http://localhost:4000/questions');
+  await page.goto(`${FRONTEND_URL}/questions`);
   const searchInput = page.getByTestId('question-search');
   await searchInput.fill(title);
   await searchInput.press('Enter');

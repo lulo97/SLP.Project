@@ -7,6 +7,7 @@ import {
   submitQuestion,
   getUniqueTitle,
   getQuestionIdFromItem,
+  FRONTEND_URL,
 } from '../utils';
 
 test('admin can update an ordering question', async ({ page }) => {
@@ -41,20 +42,21 @@ test('admin can update an ordering question', async ({ page }) => {
   await submitQuestion(page);
 
   // ---------- 2. Locate the created question and go to edit ----------
-  await page.goto('http://localhost:4000/questions');
+  await page.goto(`${FRONTEND_URL}/questions`);
   const searchInput = page.getByTestId('question-search');
   await searchInput.fill(originalTitle);
   await searchInput.press('Enter');
 
+  // UPDATED: Removed 'li' prefix
   const item = page
-    .locator(`li[data-testid^="question-item-"]:has-text("${originalTitle}")`)
+    .locator(`[data-testid^="question-item-"]:has-text("${originalTitle}")`)
     .first();
   await expect(item).toBeVisible();
 
   const questionId = await getQuestionIdFromItem(item);
   const editButton = page.getByTestId(`edit-question-btn-${questionId}`);
   await editButton.click();
-  await expect(page).toHaveURL(`http://localhost:4000/question/${questionId}/edit`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}/question/${questionId}/edit`);
 
   // ---------- 3. Update the question ----------
   const titleInput = page.getByTestId('question-title');
@@ -101,12 +103,13 @@ test('admin can update an ordering question', async ({ page }) => {
   await submitQuestion(page);
 
   // ---------- 4. Verify the updated question appears in the list ----------
-  await page.goto('http://localhost:4000/questions');
+  await page.goto(`${FRONTEND_URL}/questions`);
   await searchInput.fill(updatedTitle);
   await searchInput.press('Enter');
 
+  // UPDATED: Removed 'li' prefix
   const updatedItem = page
-    .locator(`li[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
+    .locator(`[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
     .first();
   await expect(updatedItem).toBeVisible();
 
@@ -114,7 +117,7 @@ test('admin can update an ordering question', async ({ page }) => {
   const updatedId = await getQuestionIdFromItem(updatedItem);
   const editAgainButton = page.getByTestId(`edit-question-btn-${updatedId}`);
   await editAgainButton.click();
-  await expect(page).toHaveURL(`http://localhost:4000/question/${updatedId}/edit`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}/question/${updatedId}/edit`);
 
   // Check that the ordering items are as expected (the third item is edited)
   const editedItemInput = page.getByTestId('ordering-item-2');
@@ -122,12 +125,13 @@ test('admin can update an ordering question', async ({ page }) => {
 
   // ---------- 5. Clean up ----------
   // Go back to list and delete the updated question
-  await page.goto('http://localhost:4000/questions');
+  await page.goto(`${FRONTEND_URL}/questions`);
   await searchInput.fill(updatedTitle);
   await searchInput.press('Enter');
 
+  // UPDATED: Removed 'li' prefix
   const deleteItem = page
-    .locator(`li[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
+    .locator(`[data-testid^="question-item-"]:has-text("${updatedTitle}")`)
     .first();
   const deleteId = await getQuestionIdFromItem(deleteItem);
   const deleteButton = page.getByTestId(`delete-question-btn-${deleteId}`);
