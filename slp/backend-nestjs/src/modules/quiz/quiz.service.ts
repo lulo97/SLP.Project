@@ -19,12 +19,15 @@ import {
 import { AddNoteToQuizDto } from "./dto/add-note-to-quiz.dto";
 import { AddSourceToQuizDto } from "./dto/add-source-to-quiz.dto";
 import { NoteDto } from "../note/dto/note.dto";
-import { SourceDto } from "../source/dto/source.dto";
+import { SourceDto } from "src/modules/source/source.dto";
 import { QuizSearchDto } from "./dto/quiz-search.dto";
 import { PaginatedResult } from "../../helpers/pagination.helper";
-import { AdminHelper } from "../../helpers/admin.helper"; // adjust path
+import { isAdmin } from "../../helpers/admin.helper";
 import { validate as validateJson } from "class-validator";
 import { QuestionValidationHelper } from "../question/question-validation.helper"; // if exists
+import { QuizTag } from "./quiz-tag.entity";
+import { QuizQuestion } from "./quiz-question.entity";
+import { QuizSource } from "./quiz-source.entity";
 
 @Injectable()
 export class QuizService {
@@ -111,7 +114,7 @@ export class QuizService {
     if (
       quiz.disabled &&
       quiz.userId !== currentUserId &&
-      !(currentUserId && AdminHelper.isAdmin(currentUserId))
+      !(currentUserId && isAdmin(currentUserId))
     ) {
       return null;
     }
@@ -134,7 +137,7 @@ export class QuizService {
     return quizzes.map(this.mapToListDto);
   }
 
-  async createQuiz(userId: number, dto: CreateQuizDto): Promise<QuizDto> {
+async createQuiz(userId: number, dto: CreateQuizDto): Promise<QuizDto> {
     const quiz = new Quiz();
     quiz.userId = userId;
     quiz.title = dto.title;
@@ -146,7 +149,7 @@ export class QuizService {
     if (dto.tagNames?.length) {
       const tags = await this.tagRepo.getOrCreateTags(dto.tagNames);
       quiz.quizTags = tags.map((tag) => {
-        const qt = new (await import("./quiz-tag.entity")).QuizTag();
+        const qt = new QuizTag();
         qt.tag = tag;
         return qt;
       });
@@ -161,23 +164,25 @@ export class QuizService {
     userId: number,
     dto: UpdateQuizDto,
   ): Promise<QuizDto | null> {
-    const includeDisabled = AdminHelper.isAdmin(userId);
+    const includeDisabled = isAdmin(userId);
     const quiz = await this.quizRepo.getById(id, includeDisabled);
     if (!quiz) return null;
 
-    if (!AdminHelper.isAdmin(userId) && quiz.userId !== userId) return null;
+    if (!isAdmin(userId) && quiz.userId !== userId) return null;
 
     if (dto.title !== undefined) quiz.title = dto.title;
     if (dto.description !== undefined) quiz.description = dto.description;
     if (dto.visibility !== undefined) quiz.visibility = dto.visibility;
-    if (AdminHelper.isAdmin(userId) && dto.disabled !== undefined)
+    if (isAdmin(userId) && dto.disabled !== undefined)
       quiz.disabled = dto.disabled;
 
     if (dto.tagNames !== undefined) {
-      await this.tagRepo.removeQuizTags(quiz.id);
+      // Remove existing tags
+      await this.quizRepo.removeQuizTags(quiz.id);
+      // Create new tags and associate
       const tags = await this.tagRepo.getOrCreateTags(dto.tagNames);
       quiz.quizTags = tags.map((tag) => {
-        const qt = new (await import("./quiz-tag.entity")).QuizTag();
+        const qt = new QuizTag();
         qt.quizId = quiz.id;
         qt.tagId = tag.id;
         qt.tag = tag;
@@ -217,7 +222,7 @@ export class QuizService {
 
     if (original.quizTags?.length) {
       clone.quizTags = original.quizTags.map((qt) => {
-        const newQt = new (await import("./quiz-tag.entity")).QuizTag();
+        const newQt = new QuizTag();
         newQt.tagId = qt.tagId;
         return newQt;
       });
@@ -225,9 +230,7 @@ export class QuizService {
 
     if (original.quizQuestions?.length) {
       clone.quizQuestions = original.quizQuestions.map((qq) => {
-        const newQq = new (
-          await import("./quiz-question.entity")
-        ).QuizQuestion();
+        const newQq = new QuizQuestion();
         newQq.originalQuestionId = qq.originalQuestionId;
         newQq.questionSnapshotJson = qq.questionSnapshotJson;
         newQq.displayOrder = qq.displayOrder;
@@ -237,7 +240,7 @@ export class QuizService {
 
     if (original.quizSources?.length) {
       clone.quizSources = original.quizSources.map((qs) => {
-        const newQs = new (await import("./quiz-source.entity")).QuizSource();
+        const newQs = new QuizSource();
         newQs.sourceId = qs.sourceId;
         return newQs;
       });
@@ -245,6 +248,54 @@ export class QuizService {
 
     const created = await this.quizRepo.create(clone);
     return this.mapToDto(created);
+  }
+
+  async createQuizQuestion(
+    quizId: number,
+    userId: number,
+    dto: CreateQuizQuestionDto,
+  ): Promise<QuizQuestionDto> {
+    const quiz = await this.quizRepo.getById(quizId);
+    if (!quiz) throw new NotFoundException("Quiz not found");
+    if (quiz.userId !== userId)
+      throw new UnauthorizedException("You do not own this quiz");
+    if (dto.questionSnapshotJson) {
+      this.validateQuestionSnapshot(dto.questionSnapshotJson);
+    }
+
+    const question = new QuizQuestion();
+    question.quizId = quizId;
+    question.originalQuestionId = dto.originalQuestionId ?? null;
+    question.questionSnapshotJson = dto.questionSnapshotJson ?? null;
+    question.displayOrder = dto.displayOrder;
+
+    const created = await this.quizRepo.createQuizQuestion(question);
+    return this.mapToQuestionDto(created);
+  }
+
+  async updateQuizQuestion(
+    id: number,
+    userId: number,
+    dto: UpdateQuizQuestionDto,
+  ): Promise<QuizQuestionDto | null> {
+    const question = await this.quizRepo.getQuizQuestionById(id);
+    if (!question) return null;
+    if (question.quiz.userId !== userId)
+      throw new UnauthorizedException("You do not own this quiz");
+    if (dto.questionSnapshotJson) {
+      this.validateQuestionSnapshot(dto.questionSnapshotJson);
+    }
+
+    if (dto.originalQuestionId !== undefined)
+      question.originalQuestionId = dto.originalQuestionId;
+    if (dto.questionSnapshotJson !== undefined)
+      question.questionSnapshotJson = dto.questionSnapshotJson;
+    if (dto.displayOrder !== undefined)
+      question.displayOrder = dto.displayOrder;
+    question.updatedAt = new Date();
+
+    await this.quizRepo.updateQuizQuestion(question);
+    return this.mapToQuestionDto(question);
   }
 
   async searchQuizzes(
@@ -295,56 +346,6 @@ export class QuizService {
       question.quiz.userId !== currentUserId
     )
       return null;
-    return this.mapToQuestionDto(question);
-  }
-
-  async createQuizQuestion(
-    quizId: number,
-    userId: number,
-    dto: CreateQuizQuestionDto,
-  ): Promise<QuizQuestionDto> {
-    const quiz = await this.quizRepo.getById(quizId);
-    if (!quiz) throw new NotFoundException("Quiz not found");
-    if (quiz.userId !== userId)
-      throw new UnauthorizedException("You do not own this quiz");
-    if (dto.questionSnapshotJson) {
-      this.validateQuestionSnapshot(dto.questionSnapshotJson);
-    }
-
-    const question = new (
-      await import("./quiz-question.entity")
-    ).QuizQuestion();
-    question.quizId = quizId;
-    question.originalQuestionId = dto.originalQuestionId ?? null;
-    question.questionSnapshotJson = dto.questionSnapshotJson ?? null;
-    question.displayOrder = dto.displayOrder;
-
-    const created = await this.quizRepo.createQuizQuestion(question);
-    return this.mapToQuestionDto(created);
-  }
-
-  async updateQuizQuestion(
-    id: number,
-    userId: number,
-    dto: UpdateQuizQuestionDto,
-  ): Promise<QuizQuestionDto | null> {
-    const question = await this.quizRepo.getQuizQuestionById(id);
-    if (!question) return null;
-    if (question.quiz.userId !== userId)
-      throw new UnauthorizedException("You do not own this quiz");
-    if (dto.questionSnapshotJson) {
-      this.validateQuestionSnapshot(dto.questionSnapshotJson);
-    }
-
-    if (dto.originalQuestionId !== undefined)
-      question.originalQuestionId = dto.originalQuestionId;
-    if (dto.questionSnapshotJson !== undefined)
-      question.questionSnapshotJson = dto.questionSnapshotJson;
-    if (dto.displayOrder !== undefined)
-      question.displayOrder = dto.displayOrder;
-    question.updatedAt = new Date();
-
-    await this.quizRepo.updateQuizQuestion(question);
     return this.mapToQuestionDto(question);
   }
 

@@ -99,8 +99,13 @@ export class QuizRepository {
 
   async create(quiz: Quiz): Promise<Quiz> {
     const saved = await this.quizRepo.save(quiz);
-    // Reload with relations
-    return this.getById(saved.id);
+    const reloaded = await this.getById(saved.id);
+
+    if (!reloaded) {
+      throw new Error(`Failed to reload quiz after creation (ID: ${saved.id})`);
+    }
+
+    return reloaded;
   }
 
   async update(quiz: Quiz): Promise<void> {
@@ -328,5 +333,9 @@ export class QuizRepository {
       commentCount: 0, // you need to join comments
       questionCount: 0,
     }));
+  }
+
+  async removeQuizTags(quizId: number): Promise<void> {
+    await this.quizTagRepo.delete({ quizId });
   }
 }
