@@ -9,13 +9,13 @@ import { SessionModule } from "../modules/session/session.module";
 import { MetricsModule } from "../modules/metrics/metrics.module";
 import configuration from "../config/configuration";
 import { QuizModule } from "../modules/quiz/quiz.module";
-import { SourceModule } from '../modules/source/source.module';
-import { NoteModule } from '../modules/note/note.module';
+import { SourceModule } from "../modules/source/source.module";
+import { NoteModule } from "../modules/note/note.module";
 // import { ExplanationModule } from './modules/explanation/explanation.module';
 // import { ProgressModule } from './modules/progress/progress.module';
 // import { FavoriteModule } from './modules/favorite/favorite.module';
 // import { CommentModule } from './modules/comment/comment.module';
-// import { ReportModule } from './modules/report/report.module';
+import { ReportModule } from "../modules/report/report.module";
 // import { AdminModule } from './modules/admin/admin.module';
 // import { DashboardModule } from './modules/dashboard/dashboard.module';
 // import { HealthModule } from './modules/health/health.module';
@@ -24,7 +24,7 @@ import { NoteModule } from '../modules/note/note.module';
 import { EmailModule } from "../modules/email/email.module";
 // import { FileStorageModule } from './modules/file-storage/file-storage.module';
 // import { SearchModule } from './modules/search/search.module';
-// import { QuizAttemptModule } from './modules/quiz-attempt/quiz-attempt.module';
+import { QuizAttemptModule } from "../modules/quiz-attempt/quiz-attempt.module";
 // import { DailyWordModule } from './modules/daily-word/daily-word.module';
 import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
@@ -41,6 +41,7 @@ import { QuestionModule } from "../modules/question/question.module";
       autoLoadEntities: true,
       synchronize: false, // use migrations
       logging: true,
+      entities: [__dirname + "/modules/**/*.entity{.ts,.js}"],
     }),
     AuthModule,
     UserModule,
@@ -52,7 +53,7 @@ import { QuestionModule } from "../modules/question/question.module";
     // ProgressModule,
     // FavoriteModule,
     // CommentModule,
-    // ReportModule,
+    ReportModule,
     // AdminModule,
     // DashboardModule,
     // HealthModule,
@@ -64,6 +65,7 @@ import { QuestionModule } from "../modules/question/question.module";
 
     TagModule,
     QuestionModule,
+    QuizAttemptModule,
   ],
   controllers: [AppController],
   providers: [AppService],

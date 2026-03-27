@@ -32,7 +32,19 @@ import { SessionModule } from "../session/session.module";
     SessionModule,
   ],
   controllers: [QuizController],
-  providers: [QuizService, QuizRepository],
-  exports: [QuizService, QuizRepository],
+  providers: [
+    QuizService,
+    QuizRepository,
+    // Cung cấp token IQuizRepository trỏ đến QuizRepository
+    {
+      provide: 'IQuizRepository',
+      useClass: QuizRepository,
+    },
+  ],
+  exports: [
+    QuizService,
+    // Export token để các module khác có thể inject
+    'IQuizRepository',
+  ],
 })
 export class QuizModule {}
