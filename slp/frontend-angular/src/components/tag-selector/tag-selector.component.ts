@@ -63,9 +63,37 @@ export class TagSelectorComponent implements ControlValueAccessor, OnInit {
 
   ngOnInit(): void {
     this.loadTags();
-    this.control.valueChanges.subscribe((value) => {
-      this.onChange(value);
+
+    this.control.valueChanges.subscribe((value: string[] | null) => {
+      const rawValue = value || [];
+      const cleaned = this.cleanValues(rawValue);
+
+      // Only update the control if the cleaned version is different
+      // from the current version to prevent infinite loops.
+      if (JSON.stringify(rawValue) !== JSON.stringify(cleaned)) {
+        this.control.setValue(cleaned, { emitEvent: false });
+        this.onChange(cleaned);
+      } else {
+        this.onChange(rawValue);
+      }
+
+      this.onTouched();
     });
+  }
+
+  // Helper method to keep logic clean
+  private cleanValues(values: string[]): string[] {
+    const seen = new Set<string>();
+    return values
+      .map((v) => v.trim())
+      .filter((v) => {
+        if (!v) return false;
+        const key = v.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, this.maxTags);
   }
 
   loadTags(): void {
@@ -81,27 +109,6 @@ export class TagSelectorComponent implements ControlValueAccessor, OnInit {
           console.error(err);
         },
       });
-  }
-
-  handleChange(newVal: string[]): void {
-    if (!newVal) return;
-
-    const seen = new Set<string>();
-    const clean = newVal
-      .map((v) => v.trim())
-      .filter((v) => {
-        if (!v) return false;
-        const key = v.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, this.maxTags);
-
-    // Cập nhật lại control với dữ liệu đã làm sạch (tránh vòng lặp vô tận bằng emitEvent: false)
-    this.control.setValue(clean, { emitEvent: false });
-    this.onChange(clean);
-    this.onTouched();
   }
 
   // ControlValueAccessor methods
