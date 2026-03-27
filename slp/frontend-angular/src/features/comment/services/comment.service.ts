@@ -1,4 +1,4 @@
-// src/features/comment/services/comment.service.ts
+
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';

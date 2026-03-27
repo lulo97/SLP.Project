@@ -1,4 +1,4 @@
-// src/features/quiz/components/quiz-info-card.component.ts
+
 
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';

@@ -1,4 +1,4 @@
-// src/features/question/pages/question-list.component.ts
+
 import { Component, OnInit, OnDestroy, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterModule, Router } from "@angular/router";

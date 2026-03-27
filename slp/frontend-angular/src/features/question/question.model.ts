@@ -1,4 +1,4 @@
-// src/features/question/question.model.ts
+
 
 export interface QuestionDto {
   id: number;

@@ -1,5 +1,3 @@
-// src/app/app.routes.ts (phần liên quan)
-
 import { Routes } from "@angular/router";
 import { MobileLayoutComponent } from "../layouts/mobile-layout/mobile-layout.component";
 import { AuthGuard } from "../features/auth/auth.guard";

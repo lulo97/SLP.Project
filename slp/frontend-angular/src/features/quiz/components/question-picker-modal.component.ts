@@ -1,4 +1,4 @@
-// src/features/quiz/components/question-picker-modal.component.ts
+
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';

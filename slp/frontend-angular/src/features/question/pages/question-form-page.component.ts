@@ -1,4 +1,4 @@
-// src/features/question/pages/question-form-page.component.ts
+
 import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";

@@ -1,4 +1,4 @@
-// src/features/quiz/quiz.model.ts
+
 
 export interface QuizListDto {
   id: number;

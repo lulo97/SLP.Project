@@ -1,5 +1,3 @@
-// src/features/quiz/components/sources-section.component.ts
-
 import { Component, Input, Output, EventEmitter } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { NzCardModule } from "ng-zorro-antd/card";
@@ -14,6 +12,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { SourceDto } from "../quiz.model";
 import { RouterModule } from "@angular/router";
 import { FormsModule } from "@angular/forms";
+
 @Component({
   selector: "app-sources-section",
   standalone: true,
@@ -36,9 +35,29 @@ import { FormsModule } from "@angular/forms";
       class="shadow-sm"
       data-testid="sources-card"
     >
+      <!-- Loading -->
+      <div
+        *ngIf="loading"
+        class="text-center py-4"
+        data-testid="sources-loading"
+      >
+        <nz-spin size="small"></nz-spin>
+      </div>
+
+      <!-- Empty state -->
+      <div
+        *ngIf="!loading && sources.length === 0"
+        class="text-gray-400 text-sm py-2"
+        data-testid="no-sources-message"
+      >
+        No sources attached.
+      </div>
+
+      <!-- Sources tags -->
       <div
         *ngIf="!loading && sources.length > 0"
         class="flex flex-wrap gap-2 mb-3"
+        data-testid="sources-tags-container"
       >
         <nz-tag
           *ngFor="let src of sources"
@@ -57,43 +76,66 @@ import { FormsModule } from "@angular/forms";
           {{ src.title }}
         </nz-tag>
       </div>
+
+      <!-- Attach button (always shown if not readonly) -->
+      <button
+        *ngIf="!readonly"
+        nz-button
+        nzType="dashed"
+        block
+        class="mt-2"
+        [disabled]="!canEdit"
+        (click)="openAttachModal()"
+        data-testid="attach-source-button"
+      >
+        <i nz-icon nzType="plus"></i>
+        {{ "quiz.attachSources" | translate }}
+      </button>
     </nz-card>
+
+    <!-- Attach Source Modal (unchanged) -->
     <nz-modal
       [(nzVisible)]="modalVisible"
       nzTitle="{{ 'quiz.attachSources' | translate }}"
       (nzOnOk)="handleAttach()"
+      (nzOnCancel)="modalVisible = false"
       [nzOkLoading]="attaching"
       nzOkText="{{ 'quiz.attach' | translate }}"
       nzCancelText="{{ 'common.cancel' | translate }}"
       data-testid="attach-source-modal"
     >
-      <div *ngIf="availableSourcesLoading" class="text-center py-4">
-        <nz-spin />
-      </div>
-      <div
-        *ngIf="!availableSourcesLoading && availableSources.length === 0"
-        class="text-gray-400"
-      >
-        {{ "quiz.noSourcesAvailable" | translate }}
-        <a routerLink="/source/upload">{{ "source.uploadFile" | translate }}</a
-        >.
-      </div>
-      <nz-checkbox-group
-        *ngIf="!availableSourcesLoading && availableSources.length > 0"
-        [(ngModel)]="selectedIds"
-        class="flex flex-col gap-2"
-        data-testid="source-checkbox-group"
-      >
-        <label
-          nz-checkbox
-          *ngFor="let src of availableSources"
-          [nzValue]="src.id"
-          [nzDisabled]="isAlreadyAttached(src.id)"
-          [attr.data-testid]="'source-checkbox-' + src.id"
+      <ng-template nzModalContent>
+        <div *ngIf="availableSourcesLoading" class="text-center py-4">
+          <nz-spin></nz-spin>
+        </div>
+
+        <div
+          *ngIf="!availableSourcesLoading && availableSources.length === 0"
+          class="text-gray-400"
         >
-          {{ src.title }} ({{ src.type }})
-        </label>
-      </nz-checkbox-group>
+          {{ "quiz.noSourcesAvailable" | translate }}
+          <a routerLink="/source/upload">
+            {{ "source.uploadFile" | translate }} </a
+          >.
+        </div>
+
+        <nz-checkbox-group
+          *ngIf="!availableSourcesLoading && availableSources.length > 0"
+          [(ngModel)]="selectedIds"
+          class="flex flex-col gap-2"
+          data-testid="source-checkbox-group"
+        >
+          <label
+            nz-checkbox
+            *ngFor="let src of availableSources"
+            [nzValue]="src.id"
+            [nzDisabled]="isAlreadyAttached(src.id)"
+            [attr.data-testid]="'source-checkbox-' + src.id"
+          >
+            {{ src.title }} ({{ src.type }})
+          </label>
+        </nz-checkbox-group>
+      </ng-template>
     </nz-modal>
   `,
   styles: [
@@ -159,6 +201,7 @@ export class SourcesSectionComponent {
     this.attaching = true;
     this.attach.emit(this.selectedIds);
     this.modalVisible = false;
+    this.selectedIds = [];
     this.attaching = false;
   }
 

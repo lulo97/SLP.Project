@@ -1,4 +1,4 @@
-// src/features/quiz/pages/quiz-list.component.ts
+
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
