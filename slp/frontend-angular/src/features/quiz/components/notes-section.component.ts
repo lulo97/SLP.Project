@@ -1,6 +1,6 @@
 // src/features/quiz/components/notes-section.component.ts
 
-import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
+import { Component, Input, Output, EventEmitter } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { NzCardModule } from "ng-zorro-antd/card";
@@ -35,9 +35,12 @@ import { NzFormModule } from "ng-zorro-antd/form";
       class="shadow-sm"
       data-testid="notes-card"
     >
-      <div *ngIf="loading" class="text-center py-4" data-testid="notes-loading">
-        <nz-spin size="small" />
+      <!-- Loading state -->
+      <div *ngIf="loading" class="text-center py-4">
+        <nz-spin size="small" data-testid="notes-loading"></nz-spin>
       </div>
+
+      <!-- Empty state -->
       <div
         *ngIf="!loading && notes.length === 0"
         class="text-gray-400 text-sm py-2"
@@ -45,6 +48,8 @@ import { NzFormModule } from "ng-zorro-antd/form";
       >
         {{ "quiz.noNotes" | translate }}
       </div>
+
+      <!-- Notes list -->
       <div *ngIf="!loading && notes.length > 0" class="space-y-3">
         <div
           *ngFor="let note of notes"
@@ -77,10 +82,12 @@ import { NzFormModule } from "ng-zorro-antd/form";
           </div>
           <p class="text-sm whitespace-pre-wrap">{{ note.content }}</p>
           <div class="text-xs text-gray-400 mt-1">
-            {{ note.updatedAt | date: "medium" }}
+            {{ note.createdAt | date: "medium" }}
           </div>
         </div>
       </div>
+
+      <!-- Add Note button -->
       <button
         nz-button
         nzType="dashed"
@@ -92,46 +99,40 @@ import { NzFormModule } from "ng-zorro-antd/form";
         <i nz-icon nzType="plus"></i> {{ "quiz.addNote" | translate }}
       </button>
     </nz-card>
-
     <nz-modal
       [(nzVisible)]="modalVisible"
       [nzTitle]="modalTitle"
       (nzOnOk)="handleSave()"
+      (nzOnCancel)="handleCancel()"
       [nzOkLoading]="saving"
-      nzOkText="{{ 'common.save' | translate }}"
-      nzCancelText="{{ 'common.cancel' | translate }}"
-      [nzWidth]="320"
-      data-testid="note-modal"
+      [nzWidth]="480"
     >
-      <form nz-form>
-        <nz-form-item>
-          <nz-form-label nzRequired>{{
-            "note.title" | translate
-          }}</nz-form-label>
-          <nz-form-control>
-            <input
-              nz-input
-              [(ngModel)]="form.title"
-              name="title"
-              data-testid="note-title-input"
-            />
-          </nz-form-control>
-        </nz-form-item>
-        <nz-form-item>
-          <nz-form-label nzRequired>{{
-            "note.content" | translate
-          }}</nz-form-label>
-          <nz-form-control>
-            <textarea
-              nz-input
-              [(ngModel)]="form.content"
-              name="content"
-              rows="4"
-              data-testid="note-content-input"
-            ></textarea>
-          </nz-form-control>
-        </nz-form-item>
-      </form>
+      <ng-template nzModalContent>
+        <form nz-form nzLayout="vertical">
+          <nz-form-item>
+            <nz-form-label nzRequired>{{
+              "note.title" | translate
+            }}</nz-form-label>
+            <nz-form-control>
+              <input nz-input [(ngModel)]="form.title" name="title" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item>
+            <nz-form-label nzRequired>{{
+              "note.content" | translate
+            }}</nz-form-label>
+            <nz-form-control>
+              <textarea
+                nz-input
+                [(ngModel)]="form.content"
+                name="content"
+                rows="4"
+              ></textarea>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </ng-template>
     </nz-modal>
   `,
   styles: [
@@ -211,7 +212,7 @@ export class NotesSectionComponent {
   handleSave(): void {
     if (!this.form.title.trim() || !this.form.content.trim()) {
       this.message.warning(this.translate.instant("note.titleContentRequired"));
-      return;
+      return; // do not close modal
     }
     this.saving = true;
     if (this.editingId) {
@@ -223,7 +224,14 @@ export class NotesSectionComponent {
     } else {
       this.add.emit({ title: this.form.title, content: this.form.content });
     }
-    this.modalVisible = false;
+    this.modalVisible = false; // close after emitting
     this.saving = false;
+  }
+
+  handleCancel(): void {
+    // ✅ New method
+    this.modalVisible = false;
+    this.editingId = null;
+    // Optionally reset form, but not necessary since it's not used after close
   }
 }

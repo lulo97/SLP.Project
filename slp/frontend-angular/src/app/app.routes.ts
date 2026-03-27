@@ -162,7 +162,7 @@ export const routes: Routes = [
           },
           {
             path: ":id/edit",
-            component: QuizEditComponent,
+            component: QuizFormComponent ,
             data: { breadcrumb: "Edit Quiz" },
           },
         ],
