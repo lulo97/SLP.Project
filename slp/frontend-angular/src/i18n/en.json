@@ -112,7 +112,9 @@
     "questionCreated": "Question created",
     "createQuestionError": "Failed to create question",
     "questionDeleted": "Question deleted",
-    "deleteQuestionError": "Failed to delete question"
+    "deleteQuestionError": "Failed to delete question",
+    "createQuestion": "Create Question",
+    "updateQuestion": "Update Question"
   },
   "question": {
     "title": "Question Title",

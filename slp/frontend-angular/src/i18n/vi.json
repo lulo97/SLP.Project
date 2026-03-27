@@ -112,7 +112,9 @@
     "questionCreated": "Đã tạo câu hỏi",
     "createQuestionError": "Tạo câu hỏi thất bại",
     "questionDeleted": "Đã xóa câu hỏi",
-    "deleteQuestionError": "Xóa câu hỏi thất bại"
+    "deleteQuestionError": "Xóa câu hỏi thất bại",
+    "createQuestion": "Tạo câu hỏi",
+    "updateQuestion": "Cập nhật câu hỏi"
   },
   "question": {
     "title": "Nội dung câu hỏi",
