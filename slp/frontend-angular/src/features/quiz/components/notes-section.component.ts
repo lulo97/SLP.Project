@@ -229,7 +229,6 @@ export class NotesSectionComponent {
   }
 
   handleCancel(): void {
-    // ✅ New method
     this.modalVisible = false;
     this.editingId = null;
     // Optionally reset form, but not necessary since it's not used after close

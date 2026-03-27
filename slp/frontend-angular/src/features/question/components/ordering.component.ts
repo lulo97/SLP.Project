@@ -75,7 +75,7 @@ export class OrderingComponent implements OnInit {
     if (!this.items.length) this.items = ["", "", "", ""];
   }
 
-  // ✅ Thêm hàm trackBy để tránh re-render toàn bộ danh sách
+  // Thêm hàm trackBy để tránh re-render toàn bộ danh sách
   trackByIndex(index: number, item: string): number {
     return index;
   }

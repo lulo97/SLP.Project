@@ -288,7 +288,7 @@ export class QuestionFormComponent implements OnInit, OnChanges {
         );
         this.multipleChoiceCorrect = (metadata.options || [])
           .filter(
-            (opt: any) => (metadata.correctAnswers || []).includes(opt.id), // ✅ sửa: so sánh id
+            (opt: any) => (metadata.correctAnswers || []).includes(opt.id),
           )
           .map((opt: any) => opt.text);
         break;

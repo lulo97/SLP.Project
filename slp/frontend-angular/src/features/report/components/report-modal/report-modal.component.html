@@ -1,20 +1,40 @@
-<div class="p-4">
-  <p class="mb-2">
-    {{ 'report.reporting' | translate:{ type: targetType, id: targetId } }}
-  </p>
-  <textarea
-    nz-input
-    rows="4"
-    [(ngModel)]="reason"
-    [placeholder]="'report.reasonPlaceholder' | translate"
-    [maxlength]="500"
-    class="w-full"
-  ></textarea>
-  <div class="text-right text-gray-400 text-xs mt-1">{{ reason.length }}/500</div>
-</div>
-<div class="flex justify-end gap-2 p-4 border-t">
-  <button nz-button (click)="handleCancel()">{{ 'report.cancel' | translate }}</button>
-  <button nz-button nzType="primary" [nzLoading]="submitting" (click)="handleSubmit()">
-    {{ 'report.submit' | translate }}
-  </button>
-</div>
+<nz-modal
+  [(nzVisible)]="visible"
+  (nzOnCancel)="handleCancel()"
+  [nzFooter]="null"
+  [nzTitle]="'report.title' | translate"
+>
+  <div class="p-4">
+    <p class="mb-2">
+      {{ 'report.reporting' | translate:{ type: targetType, id: targetId } }}
+    </p>
+
+    <textarea
+      nz-input
+      rows="4"
+      [(ngModel)]="reason"
+      [placeholder]="'report.reasonPlaceholder' | translate"
+      [maxlength]="500"
+      class="w-full"
+    ></textarea>
+
+    <div class="text-right text-gray-400 text-xs mt-1">
+      {{ reason.length }}/500
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 p-4 border-t">
+    <button nz-button (click)="handleCancel()">
+      {{ 'report.cancel' | translate }}
+    </button>
+
+    <button
+      nz-button
+      nzType="primary"
+      [nzLoading]="submitting"
+      (click)="handleSubmit()"
+    >
+      {{ 'report.submit' | translate }}
+    </button>
+  </div>
+</nz-modal>

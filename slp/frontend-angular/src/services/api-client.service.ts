@@ -11,7 +11,6 @@ export class ApiClientService {
 
   constructor(private http: HttpClient) {}
 
-  // ✅ Correct signature
   get<T>(
     url: string,
     options?: {

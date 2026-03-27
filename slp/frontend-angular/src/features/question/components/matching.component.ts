@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzFormModule } from 'ng-zorro-antd/form'; // ✅ Added
+import { NzFormModule } from 'ng-zorro-antd/form';
 
 export interface MatchingPair {
   left: string;
@@ -15,7 +15,7 @@ export interface MatchingPair {
 @Component({
   selector: 'app-matching',
   standalone: true,
-  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzIconModule, NzFormModule], // ✅ Added NzFormModule
+  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzIconModule, NzFormModule],
   template: `
      <nz-form-item>
       <nz-form-label>Matching Pairs</nz-form-label>
