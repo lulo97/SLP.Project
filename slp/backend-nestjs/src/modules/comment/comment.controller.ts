@@ -23,7 +23,7 @@ interface RequestWithUser extends Request {
   user: { id: number; role?: string };
 }
 
-@Controller("comments")
+@Controller("api/comments")
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
