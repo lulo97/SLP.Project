@@ -1,0 +1,84 @@
+<div class="p-4">
+  <h2 class="text-xl font-semibold mb-4">{{ "nav.reports" | translate }}</h2>
+
+  <nz-table
+    [nzData]="reports"
+    [nzLoading]="loading"
+    [nzShowPagination]="false"
+    [nzFrontPagination]="false"
+    nzSize="middle"
+  >
+    <thead>
+      <tr>
+        <th *ngFor="let col of columns">{{ col.title }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let report of reports">
+        <td>{{ report.id }}</td>
+        <td>{{ report.username }}</td>
+        <td>{{ report.targetType }} #{{ report.targetId }}</td>
+        <td></td>
+
+        <td>
+          <span nz-tooltip [nzTooltipTitle]="report.reason">
+            {{ truncate(report.reason, 50) }}
+          </span>
+        </td>
+
+        <td>{{ formatDate(report.createdAt) }}</td>
+
+        <td>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              nz-button
+              nzSize="small"
+              nzType="primary"
+              nzGhost
+              [nzLoading]="resolvingIds.includes(report.id)"
+              (click)="resolveReport(report.id)"
+            >
+              {{ "report.resolve" | translate }}
+            </button>
+
+            <button
+              *ngIf="report.targetType === 'comment'"
+              nz-button
+              nzSize="small"
+              nzDanger
+              nzGhost
+              nz-popconfirm
+              [nzPopconfirmTitle]="'report.deleteCommentConfirm' | translate"
+              (nzOnConfirm)="deleteComment(report)"
+            >
+              {{ "report.deleteComment" | translate }}
+            </button>
+
+            <button
+              *ngIf="report.targetType === 'quiz'"
+              nz-button
+              nzSize="small"
+              nzDanger
+              nzGhost
+              nz-popconfirm
+              [nzPopconfirmTitle]="'report.disableQuizConfirm' | translate"
+              (nzOnConfirm)="disableQuiz(report)"
+            >
+              {{ "report.disableQuiz" | translate }}
+            </button>
+            <button nz-button nzSize="small" (click)="viewTarget(report)">
+              {{ "report.view" | translate }}
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      <tr *ngIf="!loading && reports.length === 0">
+        <td colspan="6" class="text-center py-8 text-gray-500">
+          {{ "report.adminEmpty" | translate }}
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</div>

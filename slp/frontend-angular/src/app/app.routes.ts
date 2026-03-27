@@ -12,6 +12,7 @@ import { QuizListComponent } from "../features/quiz/pages/quiz-list.component";
 import { QuizFormComponent } from "../features/quiz/pages/quiz-form.component";
 import { QuizDetailComponent } from "../features/quiz/pages/quiz-detail.component";
 import { QuizEditComponent } from "../features/quiz/pages/quiz-edit.component";
+import { AdminGuard } from "../features/auth/admin.guard";
 
 export const routes: Routes = [
   {
@@ -167,6 +168,23 @@ export const routes: Routes = [
         ],
       },
       // ========== END QUIZ ==========
+      {
+        path: "reports",
+        loadComponent: () =>
+          import("../features/report/pages/user-reports/user-reports.component").then(
+            (m) => m.UserReportsComponent,
+          ),
+        data: { breadcrumb: "nav.reports" },
+      },
+      {
+        path: "admin/reports",
+        loadComponent: () =>
+          import("../features/report/pages/admin-reports/admin-reports.component").then(
+            (m) => m.AdminReportsComponent,
+          ),
+        canActivate: [AdminGuard],
+        data: { breadcrumb: "Admin Reports" },
+      },
     ],
   },
   {

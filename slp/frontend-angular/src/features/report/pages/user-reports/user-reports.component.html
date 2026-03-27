@@ -1,0 +1,85 @@
+<app-mobile-layout [title]="'nav.reports' | translate">
+  <div class="space-y-4">
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex justify-center py-12">
+      <nz-spin nzSize="large"></nz-spin>
+    </div>
+
+    <!-- Error -->
+    <nz-alert
+      *ngIf="error"
+      [nzMessage]="error"
+      nzType="error"
+      nzShowIcon
+    ></nz-alert>
+
+    <!-- Empty -->
+    <nz-empty
+      *ngIf="!loading && !error && reports.length === 0"
+      [nzNotFoundContent]="'report.empty' | translate"
+      class="mt-12"
+    ></nz-empty>
+
+    <!-- List -->
+    <div *ngIf="!loading && reports.length > 0" class="space-y-3">
+      <nz-card
+        *ngFor="let report of reports"
+        [nzBodyStyle]="{ padding: '14px 16px' }"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0 space-y-1">
+            <!-- Badges -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <nz-tag
+                [nzColor]="targetColor(report.targetType)"
+                class="capitalize text-xs"
+              >
+                {{ report.targetType }}
+              </nz-tag>
+              <span class="text-xs text-gray-400">#{{ report.targetId }}</span>
+              <nz-tag
+                [nzColor]="report.resolved ? 'success' : 'warning'"
+                class="text-xs"
+              >
+                {{
+                  (report.resolved ? "report.resolved" : "report.pending")
+                    | translate
+                }}
+              </nz-tag>
+            </div>
+
+            <!-- Reason -->
+            <p class="text-sm text-gray-700 break-words">{{ report.reason }}</p>
+
+            <!-- Timestamps -->
+            <div class="flex gap-x-4 text-xs text-gray-400">
+              <span>{{
+                "report.reportedAt"
+                  | translate: { date: formatDate(report.createdAt) }
+              }}</span>
+              <span *ngIf="report.resolvedAt">
+                {{
+                  "report.resolvedAt"
+                    | translate: { date: formatDate(report.resolvedAt) }
+                }}
+              </span>
+            </div>
+          </div>
+
+          <button
+            *ngIf="!report.resolved"
+            nz-button
+            nzType="text"
+            nzDanger
+            nz-popconfirm
+            [nzPopconfirmTitle]="'report.deleteConfirm' | translate"
+            [nzLoading]="deletingId === report.id"
+            (nzOnConfirm)="deleteReport(report.id)"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
+      </nz-card>
+    </div>
+  </div>
+</app-mobile-layout>

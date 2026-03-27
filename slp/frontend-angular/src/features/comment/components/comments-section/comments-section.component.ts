@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { CommentService } from '../../services/comment.service';
 import { AuthService } from '../../../../features/auth/auth.service';
 import { CommentItemComponent } from '../comment-item/comment-item.component';
-import { ReportModalComponent } from '../../../features/report/components/report-modal.component'; // adjust path
+import { ReportModalComponent } from '../features/report/components/report-modal.component'; // adjust path
 
 @Component({
   selector: 'app-comments-section',
