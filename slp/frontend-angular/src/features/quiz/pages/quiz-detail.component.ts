@@ -437,6 +437,7 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
             (a, b) => a.displayOrder - b.displayOrder,
           );
           this.message.success(this.translate.instant("quiz.questionAdded"));
+          this.questionPickerVisible = false;
         },
         error: () =>
           this.message.error(this.translate.instant("quiz.addQuestionError")),

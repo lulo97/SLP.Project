@@ -283,6 +283,7 @@ export class QuizEditComponent implements OnInit, OnDestroy {
         };
         this.questions = [...this.questions, newQuestion].sort((a, b) => a.displayOrder - b.displayOrder);
         this.message.success(this.translate.instant('quiz.questionAdded'));
+        this.questionPickerVisible = false; 
       },
       error: () => this.message.error(this.translate.instant('quiz.addQuestionError')),
     });
