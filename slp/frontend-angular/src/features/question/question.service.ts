@@ -9,8 +9,8 @@ import {
   QuestionListDto,
   CreateQuestionPayload,
   UpdateQuestionPayload,
-  PaginatedResult,
 } from './question.model';
+import { PaginatedResult } from '../../utils/pagination.utils';
 
 @Injectable({
   providedIn: 'root',

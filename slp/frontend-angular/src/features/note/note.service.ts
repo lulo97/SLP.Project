@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, tap, finalize } from 'rxjs/operators';
 import { ApiClientService } from '../../services/api-client.service';
-import { Note, PaginatedResult } from './note.model';
+import { Note } from './note.model';
+import { PaginatedResult } from '../../utils/pagination.utils';
 
 @Injectable({ providedIn: 'root' })
 export class NoteService {

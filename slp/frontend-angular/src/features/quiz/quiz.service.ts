@@ -12,8 +12,8 @@ import {
   NoteDto,
   SourceDto,
   QuizQuestion,
-  PaginatedResult,
 } from "./quiz.model";
+import { PaginatedResult } from "../../utils/pagination.utils";
 
 @Injectable({ providedIn: "root" })
 export class QuizService {

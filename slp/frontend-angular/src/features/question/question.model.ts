@@ -34,10 +34,3 @@ export interface CreateQuestionPayload {
 }
 
 export type UpdateQuestionPayload = Partial<CreateQuestionPayload>;
-
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
