@@ -28,6 +28,7 @@ import { QuizAttemptModule } from "../modules/quiz-attempt/quiz-attempt.module";
 // import { DailyWordModule } from './modules/daily-word/daily-word.module';
 import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
+import { CommentModule } from "../modules/comment/comment.module";
 
 @Module({
   imports: [
@@ -52,7 +53,7 @@ import { QuestionModule } from "../modules/question/question.module";
     // ExplanationModule,
     // ProgressModule,
     // FavoriteModule,
-    // CommentModule,
+    CommentModule,
     ReportModule,
     // AdminModule,
     // DashboardModule,

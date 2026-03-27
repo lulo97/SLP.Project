@@ -38,7 +38,13 @@ export class SessionGuard implements CanActivate {
       throw new UnauthorizedException("Invalid or expired session");
     }
 
-    request.user = { id: session.userId, sessionId: session.id };
+    request.user = {
+      id: session.userId,
+      sessionId: session.id,
+      role: session.user?.role,
+      username: session.user?.username,
+      email: session.user?.email,
+    };
     return true;
   }
 
