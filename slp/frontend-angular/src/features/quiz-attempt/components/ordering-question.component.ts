@@ -36,10 +36,10 @@ import { NzIconModule } from "ng-zorro-antd/icon";
           nz-icon
           nzType="menu"
           nzTheme="outline"
+          cdkDragHandle
           class="drag-handle"
           [attr.data-testid]="'ordering-drag-handle-' + item.order_id"
-        >
-        </i>
+        ></i>
         <span
           class="flex-1"
           [attr.data-testid]="'ordering-item-text-' + item.order_id"

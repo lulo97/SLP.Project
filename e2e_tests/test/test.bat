@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_1_fill_blank.spec --headed
+npx playwright test attempt_quiz_1_ordering.spec --headed

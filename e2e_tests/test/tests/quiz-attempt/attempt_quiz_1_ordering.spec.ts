@@ -1,4 +1,3 @@
-
 import { test, expect, Page, Locator } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle } from "../question/utils";
 import {
@@ -13,25 +12,30 @@ import {
 async function dragAndDrop(page: Page, source: Locator, target: Locator) {
   const sourceBox = await source.boundingBox();
   const targetBox = await target.boundingBox();
+
   if (!sourceBox || !targetBox) {
-    throw new Error("Could not get bounding boxes for drag and drop");
+    throw new Error("Could not get bounding boxes");
   }
+
   await page.mouse.move(
     sourceBox.x + sourceBox.width / 2,
     sourceBox.y + sourceBox.height / 2,
   );
   await page.mouse.down();
+
   await page.mouse.move(
     targetBox.x + targetBox.width / 2,
     targetBox.y + targetBox.height / 2,
+    { steps: 10 }, // 👈 IMPORTANT (smooth movement)
   );
+
   await page.mouse.up();
 }
 
 test("admin can create a quiz with 1 ordering question, attempt it with drag-and-drop, submit, review, and delete the quiz", async ({
   page,
 }) => {
-test.setTimeout(180000);
+  test.setTimeout(180000);
 
   const quizTitle = getUniqueTitle("Ordering Quiz");
   const questionContent = "Arrange the steps in the correct order:";
@@ -42,14 +46,14 @@ test.setTimeout(180000);
     page,
     quizTitle,
     "Quiz to test ordering attempt",
-    `ordering-${Date.now()}`
+    `ordering-${Date.now()}`,
   );
 
   await addOrderingQuestion(
     page,
     questionContent,
     items,
-    "The steps must be in the correct order: first, second, third."
+    "The steps must be in the correct order: first, second, third.",
   );
 
   await startAttempt(page, quizId);
@@ -59,7 +63,9 @@ test.setTimeout(180000);
   await expect(orderingComponent).toBeVisible();
 
   // Ensure the correct number of items
-  const orderingItems = orderingComponent.locator('[data-testid^="ordering-row-"]');
+  const orderingItems = orderingComponent.locator(
+    '[data-testid^="ordering-row-"]',
+  );
   await expect(orderingItems).toHaveCount(items.length);
 
   // Reorder the items to a specific incorrect order: [Third, First, Second]
@@ -73,8 +79,8 @@ test.setTimeout(180000);
     const targetRow = orderingComponent
       .locator('[data-testid^="ordering-row-"]')
       .nth(i);
-    const handle = sourceRow.getByTestId(/^ordering-drag-handle-/);
-    await handle.dragTo(targetRow);
+    const handle = sourceRow.locator('[data-testid^="ordering-drag-handle-"]');
+    await dragAndDrop(page, handle, targetRow);
     await page.waitForTimeout(200);
   }
 
