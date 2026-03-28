@@ -8,7 +8,8 @@
     "create": "Create",
     "loading": "Loading…",
     "error": "Something went wrong",
-    "confirm": "Are you sure?"
+    "confirm": "Are you sure?",
+    "start": "Start"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -115,7 +116,16 @@
     "questionDeleted": "Question deleted",
     "deleteQuestionError": "Failed to delete question",
     "createQuestion": "Create Question",
-    "updateQuestion": "Update Question"
+    "updateQuestion": "Update Question",
+    "startQuiz": "Start Quiz",
+    "chooseAttemptSettings": "Choose attempt settings",
+    "shuffleOrder": "Shuffle question order",
+    "shuffleHint": "Questions will be randomly ordered for this attempt",
+    "loadAttemptError": "Failed to load attempt",
+    "startAttemptError": "Failed to start quiz attempt",
+    "saveAnswerError": "Failed to save your answer",
+    "submitSuccess": "Quiz submitted successfully",
+    "submitError": "Failed to submit quiz"
   },
   "question": {
     "title": "Question Title",

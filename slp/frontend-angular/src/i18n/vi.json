@@ -7,7 +7,8 @@
     "create": "Tạo mới",
     "loading": "Đang tải…",
     "error": "Đã có lỗi xảy ra",
-    "confirm": "Bạn có chắc không?"
+    "confirm": "Bạn có chắc không?",
+    "start": "Bắt đầu"
   },
   "nav": {
     "dashboard": "Trang chủ",
@@ -114,7 +115,16 @@
     "questionDeleted": "Đã xóa câu hỏi",
     "deleteQuestionError": "Xóa câu hỏi thất bại",
     "createQuestion": "Tạo câu hỏi",
-    "updateQuestion": "Cập nhật câu hỏi"
+    "updateQuestion": "Cập nhật câu hỏi",
+    "startQuiz": "Bắt đầu làm bài",
+    "chooseAttemptSettings": "Chọn tùy chọn làm bài",
+    "shuffleOrder": "Xáo trộn thứ tự câu hỏi",
+    "shuffleHint": "Câu hỏi sẽ được sắp xếp ngẫu nhiên cho lần làm này",
+    "loadAttemptError": "Không thể tải bài làm",
+    "startAttemptError": "Không thể bắt đầu làm bài",
+    "saveAnswerError": "Không thể lưu câu trả lời",
+    "submitSuccess": "Nộp bài thành công",
+    "submitError": "Không thể nộp bài"
   },
   "question": {
     "title": "Nội dung câu hỏi",
