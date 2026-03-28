@@ -10,6 +10,10 @@ import {
   AfterViewInit,
   OnDestroy,
   OnInit,
+  ViewChildren,
+  QueryList,
+  OnChanges,
+  SimpleChanges,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { NzButtonModule } from "ng-zorro-antd/button";
@@ -78,6 +82,8 @@ interface Line {
         <div class="flex flex-col gap-2" data-testid="matching-left-column">
           <div
             *ngFor="let item of pairs"
+            #leftItem
+            [attr.data-id]="item.id"
             (click)="selectLeft(item.id)"
             class="px-3 py-2.5 rounded-xl border-2 cursor-pointer select-none transition-all text-sm relative z-10"
             [class.border-indigo-500]="selectedLeft === item.id"
@@ -116,6 +122,8 @@ interface Line {
         <div class="flex flex-col gap-2" data-testid="matching-right-column">
           <div
             *ngFor="let item of shuffledRight"
+            #rightItem
+            [attr.data-id]="item.id"
             (click)="selectRight(item.id)"
             class="px-3 py-2.5 rounded-xl border-2 cursor-pointer select-none transition-all text-sm relative z-10"
             [class.border-green-500]="isMatched(item.id, 'right')"
@@ -127,7 +135,7 @@ interface Line {
             [class.border-indigo-300]="
               !isMatched(item.id, 'right') && selectedLeft !== null
             "
-            [class.bg-indigo-50/30]="
+            [class.bg-indigo-50]="
               !isMatched(item.id, 'right') && selectedLeft !== null
             "
             [class.border-gray-200]="
@@ -186,6 +194,8 @@ export class MatchingQuestionComponent
   >();
 
   @ViewChild("container") container!: ElementRef<HTMLElement>;
+  @ViewChildren("leftItem") leftItems!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren("rightItem") rightItems!: QueryList<ElementRef<HTMLElement>>;
 
   selectedLeft: number | null = null;
   shuffledRight: Pair[] = [];
@@ -211,9 +221,30 @@ export class MatchingQuestionComponent
   }
 
   ngAfterViewInit(): void {
+    this.updateRefs();
+    // Re‑populate refs if the QueryList changes (e.g., after content projection)
+    this.leftItems.changes.subscribe(() => this.updateRefs());
+    this.rightItems.changes.subscribe(() => this.updateRefs());
+
+    // Rest of existing ngAfterViewInit (ResizeObserver, etc.)
     this.resizeObserver = new ResizeObserver(() => this.computeLines());
     this.resizeObserver.observe(this.container.nativeElement);
     setTimeout(() => this.computeLines(), 0);
+  }
+  private updateRefs(): void {
+    // Clear maps first (they might have changed)
+    this.leftRefs.clear();
+    this.rightRefs.clear();
+
+    this.leftItems.forEach((el) => {
+      const id = parseInt(el.nativeElement.getAttribute("data-id")!, 10);
+      if (!isNaN(id)) this.leftRefs.set(id, el.nativeElement);
+    });
+
+    this.rightItems.forEach((el) => {
+      const id = parseInt(el.nativeElement.getAttribute("data-id")!, 10);
+      if (!isNaN(id)) this.rightRefs.set(id, el.nativeElement);
+    });
   }
 
   ngOnDestroy(): void {
@@ -292,5 +323,12 @@ export class MatchingQuestionComponent
   setRightRef(id: number, el: HTMLElement) {
     if (el) this.rightRefs.set(id, el);
     else this.rightRefs.delete(id);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes["value"] && !changes["value"].firstChange) {
+      // Ensure refs are ready and compute lines
+      setTimeout(() => this.computeLines(), 0);
+    }
   }
 }

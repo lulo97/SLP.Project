@@ -221,29 +221,31 @@ import { QuizDto } from "../../quiz/quiz.model";
     <!-- Start options modal -->
     <nz-modal
       [(nzVisible)]="showStartModal"
-      nzTitle="Start quiz"
+      nzTitle="{{ 'quiz.startQuiz' | translate }}"
       (nzOnOk)="handleStartModalOk()"
-      [nzOkText]="'Start'"
+      [nzOkText]="'common.start' | translate"
       [nzCancelText]="null"
       [nzClosable]="false"
       [nzMaskClosable]="false"
       data-testid="start-options-modal"
     >
-      <div class="space-y-4 py-2">
-        <p class="text-sm text-gray-500">
-          Choose your attempt settings before starting.
-        </p>
-        <label
-          nz-checkbox
-          [(ngModel)]="randomizeOrder"
-          data-testid="randomize-order-checkbox"
-        >
-          Shuffle question order
-          <span class="text-xs text-gray-400 ml-1">
-            (so you can't memorise answers by position)
-          </span>
-        </label>
-      </div>
+      <ng-template nzModalContent>
+        <div class="space-y-4 py-2">
+          <p class="text-sm text-gray-500">
+            {{ "quiz.chooseAttemptSettings" | translate }}
+          </p>
+          <label
+            nz-checkbox
+            [(ngModel)]="randomizeOrder"
+            data-testid="randomize-order-checkbox"
+          >
+            {{ "quiz.shuffleOrder" | translate }}
+            <span class="text-xs text-gray-400 ml-1">
+              ({{ "quiz.shuffleHint" | translate }})
+            </span>
+          </label>
+        </div>
+      </ng-template>
     </nz-modal>
   `,
 })
@@ -341,7 +343,10 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
       // Initialize empty answers
       const initialAnswers: Record<number, any> = {};
       result.questions.forEach((q) => {
-        const snapshot = JSON.parse(q.questionSnapshotJson);
+        const snapshot =
+          typeof q.questionSnapshotJson === "string"
+            ? JSON.parse(q.questionSnapshotJson || "{}")
+            : (q.questionSnapshotJson ?? {});
         initialAnswers[q.quizQuestionId] = this.getDefaultAnswer(snapshot);
       });
       this.answers.set(initialAnswers);
@@ -384,7 +389,10 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     const a = this.attempt();
     if (!a) return 0;
     return a.questions.filter((q) => {
-      const snapshot = JSON.parse(q.questionSnapshotJson);
+      const snapshot =
+        typeof q.questionSnapshotJson === "string"
+          ? JSON.parse(q.questionSnapshotJson || "{}")
+          : (q.questionSnapshotJson ?? {});
       if (snapshot.type === "flashcard") return true;
       const ans = this.answers()[q.quizQuestionId];
       if (!ans) return false;
