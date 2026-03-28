@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_1_true_false.spec --headed
+npx playwright test attempt_quiz_1_fill_blank.spec --headed
