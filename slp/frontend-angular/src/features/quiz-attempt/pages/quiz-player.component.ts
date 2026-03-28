@@ -63,7 +63,6 @@ import { QuizDto } from "../../quiz/quiz.model";
         <div class="flex items-center gap-2">
           <app-auto-save-indicator
             [saving]="saving()"
-            data-testid="auto-save-indicator"
           />
           <button
             nz-button
@@ -224,10 +223,9 @@ import { QuizDto } from "../../quiz/quiz.model";
       [nzCancelText]="null"
       [nzClosable]="false"
       [nzMaskClosable]="false"
-      data-testid="start-options-modal"
     >
       <ng-template nzModalContent>
-        <div class="space-y-4 py-2">
+        <div class="space-y-4 py-2" data-testid="start-options-modal">
           <p class="text-sm text-gray-500">
             {{ "quiz.chooseAttemptSettings" | translate }}
           </p>

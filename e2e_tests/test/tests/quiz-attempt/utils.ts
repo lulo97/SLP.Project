@@ -1,4 +1,3 @@
-
 import { Page, expect, Locator } from "@playwright/test";
 import { FRONTEND_URL } from "../question/utils";
 
@@ -10,7 +9,7 @@ export async function createEmptyQuiz(
   page: Page,
   quizTitle: string,
   description: string,
-  tag?: string
+  tag?: string,
 ): Promise<string> {
   await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
@@ -75,19 +74,19 @@ export async function verifyReviewScore(
   expectedScore: number,
   expectedTotal: number,
   expectedCorrect: number,
-  expectedIncorrect: number
+  expectedIncorrect: number,
 ) {
   await expect(page.getByTestId("score-value")).toHaveText(
-    `${expectedScore} / ${expectedTotal}`
+    `${expectedScore} / ${expectedTotal}`,
   );
   await expect(page.getByTestId("score-percent")).toHaveText(
-    `${Math.round((expectedScore / expectedTotal) * 100)}%`
+    `${Math.round((expectedScore / expectedTotal) * 100)}%`,
   );
   await expect(page.getByTestId("correct-count")).toHaveText(
-    `${expectedCorrect} correct`
+    `${expectedCorrect} correct`,
   );
   await expect(page.getByTestId("incorrect-count")).toHaveText(
-    `${expectedIncorrect} incorrect`
+    `${expectedIncorrect} incorrect`,
   );
 }
 
@@ -95,7 +94,11 @@ export async function verifyReviewScore(
  * Deletes a quiz from its detail page and verifies it is removed from the list.
  * Assumes the current page is the quiz detail page.
  */
-export async function deleteQuiz(page: Page, quizId: string, quizTitle: string) {
+export async function deleteQuiz(
+  page: Page,
+  quizId: string,
+  quizTitle: string,
+) {
   const deleteQuizButton = page.getByTestId("delete-quiz-button");
   await deleteQuizButton.click();
   const confirmButton = page.getByRole("button", { name: "Yes" });
@@ -107,7 +110,7 @@ export async function deleteQuiz(page: Page, quizId: string, quizTitle: string) 
   await searchInput.fill(quizTitle);
   await searchInput.press("Enter");
   const quizItem = page.locator(
-    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`
+    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`,
   );
   await expect(quizItem).not.toBeVisible();
 }
@@ -138,7 +141,7 @@ export async function addMultipleChoiceQuestion(
   content: string,
   options: string[],
   correctOption: string,
-  explanation?: string
+  explanation?: string,
 ) {
   const modal = await openQuestionModal(page);
   await modal.getByTestId("question-title").fill(content);
@@ -158,7 +161,9 @@ export async function addMultipleChoiceQuestion(
     await modal.getByTestId("question-explanation").fill(explanation);
   }
   await submitQuestionModal(modal);
-  await expect(page.locator(`div:has-text("${content}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${content}")`).first(),
+  ).toBeVisible();
 }
 
 /**
@@ -168,7 +173,7 @@ export async function addTrueFalseQuestion(
   page: Page,
   content: string,
   isTrue: boolean,
-  explanation?: string
+  explanation?: string,
 ) {
   const modal = await openQuestionModal(page);
   await modal.getByTestId("question-title").fill(content);
@@ -185,7 +190,9 @@ export async function addTrueFalseQuestion(
     await modal.getByTestId("question-explanation").fill(explanation);
   }
   await submitQuestionModal(modal);
-  await expect(page.locator(`div:has-text("${content}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${content}")`).first(),
+  ).toBeVisible();
 }
 
 /**
@@ -195,7 +202,7 @@ export async function addFillBlankQuestion(
   page: Page,
   content: string,
   keyword: string,
-  explanation?: string
+  explanation?: string,
 ) {
   const modal = await openQuestionModal(page);
   await modal.getByTestId("question-title").fill(content);
@@ -208,7 +215,9 @@ export async function addFillBlankQuestion(
     await modal.getByTestId("question-explanation").fill(explanation);
   }
   await submitQuestionModal(modal);
-  await expect(page.locator(`div:has-text("${content}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${content}")`).first(),
+  ).toBeVisible();
 }
 
 /**
@@ -218,7 +227,7 @@ export async function addOrderingQuestion(
   page: Page,
   content: string,
   items: string[],
-  explanation?: string
+  explanation?: string,
 ) {
   const modal = await openQuestionModal(page);
   await modal.getByTestId("question-title").fill(content);
@@ -238,7 +247,9 @@ export async function addOrderingQuestion(
     await modal.getByTestId("question-explanation").fill(explanation);
   }
   await submitQuestionModal(modal);
-  await expect(page.locator(`div:has-text("${content}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${content}")`).first(),
+  ).toBeVisible();
 }
 
 /**
@@ -248,7 +259,7 @@ export async function addMatchingQuestion(
   page: Page,
   content: string,
   pairs: Array<{ left: string; right: string }>,
-  explanation?: string
+  explanation?: string,
 ) {
   const modal = await openQuestionModal(page);
   await modal.getByTestId("question-title").fill(content);
@@ -271,7 +282,9 @@ export async function addMatchingQuestion(
     await modal.getByTestId("question-explanation").fill(explanation);
   }
   await submitQuestionModal(modal);
-  await expect(page.locator(`div:has-text("${content}")`).first()).toBeVisible();
+  await expect(
+    page.locator(`div:has-text("${content}")`).first(),
+  ).toBeVisible();
 }
 
 /**
@@ -292,7 +305,9 @@ export async function answerMultipleChoice(page: Page, optionText: string) {
 export async function answerTrueFalse(page: Page, value: boolean) {
   const tfGroup = page.getByTestId("question-type-true-false");
   await expect(tfGroup).toBeVisible();
-  const radio = page.getByTestId(value ? "true-false-option-true" : "true-false-option-false");
+  const radio = page.getByTestId(
+    value ? "true-false-option-true" : "true-false-option-false",
+  );
   await radio.check();
   await expect(radio).toBeChecked();
   await waitForAutoSave(page);
@@ -301,8 +316,17 @@ export async function answerTrueFalse(page: Page, value: boolean) {
 /**
  * Answers a fill‑in‑the‑blank question.
  */
+/**
+ * Answers a fill-in-the-blank question.
+ */
 export async function answerFillBlank(page: Page, answer: string) {
-  const input = page.getByTestId("question-type-fill-blank");
+  // 1. Find the question container (the Angular component)
+  const container = page.getByTestId("question-type-fill-blank");
+
+  // 2. Find the ACTUAL input inside it
+  // Since you already have data-testid="fill-blank-input" on the input in your HTML:
+  const input = container.getByTestId("fill-blank-input");
+
   await expect(input).toBeVisible();
   await input.fill(answer);
   await waitForAutoSave(page);
