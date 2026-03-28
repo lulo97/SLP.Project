@@ -1,1 +1,1 @@
-npx playwright test register_admin_delete.spec --headed
+npx playwright test register.spec --headed

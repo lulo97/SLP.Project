@@ -118,7 +118,6 @@ export class LoginComponent {
             this.message.error(result.message || "Account banned");
             break;
           default:
-            this.passwordError = "Invalid username or password";
             this.generalError = "Invalid username or password";
             break;
         }

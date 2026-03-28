@@ -1,7 +1,7 @@
 // register.spec.ts
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = 'http://localhost:3009';
 
 test('should register a new user and redirect to login page', async ({ page }) => {
   // Generate unique user credentials
