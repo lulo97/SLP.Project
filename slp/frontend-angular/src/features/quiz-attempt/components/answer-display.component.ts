@@ -77,15 +77,29 @@ import { CommonModule } from "@angular/common";
       class="flex flex-col gap-1"
       data-testid="answer-display-matching"
     >
-      <span
-        *ngFor="let m of matches"
-        class="text-sm"
-        [attr.data-testid]="
-          'answer-display-match-' + m.leftId + '-' + m.rightId
-        "
-      >
-        {{ getLeftText(m.leftId) }} → {{ getRightText(m.rightId) }}
-      </span>
+      <!-- User's answer: show matches with dynamic testid -->
+      <ng-container *ngIf="userAnswer; else correctPairs">
+        <span
+          *ngFor="let m of matches"
+          class="text-sm"
+          [attr.data-testid]="
+            'answer-display-match-' + m.leftId + '-' + m.rightId
+          "
+        >
+          {{ getLeftText(m.leftId) }} → {{ getRightText(m.rightId) }}
+        </span>
+      </ng-container>
+
+      <!-- Correct answer: show pairs with green styling and specific testid -->
+      <ng-template #correctPairs>
+        <span
+          *ngFor="let p of meta.pairs || []"
+          class="text-sm text-green-700"
+          [attr.data-testid]="'answer-display-pair-' + p.id"
+        >
+          {{ p.left }} → {{ p.right }}
+        </span>
+      </ng-template>
     </div>
 
     <div

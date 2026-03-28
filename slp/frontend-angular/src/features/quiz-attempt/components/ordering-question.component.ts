@@ -7,7 +7,7 @@ import {
   moveItemInArray,
 } from "@angular/cdk/drag-drop";
 import { NzButtonModule } from "ng-zorro-antd/button";
-import { NzIconModule } from "ng-zorro-antd/icon"; 
+import { NzIconModule } from "ng-zorro-antd/icon";
 
 @Component({
   selector: "app-ordering-question",
@@ -30,9 +30,16 @@ import { NzIconModule } from "ng-zorro-antd/icon";
         *ngFor="let item of _items; let i = index"
         cdkDrag
         class="flex items-center gap-2 bg-gray-50 p-2 rounded border cursor-move"
-        [attr.data-testid]="'ordering-item-' + item.order_id"
+        [attr.data-testid]="'ordering-row-' + item.order_id"
       >
-        <i nz-icon nzType="menu" nzTheme="outline" class="drag-handle"></i>
+        <i
+          nz-icon
+          nzType="menu"
+          nzTheme="outline"
+          class="drag-handle"
+          [attr.data-testid]="'ordering-drag-handle-' + item.order_id"
+        >
+        </i>
         <span
           class="flex-1"
           [attr.data-testid]="'ordering-item-text-' + item.order_id"
