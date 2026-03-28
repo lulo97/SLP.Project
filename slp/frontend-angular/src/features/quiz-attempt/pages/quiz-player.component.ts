@@ -408,7 +408,11 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
         case "ordering":
           return Array.isArray(ans.order) && ans.order.length > 0;
         case "matching":
-          return Array.isArray(ans.matches) && ans.matches.length > 0;
+          // Require all pairs to be matched (matches length equals pairs length)
+          return (
+            Array.isArray(ans.matches) &&
+            ans.matches.length === (snapshot.metadata?.pairs?.length ?? 0)
+          );
         default:
           return true;
       }
