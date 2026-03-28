@@ -17,6 +17,7 @@ import { ReportModalComponent } from "../../report/components/report-modal/repor
 import { AttemptReview } from "../attempt.model";
 import { AnswerDisplayComponent } from "../components/answer-display.component";
 import { QuizDto } from "../../quiz/quiz.model";
+import { firstValueFrom } from "rxjs";
 
 @Component({
   selector: "app-attempt-review",
@@ -34,7 +35,20 @@ import { QuizDto } from "../../quiz/quiz.model";
     AnswerDisplayComponent,
   ],
   template: `
-    <div *ngIf="review" class="space-y-4 pb-6" data-testid="review-container">
+    <div *ngIf="loading" class="text-center py-8">
+      <i nz-icon nzType="loading" nzSpin class="text-2xl"></i>
+      <p>Loading review...</p>
+    </div>
+
+    <div *ngIf="!loading && !review" class="text-center py-8 text-gray-500">
+      Review not found or attempt is not completed.
+    </div>
+
+    <div
+      *ngIf="!loading && review"
+      class="space-y-4 pb-6"
+      data-testid="review-container"
+    >
       <!-- Score card -->
       <nz-card class="shadow-sm" data-testid="score-card">
         <div class="text-center py-2">
@@ -298,14 +312,16 @@ export class AttemptReviewComponent implements OnInit {
 
   async loadReview(): Promise<void> {
     try {
-      this.review =
-        (await this.attemptService
-          .fetchAttemptReview(this.attemptId)
-          .toPromise()) || null;
+      // firstValueFrom resolves as soon as the data arrives
+      const result = await firstValueFrom(
+        this.attemptService.fetchAttemptReview(this.attemptId),
+      );
+      this.review = result || null;
     } catch (err) {
-      console.error(err);
+      console.error("Review load failed:", err);
+      this.review = null;
     } finally {
-      this.loading = false;
+      this.loading = false; // This will now definitely run
     }
   }
 
