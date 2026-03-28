@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/question/multiple_choice_1_option.spec.ts
+
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,

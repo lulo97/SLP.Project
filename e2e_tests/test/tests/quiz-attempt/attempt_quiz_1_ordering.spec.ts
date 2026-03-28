@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz-attempt/attempt_quiz_1_ordering.spec.ts
+
 import { test, expect, Page, Locator } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle } from "../question/utils";
 import {

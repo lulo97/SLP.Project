@@ -1,6 +1,22 @@
-// e2e_tests/test/tests/quiz-attempt/attempt_quiz_5_all_types.spec.ts
-import { test, expect, Locator } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
+import { test, expect } from "@playwright/test";
+import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import {
+  createEmptyQuiz,
+  addMultipleChoiceQuestion,
+  addTrueFalseQuestion,
+  addFillBlankQuestion,
+  addOrderingQuestion,
+  addMatchingQuestion,
+  startAttempt,
+  answerMultipleChoice,
+  answerTrueFalse,
+  answerFillBlank,
+  matchPair,
+  goToNextQuestion,
+  submitAttempt,
+  verifyReviewScore,
+  deleteQuiz,
+} from "./utils";
 
 test("admin can create a quiz with all 5 question types, attempt it, answer only MC wrong, score 4/5, and delete the quiz", async ({
   page,
@@ -8,6 +24,7 @@ test("admin can create a quiz with all 5 question types, attempt it, answer only
   test.setTimeout(180000);
 
   const quizTitle = getUniqueTitle("Full Quiz Attempt");
+  const tag = `full-attempt-${Date.now()}`;
 
   // ---------- Question definitions ----------
   const mcQuestion = "What is the capital of France?";
@@ -16,7 +33,7 @@ test("admin can create a quiz with all 5 question types, attempt it, answer only
   const mcWrong = "Berlin";
 
   const tfQuestion = "Paris is the capital of France.";
-  const tfCorrectAnswer = true; // true → True
+  const tfCorrectAnswer = true;
 
   const fbQuestion = "The capital of France is Paris.";
   const fbKeyword = "Paris";
@@ -30,342 +47,63 @@ test("admin can create a quiz with all 5 question types, attempt it, answer only
     { left: "Germany", right: "Berlin" },
   ];
 
-  // 1. Login as admin
+  // 1. Login & Quiz Creation
   await loginAsAdmin(page);
+  const quizId = await createEmptyQuiz(page, quizTitle, "Quiz with all five question types", tag);
 
-  // 2. Create an empty quiz
-  await page.goto(`${FRONTEND_URL}/quiz`);
-  await expect(page).toHaveURL(/\/quiz$/);
+  // 2. Add all 5 question types
+  await addMultipleChoiceQuestion(page, mcQuestion, mcOptions, mcCorrect, "Paris is the capital of France.");
+  await addTrueFalseQuestion(page, tfQuestion, tfCorrectAnswer, "Paris is indeed the capital of France.");
+  await addFillBlankQuestion(page, fbQuestion, fbKeyword, "Paris is the capital of France.");
+  await addOrderingQuestion(page, orderingQuestion, orderingItems, "Correct order: Mercury, Venus, Earth.");
+  await addMatchingQuestion(page, matchingQuestion, matchingPairs, "Match countries to their capitals.");
 
-  const createFab = page.getByTestId("create-quiz-fab");
-  await createFab.click();
-  await expect(page).toHaveURL(/\/quiz\/new/);
+  await expect(page.getByTestId("questions-total")).toHaveText("Total: 5");
 
-  await page.getByTestId("quiz-title-input").fill(quizTitle);
-  await page
-    .getByTestId("quiz-description-input")
-    .fill("Quiz with all five question types");
-  await page.getByTestId("quiz-visibility-public").check();
+  // 3. Start Attempt
+  await startAttempt(page, quizId);
 
-  // Optional tag
-  const tagSelector = page.getByTestId("tag-selector");
-  await tagSelector.click();
-  const tagInput = tagSelector.locator("input");
-  await tagInput.fill(`full-attempt-${Date.now()}`);
-  await tagInput.press("Enter");
-  await tagInput.press("Escape");
+  // 4. Answer Questions (MC wrong, others correct)
+  await answerMultipleChoice(page, mcWrong); // Intentional wrong answer
+  await goToNextQuestion(page);
 
-  const submitButton = page.getByTestId("quiz-submit-button");
-  await submitButton.click();
+  await answerTrueFalse(page, true);
+  await goToNextQuestion(page);
 
-  // Wait for redirect to quiz detail page and extract quiz ID
-  await expect(page).toHaveURL(/\/quiz\/\d+/);
-  const quizId = /\/quiz\/(\d+)/.exec(page.url())![1];
-  await expect(page.getByTestId("quiz-title")).toHaveText(quizTitle);
-  await expect(page.getByTestId("no-questions-message")).toBeVisible();
+  await answerFillBlank(page, fbKeyword);
+  await goToNextQuestion(page);
 
-  // Helper to open question modal
-  const openQuestionModal = async () => {
-    await page.getByTestId("add-question-button").click();
-    const modal = page.getByTestId("question-form-modal");
-    await expect(modal).toBeVisible();
-    return modal;
-  };
+  // Ordering: Items are already in order, just skip
+  await goToNextQuestion(page);
 
-  // Helper to submit question and close modal
-  const submitQuestion = async (modal: Locator) => {
-    await modal.getByTestId("submit-question").click();
-    await expect(modal).not.toBeVisible();
-  };
-
-  // 3. Add multiple‑choice question
-  let modal = await openQuestionModal();
-  await modal.getByTestId("question-title").fill(mcQuestion);
-  await modal.getByTestId("question-type-select").click();
-  await page.getByTestId("option-multiple-choice").click();
-
-  // Fill options
-  for (let i = 0; i < mcOptions.length; i++) {
-    await modal.getByTestId(`mc-option-${i}-input`).fill(mcOptions[i]);
+  for (const pair of matchingPairs) {
+    await matchPair(page, pair.left, pair.right);
   }
-  // Mark correct answer (index of "Paris")
-  const correctIndex = mcOptions.indexOf(mcCorrect);
-  await modal.getByTestId(`mc-option-${correctIndex}-checkbox`).check();
+  await expect(page.getByTestId("matching-progress")).toHaveText(`2 / 2 matched`);
 
-  await modal
-    .getByTestId("question-explanation")
-    .fill("Paris is the capital of France.");
-  await submitQuestion(modal);
-  await expect(
-    page.locator(`div:has-text("${mcQuestion}")`).first(),
-  ).toBeVisible();
+  // 5. Submit and Verify Score
+  await submitAttempt(page);
+  await verifyReviewScore(page, 4, 5, 4, 1);
 
-  // 4. Add true/false question
-  modal = await openQuestionModal();
-  await modal.getByTestId("question-title").fill(tfQuestion);
-  await modal.getByTestId("question-type-select").click();
-  await page.getByTestId("option-true-false").click();
-
-  if (tfCorrectAnswer) {
-    await modal.getByTestId("true-false-true").check();
-  } else {
-    await modal.getByTestId("true-false-false").check();
-  }
-
-  await modal
-    .getByTestId("question-explanation")
-    .fill("Paris is indeed the capital of France.");
-  await submitQuestion(modal);
-  await expect(
-    page.locator(`div:has-text("${tfQuestion}")`).first(),
-  ).toBeVisible();
-
-  // 5. Add fill‑in‑the‑blank question
-  modal = await openQuestionModal();
-  await modal.getByTestId("question-title").fill(fbQuestion);
-  await modal.getByTestId("question-type-select").click();
-  await page.getByTestId("option-fill-blank").click();
-
-  await modal.getByTestId("fill-blank-keyword").fill(fbKeyword);
-
-  await modal
-    .getByTestId("question-explanation")
-    .fill("Paris is the capital of France.");
-  await submitQuestion(modal);
-  await expect(
-    page.locator(`div:has-text("${fbQuestion}")`).first(),
-  ).toBeVisible();
-
-  // 6. Add ordering question
-  modal = await openQuestionModal();
-  await modal.getByTestId("question-title").fill(orderingQuestion);
-  await modal.getByTestId("question-type-select").click();
-  await page.getByTestId("option-ordering").click();
-
-  for (let i = 0; i < orderingItems.length; i++) {
-    await modal.getByTestId(`ordering-item-${i}`).fill(orderingItems[i]);
-  }
-  // Remove the extra fourth item if present
-  const removeFourth = modal.getByTestId("ordering-remove-3");
-  if (await removeFourth.isVisible()) {
-    await removeFourth.click();
-  }
-
-  await modal
-    .getByTestId("question-explanation")
-    .fill("Correct order: Mercury, Venus, Earth.");
-  await submitQuestion(modal);
-  await expect(
-    page.locator(`div:has-text("${orderingQuestion}")`).first(),
-  ).toBeVisible();
-
-  // 7. Add matching question
-  modal = await openQuestionModal();
-  await modal.getByTestId("question-title").fill(matchingQuestion);
-  await modal.getByTestId("question-type-select").click();
-  await page.getByTestId("option-matching").click();
-
-  // First pair
-  await modal.getByTestId("matching-left-0").fill(matchingPairs[0].left);
-  await modal.getByTestId("matching-right-0").fill(matchingPairs[0].right);
-
-  // Add second pair
-  const addPairBtn = modal.getByTestId("matching-add");
-  await addPairBtn.click();
-
-  // Fill second pair (index 1)
-  await modal.getByTestId("matching-left-1").fill(matchingPairs[1].left);
-  await modal.getByTestId("matching-right-1").fill(matchingPairs[1].right);
-
-  await modal
-    .getByTestId("question-explanation")
-    .fill("Match countries to their capitals.");
-  await submitQuestion(modal);
-  await expect(
-    page.locator(`div:has-text("${matchingQuestion}")`).first(),
-  ).toBeVisible();
-
-  // Verify total questions count
-  const totalSpan = page.getByTestId("questions-total");
-  await expect(totalSpan).toHaveText("Total: 5");
-
-  // 8. Start a new attempt
-  await page.goto(`${FRONTEND_URL}/quiz/${quizId}/attempt`);
-
-  // Start modal appears
-  const startModal = page.getByTestId("start-options-modal");
-  await expect(startModal).toBeVisible();
-
-  // Click the Start button
-  const startButton = page
-    .locator(".ant-modal-footer")
-    .getByRole("button", { name: "Start" });
-  await startButton.click();
-
-  // Wait for the player to load
-  await expect(page.getByTestId("player-container")).toBeVisible();
-
-  const autoSaveIndicator = page.getByTestId("auto-save-indicator");
-
-  // 9. Answer the questions (only MC wrong)
-
-  // ---- Multiple Choice (wrong) ----
-  const mcGroup = page.getByTestId("question-type-multiple-choice");
-  await expect(mcGroup).toBeVisible();
-
-  // Select the wrong option (Berlin)
-  const wrongCheckbox = page.getByRole("checkbox", { name: mcWrong });
-  await wrongCheckbox.check();
-  await expect(wrongCheckbox).toBeChecked();
-
-  // Wait for auto‑save
-  await expect(autoSaveIndicator).toHaveText("Saved", { timeout: 5000 });
-
-  // Go to next question
-  await page.getByTestId("next-question").click();
-
-  // ---- True/False (correct) ----
-  const tfGroup = page.getByTestId("question-type-true-false");
-  await expect(tfGroup).toBeVisible();
-
-  const trueRadio = page.getByTestId("true-false-option-true");
-  await trueRadio.check();
-  await expect(trueRadio).toBeChecked();
-  await expect(autoSaveIndicator).toHaveText("Saved", { timeout: 5000 });
-  await page.getByTestId("next-question").click();
-
-  // ---- Fill Blank (correct) ----
-  const fbInput = page.getByTestId("question-type-fill-blank");
-  await expect(fbInput).toBeVisible();
-
-  await fbInput.fill(fbKeyword);
-  await expect(autoSaveIndicator).toHaveText("Saved", { timeout: 5000 });
-  await page.getByTestId("next-question").click();
-
-  // ---- Ordering (correct, initial order is already correct) ----
-  const orderingComponent = page.getByTestId("question-type-ordering");
-  await expect(orderingComponent).toBeVisible();
-
-  // Optionally verify the order (if needed, but not required)
-  // The initial order should be the correct one, so we just wait for auto‑save
-  // (The component auto‑saves when mounted, so we can proceed)
-  await expect(autoSaveIndicator).toHaveText("Saved", { timeout: 5000 });
-  await page.getByTestId("next-question").click();
-
-  // ---- Matching (correct) ----
-  const matchingComponent = page.getByTestId("question-type-matching");
-  await expect(matchingComponent).toBeVisible();
-
-  // Helper to match a pair
-  const match = async (leftText: string, rightText: string) => {
-    const leftItem = matchingComponent
-      .getByTestId("matching-left-column")
-      .getByText(leftText, { exact: true });
-    const rightItem = matchingComponent
-      .getByTestId("matching-right-column")
-      .getByText(rightText, { exact: true });
-    await leftItem.click();
-    await rightItem.click();
-    await expect(autoSaveIndicator).toHaveText("Saved", { timeout: 5000 });
-  };
-
-  // Match both pairs
-  await match(matchingPairs[0].left, matchingPairs[0].right);
-  await match(matchingPairs[1].left, matchingPairs[1].right);
-
-  // Verify all pairs matched
-  const progress = matchingComponent.getByTestId("matching-progress");
-  await expect(progress).toHaveText(`2 / 2 matched`);
-
-  // 10. Submit the attempt
-  const submitButtonPlayer = page.getByTestId("submit-attempt");
-  await submitButtonPlayer.click();
-
-  // Submit confirmation modal
-  const submitModal = page.getByTestId("submit-modal-message");
-  await expect(submitModal).toBeVisible();
-  const confirmSubmit = page.locator(".ant-modal-footer").getByRole("button", {
-    name: "Yes, submit",
-  });
-  await confirmSubmit.click();
-
-  // Wait for redirect to review page
-  await expect(page).toHaveURL(/\/quiz\/attempt\/\d+\/review/);
-  await expect(page.getByTestId("review-container")).toBeVisible();
-
-  // 11. Verify review page content (score 4/5)
-  const scoreValue = page.getByTestId("score-value");
-  await expect(scoreValue).toHaveText("4 / 5");
-
-  // Use regex /^review-question-/ to match IDs like review-question-0, review-question-1, etc.
+  // 6. Specific Review Content Verifications
   const reviewCards = page.getByTestId(/^review-question-/);
 
-  // ---- Multiple Choice (should be wrong) ----
-  const mcCard = reviewCards
-    .filter({ hasText: "What is the capital of France?" })
-    .first();
+  // MC should be wrong
+  const mcCard = reviewCards.filter({ hasText: mcQuestion }).first();
   await expect(mcCard).toHaveAttribute("data-correct", "false");
-  const mcUserAnswer = mcCard.getByTestId(/^review-user-answer-/);
-  await expect(mcUserAnswer).toContainText(mcWrong);
+  await expect(mcCard.getByTestId(/^review-user-answer-/)).toContainText(mcWrong);
 
-  // ---- True/False (should be correct) ----
+  // T/F should be correct
   const tfCard = page.getByTestId("review-question-1");
   await expect(tfCard).toHaveAttribute("data-correct", "true");
-  await expect(tfCard.getByTestId("review-question-content-1")).toHaveText(
-    tfQuestion,
-  );
-  const tfUserAnswer = tfCard.getByTestId(/^review-user-answer-/);
-  await expect(tfUserAnswer).toContainText("True");
+  await expect(tfCard.getByTestId(/^review-user-answer-/)).toContainText("True");
 
-  // ---- Fill Blank (should be correct) ----
-  // Note: Filter matches the rendered "___" instead of the original question string
-  const fbCard = reviewCards
-    .filter({ hasText: /The capital of France is/ })
-    .first();
-  await expect(fbCard).toHaveAttribute("data-correct", "true");
-  const fbUserAnswer = fbCard.getByTestId(/^review-user-answer-/);
-  await expect(fbUserAnswer).toContainText(fbKeyword);
-
-  // ---- Ordering (should be correct) ----
-  const orderCard = reviewCards
-    .filter({ hasText: "Arrange the planets in order from the Sun:" })
-    .first();
+  // Ordering should be correct
+  const orderCard = reviewCards.filter({ hasText: orderingQuestion }).first();
   await expect(orderCard).toHaveAttribute("data-correct", "true");
-  const orderUserAnswer = orderCard.getByTestId(/^review-user-answer-/);
-  await expect(orderUserAnswer).toContainText("1. Mercury");
-  await expect(orderUserAnswer).toContainText("2. Venus");
-  await expect(orderUserAnswer).toContainText("3. Earth");
+  await expect(orderCard.getByTestId(/^review-user-answer-/)).toContainText("1. Mercury");
 
-  // ---- Matching (should be correct) ----
-  const matchCard = reviewCards
-    .filter({ hasText: "Match the country with its capital:" })
-    .first();
-  await expect(matchCard).toHaveAttribute("data-correct", "true");
-  const matchUserAnswer = matchCard.getByTestId(/^review-user-answer-/);
-  await expect(matchUserAnswer).toContainText("France → Paris");
-  await expect(matchUserAnswer).toContainText("Germany → Berlin");
-
-  // 12. Go back to quiz detail and delete the quiz
-  const backToQuizButton = page.getByTestId("back-to-quiz");
-  await backToQuizButton.click();
-  await expect(page).toHaveURL(new RegExp(`/quiz/${quizId}$`));
-
-  const deleteQuizButton = page.getByTestId("delete-quiz-button");
-  await deleteQuizButton.click();
-  const confirmButton = page.getByRole("button", { name: "Yes" });
-  await confirmButton.click();
-
-  // After deletion, redirected to quiz list
-  await expect(page).toHaveURL(/\/quiz$/);
-
-  // Verify the quiz is gone
-  await page.getByTestId("tab-public-quizzes").click();
-  const searchInput = page.getByTestId("search-quizzes-input");
-  await searchInput.fill(quizTitle);
-  await searchInput.press("Enter");
-
-  const quizItem = page.locator(
-    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`,
-  );
-  await expect(quizItem).not.toBeVisible();
+  // 7. Cleanup
+  await page.getByTestId("back-to-quiz").click();
+  await deleteQuiz(page, quizId, quizTitle);
 });

@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz/add_quiz_5_questions.spec.ts
+
 import { test, expect, Locator } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 

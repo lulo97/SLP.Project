@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz-attempt/attempt_quiz_1_matching.spec.ts
+
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle } from "../question/utils";
 import {

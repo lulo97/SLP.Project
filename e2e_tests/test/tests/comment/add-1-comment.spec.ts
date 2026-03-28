@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz/quiz-comment-delete.spec.ts
+
 
 import { test, expect } from '@playwright/test';
 

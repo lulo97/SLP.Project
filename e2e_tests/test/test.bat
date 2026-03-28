@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_2_multiple_choice.spec --headed
+npx playwright test attempt_quiz_5_all_types.spec --headed

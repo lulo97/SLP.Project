@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/source/source-pdf.spec.ts
+
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin, FRONTEND_URL } from '../note/noteHelper';
 import * as fs from 'fs';

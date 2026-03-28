@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/source/read-grammar.spec.ts
+
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, FRONTEND_URL } from "../note/noteHelper";
 

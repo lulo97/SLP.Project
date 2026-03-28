@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz-attempt/utils.ts
+
 import { Page, expect, Locator } from "@playwright/test";
 import { FRONTEND_URL } from "../question/utils";
 

@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/question/true_false.spec.ts
+
 import { test, expect } from '@playwright/test';
 import {
   loginAsAdmin,

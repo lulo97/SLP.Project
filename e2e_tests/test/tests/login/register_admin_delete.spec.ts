@@ -1,4 +1,4 @@
-// e2e_tests/auth/tests/login/register_admin_delete.spec.ts
+
 import { test, expect } from '@playwright/test';
 
 const FRONTEND_URL = 'http://localhost:4000';

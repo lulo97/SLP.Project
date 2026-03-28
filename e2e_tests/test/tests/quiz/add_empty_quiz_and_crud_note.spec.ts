@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz/note_crud.spec.ts
+
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 

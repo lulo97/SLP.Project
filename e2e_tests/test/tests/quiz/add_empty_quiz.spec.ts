@@ -1,4 +1,4 @@
-// e2e_tests/test/tests/quiz/create_and_delete_empty_quiz.spec.ts
+
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils"; // reuse existing helpers
 
