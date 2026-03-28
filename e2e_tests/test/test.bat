@@ -1,1 +1,1 @@
-npx playwright test tests/login --headed
+npx playwright test read-progress-tracking.spec --headed
