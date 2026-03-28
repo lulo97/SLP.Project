@@ -62,7 +62,11 @@ import { CreateQuestionPayload } from "../../question/question.model";
       ></app-quiz-info-card>
 
       <!-- Report button (only for authenticated users) -->
-      <div *ngIf="isAuthenticated && !isOwner" class="flex justify-end">
+      <div
+        *ngIf="isAuthenticated && !isOwner"
+        class="flex justify-end"
+        data-testid="report-quiz-card"
+      >
         <button
           nz-button
           nzDanger
