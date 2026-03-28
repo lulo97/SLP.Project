@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_5_all_types.spec.ts --headed
+npx playwright test tests/quiz-attempt --headed
