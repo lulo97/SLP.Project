@@ -1,7 +1,7 @@
 // admin-logout.spec.ts
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = 'http://localhost:3009';
 
 test('admin logs in, opens sidebar, logs out, and is redirected to login', async ({ page }) => {
   // 1. Login as admin

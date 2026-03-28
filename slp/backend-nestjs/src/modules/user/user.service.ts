@@ -9,6 +9,7 @@ import { User } from "./user.entity";
 import { RegisterUserRequest } from "./dto/register-user.dto";
 import { UpdateUserRequest } from "./dto/update-user.dto";
 import * as bcrypt from "bcrypt";
+import { PasswordHasher } from "../auth/password-hasher";
 
 @Injectable()
 export class UserService {
@@ -39,7 +40,10 @@ export class UserService {
     const user = new User();
     user.username = dto.username;
     user.email = dto.email;
-    user.passwordHash = await bcrypt.hash(dto.password, 10);
+
+    // FIX: Swap bcrypt for custom Argon2 PasswordHasher
+    user.passwordHash = await PasswordHasher.hash(dto.password);
+
     user.createdAt = new Date();
     user.updatedAt = new Date();
     user.role = "user";

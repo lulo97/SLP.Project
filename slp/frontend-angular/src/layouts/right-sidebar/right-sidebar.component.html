@@ -1,4 +1,5 @@
 <div
+  data-testid="sidebar-container"
   class="fixed top-0 right-0 h-screen w-64 bg-white shadow-lg transform transition-transform duration-300 z-50"
   [class.translate-x-0]="isOpen"
   [class.translate-x-full]="!isOpen"
@@ -118,7 +119,12 @@
           <i nz-icon nzType="setting" nzTheme="outline"></i>
           <span>{{ "settings.title" | translate }}</span>
         </li>
-        <li nz-menu-item (click)="onLogoutClick()" class="text-red-500">
+        <li
+          data-testid="nav-item-logout"
+          nz-menu-item
+          (click)="onLogoutClick()"
+          class="text-red-500"
+        >
           <i nz-icon nzType="logout" nzTheme="outline"></i>
           <span>{{ "auth.logout" | translate }}</span>
         </li>

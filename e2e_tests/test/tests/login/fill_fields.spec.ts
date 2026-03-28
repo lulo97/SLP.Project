@@ -2,7 +2,7 @@
 import { test, expect } from "@playwright/test";
 
 // Frontend URL
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = "http://localhost:3009";
 
 test.describe("Login Page", () => {
   test.beforeEach(async ({ page }) => {

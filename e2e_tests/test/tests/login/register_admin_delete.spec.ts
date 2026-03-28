@@ -1,8 +1,8 @@
 
 import { test, expect } from '@playwright/test';
 
-const FRONTEND_URL = 'http://localhost:4000';
-const BACKEND_URL = 'https://localhost:7297'; // use HTTPS directly to avoid redirects
+const FRONTEND_URL = 'http://localhost:3009';
+const BACKEND_URL = 'http://localhost:3008'; // use HTTPS directly to avoid redirects
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = '123';
 
@@ -40,6 +40,8 @@ test('register user, login, logout, admin deletes user, verify user cannot login
     await usernameInput.fill(username);
     await passwordInput.fill(password);
     await signInButton.click();
+
+    await page.pause()
 
     await expect(page).toHaveURL(`${FRONTEND_URL}/dashboard`);
   });

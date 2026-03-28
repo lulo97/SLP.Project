@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { BehaviorSubject, Observable, of } from "rxjs";
+import { catchError, map, switchMap, tap } from "rxjs/operators";
+import { environment } from "../../environments/environment";
 
 // ─── Public Models ────────────────────────────────────────────────────────────
 
@@ -10,13 +10,13 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  emailVerified: boolean;   // mapped from API's emailConfirmed
+  emailVerified: boolean; // mapped from API's emailConfirmed
   role: string;
   status: string;
   createdAt: string;
   updatedAt: string;
   avatarFilename: string | null;
-  avatarUrl?: string;       // computed client-side – never from API
+  avatarUrl?: string; // computed client-side – never from API
 }
 
 export interface LoginResult {
@@ -53,7 +53,7 @@ interface UserApiResponse {
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class AuthService {
   private readonly baseUrl = environment.apiBackendUrl;
   private readonly fileStorageUrl = environment.fileStorageUrl;
@@ -72,7 +72,7 @@ export class AuthService {
   // ─── Getters ────────────────────────────────────────────────────────────────
 
   get sessionToken(): string | null {
-    return localStorage.getItem('session_token');
+    return localStorage.getItem("session_token");
   }
 
   get isAuthenticated(): boolean {
@@ -85,7 +85,9 @@ export class AuthService {
 
   // ─── Private helpers ────────────────────────────────────────────────────────
 
-  private buildAvatarUrl(filename: string | null | undefined): string | undefined {
+  private buildAvatarUrl(
+    filename: string | null | undefined,
+  ): string | undefined {
     if (!filename) return undefined;
     return `${this.fileStorageUrl}/files/${filename}`;
   }
@@ -106,8 +108,8 @@ export class AuthService {
   }
 
   private clearSession(): void {
-    localStorage.removeItem('session_token');
-    localStorage.removeItem('user_id');
+    localStorage.removeItem("session_token");
+    localStorage.removeItem("user_id");
     this.userSubject.next(null);
   }
 
@@ -119,25 +121,45 @@ export class AuthService {
    */
   login(username: string, password: string): Observable<LoginResult> {
     return this.http
-      .post<LoginApiResponse>(`${this.baseUrl}/auth/login`, { username, password })
+      .post<LoginApiResponse>(`${this.baseUrl}/auth/login`, {
+        username,
+        password,
+      })
       .pipe(
-        switchMap(response => {
-          localStorage.setItem('session_token', response.token);
-          localStorage.setItem('user_id', response.userId);
-          return this.fetchCurrentUser().pipe(map(() => ({ success: true } as LoginResult)));
+        tap((response) => {}),
+        switchMap((response) => {
+          localStorage.setItem("session_token", response.token);
+
+          localStorage.setItem("user_id", response.userId);
+
+          return this.fetchCurrentUser().pipe(
+            tap(() => {}),
+            map(() => {
+              return { success: true } as LoginResult;
+            }),
+          );
         }),
-        catchError(error => {
+        catchError((error) => {
+          console.error("X. catchError caught an exception:", error);
           const data = error.error;
-          return of<LoginResult>({
+
+          const result: LoginResult = {
             success: false,
             code: data?.code,
-            message: data?.message || 'Login failed',
-          });
+            message: data?.message || "Login failed",
+          };
+
+          return of(result);
         }),
+        tap((finalResult) => {}),
       );
   }
 
-  register(username: string, email: string, password: string): Observable<boolean> {
+  register(
+    username: string,
+    email: string,
+    password: string,
+  ): Observable<boolean> {
     return this.http
       .post(`${this.baseUrl}/auth/register`, { username, email, password })
       .pipe(
@@ -148,7 +170,9 @@ export class AuthService {
 
   /** Calls logout endpoint (best-effort) then clears local state immediately. */
   logout(): void {
-    this.http.post(`${this.baseUrl}/auth/logout`, {}).subscribe({ error: () => {} });
+    this.http
+      .post(`${this.baseUrl}/auth/logout`, {})
+      .subscribe({ error: () => {} });
     this.clearSession();
   }
 
@@ -156,8 +180,8 @@ export class AuthService {
 
   fetchCurrentUser(): Observable<User> {
     return this.http.get<UserApiResponse>(`${this.baseUrl}/users/me`).pipe(
-      tap(raw => this.userSubject.next(this.mapUser(raw))),
-      map(raw => this.mapUser(raw)),
+      tap((raw) => this.userSubject.next(this.mapUser(raw))),
+      map((raw) => this.mapUser(raw)),
     );
   }
 
@@ -165,7 +189,7 @@ export class AuthService {
     return this.http
       .put<UserApiResponse>(`${this.baseUrl}/users/me`, { name, avatarUrl })
       .pipe(
-        tap(raw => this.userSubject.next(this.mapUser(raw))),
+        tap((raw) => this.userSubject.next(this.mapUser(raw))),
         map(() => true),
         catchError(() => of(false)),
       );
@@ -182,7 +206,10 @@ export class AuthService {
       );
   }
 
-  confirmPasswordReset(token: string, newPassword: string): Observable<boolean> {
+  confirmPasswordReset(
+    token: string,
+    newPassword: string,
+  ): Observable<boolean> {
     return this.http
       .post(`${this.baseUrl}/auth/reset-password`, { token, newPassword })
       .pipe(
@@ -195,17 +222,23 @@ export class AuthService {
    * Changes the current user's password.
    * The backend revokes all other sessions but keeps the current one alive.
    */
-  changePassword(currentPassword: string, newPassword: string): Observable<ChangePasswordResult> {
+  changePassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Observable<ChangePasswordResult> {
     return this.http
-      .post(`${this.baseUrl}/users/me/change-password`, { currentPassword, newPassword })
+      .post(`${this.baseUrl}/users/me/change-password`, {
+        currentPassword,
+        newPassword,
+      })
       .pipe(
-        map(() => ({ success: true } as ChangePasswordResult)),
-        catchError(error => {
+        map(() => ({ success: true }) as ChangePasswordResult),
+        catchError((error) => {
           const data = error.error;
           return of<ChangePasswordResult>({
             success: false,
             code: data?.code,
-            message: data?.message || 'Failed to change password.',
+            message: data?.message || "Failed to change password.",
           });
         }),
       );
@@ -214,25 +247,21 @@ export class AuthService {
   // ─── Email verification ──────────────────────────────────────────────────────
 
   verifyEmail(token: string): Observable<boolean> {
-    return this.http
-      .post(`${this.baseUrl}/auth/verify-email`, { token })
-      .pipe(
-        tap(() => {
-          const user = this.userSubject.value;
-          if (user) this.userSubject.next({ ...user, emailVerified: true });
-        }),
-        map(() => true),
-        catchError(() => of(false)),
-      );
+    return this.http.post(`${this.baseUrl}/auth/verify-email`, { token }).pipe(
+      tap(() => {
+        const user = this.userSubject.value;
+        if (user) this.userSubject.next({ ...user, emailVerified: true });
+      }),
+      map(() => true),
+      catchError(() => of(false)),
+    );
   }
 
   sendVerificationEmail(): Observable<boolean> {
-    return this.http
-      .post(`${this.baseUrl}/auth/resend-verification`, {})
-      .pipe(
-        map(() => true),
-        catchError(() => of(false)),
-      );
+    return this.http.post(`${this.baseUrl}/auth/resend-verification`, {}).pipe(
+      map(() => true),
+      catchError(() => of(false)),
+    );
   }
 
   // ─── Utility ─────────────────────────────────────────────────────────────────

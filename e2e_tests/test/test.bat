@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_1_ordering.spec --headed
+npx playwright test register_admin_delete.spec --headed

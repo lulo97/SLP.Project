@@ -1,7 +1,7 @@
 // admin-login.spec.ts
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = 'http://localhost:3009';
 
 test('admin login with admin/123 should navigate to /dashboard', async ({ page }) => {
   await page.goto(BASE_URL);
