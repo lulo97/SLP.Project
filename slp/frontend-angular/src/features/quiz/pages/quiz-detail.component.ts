@@ -110,86 +110,56 @@ import { Attempt } from "../../quiz-attempt/attempt.model";
         class="shadow-sm mt-4"
         data-testid="attempts-section"
       >
-        <div class="flex justify-end mb-2">
+        <div class="flex justify-end mb-4">
           <button
             nz-button
             nzType="primary"
-            size="small"
             (click)="startAttempt()"
-            [nzLoading]="attemptLoading"
             [disabled]="questions.length === 0"
             data-testid="start-attempt-button"
           >
             {{ "quiz.startAttempt" | translate }}
           </button>
         </div>
-        <nz-list
-          *ngIf="attempts.length > 0"
-          nzSize="small"
-          data-testid="attempts-list"
-        >
-          <nz-list-item
-            *ngFor="let item of attempts"
-            [attr.data-testid]="'attempt-item-' + item.id"
-          >
-            <nz-list-item-meta>
-              <nz-list-item-meta-title
-                >Attempt #{{ item.id }}</nz-list-item-meta-title
-              >
-              <nz-list-item-meta-description>
-                {{ item.startTime | date: "medium" }} -
-                <span
-                  [ngClass]="{
-                    'text-green-600': item.status === 'completed',
-                    'text-yellow-600': item.status === 'in_progress',
-                    'text-gray-600': item.status === 'abandoned',
-                  }"
-                >
-                  {{ item.status }}
-                </span>
+
+        <nz-list *ngIf="attempts && attempts.length > 0" nzSize="small">
+          <nz-list-item *ngFor="let item of attempts">
+            <nz-list-item-meta
+              [nzTitle]="'Attempt #' + item.id"
+              [nzDescription]="attemptDesc"
+            >
+              <ng-template #attemptDesc>
+                {{ item.startTime | date: "medium" }} - <b>{{ item.status }}</b>
                 <span *ngIf="item.score !== null">
-                  - Score: {{ item.score }}/{{ item.maxScore }}
-                </span>
-              </nz-list-item-meta-description>
+                  (Score: {{ item.score }}/{{ item.maxScore }})</span
+                >
+              </ng-template>
             </nz-list-item-meta>
+
             <ul nz-list-item-actions>
-              <nz-list-item-action
-                *ngIf="item.status === 'completed'"
-                (click)="goToReview(item.id)"
-                data-testid="review-attempt"
-              >
-                Review
+              <nz-list-item-action *ngIf="item.status === 'completed'">
+                <a (click)="goToReview(item.id)">Review</a>
               </nz-list-item-action>
-              <nz-list-item-action
-                *ngIf="item.status === 'in_progress'"
-                (click)="resumeAttempt(item.id)"
-                data-testid="resume-attempt"
-              >
-                Resume
+              <nz-list-item-action *ngIf="item.status === 'in_progress'">
+                <a (click)="resumeAttempt(item.id)">Resume</a>
               </nz-list-item-action>
             </ul>
           </nz-list-item>
         </nz-list>
+
         <div
           *ngIf="attempts.length === 0"
-          class="text-gray-500 text-center py-4"
+          class="text-center py-4 text-gray-400"
         >
           {{ "quiz.noAttempts" | translate }}
         </div>
       </nz-card>
-
       <!-- Add report modal for quiz -->
       <app-report-modal
         [(visible)]="reportModalVisible"
         targetType="quiz"
         [targetId]="quizId"
       ></app-report-modal>
-
-      <!-- Comments section -->
-      <app-comments-section
-        targetType="quiz"
-        [targetId]="quizId"
-      ></app-comments-section>
 
       <!-- Questions section – readonly false for owner so buttons appear -->
       <app-questions-section
