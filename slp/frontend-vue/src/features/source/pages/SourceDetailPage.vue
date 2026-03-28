@@ -36,7 +36,7 @@
     </template>
 
     <template #header-right>
-      <a-tooltip title="Resume reading">
+      <a-tooltip title="Resume reading" placement="bottom">
         <button
           v-if="savedScrollPosition > 100"
           class="relative flex items-center gap-[5px] px-3 py-1.5 border-0 rounded-lg cursor-pointer text-xs font-medium text-[#059669] bg-[rgba(5,150,105,0.08)] font-[inherit] whitespace-nowrap transition-all duration-150 hover:bg-[rgba(5,150,105,0.15)]"
@@ -80,7 +80,6 @@
     <main
       class="flex-1 overflow-y-auto px-6 pt-10 pb-[120px]"
       ref="scrollContainer"
-      @scroll="onScroll"
       data-testid="source-detail-main"
     >
       <!-- Loading skeleton -->
@@ -486,9 +485,10 @@ async function loadSource() {
 
 async function loadProgress() {
   const progress = await sourceStore.fetchProgress(sourceId.value);
-  if (progress && progress.scrollPosition > 100) {
-    savedScrollPosition.value = progress.scrollPosition;
-    readPercent.value = progress.percentComplete;
+  const pos = progress?.lastPosition;
+  if (pos && (pos.scrollPosition ?? 0) > 100) {
+    savedScrollPosition.value = pos.scrollPosition!;
+    readPercent.value = pos.percentComplete ?? 0;
     showResumeToast.value = true;
   }
 }
@@ -513,10 +513,10 @@ async function loadExplanations() {
 let scrollSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function onScroll() {
-  const el = scrollContainer.value;
-  if (!el) return;
-  const scrollTop = el.scrollTop;
-  const scrollHeight = el.scrollHeight - el.clientHeight;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const scrollHeight =
+    document.documentElement.scrollHeight - window.innerHeight;
+
   readPercent.value = Math.min(
     100,
     scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0,
@@ -535,10 +535,7 @@ function onScroll() {
 function resumeReading() {
   showResumeToast.value = false;
   nextTick(() => {
-    scrollContainer.value?.scrollTo({
-      top: savedScrollPosition.value,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: savedScrollPosition.value, behavior: "smooth" });
   });
 }
 
@@ -682,19 +679,24 @@ function formatDate(iso: string) {
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
-onMounted(() => loadSource());
+onMounted(() => {
+  loadSource();
+  window.addEventListener("scroll", onScroll, { passive: true });
+});
 
 onUnmounted(() => {
+  window.removeEventListener("scroll", onScroll);
   if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
   if (notifTimer) clearTimeout(notifTimer);
-  if (scrollContainer.value) {
-    const el = scrollContainer.value;
-    const sh = el.scrollHeight - el.clientHeight;
-    sourceStore.updateProgress(sourceId.value, {
-      scrollPosition: Math.round(el.scrollTop),
-      percentComplete: sh > 0 ? Math.round((el.scrollTop / sh) * 100) : 0,
-    });
-  }
+  // final save on leave
+  const scrollTop = window.scrollY;
+  const scrollHeight =
+    document.documentElement.scrollHeight - window.innerHeight;
+  sourceStore.updateProgress(sourceId.value, {
+    scrollPosition: Math.round(scrollTop),
+    percentComplete:
+      scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0,
+  });
 });
 </script>
 

@@ -43,16 +43,16 @@ export interface SourceQueryParams {
 }
 
 export interface ProgressDto {
-  userId: number;
   sourceId: number;
-  scrollPosition: number;
-  percentComplete: number;
-  lastReadAt: string;
+  lastPosition: { scrollPosition?: number; percentComplete?: number } | null;
+  updatedAt: string;
 }
 
 export interface UpdateProgressRequest {
-  scrollPosition: number;
-  percentComplete: number;
+  lastPosition: {
+    scrollPosition: number;
+    percentComplete: number;
+  };
 }
 
 export const useSourceStore = defineStore("source", () => {
@@ -221,12 +221,12 @@ export const useSourceStore = defineStore("source", () => {
 
   async function updateProgress(
     sourceId: number,
-    payload: UpdateProgressRequest,
+    payload: { scrollPosition: number; percentComplete: number },
   ): Promise<void> {
     try {
       const res = await apiClient.put<ProgressDto>(
         `/source/${sourceId}/progress`,
-        payload,
+        { lastPosition: payload }, // ← wrap in lastPosition
       );
       currentProgress.value = res.data;
     } catch {
