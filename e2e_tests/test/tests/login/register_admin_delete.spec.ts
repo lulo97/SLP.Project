@@ -1,21 +1,20 @@
-
 import { test, expect } from '@playwright/test';
-
-const FRONTEND_URL = 'http://localhost:3009';
-const BACKEND_URL = 'http://localhost:3008'; // use HTTPS directly to avoid redirects
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = '123';
+import {
+  FRONTEND_URL,
+  BACKEND_URL,
+  ADMIN_CREDENTIALS,
+  login,
+  logout,
+  generateUniqueUser,
+  getSessionToken,
+} from './utils';
 
 test('register user, login, logout, admin deletes user, verify user cannot login', async ({ page, browser }) => {
   // Create a new browser context with ignoreHTTPSErrors for API requests
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const request = context.request;
 
-  const timestamp = Date.now();
-  const username = `testuser${timestamp}`;
-  const email = `test${timestamp}@example.com`;
-  const password = 'Test123!';
-
+  const { username, email, password } = generateUniqueUser();
   let userId: number;
 
   // ---- Step 1: API registration (capture user ID) ----
@@ -33,50 +32,24 @@ test('register user, login, logout, admin deletes user, verify user cannot login
   // ---- Step 2: UI login as new user ----
   await test.step('UI: login as new user', async () => {
     await page.goto(FRONTEND_URL);
-    const usernameInput = page.getByPlaceholder('Enter your username');
-    const passwordInput = page.getByPlaceholder('Enter your password');
-    const signInButton = page.getByRole('button', { name: 'Sign In' });
-
-    await usernameInput.fill(username);
-    await passwordInput.fill(password);
-    await signInButton.click();
-
-    await page.pause()
-
+    await login(page, username, password);
     await expect(page).toHaveURL(`${FRONTEND_URL}/dashboard`);
   });
 
-  // ---- Step 3: UI logout ----
+  // ---- Step 3: UI logout (new user) ----
   await test.step('UI: logout', async () => {
-    // Use mobile viewport to trigger sidebar toggle
-    await page.setViewportSize({ width: 375, height: 667 });
-    const toggleButton = page.getByTestId('sidebar-toggle-button');
-    await toggleButton.click();
-
-    const sidebar = page.getByTestId('sidebar-container');
-    await expect(sidebar).toBeVisible();
-
-    const logoutItem = page.getByTestId('nav-item-logout');
-    await logoutItem.click();
-
+    await logout(page);
     await expect(page).toHaveURL(`${FRONTEND_URL}/login`);
   });
 
   // ---- Step 4: UI login as admin and capture session token ----
   let adminToken: string | null = null;
   await test.step('UI: login as admin', async () => {
-    const usernameInput = page.getByPlaceholder('Enter your username');
-    const passwordInput = page.getByPlaceholder('Enter your password');
-    const signInButton = page.getByRole('button', { name: 'Sign In' });
-
-    await usernameInput.fill(ADMIN_USERNAME);
-    await passwordInput.fill(ADMIN_PASSWORD);
-    await signInButton.click();
-
+    await page.goto(FRONTEND_URL);
+    await login(page, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password);
     await expect(page).toHaveURL(`${FRONTEND_URL}/dashboard`);
 
-    // Extract session token from localStorage
-    adminToken = await page.evaluate(() => localStorage.getItem('session_token'));
+    adminToken = await getSessionToken(page);
     expect(adminToken).toBeTruthy();
   });
 
@@ -95,27 +68,13 @@ test('register user, login, logout, admin deletes user, verify user cannot login
 
   // ---- Step 6: UI logout admin ----
   await test.step('UI: logout admin', async () => {
-    // Ensure sidebar is open (it may be closed after page reloads)
-    const toggleButton = page.getByTestId('sidebar-toggle-button');
-    await toggleButton.click(); // open
-    await page.waitForTimeout(500);
-    const logoutItem = page.getByTestId('nav-item-logout');
-    await logoutItem.click();
-
+    await logout(page);
     await expect(page).toHaveURL(`${FRONTEND_URL}/login`);
   });
 
   // ---- Step 7: Try to login as deleted user – should fail ----
   await test.step('UI: attempt login as deleted user', async () => {
-    const usernameInput = page.getByPlaceholder('Enter your username');
-    const passwordInput = page.getByPlaceholder('Enter your password');
-    const signInButton = page.getByRole('button', { name: 'Sign In' });
-
-    await usernameInput.fill(username);
-    await passwordInput.fill(password);
-    await signInButton.click();
-
-    // Expect the error message (as per LoginPage.vue)
+    await login(page, username, password);
     await expect(page.getByText('Invalid username or password')).toBeVisible();
     await expect(page).toHaveURL(`${FRONTEND_URL}/login`);
   });

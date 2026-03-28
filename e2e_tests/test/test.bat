@@ -1,1 +1,1 @@
-npx playwright test register.spec --headed
+npx playwright test tests/login --headed
