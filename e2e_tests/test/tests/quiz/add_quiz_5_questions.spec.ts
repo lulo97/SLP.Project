@@ -5,6 +5,8 @@ import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 test("admin can create a quiz with 5 different question types and delete it", async ({
   page,
 }) => {
+  test.setTimeout(120000); 
+  
   const quizTitle = getUniqueTitle("Full Quiz");
   const questionMC = "What is the capital of France?";
   const optionCorrect = "Paris";

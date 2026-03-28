@@ -17,7 +17,7 @@ import { formatQuestionType, getQuestionSummary } from '../utils/question-helper
   template: `
     <nz-card [nzTitle]="'quiz.questions' | translate" class="shadow-sm" data-testid="questions-card">
       <div class="mb-2 flex justify-between items-center">
-        <span class="font-medium">{{ 'quiz.totalQuestions' | translate }}: {{ questions.length }}</span>
+        <span class="font-medium" data-testid="questions-total">{{ 'quiz.totalQuestions' | translate }}: {{ questions.length }}</span>
         <div class="space-x-2">
           <button *ngIf="!readonly" nz-button nzType="default" size="small" (click)="find.emit()" data-testid="find-question-button">
             <i nz-icon nzType="search"></i> {{ 'quiz.findQuestion' | translate }}
