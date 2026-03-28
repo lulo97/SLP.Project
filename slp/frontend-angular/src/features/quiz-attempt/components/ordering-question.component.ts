@@ -1,13 +1,26 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { NzButtonModule } from 'ng-zorro-antd/button';
+// src/features/quiz-attempt/components/ordering-question.component.ts
+
+import { Component, Input, Output, EventEmitter } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import {
+  DragDropModule,
+  CdkDragDrop,
+  moveItemInArray,
+} from "@angular/cdk/drag-drop";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzIconModule } from "ng-zorro-antd/icon"; 
 
 @Component({
-  selector: 'app-ordering-question',
+  selector: "app-ordering-question",
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, NzButtonModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DragDropModule,
+    NzButtonModule,
+    NzIconModule,
+  ],
   template: `
     <div
       cdkDropList
@@ -22,10 +35,16 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
         [attr.data-testid]="'ordering-item-' + item.order_id"
       >
         <i nz-icon nzType="menu" nzTheme="outline" class="drag-handle"></i>
-        <span class="flex-1" [attr.data-testid]="'ordering-item-text-' + item.order_id">
+        <span
+          class="flex-1"
+          [attr.data-testid]="'ordering-item-text-' + item.order_id"
+        >
           {{ item.text }}
         </span>
-        <span class="text-xs text-gray-400" [attr.data-testid]="'ordering-item-position-' + item.order_id">
+        <span
+          class="text-xs text-gray-400"
+          [attr.data-testid]="'ordering-item-position-' + item.order_id"
+        >
           {{ i + 1 }}
         </span>
       </div>
@@ -62,14 +81,18 @@ export class OrderingQuestionComponent {
 
     if (this._value.length) {
       // Restore previously saved ordering
-      const itemMap = new Map(this._sourceItems.map(item => [item.order_id, item]));
+      const itemMap = new Map(
+        this._sourceItems.map((item) => [item.order_id, item]),
+      );
       const ordered = this._value
-        .map(id => itemMap.get(id))
+        .map((id) => itemMap.get(id))
         .filter((item): item is { text: string; order_id: number } => !!item);
 
       // Append any items not present in the saved value (defensive)
       const orderedIds = new Set(this._value);
-      const remainder = this._sourceItems.filter(item => !orderedIds.has(item.order_id));
+      const remainder = this._sourceItems.filter(
+        (item) => !orderedIds.has(item.order_id),
+      );
       this._items = [...ordered, ...remainder];
     } else {
       this._items = [...this._sourceItems];
@@ -78,6 +101,6 @@ export class OrderingQuestionComponent {
   }
 
   private emitOrder(): void {
-    this.valueChange.emit(this._items.map(item => item.order_id));
+    this.valueChange.emit(this._items.map((item) => item.order_id));
   }
 }
