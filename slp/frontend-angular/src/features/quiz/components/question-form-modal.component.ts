@@ -37,8 +37,31 @@ import { TranslateService, TranslateModule } from "@ngx-translate/core";
   `,
 })
 export class QuestionFormModalComponent {
+  @Input() set question(value: DisplayQuestion | undefined) {
+    this._question = value;
+    // Recompute only when input actually changes
+    this.initialQuestion = value
+      ? {
+          id: value.id,
+          content: value.content,
+          type: value.type,
+          explanation: value.explanation,
+          metadataJson: value.metadata
+            ? JSON.stringify(value.metadata)
+            : undefined,
+          tags: value.tags,
+        }
+      : null;
+  }
+  get question(): DisplayQuestion | undefined {
+    return this._question;
+  }
+  
+  private _question?: DisplayQuestion;
+  initialQuestion: any = null; // stable reference, updated only on input change
+
   @Input() visible = false;
-  @Input() question?: DisplayQuestion;
+
   @Input() loading = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() saved = new EventEmitter<CreateQuestionPayload>();
@@ -46,23 +69,9 @@ export class QuestionFormModalComponent {
   constructor(private translate: TranslateService) {}
 
   get modalTitle(): string {
-    return this.question
+    return this._question
       ? this.translate.instant("quiz.updateQuestion")
       : this.translate.instant("quiz.createQuestion");
-  }
-
-  get initialQuestion(): any {
-    if (!this.question) return null;
-    return {
-      id: this.question.id,
-      content: this.question.content,
-      type: this.question.type,
-      explanation: this.question.explanation,
-      metadataJson: this.question.metadata
-        ? JSON.stringify(this.question.metadata)
-        : undefined,
-      tags: this.question.tags,
-    };
   }
 
   handleSave(payload: CreateQuestionPayload): void {

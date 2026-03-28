@@ -30,23 +30,23 @@ import { CreateQuestionPayload } from "../../question/question.model";
 @Component({
   selector: "app-quiz-detail",
   standalone: true,
-imports: [
-  CommonModule,
-  NzSpinModule,
-  NzCardModule,
-  TranslateModule,
-  NzIconModule,
-  NzButtonModule,
-  QuizInfoCardComponent,
-  NotesSectionComponent,
-  SourcesSectionComponent,
-  QuestionsSectionComponent,
-  QuizActionsCardComponent,
-  QuestionFormModalComponent,
-  QuestionPickerModalComponent,
-  CommentsSectionComponent,
-  ReportModalComponent,
-],
+  imports: [
+    CommonModule,
+    NzSpinModule,
+    NzCardModule,
+    TranslateModule,
+    NzIconModule,
+    NzButtonModule,
+    QuizInfoCardComponent,
+    NotesSectionComponent,
+    SourcesSectionComponent,
+    QuestionsSectionComponent,
+    QuizActionsCardComponent,
+    QuestionFormModalComponent,
+    QuestionPickerModalComponent,
+    CommentsSectionComponent,
+    ReportModalComponent,
+  ],
   template: `
     <div
       *ngIf="loading"
@@ -260,7 +260,12 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
       next: (rawQuestions: QuizQuestion[]) => {
         this.questions = rawQuestions
           .map((q) => {
-            const snapshot = JSON.parse(q.questionSnapshotJson || "{}");
+            // Guard: snapshot may already be a parsed object or still a string
+            const snapshot =
+              typeof q.questionSnapshotJson === "string"
+                ? JSON.parse(q.questionSnapshotJson || "{}")
+                : (q.questionSnapshotJson ?? {});
+
             return {
               id: q.id,
               content: snapshot.content || "",
@@ -269,7 +274,7 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
               metadata: snapshot.metadata || {},
               tags: snapshot.tags || [],
               displayOrder: q.displayOrder,
-              questionSnapshotJson: q.questionSnapshotJson,
+              questionSnapshotJson: JSON.stringify(snapshot), // normalise back to string
             };
           })
           .sort((a, b) => a.displayOrder - b.displayOrder);

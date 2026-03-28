@@ -1,1 +1,1 @@
-npx playwright test tests/question/update/update_true_false.spec.ts --headed
+npx playwright test tests/quiz/add_edit_question_type.spec.ts --headed

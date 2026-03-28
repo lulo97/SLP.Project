@@ -74,7 +74,9 @@ test("admin can create a quiz, add a multiple-choice question, edit it to true/f
   await expect(modal).not.toBeVisible();
 
   // 4. Verify the question appears with the correct type tag
-  const questionRow = page.locator(`div:has-text("${mcQuestionContent}")`).first();
+  const questionRow = page
+    .locator(`div:has-text("${mcQuestionContent}")`)
+    .first();
   await expect(questionRow).toBeVisible();
 
   const typeTag = questionRow.getByTestId(/^question-type-tag-/);
@@ -113,7 +115,9 @@ test("admin can create a quiz, add a multiple-choice question, edit it to true/f
   await expect(modal).not.toBeVisible();
 
   // 6. Verify the question now appears with the updated content and type
-  const updatedRow = page.locator(`div:has-text("${tfQuestionContent}")`).first();
+  const updatedRow = page
+    .locator(`div:has-text("${tfQuestionContent}")`)
+    .first();
   await expect(updatedRow).toBeVisible();
 
   const updatedTypeTag = updatedRow.getByTestId(/^question-type-tag-/);
@@ -136,7 +140,7 @@ test("admin can create a quiz, add a multiple-choice question, edit it to true/f
   await searchInput.press("Enter");
 
   const quizItem = page.locator(
-    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`
+    `[data-testid^="quiz-list-item-"]:has-text("${quizTitle}")`,
   );
   await expect(quizItem).not.toBeVisible();
 });
