@@ -169,13 +169,38 @@ export function useAttempt(quizId: number) {
 
         currentIndex.value = 0;
       } else {
-        // Start new attempt
-        attempt.value = await attemptStore.startAttempt(quizId, randomizeOrder); // ← pass flag
+        // New attempt
+        attempt.value = await attemptStore.startAttempt(quizId, randomizeOrder);
         if (!attempt.value) throw new Error("startAttempt returned null");
         validateQuestions(attempt.value.questions);
+
         attempt.value.questions.forEach((q) => {
           const snapshot = JSON.parse(q.questionSnapshotJson);
-          answers.value[q.quizQuestionId] = getDefaultAnswer(snapshot);
+          let answer;
+
+          // 🆕 Special handling for ordering questions
+          if (snapshot.type === "ordering") {
+            const items = snapshot.metadata?.items || [];
+            const correctOrder = items
+              .map((item: any) => item.order_id)
+              .sort((a: number, b: number) => a - b);
+            answer = { order: correctOrder };
+
+            // Save the default order immediately so it's on the server
+            attemptStore
+              .submitAnswer(
+                attempt.value!.attemptId,
+                q.quizQuestionId,
+                JSON.stringify(answer),
+              )
+              .catch((err) => {
+                console.error("Failed to save default ordering answer", err);
+              });
+          } else {
+            answer = getDefaultAnswer(snapshot);
+          }
+
+          answers.value[q.quizQuestionId] = answer;
         });
       }
     } catch (err) {

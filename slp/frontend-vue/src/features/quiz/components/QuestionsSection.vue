@@ -1,7 +1,7 @@
 <template>
   <a-card title="Questions" class="shadow-sm" data-testid="questions-card">
     <div class="mb-2 flex justify-between items-center">
-      <span class="font-medium">Total: {{ questions.length }}</span>
+      <span data-testid="questions-total" class="font-medium">Total: {{ questions.length }}</span>
       <div class="space-x-2">
         <a-button
           v-if="!readonly"
