@@ -24,12 +24,14 @@ import { TranslateService, TranslateModule } from "@ngx-translate/core";
       (nzOnCancel)="handleCancel()"
     >
       <ng-template nzModalContent>
-        <app-question-form
-          [initialQuestion]="initialQuestion"
-          [loading]="loading"
-          (save)="handleSave($event)"
-          (cancel)="handleCancel()"
-        ></app-question-form>
+        <div data-testid="question-form-modal">
+          <app-question-form
+            [initialQuestion]="initialQuestion"
+            [loading]="loading"
+            (save)="handleSave($event)"
+            (cancel)="handleCancel()"
+          ></app-question-form>
+        </div>
       </ng-template>
     </nz-modal>
   `,

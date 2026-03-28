@@ -93,15 +93,11 @@ import { FormsModule } from "@angular/forms";
       </button>
     </nz-card>
 
-    <!-- Attach Source Modal (unchanged) -->
+    <!-- Attach Source Modal -->
     <nz-modal
       [(nzVisible)]="modalVisible"
       nzTitle="{{ 'quiz.attachSources' | translate }}"
-      (nzOnOk)="handleAttach()"
-      (nzOnCancel)="modalVisible = false"
-      [nzOkLoading]="attaching"
-      nzOkText="{{ 'quiz.attach' | translate }}"
-      nzCancelText="{{ 'common.cancel' | translate }}"
+      [nzFooter]="modalFooter"
       data-testid="attach-source-modal"
     >
       <ng-template nzModalContent>
@@ -137,6 +133,26 @@ import { FormsModule } from "@angular/forms";
         </nz-checkbox-group>
       </ng-template>
     </nz-modal>
+
+    <!-- Custom modal footer with testable buttons -->
+    <ng-template #modalFooter>
+      <button
+        nz-button
+        (click)="modalVisible = false"
+        data-testid="attach-sources-cancel"
+      >
+        {{ "common.cancel" | translate }}
+      </button>
+      <button
+        nz-button
+        nzType="primary"
+        [nzLoading]="attaching"
+        (click)="handleAttach()"
+        data-testid="attach-sources-submit"
+      >
+        {{ "quiz.attach" | translate }}
+      </button>
+    </ng-template>
   `,
   styles: [
     `

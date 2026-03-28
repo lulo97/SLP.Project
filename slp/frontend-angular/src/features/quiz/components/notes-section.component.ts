@@ -1,5 +1,3 @@
-
-
 import { Component, Input, Output, EventEmitter } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -99,6 +97,7 @@ import { NzFormModule } from "ng-zorro-antd/form";
         <i nz-icon nzType="plus"></i> {{ "quiz.addNote" | translate }}
       </button>
     </nz-card>
+
     <nz-modal
       [(nzVisible)]="modalVisible"
       [nzTitle]="modalTitle"
@@ -108,31 +107,63 @@ import { NzFormModule } from "ng-zorro-antd/form";
       [nzWidth]="480"
     >
       <ng-template nzModalContent>
-        <form nz-form nzLayout="vertical">
-          <nz-form-item>
-            <nz-form-label nzRequired>{{
-              "note.title" | translate
-            }}</nz-form-label>
-            <nz-form-control>
-              <input nz-input [(ngModel)]="form.title" name="title" />
-            </nz-form-control>
-          </nz-form-item>
+        <div data-testid="note-modal">
+          <form nz-form nzLayout="vertical">
+            <nz-form-item>
+              <nz-form-label nzRequired>{{
+                "note.title" | translate
+              }}</nz-form-label>
+              <nz-form-control>
+                <input
+                  nz-input
+                  [(ngModel)]="form.title"
+                  name="title"
+                  data-testid="note-title-input"
+                />
+              </nz-form-control>
+            </nz-form-item>
 
-          <nz-form-item>
-            <nz-form-label nzRequired>{{
-              "note.content" | translate
-            }}</nz-form-label>
-            <nz-form-control>
-              <textarea
-                nz-input
-                [(ngModel)]="form.content"
-                name="content"
-                rows="4"
-              ></textarea>
-            </nz-form-control>
-          </nz-form-item>
-        </form>
+            <nz-form-item>
+              <nz-form-label nzRequired>{{
+                "note.content" | translate
+              }}</nz-form-label>
+              <nz-form-control>
+                <textarea
+                  nz-input
+                  [(ngModel)]="form.content"
+                  name="content"
+                  rows="4"
+                  data-testid="note-content-input"
+                ></textarea>
+              </nz-form-control>
+            </nz-form-item>
+          </form>
+        </div>
       </ng-template>
+
+      <div *nzModalFooter>
+        <button
+          nz-button
+          nzType="default"
+          (click)="handleCancel()"
+          data-testid="note-cancel-button"
+        >
+          {{ "common.cancel" | translate }}
+        </button>
+        <button
+          nz-button
+          nzType="primary"
+          [nzLoading]="saving"
+          (click)="handleSave()"
+          data-testid="note-save-button"
+        >
+          {{
+            editingId
+              ? ("common.save" | translate)
+              : ("common.create" | translate)
+          }}
+        </button>
+      </div>
     </nz-modal>
   `,
   styles: [
