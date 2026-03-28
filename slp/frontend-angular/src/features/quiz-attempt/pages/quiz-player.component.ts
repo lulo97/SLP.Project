@@ -7,12 +7,10 @@ import {
   inject,
   signal,
   computed,
-  effect,
-  HostListener,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Subject, takeUntil, debounceTime, switchMap } from "rxjs";
+import { Subject, takeUntil } from "rxjs";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzModalModule, NzModalService } from "ng-zorro-antd/modal";
 import { NzDrawerModule } from "ng-zorro-antd/drawer";
@@ -308,7 +306,7 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
           maxScore: existing.maxScore,
           questions: existing.answers!.map((ans) => ({
             quizQuestionId: ans.quizQuestionId,
-            displayOrder: 0, // not needed, but we'll keep
+            displayOrder: 0,
             questionSnapshotJson: ans.questionSnapshotJson,
           })),
         });
@@ -341,16 +339,42 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
         .toPromise();
       if (!result) return;
       this.attempt.set(result);
-      // Initialize empty answers
+
+      // Initialize answers
       const initialAnswers: Record<number, any> = {};
+      const orderingQuestions: Array<{ quizQuestionId: number; answer: any }> =
+        [];
+
       result.questions.forEach((q) => {
-        const snapshot =
-          typeof q.questionSnapshotJson === "string"
-            ? JSON.parse(q.questionSnapshotJson || "{}")
-            : (q.questionSnapshotJson ?? {});
-        initialAnswers[q.quizQuestionId] = this.getDefaultAnswer(snapshot);
+        const snapshot = this.parseSnapshot(q.questionSnapshotJson);
+        let answer = this.getDefaultAnswer(snapshot);
+
+        // Đối với câu hỏi ordering: tạo đáp án đúng ngay lập tức
+        if (snapshot.type === "ordering") {
+          const items = snapshot.metadata?.items || [];
+          const correctOrder = items
+            .map((item: any) => item.order_id)
+            .sort((a: number, b: number) => a - b);
+          answer = { order: correctOrder };
+          orderingQuestions.push({ quizQuestionId: q.quizQuestionId, answer });
+        }
+
+        initialAnswers[q.quizQuestionId] = answer;
       });
+
       this.answers.set(initialAnswers);
+
+      // Lưu các đáp án mặc định của ordering xuống server
+      for (const q of orderingQuestions) {
+        const answerJson = JSON.stringify(q.answer);
+        this.attemptService
+          .submitAnswer(this.attempt()!.attemptId, q.quizQuestionId, answerJson)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            error: (err) =>
+              console.error("Failed to save default ordering answer", err),
+          });
+      }
     } catch (err) {
       console.error(err);
       this.message.error(this.translate.instant("quiz.startAttemptError"));
@@ -374,7 +398,7 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     return !!this.authService.currentUser;
   }
 
-  // Thêm helper method
+  // Helper method để parse snapshot (dạng string hoặc object)
   private parseSnapshot(snapshot: any): any {
     if (!snapshot) return {};
     if (typeof snapshot === "string") {
@@ -387,7 +411,6 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     return snapshot;
   }
 
-  // Sửa getDefaultAnswer
   getDefaultAnswer(snapshot: any): any {
     const parsed = this.parseSnapshot(snapshot);
     const type = parsed.type;
@@ -401,7 +424,6 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     return {};
   }
 
-  // Sửa answeredCount
   answeredCount = computed(() => {
     const a = this.attempt();
     if (!a) return 0;
