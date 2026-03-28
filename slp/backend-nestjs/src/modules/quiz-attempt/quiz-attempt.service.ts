@@ -175,14 +175,14 @@ export class QuizAttemptService implements IQuizAttemptService {
     if (!answer)
       throw new BadRequestException("Question not part of this attempt");
 
-    // Validate JSON
+    let parsedAnswer;
     try {
-      JSON.parse(dto.answerJson);
+      parsedAnswer = JSON.parse(dto.answerJson);
     } catch {
       throw new BadRequestException("Invalid answer JSON");
     }
 
-    answer.answerJson = dto.answerJson;
+    answer.answerJson = parsedAnswer;
     await this.attemptRepo.updateAnswer(answer);
   }
 
