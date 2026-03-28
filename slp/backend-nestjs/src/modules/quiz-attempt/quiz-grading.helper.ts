@@ -15,28 +15,37 @@ export function shuffleArray<T>(array: T[]): T[] {
 /**
  * Parse snapshot JSON and shuffle options/items for certain question types.
  */
-export function shuffleOptionsInSnapshot(snapshotJson: string): string {
-  try {
-    const snapshot = JSON.parse(snapshotJson);
-    if (!snapshot || typeof snapshot !== "object") return snapshotJson;
+export function shuffleOptionsInSnapshot(snapshotInput: any): any {
+  let snapshot: any;
 
-    const type = snapshot.type;
-    const metadata = snapshot.metadata;
-    if (!metadata) return snapshotJson;
-
-    if (type === "multiple_choice" || type === "single_choice") {
-      if (Array.isArray(metadata.options)) {
-        metadata.options = shuffleArray(metadata.options);
-      }
-    } else if (type === "ordering") {
-      if (Array.isArray(metadata.items)) {
-        metadata.items = shuffleArray(metadata.items);
-      }
+  // Handle string input (parse) or object input (use directly)
+  if (typeof snapshotInput === "string") {
+    try {
+      snapshot = JSON.parse(snapshotInput);
+    } catch {
+      return snapshotInput; // return original if parse fails
     }
-    return snapshot;
-  } catch {
-    return snapshotJson;
+  } else {
+    snapshot = snapshotInput;
   }
+
+  if (!snapshot || typeof snapshot !== "object") return snapshotInput;
+
+  const type = snapshot.type;
+  const metadata = snapshot.metadata;
+  if (!metadata) return snapshotInput;
+
+  if (type === "multiple_choice" || type === "single_choice") {
+    if (Array.isArray(metadata.options)) {
+      metadata.options = shuffleArray(metadata.options);
+    }
+  } else if (type === "ordering") {
+    if (Array.isArray(metadata.items)) {
+      metadata.items = shuffleArray(metadata.items);
+    }
+  }
+  // Return the (possibly modified) snapshot object
+  return snapshot;
 }
 
 function ensureObject(data: any): any {
