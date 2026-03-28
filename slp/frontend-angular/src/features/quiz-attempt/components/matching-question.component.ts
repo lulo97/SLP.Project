@@ -216,8 +216,7 @@ export class MatchingQuestionComponent
   private rightRefs = new Map<number, HTMLElement>();
 
   ngOnInit(): void {
-    // Shuffle right column
-    this.shuffledRight = [...this.pairs].sort(() => Math.random() - 0.5);
+    this.reshuffleRight();
   }
 
   ngAfterViewInit(): void {
@@ -231,6 +230,12 @@ export class MatchingQuestionComponent
     this.resizeObserver.observe(this.container.nativeElement);
     setTimeout(() => this.computeLines(), 0);
   }
+
+  private reshuffleRight(): void {
+    // Shuffle a copy of the pairs array
+    this.shuffledRight = [...this.pairs].sort(() => Math.random() - 0.5);
+  }
+
   private updateRefs(): void {
     // Clear maps first (they might have changed)
     this.leftRefs.clear();
@@ -336,6 +341,14 @@ export class MatchingQuestionComponent
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["value"] && !changes["value"].firstChange) {
       // Ensure refs are ready and compute lines
+      setTimeout(() => this.computeLines(), 0);
+    }
+    if (changes["pairs"] && !changes["pairs"].firstChange) {
+      // Pairs changed – reshuffle the right column and reset internal state
+      this.reshuffleRight();
+      // Clear any pending left selection (it's now invalid)
+      this.selectedLeft = null;
+      // Recompute lines after DOM updates (refs may have changed)
       setTimeout(() => this.computeLines(), 0);
     }
   }
