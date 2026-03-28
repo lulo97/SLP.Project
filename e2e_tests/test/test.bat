@@ -1,1 +1,1 @@
-npx playwright test attempt_quiz_1_multiple_choice.spec.ts --headed
+npx playwright test attempt_quiz_1_true_false.spec --headed
