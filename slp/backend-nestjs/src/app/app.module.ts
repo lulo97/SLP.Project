@@ -11,10 +11,8 @@ import configuration from "../config/configuration";
 import { QuizModule } from "../modules/quiz/quiz.module";
 import { SourceModule } from "../modules/source/source.module";
 import { NoteModule } from "../modules/note/note.module";
-// import { ExplanationModule } from './modules/explanation/explanation.module';
 // import { ProgressModule } from './modules/progress/progress.module';
 // import { FavoriteModule } from './modules/favorite/favorite.module';
-// import { CommentModule } from './modules/comment/comment.module';
 import { ReportModule } from "../modules/report/report.module";
 // import { AdminModule } from './modules/admin/admin.module';
 // import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -29,6 +27,7 @@ import { QuizAttemptModule } from "../modules/quiz-attempt/quiz-attempt.module";
 import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
 import { CommentModule } from "../modules/comment/comment.module";
+import { ExplanationModule } from "../modules/explanation/explanation.module";
 
 @Module({
   imports: [
@@ -50,7 +49,7 @@ import { CommentModule } from "../modules/comment/comment.module";
     QuizModule,
     SourceModule,
     NoteModule,
-    // ExplanationModule,
+    ExplanationModule,
     // ProgressModule,
     // FavoriteModule,
     CommentModule,
