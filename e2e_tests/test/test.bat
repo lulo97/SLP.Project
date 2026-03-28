@@ -1,1 +1,1 @@
-npx playwright test add_quiz_5_questions.spec --headed
+npx playwright test edit_quiz_title.spec --headed

@@ -11,6 +11,8 @@ import { QuizFormComponent } from "../features/quiz/pages/quiz-form.component";
 import { QuizDetailComponent } from "../features/quiz/pages/quiz-detail.component";
 import { QuizEditComponent } from "../features/quiz/pages/quiz-edit.component";
 import { AdminGuard } from "../features/auth/admin.guard";
+import { QuizPlayerComponent } from "../features/quiz-attempt/pages/quiz-player.component";
+import { AttemptReviewComponent } from "../features/quiz-attempt/pages/attempt-review.component";
 
 export const routes: Routes = [
   {
@@ -160,7 +162,7 @@ export const routes: Routes = [
           },
           {
             path: ":id/edit",
-            component: QuizFormComponent ,
+            component: QuizFormComponent,
             data: { breadcrumb: "Edit Quiz" },
           },
         ],
@@ -182,6 +184,18 @@ export const routes: Routes = [
           ),
         canActivate: [AdminGuard],
         data: { breadcrumb: "Admin Reports" },
+      },
+      {
+        path: "quiz/:quizId/attempt",
+        component: QuizPlayerComponent,
+      },
+      {
+        path: "quiz/:quizId/attempt/:attemptId",
+        component: QuizPlayerComponent,
+      },
+      {
+        path: "quiz/attempt/:attemptId/review",
+        component: AttemptReviewComponent,
       },
     ],
   },

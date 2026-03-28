@@ -12,6 +12,7 @@ import { QuizService } from "../quiz.service";
 import { AuthService } from "../../auth/auth.service";
 import { SourceService } from "../../source/services/source.service";
 import { QuestionService } from "../../question/question.service";
+import { NzListModule } from "ng-zorro-antd/list";
 
 // Components
 import { QuizInfoCardComponent } from "../components/quiz-info-card.component";
@@ -26,6 +27,8 @@ import { ReportModalComponent } from "../../report/components/report-modal/repor
 
 import { DisplayQuestion, QuizQuestion } from "../quiz.model";
 import { CreateQuestionPayload } from "../../question/question.model";
+import { AttemptService } from "../../quiz-attempt/attempt.service";
+import { Attempt } from "../../quiz-attempt/attempt.model";
 
 @Component({
   selector: "app-quiz-detail",
@@ -46,6 +49,7 @@ import { CreateQuestionPayload } from "../../question/question.model";
     QuestionPickerModalComponent,
     CommentsSectionComponent,
     ReportModalComponent,
+    NzListModule,
   ],
   template: `
     <div
@@ -100,7 +104,7 @@ import { CreateQuestionPayload } from "../../question/question.model";
         (view)="handleViewSource($event)"
       ></app-sources-section>
 
-      <!-- Attempts section (anyone can start an attempt) -->
+      <!-- Attempts Section -->
       <nz-card
         nzTitle="{{ 'quiz.attempts' | translate }}"
         class="shadow-sm mt-4"
@@ -119,15 +123,73 @@ import { CreateQuestionPayload } from "../../question/question.model";
             {{ "quiz.startAttempt" | translate }}
           </button>
         </div>
-        <!-- Attempts list goes here; you can reuse from Vue or implement later -->
+        <nz-list
+          *ngIf="attempts.length > 0"
+          nzSize="small"
+          data-testid="attempts-list"
+        >
+          <nz-list-item
+            *ngFor="let item of attempts"
+            [attr.data-testid]="'attempt-item-' + item.id"
+          >
+            <nz-list-item-meta>
+              <nz-list-item-meta-title
+                >Attempt #{{ item.id }}</nz-list-item-meta-title
+              >
+              <nz-list-item-meta-description>
+                {{ item.startTime | date: "medium" }} -
+                <span
+                  [ngClass]="{
+                    'text-green-600': item.status === 'completed',
+                    'text-yellow-600': item.status === 'in_progress',
+                    'text-gray-600': item.status === 'abandoned',
+                  }"
+                >
+                  {{ item.status }}
+                </span>
+                <span *ngIf="item.score !== null">
+                  - Score: {{ item.score }}/{{ item.maxScore }}
+                </span>
+              </nz-list-item-meta-description>
+            </nz-list-item-meta>
+            <ul nz-list-item-actions>
+              <nz-list-item-action
+                *ngIf="item.status === 'completed'"
+                (click)="goToReview(item.id)"
+                data-testid="review-attempt"
+              >
+                Review
+              </nz-list-item-action>
+              <nz-list-item-action
+                *ngIf="item.status === 'in_progress'"
+                (click)="resumeAttempt(item.id)"
+                data-testid="resume-attempt"
+              >
+                Resume
+              </nz-list-item-action>
+            </ul>
+          </nz-list-item>
+        </nz-list>
         <div
-          class="text-gray-500 text-center py-4"
           *ngIf="attempts.length === 0"
+          class="text-gray-500 text-center py-4"
         >
           {{ "quiz.noAttempts" | translate }}
         </div>
-        <!-- ... add attempts list rendering ... -->
       </nz-card>
+
+      <!-- Add report modal for quiz -->
+      <app-report-modal
+        [(visible)]="reportModalVisible"
+        targetType="quiz"
+        [targetId]="quizId"
+      ></app-report-modal>
+
+      <!-- Comments section -->
+      <app-comments-section
+        targetType="quiz"
+        [targetId]="quizId"
+      ></app-comments-section>
 
       <!-- Questions section – readonly false for owner so buttons appear -->
       <app-questions-section
@@ -189,6 +251,7 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
   private questionService = inject(QuestionService);
   private message = inject(NzMessageService);
   private translate = inject(TranslateService);
+  private attemptService = inject(AttemptService);
 
   quizId!: number;
   quiz: any = null;
@@ -213,10 +276,8 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
   insertIndex: number | undefined;
   questionPickerVisible = false;
 
-  // Attempts (stub – you can implement fully later)
-  attempts: any[] = [];
+  attempts: Attempt[] = [];
   attemptLoading = false;
-
   reportModalVisible = false;
 
   private destroy$ = new Subject<void>();
@@ -246,6 +307,7 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
       .subscribe((quiz) => {
         this.quiz = quiz;
         if (quiz) {
+          this.loadAttempts();
           this.isOwner = this.authService.currentUser?.id === quiz.userId;
           this.loadQuestions();
           if (this.isOwner) {
@@ -253,7 +315,6 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
           }
           this.loadSources();
           this.loadAvailableSources();
-          this.loadAttempts(); // optional
         }
         this.loading = false;
       });
@@ -321,8 +382,24 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  // In loadQuiz, after loading quiz, load attempts
   loadAttempts(): void {
-    // implement if needed – similar to Vue's attemptStore.fetchUserAttemptsForQuiz
+    this.attemptService.fetchUserAttemptsForQuiz(this.quizId).subscribe({
+      next: (data) => (this.attempts = data),
+      error: () => console.error("Failed to load attempts"),
+    });
+  }
+  // Attempt actions
+  startAttempt(): void {
+    this.router.navigate(["/quiz", this.quizId, "attempt"]);
+  }
+
+  resumeAttempt(attemptId: number): void {
+    this.router.navigate(["/quiz", this.quizId, "attempt", attemptId]);
+  }
+
+  goToReview(attemptId: number): void {
+    this.router.navigate(["/quiz/attempt", attemptId, "review"]);
   }
 
   // ─── Notes handlers ───────────────────────────────────────
@@ -595,16 +672,6 @@ export class QuizDetailComponent implements OnInit, OnDestroy {
       error: () =>
         this.message.error(this.translate.instant("quiz.deleteQuestionError")),
     });
-  }
-
-  // ─── Attempts ─────────────────────────────────────────────
-
-  startAttempt(): void {
-    this.attemptLoading = true;
-    // Call attempt service to start attempt and navigate
-    this.router.navigate(["/quiz", this.quizId, "attempt"]);
-    // After navigation, set loading false
-    setTimeout(() => (this.attemptLoading = false), 500);
   }
 
   // ─── Quiz actions ─────────────────────────────────────────
