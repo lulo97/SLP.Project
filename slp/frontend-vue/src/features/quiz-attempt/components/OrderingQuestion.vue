@@ -10,7 +10,7 @@
       v-for="(element, index) in localItems"
       :key="element.order_id"
       class="flex items-center gap-2 bg-gray-50 p-2 rounded border"
-      :data-testid="`ordering-item-${element.order_id}`"
+      :data-testid="`ordering-row-${element.order_id}`"
       :data-index="index"
     >
       <span
