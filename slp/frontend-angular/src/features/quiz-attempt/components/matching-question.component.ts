@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/components/matching-question.component.ts
-
 import {
   Component,
   Input,

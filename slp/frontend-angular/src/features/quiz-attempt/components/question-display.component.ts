@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/components/question-display.component.ts
-
 import {
   Component,
   Input,

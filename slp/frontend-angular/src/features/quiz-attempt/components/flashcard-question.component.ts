@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/components/flashcard-question.component.ts
-
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 

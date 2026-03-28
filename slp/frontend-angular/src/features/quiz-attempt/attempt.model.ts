@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/attempt.model.ts
-
 export interface Attempt {
   id: number;
   userId: number;

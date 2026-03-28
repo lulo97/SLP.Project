@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/attempt.service.ts
-
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from '../../services/api-client.service';

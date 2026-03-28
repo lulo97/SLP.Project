@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/pages/quiz-player.component.ts
-
 import {
   Component,
   OnInit,

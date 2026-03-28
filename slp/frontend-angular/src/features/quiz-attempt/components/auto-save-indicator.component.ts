@@ -1,5 +1,3 @@
-// src/features/quiz-attempt/components/auto-save-indicator.component.ts
-
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzIconModule } from 'ng-zorro-antd/icon';
