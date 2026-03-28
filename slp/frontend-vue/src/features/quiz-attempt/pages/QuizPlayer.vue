@@ -186,9 +186,8 @@
       :closable="false"
       :mask-closable="false"
       @ok="handleStartModalOk"
-      data-testid="start-options-modal"
     >
-      <div class="space-y-4 py-2">
+      <div class="space-y-4 py-2" data-testid="start-options-modal">
         <p class="text-sm text-gray-500">
           Choose your attempt settings before starting.
         </p>

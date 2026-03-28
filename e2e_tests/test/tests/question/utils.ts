@@ -1,7 +1,7 @@
 // e2e_tests/test/utils/questionTestUtils.ts
 import { Locator, Page, expect } from "@playwright/test";
 
-export const FRONTEND_URL = "http://localhost:3009";
+export const FRONTEND_URL = "http://localhost:4000";
 const ADMIN_USERNAME = "test1";
 const ADMIN_PASSWORD = "2";
 
