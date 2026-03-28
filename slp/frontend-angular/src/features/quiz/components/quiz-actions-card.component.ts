@@ -80,7 +80,7 @@ import { RouterModule } from "@angular/router";
           (click)="onConfirmDelete()"
           data-testid="confirm-delete-quiz-button"
         >
-          {{ "common.delete" | translate }}
+          {{ "common.yes" | translate }}
         </button>
       </div>
     </ng-template>
