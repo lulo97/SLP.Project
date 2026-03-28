@@ -394,6 +394,7 @@ const {
   togglePause: ttsTogglePause,
   stop: ttsStop,
 } = useTts();
+const currentSourceId = ref<number>(0);
 
 // ── Refs ──────────────────────────────────────────────────────────────────────
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -680,6 +681,8 @@ function formatDate(iso: string) {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
+  currentSourceId.value = Number(route.params.id);
+
   loadSource();
   window.addEventListener("scroll", onScroll, { passive: true });
 });
@@ -688,15 +691,18 @@ onUnmounted(() => {
   window.removeEventListener("scroll", onScroll);
   if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
   if (notifTimer) clearTimeout(notifTimer);
-  // final save on leave
-  const scrollTop = window.scrollY;
-  const scrollHeight =
-    document.documentElement.scrollHeight - window.innerHeight;
-  sourceStore.updateProgress(sourceId.value, {
-    scrollPosition: Math.round(scrollTop),
-    percentComplete:
-      scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0,
-  });
+
+  // Use captured id, not the computed one (route is already changed)
+  if (currentSourceId.value) {
+    const scrollTop = window.scrollY;
+    const scrollHeight =
+      document.documentElement.scrollHeight - window.innerHeight;
+    sourceStore.updateProgress(currentSourceId.value, {
+      scrollPosition: Math.round(scrollTop),
+      percentComplete:
+        scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0,
+    });
+  }
 });
 </script>
 

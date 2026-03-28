@@ -223,15 +223,14 @@ export const useSourceStore = defineStore("source", () => {
     sourceId: number,
     payload: { scrollPosition: number; percentComplete: number },
   ): Promise<void> {
+    if (!sourceId || isNaN(sourceId)) return;
     try {
       const res = await apiClient.put<ProgressDto>(
         `/source/${sourceId}/progress`,
-        { lastPosition: payload }, // ← wrap in lastPosition
+        { lastPosition: payload },
       );
       currentProgress.value = res.data;
-    } catch {
-      /* non-critical */
-    }
+    } catch {}
   }
 
   return {
