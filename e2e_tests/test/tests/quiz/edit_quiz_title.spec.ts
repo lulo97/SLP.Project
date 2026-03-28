@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/add_edit_delete_quiz.spec.ts
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 
 test("admin can create an empty quiz, edit its title, and delete it", async ({ page }) => {
   const originalTitle = getUniqueTitle("Empty Quiz");
@@ -10,7 +10,7 @@ test("admin can create an empty quiz, edit its title, and delete it", async ({ p
   await loginAsAdmin(page);
 
   // 2. Go to quiz list and create a new quiz
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   const createFab = page.getByTestId("create-quiz-fab");

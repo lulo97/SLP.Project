@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/add_quiz_5_questions.spec.ts
 import { test, expect, Locator } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 
 test("admin can create a quiz with 5 different question types and delete it", async ({
   page,
@@ -24,7 +24,7 @@ test("admin can create a quiz with 5 different question types and delete it", as
   await loginAsAdmin(page);
 
   // 2. Create an empty quiz
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   const createFab = page.getByTestId("create-quiz-fab");

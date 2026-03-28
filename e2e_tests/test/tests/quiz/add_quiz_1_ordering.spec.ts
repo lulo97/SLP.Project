@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/add_quiz_1_ordering.spec.ts
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 
 test("admin can create a quiz, add an ordering question, and delete the quiz", async ({ page }) => {
   const quizTitle = getUniqueTitle("Quiz with Ordering Question");
@@ -11,7 +11,7 @@ test("admin can create a quiz, add an ordering question, and delete the quiz", a
   await loginAsAdmin(page);
 
   // 2. Go to quiz list and create a new quiz
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   const createFab = page.getByTestId("create-quiz-fab");

@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/create_and_delete_empty_quiz.spec.ts
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils"; // reuse existing helpers
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils"; // reuse existing helpers
 
 test("admin can create an empty quiz and delete it", async ({ page }) => {
   const quizTitle = getUniqueTitle("Empty Quiz");
@@ -9,7 +9,7 @@ test("admin can create an empty quiz and delete it", async ({ page }) => {
   await loginAsAdmin(page);
 
   // 2. Go to the quiz list page
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   // 3. Click the floating action button to create a new quiz

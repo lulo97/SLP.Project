@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/add_quiz_1_true_false.spec.ts
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 
 test("admin can create an empty quiz, add a true/false question, then delete the quiz", async ({
   page,
@@ -13,7 +13,7 @@ test("admin can create an empty quiz, add a true/false question, then delete the
   await loginAsAdmin(page);
 
   // 2. Go to quiz list and create a new quiz
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   const createFab = page.getByTestId("create-quiz-fab");

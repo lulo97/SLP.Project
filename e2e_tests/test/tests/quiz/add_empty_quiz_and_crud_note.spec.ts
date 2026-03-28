@@ -1,6 +1,6 @@
 // e2e_tests/test/tests/quiz/note_crud.spec.ts
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin, getUniqueTitle } from "../question/utils";
+import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 
 test("admin can create a quiz, add/edit/delete a note, then delete the quiz", async ({ page }) => {
   const quizTitle = getUniqueTitle("Quiz with Note");
@@ -11,7 +11,7 @@ test("admin can create a quiz, add/edit/delete a note, then delete the quiz", as
 
   // ---------- 1. Create an empty quiz ----------
   await loginAsAdmin(page);
-  await page.goto("http://localhost:4000/quiz");
+  await page.goto(`${FRONTEND_URL}/quiz`);
   await expect(page).toHaveURL(/\/quiz$/);
 
   const createFab = page.getByTestId("create-quiz-fab");
