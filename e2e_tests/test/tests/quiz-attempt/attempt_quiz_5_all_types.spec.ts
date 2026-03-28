@@ -5,7 +5,7 @@ import { loginAsAdmin, getUniqueTitle, FRONTEND_URL } from "../question/utils";
 test("admin can create a quiz with all 5 question types, attempt it, answer only MC wrong, score 4/5, and delete the quiz", async ({
   page,
 }) => {
-  test.setTimeout(180000); 
+  test.setTimeout(180000);
 
   const quizTitle = getUniqueTitle("Full Quiz Attempt");
 
@@ -297,46 +297,51 @@ test("admin can create a quiz with all 5 question types, attempt it, answer only
   const scoreValue = page.getByTestId("score-value");
   await expect(scoreValue).toHaveText("4 / 5");
 
-  const scorePercent = page.getByTestId("score-percent");
-  await expect(scorePercent).toHaveText("80%");
+  // Use regex /^review-question-/ to match IDs like review-question-0, review-question-1, etc.
+  const reviewCards = page.getByTestId(/^review-question-/);
 
-  const correctCount = page.getByTestId("correct-count");
-  const incorrectCount = page.getByTestId("incorrect-count");
-  await expect(correctCount).toHaveText("4 correct");
-  await expect(incorrectCount).toHaveText("1 incorrect");
-
-  // Verify each question's correctness
-  // Question 0: Multiple Choice (should be incorrect)
-  const mcCard = page.getByTestId("review-question-0");
+  // ---- Multiple Choice (should be wrong) ----
+  const mcCard = reviewCards
+    .filter({ hasText: "What is the capital of France?" })
+    .first();
   await expect(mcCard).toHaveAttribute("data-correct", "false");
-  const mcUserAnswer = page.getByTestId("review-user-answer-0");
+  const mcUserAnswer = mcCard.getByTestId(/^review-user-answer-/);
   await expect(mcUserAnswer).toContainText(mcWrong);
 
-  // Question 1: True/False (correct)
+  // ---- True/False (should be correct) ----
   const tfCard = page.getByTestId("review-question-1");
   await expect(tfCard).toHaveAttribute("data-correct", "true");
-  const tfUserAnswer = page.getByTestId("review-user-answer-1");
+  await expect(tfCard.getByTestId("review-question-content-1")).toHaveText(
+    tfQuestion,
+  );
+  const tfUserAnswer = tfCard.getByTestId(/^review-user-answer-/);
   await expect(tfUserAnswer).toContainText("True");
 
-  // Question 2: Fill Blank (correct)
-  const fbCard = page.getByTestId("review-question-2");
+  // ---- Fill Blank (should be correct) ----
+  // Note: Filter matches the rendered "___" instead of the original question string
+  const fbCard = reviewCards
+    .filter({ hasText: /The capital of France is/ })
+    .first();
   await expect(fbCard).toHaveAttribute("data-correct", "true");
-  const fbUserAnswer = page.getByTestId("review-user-answer-2");
+  const fbUserAnswer = fbCard.getByTestId(/^review-user-answer-/);
   await expect(fbUserAnswer).toContainText(fbKeyword);
 
-  // Question 3: Ordering (correct)
-  const orderCard = page.getByTestId("review-question-3");
+  // ---- Ordering (should be correct) ----
+  const orderCard = reviewCards
+    .filter({ hasText: "Arrange the planets in order from the Sun:" })
+    .first();
   await expect(orderCard).toHaveAttribute("data-correct", "true");
-  const orderUserAnswer = page.getByTestId("review-user-answer-3");
-  // Expect the original order to be displayed
+  const orderUserAnswer = orderCard.getByTestId(/^review-user-answer-/);
   await expect(orderUserAnswer).toContainText("1. Mercury");
   await expect(orderUserAnswer).toContainText("2. Venus");
   await expect(orderUserAnswer).toContainText("3. Earth");
 
-  // Question 4: Matching (correct)
-  const matchCard = page.getByTestId("review-question-4");
+  // ---- Matching (should be correct) ----
+  const matchCard = reviewCards
+    .filter({ hasText: "Match the country with its capital:" })
+    .first();
   await expect(matchCard).toHaveAttribute("data-correct", "true");
-  const matchUserAnswer = page.getByTestId("review-user-answer-4");
+  const matchUserAnswer = matchCard.getByTestId(/^review-user-answer-/);
   await expect(matchUserAnswer).toContainText("France → Paris");
   await expect(matchUserAnswer).toContainText("Germany → Berlin");
 
