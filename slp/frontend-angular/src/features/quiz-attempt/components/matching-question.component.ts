@@ -258,11 +258,19 @@ export class MatchingQuestionComponent
   }
 
   selectLeft(id: number): void {
-    if (this.isMatched(id, "left")) return;
+    // If already selected, just clear selection (no change to matches)
     if (this.selectedLeft === id) {
       this.selectedLeft = null;
       return;
     }
+
+    // Remove any existing match that uses this leftId
+    const newMatches = this.value.filter((m) => m.leftId !== id);
+    if (newMatches.length !== this.value.length) {
+      this.valueChange.emit(newMatches);
+    }
+
+    // Select this left item for pairing
     this.selectedLeft = id;
   }
 
