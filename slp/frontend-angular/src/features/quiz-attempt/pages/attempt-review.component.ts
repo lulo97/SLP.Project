@@ -355,11 +355,16 @@ export class AttemptReviewComponent implements OnInit {
   }
 
   parseSnapshot(ans: any): any {
-    try {
-      return JSON.parse(ans.questionSnapshotJson);
-    } catch {
-      return {};
+    const raw = ans.questionSnapshotJson;
+    if (!raw) return {};
+    if (typeof raw === "string") {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
     }
+    return raw;
   }
 
   isFlashcard(ans: any): boolean {

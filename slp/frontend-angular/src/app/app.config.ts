@@ -48,6 +48,7 @@ import {
   MoonOutline,
   DeleteOutline,
   InboxOutline,
+  SyncOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -90,6 +91,7 @@ const icons = [
   MoonOutline,
   DeleteOutline,
   InboxOutline,
+  SyncOutline,
 ];
 
 const ngZorroConfig: NzConfig = {

@@ -61,7 +61,7 @@ import { QuizDto } from "../../quiz/quiz.model";
       >
         <div>
           <span class="font-medium" data-testid="player-progress">
-            Question {{ currentIndex + 1 }} of {{ attempt()!.questionCount }}
+            Question {{ currentIndex() + 1 }} of {{ attempt()!.questionCount }}
           </span>
         </div>
         <div class="flex items-center gap-2">
@@ -117,13 +117,13 @@ import { QuizDto } from "../../quiz/quiz.model";
         <button
           nz-button
           (click)="prevQuestion()"
-          [disabled]="currentIndex === 0"
+          [disabled]="currentIndex() === 0"
           data-testid="prev-question"
         >
           Previous
         </button>
         <button
-          *ngIf="currentIndex < attempt()!.questionCount - 1"
+          *ngIf="currentIndex() < attempt()!.questionCount - 1"
           nz-button
           nzType="primary"
           (click)="nextQuestion()"
@@ -132,7 +132,7 @@ import { QuizDto } from "../../quiz/quiz.model";
           Next
         </button>
         <div
-          *ngIf="currentIndex === attempt()!.questionCount - 1"
+          *ngIf="currentIndex() === attempt()!.questionCount - 1"
           class="flex flex-col items-end gap-1"
           data-testid="submit-area"
         >
@@ -167,10 +167,10 @@ import { QuizDto } from "../../quiz/quiz.model";
           <button
             nz-button
             *ngFor="let q of attempt()!.questions; let idx = index"
-            [nzType]="idx === currentIndex ? 'primary' : 'default'"
+            [nzType]="idx === currentIndex() ? 'primary' : 'default'"
             (click)="goToQuestion(idx); showSidebar = false"
             [attr.data-testid]="'sidebar-question-' + idx"
-            [attr.data-active]="idx === currentIndex"
+            [attr.data-active]="idx === currentIndex()"
           >
             {{ idx + 1 }}
           </button>
@@ -187,18 +187,19 @@ import { QuizDto } from "../../quiz/quiz.model";
         nzCancelText="Cancel"
         data-testid="submit-modal"
       >
-        <p data-testid="submit-modal-message">
-          Are you sure you want to submit? You cannot change your answers after
-          submission.
-        </p>
-        <p
-          class="mt-2 text-sm text-gray-500"
-          data-testid="submit-modal-answered-count"
-        >
-          Answered: {{ answeredCount() }} / {{ attempt()!.questionCount }}
-        </p>
+        <ng-template nzModalContent>
+          <p data-testid="submit-modal-message">
+            Are you sure you want to submit? You cannot change your answers
+            after submission.
+          </p>
+          <p
+            class="mt-2 text-sm text-gray-500"
+            data-testid="submit-modal-answered-count"
+          >
+            Answered: {{ answeredCount() }} / {{ attempt()!.questionCount }}
+          </p>
+        </ng-template>
       </nz-modal>
-
       <!-- Report modal -->
       <app-report-modal
         *ngIf="reportQuestionId"
@@ -262,7 +263,7 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
   quizId!: number;
   attemptId?: number;
   attempt = signal<StartAttemptResponse | null>(null);
-  currentIndex = 0;
+  currentIndex = signal<number>(0);
   answers = signal<Record<number, any>>({});
   saving = signal(false);
   loading = false;
@@ -357,22 +358,10 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     }
   }
 
-  getDefaultAnswer(snapshot: any): any {
-    const type = snapshot.type;
-    if (type === "multiple_choice") return { selected: [] };
-    if (type === "single_choice") return { selected: null };
-    if (type === "true_false") return { selected: null };
-    if (type === "fill_blank") return { answer: "" };
-    if (type === "ordering") return { order: [] };
-    if (type === "matching") return { matches: [] };
-    if (type === "flashcard") return {};
-    return {};
-  }
-
   currentQuestion = computed(() => {
     const a = this.attempt();
     if (!a) return null;
-    return a.questions[this.currentIndex] || null;
+    return a.questions[this.currentIndex()] || null;
   });
 
   isOwner = computed(() => {
@@ -385,14 +374,39 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     return !!this.authService.currentUser;
   }
 
+  // Thêm helper method
+  private parseSnapshot(snapshot: any): any {
+    if (!snapshot) return {};
+    if (typeof snapshot === "string") {
+      try {
+        return JSON.parse(snapshot);
+      } catch {
+        return {};
+      }
+    }
+    return snapshot;
+  }
+
+  // Sửa getDefaultAnswer
+  getDefaultAnswer(snapshot: any): any {
+    const parsed = this.parseSnapshot(snapshot);
+    const type = parsed.type;
+    if (type === "multiple_choice") return { selected: [] };
+    if (type === "single_choice") return { selected: null };
+    if (type === "true_false") return { selected: null };
+    if (type === "fill_blank") return { answer: "" };
+    if (type === "ordering") return { order: [] };
+    if (type === "matching") return { matches: [] };
+    if (type === "flashcard") return {};
+    return {};
+  }
+
+  // Sửa answeredCount
   answeredCount = computed(() => {
     const a = this.attempt();
     if (!a) return 0;
     return a.questions.filter((q) => {
-      const snapshot =
-        typeof q.questionSnapshotJson === "string"
-          ? JSON.parse(q.questionSnapshotJson || "{}")
-          : (q.questionSnapshotJson ?? {});
+      const snapshot = this.parseSnapshot(q.questionSnapshotJson);
       if (snapshot.type === "flashcard") return true;
       const ans = this.answers()[q.quizQuestionId];
       if (!ans) return false;
@@ -408,7 +422,6 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
         case "ordering":
           return Array.isArray(ans.order) && ans.order.length > 0;
         case "matching":
-          // Require all pairs to be matched (matches length equals pairs length)
           return (
             Array.isArray(ans.matches) &&
             ans.matches.length === (snapshot.metadata?.pairs?.length ?? 0)
@@ -456,20 +469,20 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
   }
 
   nextQuestion(): void {
-    if (this.currentIndex < this.attempt()!.questionCount - 1) {
-      this.currentIndex++;
+    if (this.currentIndex() < this.attempt()!.questionCount - 1) {
+      this.currentIndex.set(this.currentIndex() + 1);
     }
   }
 
   prevQuestion(): void {
-    if (this.currentIndex > 0) {
-      this.currentIndex--;
+    if (this.currentIndex() > 0) {
+      this.currentIndex.set(this.currentIndex() - 1);
     }
   }
 
   goToQuestion(index: number): void {
     if (index >= 0 && index < this.attempt()!.questionCount) {
-      this.currentIndex = index;
+      this.currentIndex.set(index);
     }
   }
 

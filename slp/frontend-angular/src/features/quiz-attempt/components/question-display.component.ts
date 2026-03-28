@@ -1,14 +1,22 @@
 // src/features/quiz-attempt/components/question-display.component.ts
 
-import { Component, Input, Output, EventEmitter, computed, effect, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MultipleChoiceQuestionComponent } from './multiple-choice-question.component';
-import { SingleChoiceQuestionComponent } from './single-choice-question.component';
-import { TrueFalseQuestionComponent } from './true-false-question.component';
-import { FillBlankQuestionComponent } from './fill-blank-question.component';
-import { OrderingQuestionComponent } from './ordering-question.component';
-import { MatchingQuestionComponent } from './matching-question.component';
-import { FlashcardQuestionComponent } from './flashcard-question.component';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  computed,
+  effect,
+  signal,
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { MultipleChoiceQuestionComponent } from "./multiple-choice-question.component";
+import { SingleChoiceQuestionComponent } from "./single-choice-question.component";
+import { TrueFalseQuestionComponent } from "./true-false-question.component";
+import { FillBlankQuestionComponent } from "./fill-blank-question.component";
+import { OrderingQuestionComponent } from "./ordering-question.component";
+import { MatchingQuestionComponent } from "./matching-question.component";
+import { FlashcardQuestionComponent } from "./flashcard-question.component";
 
 interface QuestionSnapshot {
   type: string;
@@ -19,7 +27,7 @@ interface QuestionSnapshot {
 }
 
 @Component({
-  selector: 'app-question-display',
+  selector: "app-question-display",
   standalone: true,
   imports: [
     CommonModule,
@@ -32,8 +40,14 @@ interface QuestionSnapshot {
     FlashcardQuestionComponent,
   ],
   template: `
-    <div *ngIf="snapshot.type !== 'unknown'" data-testid="question-display-container" [attr.data-question-type]="snapshot.type">
-      <h3 class="text-lg font-medium mb-2" data-testid="question-content">{{ displayContent() }}</h3>
+    <div
+      *ngIf="snapshot.type !== 'unknown'"
+      data-testid="question-display-container"
+      [attr.data-question-type]="snapshot.type"
+    >
+      <h3 class="text-lg font-medium mb-2" data-testid="question-content">
+        {{ displayContent() }}
+      </h3>
 
       <!-- Multiple choice -->
       <app-multiple-choice-question
@@ -96,8 +110,13 @@ interface QuestionSnapshot {
       ></app-flashcard-question>
 
       <!-- Unknown type -->
-      <div *ngIf="snapshot.type === 'unknown'" data-testid="question-type-unsupported">
-        <p class="text-red-500">Unsupported question type: {{ snapshot.type }}</p>
+      <div
+        *ngIf="snapshot.type === 'unknown'"
+        data-testid="question-type-unsupported"
+      >
+        <p class="text-red-500">
+          Unsupported question type: {{ snapshot.type }}
+        </p>
       </div>
     </div>
   `,
@@ -115,29 +134,39 @@ export class QuestionDisplayComponent {
   @Input() answer: any = null;
   @Output() answerChange = new EventEmitter<any>();
 
-  snapshot: QuestionSnapshot = { type: 'unknown', content: '', metadata: {} };
+  snapshot: QuestionSnapshot = { type: "unknown", content: "", metadata: {} };
 
   private parseSnapshot(): void {
     if (!this.question?.questionSnapshotJson) {
-      this.snapshot = { type: 'unknown', content: 'Question data missing', metadata: {} };
+      this.snapshot = {
+        type: "unknown",
+        content: "Question data missing",
+        metadata: {},
+      };
       return;
     }
     try {
-      this.snapshot = JSON.parse(this.question.questionSnapshotJson);
+      // If it's already an object, use it directly; otherwise parse the string
+      const raw = this.question.questionSnapshotJson;
+      this.snapshot = typeof raw === "string" ? JSON.parse(raw) : raw;
     } catch {
-      this.snapshot = { type: 'unknown', content: 'Invalid question data', metadata: {} };
+      this.snapshot = {
+        type: "unknown",
+        content: "Invalid question data",
+        metadata: {},
+      };
     }
   }
 
   displayContent(): string {
-    const content = this.snapshot.content || '';
+    const content = this.snapshot.content || "";
     const keywords = this.snapshot.metadata?.keywords;
     if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
       return content;
     }
     let result = content;
     keywords.forEach((kw: string) => {
-      result = result.split(kw).join('___');
+      result = result.split(kw).join("___");
     });
     return result;
   }
