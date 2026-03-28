@@ -311,18 +311,16 @@ export class AttemptReviewComponent implements OnInit {
   }
 
   async loadReview(): Promise<void> {
-    try {
-      // firstValueFrom resolves as soon as the data arrives
-      const result = await firstValueFrom(
-        this.attemptService.fetchAttemptReview(this.attemptId),
-      );
-      this.review = result || null;
-    } catch (err) {
-      console.error("Review load failed:", err);
-      this.review = null;
-    } finally {
-      this.loading = false; // This will now definitely run
-    }
+    this.attemptService.fetchAttemptReview(this.attemptId).subscribe({
+      next: (res) => {
+        this.review = res;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+      },
+      complete: () => {},
+    });
   }
 
   get isAuthenticated(): boolean {
