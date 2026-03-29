@@ -17,7 +17,7 @@ import { StartupChecks } from "./common/startup-checks";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ["error", "warn"],
+    logger: ['log', 'error', 'warn'],
   });
 
   // Global pipes/filters

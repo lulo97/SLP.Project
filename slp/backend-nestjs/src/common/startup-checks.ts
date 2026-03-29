@@ -57,7 +57,6 @@ export class StartupChecks {
 
   async checkLlmConnection(): Promise<void> {
     const completionsUrl = this.configService.get<string>("llmApi.baseUrl");
-    console.log({completionsUrl})
 
     if (!completionsUrl) {
       this.logger.warn(
