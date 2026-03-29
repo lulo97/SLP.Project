@@ -71,6 +71,14 @@ import { SourceService } from "../services/source.service";
               {{ "source.uploadHint" | translate }}
             </p>
           </nz-upload>
+
+          <div
+            *ngIf="fileList.length > 0"
+            class="mt-2 text-xs text-gray-500"
+            data-testid="source-upload-selected-file"
+          >
+            {{ "source.selected" | translate }}: {{ fileList[0].name }}
+          </div>
         </nz-form-item>
 
         <div class="mt-4">
