@@ -454,6 +454,12 @@ import { trigger, transition, style, animate } from "@angular/animations";
     />
 
     <app-tts-player />
+
+    <ng-template #notifTpl>
+      <span data-testid="source-detail-notification">
+        {{ notificationText }}
+      </span>
+    </ng-template>
   `,
   styles: [
     `
@@ -569,6 +575,8 @@ import { trigger, transition, style, animate } from "@angular/animations";
   ],
 })
 export class SourceDetailComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild("notifTpl", { static: true }) notifTpl!: TemplateRef<any>;
+  notificationText = "";
   Math = Math;
   private route = inject(ActivatedRoute);
   router = inject(Router);
@@ -760,7 +768,8 @@ export class SourceDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   cycleFontSize(): void {
     this.fontSizeIndex = (this.fontSizeIndex + 1) % 3;
-    this.message.info("Font size changed");
+    this.notificationText = "Font size changed";
+    this.message.info(this.notifTpl);
   }
 
   handleExplain(text: string): void {
@@ -865,8 +874,14 @@ export class SourceDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     modalRef.afterClose.subscribe((result) => {
       if (result) {
         this.sourceService.createFavorite(result).subscribe({
-          next: () => this.message.success("Saved to favorites"),
-          error: () => this.message.error("Failed to save"),
+          next: () => {
+            this.notificationText = "Saved to favorites";
+            this.message.success(this.notifTpl);
+          },
+          error: () => {
+            this.notificationText = "Failed to save";
+            this.message.error(this.notifTpl);
+          },
         });
       }
     });
