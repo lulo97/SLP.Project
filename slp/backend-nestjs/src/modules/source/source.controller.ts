@@ -23,9 +23,9 @@ import {
   UploadSourceRequest,
   UrlSourceDto,
   CreateNoteSourceRequest,
-  UpdateProgressRequest,
 } from './source.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UpdateProgressRequest } from '../progress/dto/update-progress-request.dto';
 
 @ApiTags('source')
 @Controller('api/source')

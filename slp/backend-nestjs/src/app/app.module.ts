@@ -17,8 +17,8 @@ import { ReportModule } from "../modules/report/report.module";
 // import { AdminModule } from './modules/admin/admin.module';
 // import { DashboardModule } from './modules/dashboard/dashboard.module';
 // import { HealthModule } from './modules/health/health.module';
-// import { LlmModule } from './modules/llm/llm.module';
-// import { QueueModule } from './modules/queue/queue.module';
+import { LlmModule } from '../modules/llm/llm.module';
+import { QueueModule } from '../modules/queue/queue.module';
 import { EmailModule } from "../modules/email/email.module";
 // import { FileStorageModule } from './modules/file-storage/file-storage.module';
 // import { SearchModule } from './modules/search/search.module';
@@ -57,8 +57,8 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     // AdminModule,
     // DashboardModule,
     // HealthModule,
-    // LlmModule,
-    // QueueModule,
+    LlmModule,
+    QueueModule,
     EmailModule,
     // FileStorageModule,
     MetricsModule,

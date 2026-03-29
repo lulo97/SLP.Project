@@ -89,8 +89,3 @@ export class ProgressDto {
   progress: number; // e.g., 0.0 – 1.0
   updatedAt: Date;
 }
-
-export class UpdateProgressRequest {
-  @ApiProperty()
-  progress: number;
-}
