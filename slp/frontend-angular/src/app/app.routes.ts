@@ -199,6 +199,39 @@ export const routes: Routes = [
         path: "quiz/attempt/:attemptId/review",
         component: AttemptReviewComponent,
       },
+      // Inside app.routes.ts, add the following entries:
+      {
+        path: "favourites",
+        loadComponent: () =>
+          import("../features/favourite/favourite-list.component").then(
+            (m) => m.FavoriteListComponent,
+          ),
+        data: { breadcrumb: "favourite.myFavourites" },
+      },
+      {
+        path: "favourites/new",
+        loadComponent: () =>
+          import("../features/favourite/favourite-form.component").then(
+            (m) => m.FavoriteFormComponent,
+          ),
+        data: { breadcrumb: "favourite.addFavourite" },
+      },
+      {
+        path: "favourites/:id",
+        loadComponent: () =>
+          import("../features/favourite/favourite-detail.component").then(
+            (m) => m.FavoriteDetailComponent,
+          ),
+        data: { breadcrumb: "favourite.favouriteDetail" },
+      },
+      {
+        path: "favourites/:id/edit",
+        loadComponent: () =>
+          import("../features/favourite/favourite-form.component").then(
+            (m) => m.FavoriteFormComponent,
+          ),
+        data: { breadcrumb: "favourite.editFavourite" },
+      },
     ],
   },
   {
