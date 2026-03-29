@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { ExplainRequest, GrammarCheckRequest } from './llm.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
+import { ExplainRequest, GrammarCheckRequest } from "./llm.dto";
 
 @Injectable()
 export class LlmService {
@@ -11,20 +11,18 @@ export class LlmService {
   private readonly maxTokens: number;
 
   constructor(private config: ConfigService) {
-    this.baseUrl = this.config.get<string>('LLM_API_BASE_URL') ?? "";
-    this.temperature = this.config.get<number>('LLM_TEMPERATURE', 0.8);
-    this.maxTokens = this.config.get<number>('LLM_MAX_TOKENS', -1);
+    this.baseUrl = this.config.get<string>("LLM_API_BASE_URL") ?? "";
+    this.temperature = this.config.get<number>("LLM_TEMPERATURE", 0.8);
+    this.maxTokens = this.config.get<number>("LLM_MAX_TOKENS", -1);
     if (!this.baseUrl) {
-      throw new Error('LLM_API_BASE_URL is not configured');
+      throw new Error("LLM_API_BASE_URL is not configured");
     }
   }
 
   // --- Prompt builders -------------------------------------------------
 
   buildExplainPrompt(request: ExplainRequest): string {
-    const contextPart = request.context
-      ? `\nContext: ${request.context}`
-      : '';
+    const contextPart = request.context ? `\nContext: ${request.context}` : "";
     return `Please explain the following text clearly and concisely:${contextPart}\n\nText: ${request.selectedText}`;
   }
 
@@ -34,12 +32,14 @@ export class LlmService {
 
   // --- Core LLM call (streaming SSE) -----------------------------------
 
-  async callLlmAsync(prompt: string): Promise<{ content: string; tokensUsed: number | null }> {
+  async callLlmAsync(
+    prompt: string,
+  ): Promise<{ content: string; tokensUsed: number | null }> {
     const payload = {
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
       stream: true,
       return_progress: true,
-      reasoning_format: 'auto',
+      reasoning_format: "auto",
       temperature: this.temperature,
       max_tokens: this.maxTokens,
       dynatemp_range: 0,
@@ -59,15 +59,15 @@ export class LlmService {
       dry_allowed_length: 2,
       dry_penalty_last_n: -1,
       samplers: [
-        'penalties',
-        'dry',
-        'top_n_sigma',
-        'top_k',
-        'typ_p',
-        'top_p',
-        'min_p',
-        'xtc',
-        'temperature',
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature",
       ],
       timings_per_token: true,
     };
@@ -75,29 +75,30 @@ export class LlmService {
     this.logger.debug(`Sending streaming request to ${this.baseUrl}`);
 
     const response = await axios.post(this.baseUrl, payload, {
-      responseType: 'stream',
-      headers: { 'Content-Type': 'application/json' },
+      responseType: "stream",
+      headers: { "Content-Type": "application/json" },
+      timeout: 120_000, // 2 minutes — matches a typical LLM response window
     });
 
     const stream = response.data;
-    let content = '';
+    let content = "";
     let tokensUsed: number | null = null;
 
     // Parse SSE lines
     return new Promise((resolve, reject) => {
-      let buffer = '';
-      stream.on('data', (chunk: Buffer) => {
+      let buffer = "";
+      stream.on("data", (chunk: Buffer) => {
         buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
+          if (!line.startsWith("data: ")) continue;
           const data = line.slice(6).trim();
-          if (data === '[DONE]') {
-            // End of stream
-            stream.destroy();
+          //resolve first, then clean up
+          if (data === "[DONE]") {
             resolve({ content, tokensUsed });
+            stream.destroy();
             return;
           }
           if (!data) continue;
@@ -122,8 +123,8 @@ export class LlmService {
         }
       });
 
-      stream.on('error', (err: any) => reject(err));
-      stream.on('end', () => {
+      stream.on("error", (err: any) => reject(err));
+      stream.on("end", () => {
         // If we never got [DONE] but stream closed, resolve anyway
         resolve({ content, tokensUsed });
       });

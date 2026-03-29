@@ -62,7 +62,7 @@ export class LlmController {
     }
 
     // Queue enabled?
-    if (this.config.get<boolean>("QUEUE_ENABLED", false)) {
+    if (this.config.get<string>("QUEUE_ENABLED", "false") === "true") {
       return this.enqueueJob(res, userId, "explain", prompt, request);
     }
 
@@ -90,7 +90,7 @@ export class LlmController {
       }
     }
 
-    if (this.config.get<boolean>("QUEUE_ENABLED", false)) {
+    if (this.config.get<string>("QUEUE_ENABLED", "false") === "true") {
       return this.enqueueJob(res, userId, "grammar_check", prompt, request);
     }
 
@@ -167,11 +167,9 @@ export class LlmController {
         completedAt: new Date(),
       });
 
-      res
-        .status(HttpStatus.BAD_GATEWAY)
-        .json({
-          message: "LLM service is unavailable. Please try again later.",
-        });
+      res.status(HttpStatus.BAD_GATEWAY).json({
+        message: "LLM service is unavailable. Please try again later.",
+      });
     }
   }
 
@@ -182,28 +180,34 @@ export class LlmController {
     prompt: string,
     requestObj: any,
   ): Promise<void> {
-    const jobId = uuidv4();
+    try {
+      const jobId = uuidv4();
 
-    // Create DB log with status = Pending
-    const log = await this.llmRepo.createAsync({
-      userId,
-      requestType,
-      prompt,
-      jobId,
-      status: "Pending",
-    });
+      // Create DB log with status = Pending
+      const log = await this.llmRepo.createAsync({
+        userId,
+        requestType,
+        prompt,
+        jobId,
+        status: "Pending",
+      });
 
-    const job: LlmJob = {
-      jobId,
-      userId,
-      requestType,
-      requestData: JSON.stringify(requestObj),
-      createdAt: new Date(),
-      retryCount: 0,
-    };
+      const job: LlmJob = {
+        jobId,
+        userId,
+        requestType,
+        requestData: JSON.stringify(requestObj),
+        createdAt: new Date(),
+        retryCount: 0,
+      };
 
-    await this.queueService.enqueue(job);
+      await this.queueService.enqueue(job);
 
-    res.status(HttpStatus.ACCEPTED).json({ jobId, status: "Pending" });
+      res.status(HttpStatus.ACCEPTED).json({ jobId, status: "Pending" });
+    } catch {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: "Failed to enqueue job.",
+      });
+    }
   }
 }
