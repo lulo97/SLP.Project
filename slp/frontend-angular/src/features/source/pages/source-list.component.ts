@@ -223,6 +223,7 @@ import { NzAlertModule } from "ng-zorro-antd/alert";
       <div
         *ngIf="((pagination$ | async)?.totalPages ?? 0) > 1"
         class="flex justify-center py-4"
+        data-testid="source-list-pagination"
       >
         <nz-pagination
           [nzPageIndex]="(pagination$ | async)?.page ?? 1"
