@@ -148,7 +148,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
                   nzCancelText="{{ 'common.cancel' | translate }}"
                   (nzOnConfirm)="deleteFavorite(fav.id)"
                   (click)="$event.stopPropagation()"
-                  [attr.data-testid]="'delete-popconfirm-' + fav.id"
+                  [attr.data-testid]="'delete-favourite-icon-' + fav.id"
                 >
                   <i nz-icon nzType="delete"></i>
                 </button>
