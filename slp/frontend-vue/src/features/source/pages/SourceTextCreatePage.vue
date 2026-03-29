@@ -50,7 +50,7 @@
         closable
         @close="sourceStore.clearError"
         class="mt-4"
-        data-testid="source-note-create-error"
+        data-testid="source-text-create-error"
       />
     </a-card>
   </MobileLayout>

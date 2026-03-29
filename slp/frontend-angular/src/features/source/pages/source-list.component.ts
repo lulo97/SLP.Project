@@ -77,7 +77,7 @@ import { NzAlertModule } from "ng-zorro-antd/alert";
       </div>
 
       <!-- Search/filter bar -->
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2" data-testid="source-list-filters">
         <input
           nz-input
           [(ngModel)]="searchQuery"
