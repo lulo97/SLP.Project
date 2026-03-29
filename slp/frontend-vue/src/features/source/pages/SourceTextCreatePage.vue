@@ -13,7 +13,7 @@
             placeholder="Enter a descriptive title"
             :maxlength="255"
             show-count
-            data-testid="source-note-create-title-input"
+            data-testid="source-text-create-title-input"
           />
         </a-form-item>
 

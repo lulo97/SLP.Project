@@ -26,7 +26,7 @@ test.describe('Source and favourite – full flow', () => {
     // The content must contain the text we will select later
     const selectedText = 'This sentence will be added as a favourite.';
     const sampleContent = `Some introductory text. ${selectedText} Some more text after.`;
-    await page.getByTestId('source-note-create-title-input').fill(uniqueTitle);
+    await page.getByTestId('source-text-create-title-input').fill(uniqueTitle);
     await page
       .getByTestId('source-note-create-content-input')
       .fill(sampleContent);

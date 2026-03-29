@@ -39,7 +39,7 @@ test.describe("Source – Error Handling & Validation", () => {
     });
 
     await page.fill(
-      '[data-testid="source-note-create-title-input"]',
+      '[data-testid="source-text-create-title-input"]',
       "A title",
     );
     await expect(
@@ -74,7 +74,7 @@ test.describe("Source – Error Handling & Validation", () => {
       waitUntil: "domcontentloaded",
     });
 
-    await page.fill('[data-testid="source-note-create-title-input"]', "Title");
+    await page.fill('[data-testid="source-text-create-title-input"]', "Title");
     await page.fill(
       '[data-testid="source-note-create-content-input"]',
       "Content",

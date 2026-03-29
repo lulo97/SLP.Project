@@ -20,7 +20,7 @@ test.describe("Source – text selection and TTS listen", () => {
     // Short enough text that it won't be truncated (max 48 chars)
     const selectedText = "This sentence will be selected.";
     const sampleContent = `The quick brown fox jumps over the lazy dog. ${selectedText}`;
-    await page.getByTestId("source-note-create-title-input").fill(uniqueTitle);
+    await page.getByTestId("source-text-create-title-input").fill(uniqueTitle);
     await page
       .getByTestId("source-note-create-content-input")
       .fill(sampleContent);

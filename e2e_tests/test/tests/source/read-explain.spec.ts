@@ -20,7 +20,7 @@ test.describe("Source – text selection and AI explanation", () => {
     const sampleContent = `First paragraph with some interesting text. This is the text we will select later.
       Second paragraph. It contains different information.`;
       
-    await page.getByTestId("source-note-create-title-input").fill(uniqueTitle);
+    await page.getByTestId("source-text-create-title-input").fill(uniqueTitle);
     await page.getByTestId("source-note-create-content-input").fill(sampleContent);
     await page.getByTestId("source-note-create-submit-btn").click();
 
