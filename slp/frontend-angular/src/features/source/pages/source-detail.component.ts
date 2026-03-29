@@ -5,6 +5,7 @@ import {
   ViewChild,
   ElementRef,
   inject,
+  ChangeDetectorRef,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -19,6 +20,7 @@ import { NzToolTipModule } from "ng-zorro-antd/tooltip";
 import { NzRadioModule } from "ng-zorro-antd/radio";
 import { NzInputModule } from "ng-zorro-antd/input";
 import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzModalModule } from "ng-zorro-antd/modal";
 
 // Services
 import { SourceService } from "../services/source.service";
@@ -54,6 +56,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
     SelectionBubbleComponent,
     ExplanationPanelComponent,
     TtsPlayerComponent,
+    NzModalModule,
   ],
   template: `
     <div
@@ -426,6 +429,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
     </div>
 
     <app-selection-bubble
+      *ngIf="!loading && source"
       [containerRef]="contentRef?.nativeElement"
       (explain)="handleExplain($event)"
       (grammar)="handleGrammar($event)"
@@ -569,6 +573,7 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
   private message = inject(NzMessageService);
   private modal = inject(NzModalService);
   private currentSourceId = 0;
+  containerEl?: HTMLElement;
 
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
   @ViewChild("contentRef") contentRef?: ElementRef;
@@ -619,6 +624,10 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
     return this.wordCount ? Math.ceil(this.wordCount / 200) : 0;
   }
 
+  ngAfterViewInit(): void {
+    this.containerEl = this.contentRef?.nativeElement;
+  }
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get("id"));
     if (id) {
@@ -652,6 +661,8 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  private cdr = inject(ChangeDetectorRef);
+
   loadSource(id: number = this.currentSourceId): void {
     this.currentSourceId = id;
     this.loading = true;
@@ -662,6 +673,7 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
         this.loadProgress(id);
         this.loadExplanations(id);
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = err?.error?.message || "Could not load this source.";

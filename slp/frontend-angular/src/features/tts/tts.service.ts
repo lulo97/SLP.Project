@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type TtsState = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
@@ -21,7 +22,7 @@ export class TtsService {
   private onPlay: (() => void) | null = null;
   private onError: (() => void) | null = null;
 
-  private ttsBaseUrl = import.meta.env?.['VITE_TTS_URL'] || 'http://localhost:3005';
+  private ttsBaseUrl = environment.ttsUrl;
 
   play(text: string): void {
     this.stop();
