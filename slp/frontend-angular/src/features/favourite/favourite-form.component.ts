@@ -59,24 +59,47 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
             <nz-select
               formControlName="type"
               [nzPlaceHolder]="'favourite.typePlaceholder' | translate"
-              data-testid="favourite-type-select"
+              [attr.data-testid]="'favourite-type-select'"
             >
               <nz-option
+                nzCustomContent
                 nzValue="word"
                 [nzLabel]="'favourite.typeWord' | translate"
-              ></nz-option>
+              >
+                <span [attr.data-testid]="'favourite-type-option-word'">
+                  {{ "favourite.typeWord" | translate }}
+                </span>
+              </nz-option>
+
               <nz-option
+                nzCustomContent
                 nzValue="phrase"
                 [nzLabel]="'favourite.typePhrase' | translate"
-              ></nz-option>
+              >
+                <span [attr.data-testid]="'favourite-type-option-phrase'">
+                  {{ "favourite.typePhrase" | translate }}
+                </span>
+              </nz-option>
+
               <nz-option
+                nzCustomContent
                 nzValue="idiom"
                 [nzLabel]="'favourite.typeIdiom' | translate"
-              ></nz-option>
+              >
+                <span [attr.data-testid]="'favourite-type-option-idiom'">
+                  {{ "favourite.typeIdiom" | translate }}
+                </span>
+              </nz-option>
+
               <nz-option
+                nzCustomContent
                 nzValue="other"
                 [nzLabel]="'favourite.typeOther' | translate"
-              ></nz-option>
+              >
+                <span [attr.data-testid]="'favourite-type-option-other'">
+                  {{ "favourite.typeOther" | translate }}
+                </span>
+              </nz-option>
             </nz-select>
           </nz-form-control>
         </nz-form-item>

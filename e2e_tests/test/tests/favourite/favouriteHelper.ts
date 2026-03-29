@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from "@playwright/test";
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4000";
-const BACKEND_URL = process.env.BACKEND_URL || "https://localhost:7297";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3009";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3008";
 
 // ----------------------------------------------------------------------
 // API Helpers
@@ -123,14 +123,7 @@ export async function fillFavouriteForm(
   // Open the dropdown
   await page.getByTestId("favourite-type-select").click();
 
-  // AntD options are usually in a div with class .ant-select-item-option
-  // We use a regex for 'name' to make it case-insensitive,
-  // or target the title attribute which AntD often sets.
-  const option = page.locator(".ant-select-item-option", {
-    hasText: new RegExp(`^${type}$`, "i"),
-  });
-
-  await option.click();
+  await page.getByTestId(type).click();
 
   if (note) {
     await page.getByTestId("favourite-note-textarea").fill(note);
@@ -185,13 +178,21 @@ export async function verifyFavouriteFormValues(
 
   // --- FIX FOR AntD SELECT ---
   // We look for the element that actually displays the selected text
-  const selectLabel = page.locator(
-    '[data-testid="favourite-type-select"] .ant-select-selection-item',
-  );
+  const selectLabel = page.getByTestId("favourite-type-select");
 
-  // Use toHaveText instead of toHaveValue
-  // Use a Regex or 'i' flag if your 'expectedType' casing varies from the UI label
-  await expect(selectLabel).toHaveText(new RegExp(`^${expectedType}$`, "i"));
+  let expectedTypeText = "";
+
+  if (expectedType == "favourite-type-option-word") {
+    expectedTypeText = "Word";
+  } else {
+    throw new Error("Implement more")
+  }
+
+  // \s* matches any whitespace (space, tab, etc.)
+  // ^ and $ ensure we match the whole string, not just a partial substring
+  const regex = new RegExp(`^\\s*${expectedTypeText}\\s*$`, "i");
+
+  await expect(selectLabel).toHaveText(regex);
 
   if (expectedNote) {
     await expect(page.getByTestId("favourite-note-textarea")).toHaveValue(

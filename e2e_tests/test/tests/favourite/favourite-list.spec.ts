@@ -15,7 +15,7 @@ test.describe('Favourite CRUD via UI', () => {
 
     // 2. Create a favourite
     const uniqueText = `Test Favourite ${Date.now()}`;
-    const uniqueType = 'word';
+    const uniqueType = 'favourite-type-option-word';
     const uniqueNote = 'This favourite was created by Playwright.';
 
     const { id } = await createFavouriteViaUI(page, uniqueText, uniqueType, uniqueNote);

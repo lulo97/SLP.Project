@@ -20,7 +20,7 @@ test.describe('Favourite Edit and Delete via UI', () => {
 
     // 2. Create a favourite with original values
     const originalText = `Original Favourite ${Date.now()}`;
-    const originalType = 'Word';
+    const originalType = 'favourite-type-option-word';
     const originalNote = 'This is the original note.';
     const editedText = `${originalText} (edited)`;
     const editedNote = 'This note has been updated.';

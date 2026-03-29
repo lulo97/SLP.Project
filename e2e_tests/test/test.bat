@@ -1,1 +1,1 @@
-npx playwright test read-progress-tracking.spec --headed
+npx playwright test edit-favourite.spec --headed
