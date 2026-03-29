@@ -21,7 +21,7 @@ test.describe('Source (Note) – create and delete via UI', () => {
     await page.getByTestId('source-text-create-content-input').fill(uniqueContent);
 
     // 4. Submit the form
-    await page.getByTestId('source-note-create-submit-btn').click();
+    await page.getByTestId('source-text-create-submit-btn').click();
 
     // 5. After creation, the page redirects to the source detail page.
     //    Wait for the URL to contain a numeric source ID.

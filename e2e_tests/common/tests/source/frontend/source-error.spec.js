@@ -25,7 +25,7 @@ test.describe("Source – Error Handling & Validation", () => {
     });
 
     await expect(
-      page.locator('[data-testid="source-note-create-submit-btn"]'),
+      page.locator('[data-testid="source-text-create-submit-btn"]'),
     ).toBeDisabled();
     await page.close();
   });
@@ -43,7 +43,7 @@ test.describe("Source – Error Handling & Validation", () => {
       "A title",
     );
     await expect(
-      page.locator('[data-testid="source-note-create-submit-btn"]'),
+      page.locator('[data-testid="source-text-create-submit-btn"]'),
     ).toBeDisabled();
     await page.close();
   });
@@ -61,7 +61,7 @@ test.describe("Source – Error Handling & Validation", () => {
       "Some content",
     );
     await expect(
-      page.locator('[data-testid="source-note-create-submit-btn"]'),
+      page.locator('[data-testid="source-text-create-submit-btn"]'),
     ).toBeDisabled();
     await page.close();
   });
@@ -80,7 +80,7 @@ test.describe("Source – Error Handling & Validation", () => {
       "Content",
     );
     await expect(
-      page.locator('[data-testid="source-note-create-submit-btn"]'),
+      page.locator('[data-testid="source-text-create-submit-btn"]'),
     ).toBeEnabled();
     await page.close();
   });

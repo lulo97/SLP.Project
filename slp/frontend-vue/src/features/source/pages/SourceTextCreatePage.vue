@@ -35,7 +35,7 @@
             :loading="sourceStore.loading"
             :disabled="!form.title.trim() || !form.content.trim()"
             block
-            data-testid="source-note-create-submit-btn"
+            data-testid="source-text-create-submit-btn"
           >
             Create Source
           </a-button>

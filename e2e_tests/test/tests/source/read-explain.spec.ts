@@ -22,7 +22,7 @@ test.describe("Source – text selection and AI explanation", () => {
       
     await page.getByTestId("source-text-create-title-input").fill(uniqueTitle);
     await page.getByTestId("source-text-create-content-input").fill(sampleContent);
-    await page.getByTestId("source-note-create-submit-btn").click();
+    await page.getByTestId("source-text-create-submit-btn").click();
 
     // 3. Wait for the source detail page to load and capture the source ID
     await page.waitForURL(/\/source\/\d+/);

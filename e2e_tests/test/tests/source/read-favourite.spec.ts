@@ -30,7 +30,7 @@ test.describe('Source and favourite – full flow', () => {
     await page
       .getByTestId('source-text-create-content-input')
       .fill(sampleContent);
-    await page.getByTestId('source-note-create-submit-btn').click();
+    await page.getByTestId('source-text-create-submit-btn').click();
 
     // 3. Wait for the source detail page to load and capture the source ID
     await page.waitForURL(/\/source\/\d+/);
