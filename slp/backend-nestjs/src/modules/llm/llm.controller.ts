@@ -7,14 +7,13 @@ import {
   UseGuards,
   ForbiddenException,
   NotFoundException,
-  BadRequestException,
-  HttpCode,
   HttpStatus,
   Res,
   forwardRef,
   Inject,
 } from "@nestjs/common";
-import { Response } from "express";
+import type { Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { ConfigService } from "@nestjs/config";
 import { SessionGuard } from "../session/session.guard";
 import { User } from "../../common/decorators/user.decorator";
@@ -41,9 +40,12 @@ export class LlmController {
     private config: ConfigService,
   ) {}
 
-  // POST /api/llm/explain
   @Post("explain")
-  async explain(@Body() request: ExplainRequest, @User() user: any) {
+  async explain(
+    @Body() request: ExplainRequest,
+    @User() user: any,
+    @Res() res: Response,
+  ) {
     const userId = user?.id ?? null;
     const prompt = this.llmService.buildExplainPrompt(request);
 
@@ -55,22 +57,25 @@ export class LlmController {
         prompt,
       );
       if (cached?.response) {
-        return { result: cached.response } as SyncLlmResponse;
+        return res.json({ result: cached.response } as SyncLlmResponse);
       }
     }
 
     // Queue enabled?
     if (this.config.get<boolean>("QUEUE_ENABLED", false)) {
-      return this.enqueueJob(userId, "explain", prompt, request);
+      return this.enqueueJob(res, userId, "explain", prompt, request);
     }
 
     // Synchronous fallback
-    return this.processSync(userId, "explain", prompt);
+    return this.processSync(res, userId, "explain", prompt);
   }
 
-  // POST /api/llm/grammar-check
   @Post("grammar-check")
-  async grammarCheck(@Body() request: GrammarCheckRequest, @User() user: any) {
+  async grammarCheck(
+    @Body() request: GrammarCheckRequest,
+    @User() user: any,
+    @Res() res: Response,
+  ) {
     const userId = user?.id ?? null;
     const prompt = this.llmService.buildGrammarCheckPrompt(request);
 
@@ -81,20 +86,23 @@ export class LlmController {
         prompt,
       );
       if (cached?.response) {
-        return { result: cached.response } as SyncLlmResponse;
+        return res.json({ result: cached.response } as SyncLlmResponse);
       }
     }
 
     if (this.config.get<boolean>("QUEUE_ENABLED", false)) {
-      return this.enqueueJob(userId, "grammar_check", prompt, request);
+      return this.enqueueJob(res, userId, "grammar_check", prompt, request);
     }
 
-    return this.processSync(userId, "grammar_check", prompt);
+    return this.processSync(res, userId, "grammar_check", prompt);
   }
 
-  // GET /api/llm/job/:jobId
   @Get("job/:jobId")
-  async getJobStatus(@Param("jobId") jobId: string, @User() user: any) {
+  async getJobStatus(
+    @Param("jobId") jobId: string,
+    @User() user: any,
+    @Res() res: Response,
+  ) {
     const log = await this.llmRepo.getByJobIdAsync(jobId);
     if (!log) {
       throw new NotFoundException(`Job '${jobId}' not found`);
@@ -113,16 +121,17 @@ export class LlmController {
       createdAt: log.createdAt,
       completedAt: log.completedAt ?? undefined,
     };
-    return response;
+    return res.json(response);
   }
 
   // --- Helpers --------------------------------------------------------------
 
   private async processSync(
+    res: Response,
     userId: number | null,
     requestType: string,
     prompt: string,
-  ): Promise<SyncLlmResponse> {
+  ): Promise<void> {
     try {
       const { content, tokensUsed } =
         await this.llmService.callLlmAsync(prompt);
@@ -146,7 +155,7 @@ export class LlmController {
         tokensUsed,
       );
 
-      return { result: content };
+      res.status(HttpStatus.OK).json({ result: content });
     } catch (err) {
       // Log error
       await this.llmRepo.createAsync({
@@ -158,19 +167,22 @@ export class LlmController {
         completedAt: new Date(),
       });
 
-      throw new BadRequestException(
-        "LLM service is unavailable. Please try again later.",
-      );
+      res
+        .status(HttpStatus.BAD_GATEWAY)
+        .json({
+          message: "LLM service is unavailable. Please try again later.",
+        });
     }
   }
 
   private async enqueueJob(
+    res: Response,
     userId: number | null,
     requestType: string,
     prompt: string,
     requestObj: any,
-  ): Promise<AsyncLlmResponse> {
-    const jobId = this.generateJobId();
+  ): Promise<void> {
+    const jobId = uuidv4();
 
     // Create DB log with status = Pending
     const log = await this.llmRepo.createAsync({
@@ -192,13 +204,6 @@ export class LlmController {
 
     await this.queueService.enqueue(job);
 
-    return { jobId, status: "Pending" };
-  }
-
-  private generateJobId(): string {
-    // Simple UUID v4-like string
-    return (
-      Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
-    );
+    res.status(HttpStatus.ACCEPTED).json({ jobId, status: "Pending" });
   }
 }

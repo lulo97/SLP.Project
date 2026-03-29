@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, IsNull } from 'typeorm';
-import { LlmLog } from './llm.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, MoreThanOrEqual, IsNull } from "typeorm";
+import { LlmLog } from "./llm.entity";
 
 @Injectable()
 export class LlmRepository {
@@ -29,10 +29,10 @@ export class LlmRepository {
           userId,
           requestType,
           prompt,
-          status: 'Completed',
-          response: MoreThanOrEqual(''), // not null
+          status: "Completed",
+          response: MoreThanOrEqual(""), // not null
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
       if (userHit) return userHit;
     }
@@ -43,10 +43,10 @@ export class LlmRepository {
         userId: IsNull(),
         requestType,
         prompt,
-        status: 'Completed',
-        response: MoreThanOrEqual(''),
+        status: "Completed",
+        response: MoreThanOrEqual(""),
       },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -60,32 +60,36 @@ export class LlmRepository {
     response: string,
     tokensUsed: number | null,
   ): Promise<void> {
-    const existing = await this.repo.findOne({
-      where: {
-        userId: IsNull(),
-        requestType,
-        prompt,
-        status: 'Completed',
-      },
-    });
-
-    if (existing) {
-      // Refresh the cached value
-      existing.response = response;
-      existing.tokensUsed = tokensUsed;
-      existing.completedAt = new Date();
-      await this.repo.save(existing);
-    } else {
-      const newRow = this.repo.create({
-        userId: null,
-        requestType,
-        prompt,
-        response,
-        tokensUsed,
-        status: 'Completed',
-        completedAt: new Date(),
+    try {
+      const existing = await this.repo.findOne({
+        where: {
+          userId: IsNull(),
+          requestType,
+          prompt,
+          status: "Completed",
+        },
       });
-      await this.repo.save(newRow);
+
+      if (existing) {
+        existing.response = response;
+        existing.tokensUsed = tokensUsed;
+        existing.completedAt = new Date();
+        await this.repo.save(existing);
+      } else {
+        const newRow = this.repo.create({
+          userId: null,
+          requestType,
+          prompt,
+          response,
+          tokensUsed,
+          status: "Completed",
+          completedAt: new Date(),
+        });
+        await this.repo.save(newRow);
+      }
+    } catch (err) {
+      // Non-fatal: a concurrent request may have inserted the same row just before us.
+      // Swallow and move on.
     }
   }
 
@@ -103,6 +107,6 @@ export class LlmRepository {
   }
 
   async getStaleProcessingLogsAsync(): Promise<LlmLog[]> {
-    return this.repo.find({ where: { status: 'Processing' } });
+    return this.repo.find({ where: { status: "Processing" } });
   }
 }
