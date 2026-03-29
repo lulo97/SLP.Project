@@ -14,7 +14,7 @@ test.describe("Source – text selection and AI explanation", () => {
     // 2. Create a new text source (note)
     await page.getByTestId("source-list-add-text-btn").click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
-    await expect(page.getByTestId("source-note-create-card")).toBeVisible();
+    await expect(page.getByTestId("source-text-create-card")).toBeVisible();
 
     const uniqueTitle = `Playwright Explanation Test ${Date.now()}`;
     const sampleContent = `First paragraph with some interesting text. This is the text we will select later.

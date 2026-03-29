@@ -37,7 +37,7 @@ test.describe("Source – Note Creation", () => {
     await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
 
     // Form visible
-    await expect(page.locator('[data-testid="source-note-create-card"]')).toBeVisible();
+    await expect(page.locator('[data-testid="source-text-create-card"]')).toBeVisible();
     await expect(page.locator('[data-testid="source-note-create-form"]')).toBeVisible();
 
     // Submit is disabled until both fields are filled

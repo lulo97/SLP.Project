@@ -1,6 +1,6 @@
 <template>
   <MobileLayout title="Create Note Source">
-    <a-card class="shadow-sm" data-testid="source-note-create-card">
+    <a-card class="shadow-sm" data-testid="source-text-create-card">
       <a-form
         :model="form"
         @submit.prevent="handleSubmit"

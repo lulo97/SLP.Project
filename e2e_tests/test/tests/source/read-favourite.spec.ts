@@ -20,7 +20,7 @@ test.describe('Source and favourite – full flow', () => {
     // 2. Create a new text source (note) with a unique title and content
     await page.getByTestId('source-list-add-text-btn').click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
-    await expect(page.getByTestId('source-note-create-card')).toBeVisible();
+    await expect(page.getByTestId('source-text-create-card')).toBeVisible();
 
     const uniqueTitle = `Playwright Source ${Date.now()}`;
     // The content must contain the text we will select later

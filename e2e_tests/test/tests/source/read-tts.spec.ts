@@ -14,7 +14,7 @@ test.describe("Source – text selection and TTS listen", () => {
     // 2. Create a new text source (note)
     await page.getByTestId("source-list-add-text-btn").click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
-    await expect(page.getByTestId("source-note-create-card")).toBeVisible();
+    await expect(page.getByTestId("source-text-create-card")).toBeVisible();
 
     const uniqueTitle = `Playwright Listen Test ${Date.now()}`;
     // Short enough text that it won't be truncated (max 48 chars)

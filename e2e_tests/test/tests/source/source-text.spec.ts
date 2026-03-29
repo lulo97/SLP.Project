@@ -12,7 +12,7 @@ test.describe('Source (Note) – create and delete via UI', () => {
     // 2. Click "Add Text" button → navigate to note creation page
     await page.getByTestId('source-list-add-text-btn').click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
-    await expect(page.getByTestId('source-note-create-card')).toBeVisible();
+    await expect(page.getByTestId('source-text-create-card')).toBeVisible();
 
     // 3. Fill in the note form
     const uniqueTitle = `Playwright Note ${Date.now()}`;

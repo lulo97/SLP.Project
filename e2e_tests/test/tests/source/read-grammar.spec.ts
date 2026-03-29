@@ -14,7 +14,7 @@ test.describe("Source – text selection and AI grammar check", () => {
     // 2. Create a new text source (note) with a sentence containing a grammar error
     await page.getByTestId("source-list-add-text-btn").click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
-    await expect(page.getByTestId("source-note-create-card")).toBeVisible();
+    await expect(page.getByTestId("source-text-create-card")).toBeVisible();
 
     const uniqueTitle = `Playwright Grammar Test ${Date.now()}`;
     // Deliberate grammar error: "he go" instead of "he goes"
