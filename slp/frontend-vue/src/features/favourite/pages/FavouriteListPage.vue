@@ -28,7 +28,11 @@
         </div>
       </div>
 
-      <a-spin :spinning="store.loading" tip="Loading...">
+      <a-spin
+        :spinning="store.loading"
+        tip="Loading..."
+        data-testid="list-loading-spinner"
+      >
         <div class="space-y-3" data-testid="list-content-wrapper">
           <a-empty
             v-if="!store.loading && store.favorites.length === 0"

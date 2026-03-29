@@ -51,6 +51,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
             [placeholder]="'favourite.searchPlaceholder' | translate"
             [(ngModel)]="searchQuery"
             (ngModelChange)="onSearch()"
+            (keydown.enter)="onSearchEnter()"
             class="w-48"
             data-testid="favourite-search-input"
           />
@@ -111,7 +112,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
                 <p
                   *ngIf="fav.note"
                   class="text-gray-500 text-sm mt-1 line-clamp-2"
-                  [attr.data-testid]="'favorite-item-note-' + fav.id"
+                  data-testid="favorite-item-note"
                 >
                   {{ fav.note }}
                 </p>
@@ -216,6 +217,11 @@ export class FavoriteListComponent implements OnInit, OnDestroy {
     this.searchDebounce = setTimeout(() => {
       this.favoriteService.fetchFavorites(this.searchQuery || undefined, 1);
     }, 500);
+  }
+
+  onSearchEnter(): void {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.favoriteService.fetchFavorites(this.searchQuery || undefined, 1);
   }
 
   onPageChange(page: number): void {
