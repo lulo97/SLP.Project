@@ -79,7 +79,6 @@
     <!-- Main scrollable content -->
     <main
       class="flex-1 overflow-y-auto px-6 pt-10 pb-[120px]"
-      ref="scrollContainer"
       data-testid="source-detail-main"
     >
       <!-- Loading skeleton -->
@@ -397,7 +396,6 @@ const {
 const currentSourceId = ref<number>(0);
 
 // ── Refs ──────────────────────────────────────────────────────────────────────
-const scrollContainer = ref<HTMLElement | null>(null);
 //const articleRef      = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
 
