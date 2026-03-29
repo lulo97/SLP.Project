@@ -1,17 +1,33 @@
 <div class="min-h-screen bg-gray-50" data-testid="layout-container">
-  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]">
-    <div class="flex items-center justify-between p-4">
-      <div>
-        <ng-content select="[header-left]"></ng-content>
-        <ng-container *ngIf="!(hasHeaderLeft | async)">
+  <header
+    class="bg-white shadow-sm fixed top-0 left-0 right-0 z-30 h-[10vh]"
+    data-testid="main-header"
+  >
+    <div
+      class="flex items-center justify-between p-4"
+      data-testid="header-content"
+      *ngIf="header$ | async as header"
+    >
+      <div data-testid="header-left-section">
+        <ng-container *ngIf="header.left; else defaultLeft">
+          <ng-container [ngTemplateOutlet]="header.left"></ng-container>
+        </ng-container>
+        <ng-template #defaultLeft>
           <app-breadcrumb [fallbackTitle]="title"></app-breadcrumb>
+        </ng-template>
+      </div>
+
+      <div data-testid="header-center-section">
+        <ng-container *ngIf="header.center">
+          <ng-container [ngTemplateOutlet]="header.center"></ng-container>
         </ng-container>
       </div>
-      <div>
-        <ng-content select="[header-center]"></ng-content>
-      </div>
-      <div class="flex items-center gap-2">
-        <ng-content select="[header-right]"></ng-content>
+
+      <div class="flex items-center gap-2" data-testid="header-right-section">
+        <ng-container *ngIf="header.right">
+          <ng-container [ngTemplateOutlet]="header.right"></ng-container>
+        </ng-container>
+
         <button
           data-testid="sidebar-toggle-button"
           (click)="toggleSidebar()"
@@ -23,10 +39,6 @@
       </div>
     </div>
   </header>
-
-  <!-- <main class="mt-[10vh] pt-4 pb-6 px-4">
-    <ng-content></ng-content>
-  </main> -->
 
   <main class="mt-[10vh] pt-4 pb-6 px-4">
     <router-outlet></router-outlet>

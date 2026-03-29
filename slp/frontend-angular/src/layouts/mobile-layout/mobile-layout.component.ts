@@ -1,18 +1,19 @@
 import { Component, Input, ChangeDetectorRef, NgZone } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { Router } from "@angular/router";
+import { CommonModule, AsyncPipe, NgTemplateOutlet } from "@angular/common";
+import { Router, RouterOutlet } from "@angular/router";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { BreadcrumbComponent } from "../../components/breadcrumb/breadcrumb.component";
 import { RightSidebarComponent } from "../right-sidebar/right-sidebar.component";
 import { AuthService } from "../../features/auth/auth.service";
-import { BehaviorSubject } from "rxjs";
-import { RouterOutlet } from "@angular/router"; // 1. Import this
+import { MobileHeaderService } from "./mobile-header.service";
 
 @Component({
   selector: "app-mobile-layout",
   standalone: true,
   imports: [
     CommonModule,
+    AsyncPipe,
+    NgTemplateOutlet,
     NzIconModule,
     BreadcrumbComponent,
     RightSidebarComponent,
@@ -24,19 +25,19 @@ import { RouterOutlet } from "@angular/router"; // 1. Import this
 export class MobileLayoutComponent {
   @Input() title: string = "";
   sidebarOpen = false;
-
-  hasHeaderLeft = new BehaviorSubject<boolean>(false);
+  header$;
 
   constructor(
     private router: Router,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef, // ← inject
-    private ngZone: NgZone, // Inject NgZone
-  ) {}
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private mobileHeaderService: MobileHeaderService,
+  ) {
+    this.header$ = this.mobileHeaderService.header$;
+  }
 
   toggleSidebar(): void {
-    // Wrapping in run() ensures the UI updates immediately even if
-    // triggered by an event outside the standard Angular context
     this.ngZone.run(() => {
       this.sidebarOpen = !this.sidebarOpen;
       this.cdr.markForCheck();
@@ -45,11 +46,11 @@ export class MobileLayoutComponent {
 
   handleCloseSidebar(): void {
     this.sidebarOpen = false;
-    this.cdr.detectChanges(); // This forces the UI to notice 'sidebarOpen' is now false
+    this.cdr.detectChanges();
   }
 
   handleLogout(): void {
-    this.authService.logout(); // This should trigger your API call
+    this.authService.logout();
     this.router.navigate(["/login"]);
   }
 }

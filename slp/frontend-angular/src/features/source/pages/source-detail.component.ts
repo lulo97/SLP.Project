@@ -6,7 +6,10 @@ import {
   ElementRef,
   inject,
   ChangeDetectorRef,
+  AfterViewInit,
+  TemplateRef,
 } from "@angular/core";
+import { MobileHeaderService } from "../../../layouts/mobile-layout/mobile-header.service";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
@@ -71,7 +74,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
     </div>
 
     <div>
-      <ng-container header-left>
+      <ng-template #headerLeftTpl>
         <button
           class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-[13px] font-medium text-gray-500 py-1.5 pr-2.5 pl-1.5 rounded-[7px] transition-all duration-150 hover:text-[#1a1a2e] hover:bg-black/[0.05] font-[inherit] whitespace-nowrap"
           (click)="router.navigate(['/source'])"
@@ -87,15 +90,16 @@ import { trigger, transition, style, animate } from "@angular/animations";
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
+            aria-hidden="true"
           >
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
           </svg>
           <span class="hidden sm:inline">Sources</span>
         </button>
-      </ng-container>
+      </ng-template>
 
-      <ng-container header-center>
+      <ng-template #headerCenterTpl>
         <span
           *ngIf="source"
           class="text-[11px] font-semibold tracking-[0.06em] uppercase py-[3px] px-2.5 rounded-full bg-[#ede9fe] text-[#7c6af5]"
@@ -104,9 +108,9 @@ import { trigger, transition, style, animate } from "@angular/animations";
         >
           {{ typeLabel }}
         </span>
-      </ng-container>
+      </ng-template>
 
-      <ng-container header-right>
+      <ng-template #headerRightTpl>
         <button
           *ngIf="savedScrollPosition > 100"
           nz-button
@@ -164,8 +168,9 @@ import { trigger, transition, style, animate } from "@angular/animations";
             *ngIf="explanations.length"
             class="absolute top-0.5 right-1 bg-[#7c6af5] text-white text-[9px] font-bold min-w-[14px] h-[14px] rounded-[7px] flex items-center justify-center px-[3px]"
             data-testid="source-detail-explanations-badge"
-            >{{ explanations.length }}</span
           >
+            {{ explanations.length }}
+          </span>
         </button>
 
         <button
@@ -187,12 +192,12 @@ import { trigger, transition, style, animate } from "@angular/animations";
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-            <polyline points="2 17 12 22 22 17" />
-            <polyline points="2 12 12 17 22 12" />
+            <path d="M12 4v16"></path>
+            <path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"></path>
+            <path d="M9 20h6"></path>
           </svg>
         </button>
-      </ng-container>
+      </ng-template>
 
       <main
         #scrollContainer
@@ -563,7 +568,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
     ]),
   ],
 })
-export class SourceDetailComponent implements OnInit, OnDestroy {
+export class SourceDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   Math = Math;
   private route = inject(ActivatedRoute);
   router = inject(Router);
@@ -574,6 +579,7 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
   private modal = inject(NzModalService);
   private currentSourceId = 0;
   containerEl?: HTMLElement;
+  private mobileHeaderService = inject(MobileHeaderService);
 
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
   @ViewChild("contentRef") contentRef?: ElementRef;
@@ -624,8 +630,21 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
     return this.wordCount ? Math.ceil(this.wordCount / 200) : 0;
   }
 
+  @ViewChild("headerLeftTpl", { static: true })
+  headerLeftTpl!: TemplateRef<unknown>;
+  @ViewChild("headerCenterTpl", { static: true })
+  headerCenterTpl!: TemplateRef<unknown>;
+  @ViewChild("headerRightTpl", { static: true })
+  headerRightTpl!: TemplateRef<unknown>;
+
   ngAfterViewInit(): void {
     this.containerEl = this.contentRef?.nativeElement;
+
+    this.mobileHeaderService.setHeader({
+      left: this.headerLeftTpl,
+      center: this.headerCenterTpl,
+      right: this.headerRightTpl,
+    });
   }
 
   ngOnInit(): void {
@@ -642,6 +661,8 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.mobileHeaderService.clearHeader();
+
     if (this.scrollSaveTimer) clearTimeout(this.scrollSaveTimer);
     // Save final progress
     const id = Number(this.route.snapshot.paramMap.get("id"));
