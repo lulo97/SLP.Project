@@ -38,7 +38,7 @@ test.describe("Source – Note Creation", () => {
 
     // Form visible
     await expect(page.locator('[data-testid="source-text-create-card"]')).toBeVisible();
-    await expect(page.locator('[data-testid="source-note-create-form"]')).toBeVisible();
+    await expect(page.locator('[data-testid="source-text-create-form"]')).toBeVisible();
 
     // Submit is disabled until both fields are filled
     await expect(page.locator('[data-testid="source-note-create-submit-btn"]')).toBeDisabled();

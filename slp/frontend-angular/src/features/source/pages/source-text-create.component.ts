@@ -27,7 +27,7 @@ import { SourceService } from '../services/source.service';
   ],
   template: `
       <nz-card class="shadow-sm" data-testid="source-text-create-card">
-        <form nz-form (ngSubmit)="handleSubmit()" data-testid="source-note-create-form">
+        <form nz-form (ngSubmit)="handleSubmit()" data-testid="source-text-create-form">
           <nz-form-item>
             <nz-form-label nzRequired>{{ 'source.title' | translate }}</nz-form-label>
             <nz-form-control>

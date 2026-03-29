@@ -5,7 +5,7 @@
         :model="form"
         @submit.prevent="handleSubmit"
         layout="vertical"
-        data-testid="source-note-create-form"
+        data-testid="source-text-create-form"
       >
         <a-form-item label="Title" required>
           <a-input
