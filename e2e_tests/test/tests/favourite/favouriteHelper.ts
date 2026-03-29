@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from "@playwright/test";
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3009";
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3008";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4000";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5140";
 
 // ----------------------------------------------------------------------
 // API Helpers
@@ -123,7 +123,8 @@ export async function fillFavouriteForm(
   // Open the dropdown
   await page.getByTestId("favourite-type-select").click();
 
-  await page.getByTestId(type).click();
+  //Angular antd = 1 item, vue = 2 items so need first() to by pass both
+  await page.getByTestId(type).first().click();
 
   if (note) {
     await page.getByTestId("favourite-note-textarea").fill(note);

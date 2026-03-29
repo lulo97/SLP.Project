@@ -18,21 +18,32 @@
           <a-select
             v-model:value="form.type"
             :placeholder="t('favourite.typePlaceholder')"
-            +
             data-testid="favourite-type-select"
+            :dropdown-match-select-width="true"
           >
-            <a-select-option value="word">{{
-              t("favourite.typeWord")
-            }}</a-select-option>
-            <a-select-option value="phrase">{{
-              t("favourite.typePhrase")
-            }}</a-select-option>
-            <a-select-option value="idiom">{{
-              t("favourite.typeIdiom")
-            }}</a-select-option>
-            <a-select-option value="other">{{
-              t("favourite.typeOther")
-            }}</a-select-option>
+            <a-select-option value="word">
+              <span data-testid="favourite-type-option-word">
+                {{ t("favourite.typeWord") }}
+              </span>
+            </a-select-option>
+
+            <a-select-option value="phrase">
+              <span data-testid="favourite-type-option-phrase">
+                {{ t("favourite.typePhrase") }}
+              </span>
+            </a-select-option>
+
+            <a-select-option value="idiom">
+              <span data-testid="favourite-type-option-idiom">
+                {{ t("favourite.typeIdiom") }}
+              </span>
+            </a-select-option>
+
+            <a-select-option value="other">
+              <span data-testid="favourite-type-option-other">
+                {{ t("favourite.typeOther") }}
+              </span>
+            </a-select-option>
           </a-select>
         </a-form-item>
 
