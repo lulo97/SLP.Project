@@ -11,7 +11,7 @@ import configuration from "../config/configuration";
 import { QuizModule } from "../modules/quiz/quiz.module";
 import { SourceModule } from "../modules/source/source.module";
 import { NoteModule } from "../modules/note/note.module";
-// import { ProgressModule } from './modules/progress/progress.module';
+import { ProgressModule } from '../modules/progress/progress.module';
 // import { FavoriteModule } from './modules/favorite/favorite.module';
 import { ReportModule } from "../modules/report/report.module";
 // import { AdminModule } from './modules/admin/admin.module';
@@ -50,7 +50,7 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     SourceModule,
     NoteModule,
     ExplanationModule,
-    // ProgressModule,
+    ProgressModule,
     // FavoriteModule,
     CommentModule,
     ReportModule,
