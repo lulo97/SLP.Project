@@ -77,7 +77,10 @@ import { NzAlertModule } from "ng-zorro-antd/alert";
       </div>
 
       <!-- Search/filter bar -->
-      <div class="flex flex-wrap items-center gap-2" data-testid="source-list-filters">
+      <div
+        class="flex flex-wrap items-center gap-2"
+        data-testid="source-list-filters"
+      >
         <input
           nz-input
           [(ngModel)]="searchQuery"
@@ -94,9 +97,23 @@ import { NzAlertModule } from "ng-zorro-antd/alert";
           (ngModelChange)="onTypeChange()"
           data-testid="source-list-type-filter"
         >
-          <nz-option nzValue="pdf" nzLabel="PDF"></nz-option>
-          <nz-option nzValue="link" nzLabel="URL"></nz-option>
-          <nz-option nzValue="text" nzLabel="Text"></nz-option>
+          <nz-option nzValue="pdf" nzLabel="PDF">
+            <ng-container>
+              <span data-testid="source-list-type-pdf">PDF</span>
+            </ng-container>
+          </nz-option>
+
+          <nz-option nzValue="link" nzLabel="URL">
+            <ng-container>
+              <span data-testid="source-list-type-link">URL</span>
+            </ng-container>
+          </nz-option>
+
+          <nz-option nzValue="text" nzLabel="Text">
+            <ng-container>
+              <span data-testid="source-list-type-text">Text</span>
+            </ng-container>
+          </nz-option>
         </nz-select>
         <span
           *ngIf="(pagination$ | async)!.total > 0"
