@@ -1,19 +1,27 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NzModalRef } from 'ng-zorro-antd/modal';
-import { NzRadioModule } from 'ng-zorro-antd/radio';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzButtonModule } from 'ng-zorro-antd/button';
+import { Component, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { NzModalRef } from "ng-zorro-antd/modal";
+import { NzRadioModule } from "ng-zorro-antd/radio";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzButtonModule } from "ng-zorro-antd/button";
 
 @Component({
-  selector: 'app-favorite-modal',
+  selector: "app-favorite-modal",
   standalone: true,
-  imports: [CommonModule, FormsModule, NzRadioModule, NzInputModule, NzButtonModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NzRadioModule,
+    NzInputModule,
+    NzButtonModule,
+  ],
   template: `
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-3" data-testid="source-detail-favorite-modal">
       <div>
-        <div class="text-xs font-semibold text-gray-500 mb-1">Selected text</div>
+        <div class="text-xs font-semibold text-gray-500 mb-1">
+          Selected text
+        </div>
         <textarea
           nz-input
           [(ngModel)]="text"
@@ -31,15 +39,28 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
           nzSize="small"
           data-testid="source-detail-favorite-type-group"
         >
-          <label nz-radio-button nzValue="word">Word</label>
-          <label nz-radio-button nzValue="phrase">Phrase</label>
-          <label nz-radio-button nzValue="idiom">Idiom</label>
-          <label nz-radio-button nzValue="other">Other</label>
+          <label nz-radio-button nzValue="word">
+            <span data-testid="source-detail-favorite-type-word">Word</span>
+          </label>
+
+          <label nz-radio-button nzValue="phrase">
+            <span data-testid="source-detail-favorite-type-phrase">Phrase</span>
+          </label>
+
+          <label nz-radio-button nzValue="idiom">
+            <span data-testid="source-detail-favorite-type-idiom">Idiom</span>
+          </label>
+
+          <label nz-radio-button nzValue="other">
+            <span data-testid="source-detail-favorite-type-other">Other</span>
+          </label>
         </nz-radio-group>
       </div>
 
       <div>
-        <div class="text-xs font-semibold text-gray-500 mb-1">Note (optional)</div>
+        <div class="text-xs font-semibold text-gray-500 mb-1">
+          Note (optional)
+        </div>
         <input
           nz-input
           [(ngModel)]="note"
@@ -53,9 +74,9 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 export class FavoriteModalComponent {
   private modalRef = inject(NzModalRef);
 
-  text: string = '';
-  type: 'word' | 'phrase' | 'idiom' | 'other' = 'word';
-  note: string = '';
+  text: string = "";
+  type: "word" | "phrase" | "idiom" | "other" = "word";
+  note: string = "";
 
   constructor() {
     // Get data passed via nzData
