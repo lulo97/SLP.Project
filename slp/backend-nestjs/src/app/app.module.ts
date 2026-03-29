@@ -12,7 +12,7 @@ import { QuizModule } from "../modules/quiz/quiz.module";
 import { SourceModule } from "../modules/source/source.module";
 import { NoteModule } from "../modules/note/note.module";
 import { ProgressModule } from '../modules/progress/progress.module';
-// import { FavoriteModule } from './modules/favorite/favorite.module';
+import { FavoriteModule } from '../modules/favorite/favorite.module';
 import { ReportModule } from "../modules/report/report.module";
 // import { AdminModule } from './modules/admin/admin.module';
 // import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -51,7 +51,7 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     NoteModule,
     ExplanationModule,
     ProgressModule,
-    // FavoriteModule,
+    FavoriteModule,
     CommentModule,
     ReportModule,
     // AdminModule,

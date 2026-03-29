@@ -62,5 +62,5 @@ export class User {
   quizzes: Quiz[];
 
   @OneToMany(() => FavoriteItem, (favorite) => favorite.user)
-  favorites: Quiz[];
+  favorites: FavoriteItem[];
 }
