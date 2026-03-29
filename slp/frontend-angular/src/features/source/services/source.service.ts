@@ -168,4 +168,12 @@ export class SourceService {
   }): Observable<ExplanationItem> {
     return this.api.post<ExplanationItem>("/explanations", data);
   }
+
+  createFavorite(payload: {
+    text: string;
+    type: string;
+    note?: string;
+  }): Observable<any> {
+    return this.api.post("/favorites", payload);
+  }
 }

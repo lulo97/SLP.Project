@@ -29,6 +29,7 @@ import { TtsService } from "../../tts/tts.service";
 import { SelectionBubbleComponent } from "../components/selection-bubble.component";
 import { ExplanationPanelComponent } from "../components/explanation-panel.component";
 import { TtsPlayerComponent } from "../../tts/tts-player.component";
+import { FavoriteModalComponent } from "../components/favorite-modal.component";
 
 // Models
 import {
@@ -425,7 +426,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
     </div>
 
     <app-selection-bubble
-      [containerRef]="contentRef"
+      [containerRef]="contentRef?.nativeElement"
       (explain)="handleExplain($event)"
       (grammar)="handleGrammar($event)"
       (tts)="handleTts($event)"
@@ -559,6 +560,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
   ],
 })
 export class SourceDetailComponent implements OnInit, OnDestroy {
+  Math = Math;
   private route = inject(ActivatedRoute);
   router = inject(Router);
   private sourceService = inject(SourceService);
@@ -566,6 +568,7 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
   private tts = inject(TtsService);
   private message = inject(NzMessageService);
   private modal = inject(NzModalService);
+  private currentSourceId = 0;
 
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
   @ViewChild("contentRef") contentRef?: ElementRef;
@@ -618,7 +621,10 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get("id"));
-    if (id) this.loadSource(id);
+    if (id) {
+      this.currentSourceId = id;
+      this.loadSource(id);
+    }
     fromEvent(window, "scroll")
       .pipe(debounceTime(50), takeUntil(this.destroy$))
       .subscribe(() => this.onScroll());
@@ -637,14 +643,17 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
       const percent = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
       this.sourceService
         .updateProgress(id, {
-          scrollPosition: Math.round(scrollTop),
-          percentComplete: Math.round(percent),
+          lastPosition: {
+            scrollPosition: Math.round(scrollTop),
+            percentComplete: Math.round(percent),
+          },
         })
         .subscribe({ error: () => {} });
     }
   }
 
-  loadSource(id: number): void {
+  loadSource(id: number = this.currentSourceId): void {
+    this.currentSourceId = id;
     this.loading = true;
     this.error = null;
     this.sourceService.getSourceDetail(id).subscribe({
@@ -700,8 +709,10 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
       if (id) {
         this.sourceService
           .updateProgress(id, {
-            scrollPosition: Math.round(scrollTop),
-            percentComplete: Math.round(this.readPercent),
+            lastPosition: {
+              scrollPosition: Math.round(scrollTop),
+              percentComplete: Math.round(this.readPercent),
+            },
           })
           .subscribe({ error: () => {} });
         this.savedScrollPosition = Math.round(scrollTop);
@@ -773,10 +784,13 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
 
   handleGrammar(text: string): void {
     window.getSelection()?.removeAllRanges();
-    const hide = this.message.loading("Checking grammar...", { nzDuration: 0 });
+    const loadingRef = this.message.loading("Checking grammar...", {
+      nzDuration: 0,
+    });
+
     this.llm.requestGrammarCheck({ text }).subscribe({
       next: (corrected) => {
-        hide();
+        this.message.remove(loadingRef.messageId);
         this.modal.info({
           nzTitle: "Grammar Check Result",
           nzContent: `
@@ -790,7 +804,10 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
         });
       },
       error: () => {
-        hide();
+        const loadingRef = this.message.loading("Checking grammar...", {
+          nzDuration: 0,
+        });
+        this.message.remove(loadingRef.messageId);
         this.message.error("Grammar check failed");
       },
     });
@@ -805,14 +822,20 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
     const modalRef = this.modal.create({
       nzTitle: "Save to Favorites",
       nzContent: FavoriteModalComponent,
-      nzComponentParams: { text },
+      nzData: { text },
       nzOkText: "Save",
       nzOkLoading: false,
-      nzOnOk: (comp) => comp.submit(),
+      nzOnOk: (comp: FavoriteModalComponent) => comp.submit(),
       nzCancelText: "Cancel",
     });
+
     modalRef.afterClose.subscribe((result) => {
-      if (result) this.message.success("Saved to favorites");
+      if (result) {
+        this.sourceService.createFavorite(result).subscribe({
+          next: () => this.message.success("Saved to favorites"),
+          error: () => this.message.error("Failed to save"),
+        });
+      }
     });
   }
 
@@ -824,7 +847,22 @@ export class SourceDetailComponent implements OnInit, OnDestroy {
     });
   }
 }
-function escapeHtml(text: string) {
-    throw new Error("Function not implemented.");
-}
 
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return ch;
+    }
+  });
+}
