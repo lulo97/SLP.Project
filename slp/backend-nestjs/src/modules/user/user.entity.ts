@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Note } from "../note/note.entity";
 import { Quiz } from "../quiz/quiz.entity";
+import { FavoriteItem } from "../favorite/favorite-item.entity";
 
 @Entity("users")
 export class User {
@@ -59,4 +60,7 @@ export class User {
 
   @OneToMany(() => Quiz, (quiz) => quiz.user)
   quizzes: Quiz[];
+
+  @OneToMany(() => FavoriteItem, (favorite) => favorite.user)
+  favorites: Quiz[];
 }
