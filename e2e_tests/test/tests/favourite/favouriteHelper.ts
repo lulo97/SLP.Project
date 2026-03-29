@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from "@playwright/test";
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4000";
-const BACKEND_URL = process.env.BACKEND_URL || "https://localhost:7297";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3009";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3008";
 
 // ----------------------------------------------------------------------
 // API Helpers
@@ -120,16 +120,19 @@ export async function fillFavouriteForm(
 ): Promise<void> {
   await page.getByTestId("favourite-text-input").fill(text);
 
-  // Open the dropdown
+  // Open the dropdown trigger
   await page.getByTestId("favourite-type-select").click();
 
-  // AntD options are usually in a div with class .ant-select-item-option
-  // We use a regex for 'name' to make it case-insensitive,
-  // or target the title attribute which AntD often sets.
-  const option = page.locator(".ant-select-item-option", {
-    hasText: new RegExp(`^${type}$`, "i"),
-  });
-
+  // ✅ Use the title attribute — immune to comment-node whitespace padding.
+  //
+  // Vue AntD:         <div class="ant-select-item-option" title="Word">Word</div>
+  // Angular ng-zorro: <nz-option-item class="ant-select-item-option" title="Word">
+  //                     <!--container--> Word <!--container-->
+  //                   </nz-option-item>
+  //
+  // hasText on Angular yields " Word " (spaces from comment boundaries),
+  // so /^Word$/i never matches. title="Word" is clean on both.
+  const option = page.locator(`.ant-select-item-option[title="${type}"]`);
   await option.click();
 
   if (note) {
@@ -178,20 +181,28 @@ export async function verifyFavouriteFormValues(
   expectedType: string,
   expectedNote?: string,
 ): Promise<void> {
-  // Standard inputs work fine with toHaveValue
   await expect(page.getByTestId("favourite-text-input")).toHaveValue(
     expectedText,
   );
 
-  // --- FIX FOR AntD SELECT ---
-  // We look for the element that actually displays the selected text
+  // ✅ Use toHaveAttribute("title") instead of toHaveText().
+  //
+  // The selection trigger renders differently per framework:
+  //   Vue AntD:         <div class="ant-select-selection-item" title="Word">Word</div>
+  //   Angular ng-zorro: <nz-select-item class="ant-select-selection-item" title="Word">
+  //                       <!--container--> Word <!--container-->
+  //                     </nz-select-item>
+  //
+  // toHaveText on Angular gives " Word " due to comment-node padding,
+  // so /^Word$/i fails. Both frameworks set title="<label>" on the trigger
+  // element, so toHaveAttribute is clean and works on both.
   const selectLabel = page.locator(
     '[data-testid="favourite-type-select"] .ant-select-selection-item',
   );
-
-  // Use toHaveText instead of toHaveValue
-  // Use a Regex or 'i' flag if your 'expectedType' casing varies from the UI label
-  await expect(selectLabel).toHaveText(new RegExp(`^${expectedType}$`, "i"));
+  await expect(selectLabel).toHaveAttribute(
+    "title",
+    new RegExp(`^${expectedType}$`, "i"),
+  );
 
   if (expectedNote) {
     await expect(page.getByTestId("favourite-note-textarea")).toHaveValue(
