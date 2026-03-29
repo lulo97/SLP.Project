@@ -13,6 +13,7 @@ import { QuizEditComponent } from "../features/quiz/pages/quiz-edit.component";
 import { AdminGuard } from "../features/auth/admin.guard";
 import { QuizPlayerComponent } from "../features/quiz-attempt/pages/quiz-player.component";
 import { AttemptReviewComponent } from "../features/quiz-attempt/pages/attempt-review.component";
+import { SourceDetailComponent } from "../features/source/pages/source-detail.component";
 
 export const routes: Routes = [
   {
@@ -141,6 +142,7 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         data: { breadcrumb: "Add Text" },
       },
+      { path: "source/:id", component: SourceDetailComponent },
       // ========== QUIZ ROUTES ==========
       {
         path: "quiz",

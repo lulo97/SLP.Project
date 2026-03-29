@@ -7,6 +7,10 @@ import {
   SourceListItem,
   PagedResult,
   SourceQueryParams,
+  ExplanationItem,
+  ProgressDto,
+  SourceDetail,
+  UpdateProgressRequest,
 } from "../models/source.model";
 
 @Injectable({ providedIn: "root" })
@@ -134,5 +138,34 @@ export class SourceService {
 
   clearError(): void {
     this.errorSubject.next(null);
+  }
+
+  getSourceDetail(id: number): Observable<SourceDetail> {
+    return this.api.get<SourceDetail>(`/source/${id}`);
+  }
+
+  getProgress(id: number): Observable<ProgressDto> {
+    return this.api.get<ProgressDto>(`/source/${id}/progress`);
+  }
+
+  updateProgress(
+    id: number,
+    payload: UpdateProgressRequest,
+  ): Observable<ProgressDto> {
+    return this.api.put<ProgressDto>(`/source/${id}/progress`, {
+      lastPosition: payload,
+    });
+  }
+
+  getExplanations(sourceId: number): Observable<ExplanationItem[]> {
+    return this.api.get<ExplanationItem[]>(`/source/${sourceId}/explanations`);
+  }
+
+  createExplanation(data: {
+    sourceId: number;
+    textRange: { text: string };
+    content: string;
+  }): Observable<ExplanationItem> {
+    return this.api.post<ExplanationItem>("/explanations", data);
   }
 }

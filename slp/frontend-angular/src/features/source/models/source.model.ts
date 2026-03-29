@@ -35,3 +35,43 @@ export interface SourceQueryParams {
   search?: string;
   type?: string;
 }
+
+export interface SourceDetail extends Source {
+  rawText?: string;
+  contentJson?: any;
+  metadata?: any;
+}
+
+export interface ProgressDto {
+  sourceId: number;
+  lastPosition: {
+    scrollPosition?: number;
+    percentComplete?: number;
+  } | null;
+  updatedAt: string;
+}
+
+export interface UpdateProgressRequest {
+  lastPosition: {
+    scrollPosition: number;
+    percentComplete: number;
+  };
+}
+
+export interface ExplanationItem {
+  id: number;
+  userId?: number;
+  sourceId?: number;
+  textRange?: { text?: string; [key: string]: any } | null;
+  content: string;
+  authorType?: string;
+  editable?: boolean;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface FavoriteRequest {
+  text: string;
+  type: 'word' | 'phrase' | 'idiom' | 'other';
+  note?: string;
+}
