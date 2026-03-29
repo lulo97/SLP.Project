@@ -29,78 +29,76 @@ import { SourceService } from "../services/source.service";
     NzFormModule,
   ],
   template: `
-      <nz-card class="shadow-sm" data-testid="source-upload-card">
-        <form nz-form (ngSubmit)="handleUpload()">
-          <nz-form-item>
-            <nz-form-label>{{ "source.title" | translate }}</nz-form-label>
-            <nz-form-control>
-              <input
-                nz-input
-                [(ngModel)]="title"
-                name="title"
-                [placeholder]="'source.titlePlaceholder' | translate"
-                data-testid="source-upload-title-input"
-              />
-            </nz-form-control>
-          </nz-form-item>
+    <nz-card class="shadow-sm" data-testid="source-upload-card">
+      <form
+        nz-form
+        (ngSubmit)="handleUpload()"
+        data-testid="source-upload-form"
+      >
+        <nz-form-item>
+          <nz-form-label>{{ "source.title" | translate }}</nz-form-label>
+          <nz-form-control>
+            <input
+              nz-input
+              [(ngModel)]="title"
+              name="title"
+              [placeholder]="'source.titlePlaceholder' | translate"
+              data-testid="source-upload-title-input"
+            />
+          </nz-form-control>
+        </nz-form-item>
 
-          <nz-form-item>
-            <nz-upload
-              nzType="drag"
-              [nzFileList]="fileList"
-              [nzBeforeUpload]="beforeUpload"
-              (nzFileListChange)="handleChange($event)"
-              [nzMultiple]="false"
-              [nzLimit]="1"
-              data-testid="source-upload-dragger"
+        <nz-form-item>
+          <nz-upload
+            nzType="drag"
+            [nzFileList]="fileList"
+            [nzBeforeUpload]="beforeUpload"
+            (nzFileListChange)="handleChange($event)"
+            [nzMultiple]="false"
+            [nzLimit]="1"
+            data-testid="source-upload-dragger"
+          >
+            <p
+              class="ant-upload-drag-icon"
+              data-testid="source-upload-dragger-icon"
             >
-              <p
-                class="ant-upload-drag-icon"
-                data-testid="source-upload-dragger-icon"
-              >
-                <i nz-icon nzType="inbox"></i>
-              </p>
-              <p
-                class="ant-upload-text"
-                data-testid="source-upload-dragger-text"
-              >
-                {{ "source.dragText" | translate }}
-              </p>
-              <p
-                class="ant-upload-hint"
-                data-testid="source-upload-dragger-hint"
-              >
-                {{ "source.uploadHint" | translate }}
-              </p>
-            </nz-upload>
-          </nz-form-item>
+              <i nz-icon nzType="inbox"></i>
+            </p>
+            <p class="ant-upload-text" data-testid="source-upload-dragger-text">
+              {{ "source.dragText" | translate }}
+            </p>
+            <p class="ant-upload-hint" data-testid="source-upload-dragger-hint">
+              {{ "source.uploadHint" | translate }}
+            </p>
+          </nz-upload>
+        </nz-form-item>
 
-          <div class="mt-4">
-            <button
-              nz-button
-              nzType="primary"
-              type="submit"
-              [disabled]="!fileList.length"
-              [nzLoading]="(loading$ | async)!"
-              block
-              data-testid="source-upload-submit-btn"
-            >
-              {{ "source.upload" | translate }}
-            </button>
-          </div>
-        </form>
+        <div class="mt-4">
+          <button
+            nz-button
+            nzType="primary"
+            type="submit"
+            [disabled]="!fileList.length"
+            [nzLoading]="(loading$ | async)!"
+            block
+            data-testid="source-upload-submit-btn"
+          >
+            {{ "source.upload" | translate }}
+          </button>
+        </div>
+      </form>
 
-        <nz-alert
-          *ngIf="error$ | async as err"
-          [nzMessage]="err"
-          nzType="error"
-          nzShowIcon
-          nzClosable
-          (nzOnClose)="sourceService.clearError()"
-          class="mt-4"
-          data-testid="source-upload-error"
-        ></nz-alert>
-      </nz-card>
+      <nz-alert
+        *ngIf="error$ | async as err"
+        [nzMessage]="err"
+        nzType="error"
+        nzShowIcon
+        nzClosable
+        (nzOnClose)="sourceService.clearError()"
+        class="mt-4"
+        data-testid="source-upload-error"
+      ></nz-alert>
+    </nz-card>
   `,
 })
 export class SourceUploadComponent {
