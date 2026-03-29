@@ -1,12 +1,21 @@
 // --- Inbound requests --------------------------------------------------
 
+import { IsNumber, IsString, IsOptional } from 'class-validator';
+
 export class ExplainRequest {
+  @IsNumber()
   sourceId: number;
+
+  @IsString()
   selectedText: string;
+
+  @IsOptional()
+  @IsString()
   context?: string;
 }
 
 export class GrammarCheckRequest {
+  @IsString()
   text: string;
 }
 

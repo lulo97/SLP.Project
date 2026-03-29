@@ -12,16 +12,20 @@ import { Session } from "./modules/session/session.entity";
 import { User } from "./modules/user/user.entity";
 import { METRICS_COLLECTOR } from "./modules/metrics/metrics.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { HttpService } from "@nestjs/axios";
+import { StartupChecks } from "./common/startup-checks";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ["error", "warn"],
+  });
 
   // Global pipes/filters
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, // tự động chuyển đổi string sang number, boolean...
-      whitelist: true, // loại bỏ các thuộc tính không có trong DTO
-      forbidNonWhitelisted: true, // nếu muốn chặt chẽ hơn
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -31,6 +35,18 @@ async function bootstrap() {
   const metricsCollector = app.get(METRICS_COLLECTOR);
   const sessionRepository = app.get(getRepositoryToken(Session));
   const userRepository = app.get(getRepositoryToken(User)) as Repository<User>;
+  const dataSource = app.get(DataSource);
+  const httpService = app.get(HttpService);
+
+  // Run startup health checks
+  const startupChecks = new StartupChecks(
+    dataSource,
+    configService,
+    httpService,
+  );
+  await startupChecks.checkDatabaseConnection(); // fatal
+  await startupChecks.checkLlmConnection(); // non-fatal
+  await startupChecks.checkTtsConnection(); // non-fatal
 
   // Instantiate middlewares
   const rateLimitingMiddleware = new RateLimitingMiddleware(configService);
@@ -66,29 +82,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup("api", app, document);
-
-  // ==================== DATABASE CONNECTION CHECK ====================
-  const logger = new Logger("DatabaseCheck");
-
-  try {
-    // Ensure TypeORM is fully initialized
-    const dataSource = app.get(DataSource);
-    if (!dataSource.isInitialized) {
-      await dataSource.initialize();
-    }
-
-    // Test connection with a simple query
-    const usersCount = await userRepository.count();
-    logger.log(
-      `✅ Database connected successfully. Users count: ${usersCount}`,
-    );
-  } catch (error) {
-    logger.error("❌ Database connection failed or query error:");
-    logger.error(error instanceof Error ? error.message : error);
-    // Exit the process with error code
-    process.exit(1);
-  }
-  // ==============================================================
 
   const port = process.env.PORT || 3008;
   await app.listen(port);
