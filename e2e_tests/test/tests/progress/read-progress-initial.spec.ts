@@ -18,7 +18,7 @@ test.describe("Reading progress – initial state", () => {
     await page.getByTestId("source-list-add-text-btn").click();
     await page.waitForURL(`${FRONTEND_URL}/source/new-text`);
     await page.getByTestId("source-text-create-title-input").fill(title);
-    await page.getByTestId("source-note-create-content-input").fill(content);
+    await page.getByTestId("source-text-create-content-input").fill(content);
     await page.getByTestId("source-note-create-submit-btn").click();
     await page.waitForURL(/\/source\/\d+/);
     const match = page.url().match(/\/source\/(\d+)/);

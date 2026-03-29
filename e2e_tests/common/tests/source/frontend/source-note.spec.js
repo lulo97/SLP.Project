@@ -47,7 +47,7 @@ test.describe("Source – Note Creation", () => {
     // Still disabled — content missing
     await expect(page.locator('[data-testid="source-note-create-submit-btn"]')).toBeDisabled();
 
-    await page.fill('[data-testid="source-note-create-content-input"]', source.content);
+    await page.fill('[data-testid="source-text-create-content-input"]', source.content);
     await expect(page.locator('[data-testid="source-note-create-submit-btn"]')).toBeEnabled();
 
     await page.click('[data-testid="source-note-create-submit-btn"]');
@@ -75,7 +75,7 @@ test.describe("Source – Note Creation", () => {
 
     await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
     await page.fill('[data-testid="source-text-create-title-input"]', source.title);
-    await page.fill('[data-testid="source-note-create-content-input"]', source.content);
+    await page.fill('[data-testid="source-text-create-content-input"]', source.content);
     await page.click('[data-testid="source-note-create-submit-btn"]');
     await page.waitForURL(/\/source\/\d+$/, { timeout: 15_000 });
 
@@ -93,7 +93,7 @@ test.describe("Source – Note Creation", () => {
     const page = await createAuthenticatedPage(browser, authToken);
     await page.goto(`${FRONTEND_URL}/source/new-note`, { waitUntil: "domcontentloaded" });
 
-    await page.fill('[data-testid="source-note-create-content-input"]', "Some content here");
+    await page.fill('[data-testid="source-text-create-content-input"]', "Some content here");
     await expect(page.locator('[data-testid="source-note-create-submit-btn"]')).toBeDisabled();
 
     await page.close();

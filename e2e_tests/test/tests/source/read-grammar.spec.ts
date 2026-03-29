@@ -21,7 +21,7 @@ test.describe("Source – text selection and AI grammar check", () => {
     const sampleContent = `This is a test. He go to school every day. The quick brown fox jumps over the lazy dog.`;
     await page.getByTestId("source-text-create-title-input").fill(uniqueTitle);
     await page
-      .getByTestId("source-note-create-content-input")
+      .getByTestId("source-text-create-content-input")
       .fill(sampleContent);
     await page.getByTestId("source-note-create-submit-btn").click();
 

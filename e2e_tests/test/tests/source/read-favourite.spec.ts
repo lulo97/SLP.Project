@@ -28,7 +28,7 @@ test.describe('Source and favourite – full flow', () => {
     const sampleContent = `Some introductory text. ${selectedText} Some more text after.`;
     await page.getByTestId('source-text-create-title-input').fill(uniqueTitle);
     await page
-      .getByTestId('source-note-create-content-input')
+      .getByTestId('source-text-create-content-input')
       .fill(sampleContent);
     await page.getByTestId('source-note-create-submit-btn').click();
 

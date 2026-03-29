@@ -24,7 +24,7 @@
             :rows="8"
             :maxlength="10000"
             show-count
-            data-testid="source-note-create-content-input"
+            data-testid="source-text-create-content-input"
           />
         </a-form-item>
 

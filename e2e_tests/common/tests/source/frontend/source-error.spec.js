@@ -57,7 +57,7 @@ test.describe("Source – Error Handling & Validation", () => {
     });
 
     await page.fill(
-      '[data-testid="source-note-create-content-input"]',
+      '[data-testid="source-text-create-content-input"]',
       "Some content",
     );
     await expect(
@@ -76,7 +76,7 @@ test.describe("Source – Error Handling & Validation", () => {
 
     await page.fill('[data-testid="source-text-create-title-input"]', "Title");
     await page.fill(
-      '[data-testid="source-note-create-content-input"]',
+      '[data-testid="source-text-create-content-input"]',
       "Content",
     );
     await expect(

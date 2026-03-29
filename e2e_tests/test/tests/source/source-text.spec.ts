@@ -18,7 +18,7 @@ test.describe('Source (Note) – create and delete via UI', () => {
     const uniqueTitle = `Playwright Note ${Date.now()}`;
     const uniqueContent = 'This note was created by the frontend-only test.';
     await page.getByTestId('source-text-create-title-input').fill(uniqueTitle);
-    await page.getByTestId('source-note-create-content-input').fill(uniqueContent);
+    await page.getByTestId('source-text-create-content-input').fill(uniqueContent);
 
     // 4. Submit the form
     await page.getByTestId('source-note-create-submit-btn').click();
