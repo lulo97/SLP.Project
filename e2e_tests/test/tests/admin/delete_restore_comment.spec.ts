@@ -105,7 +105,16 @@ test("user A creates quiz B, posts comment C, admin deletes comment C, user A ca
     await page.goto(`${FRONTEND_URL}/quiz/view/${quizId}`);
     await expect(page.getByTestId("quiz-title")).toHaveText(quizTitle);
 
+    // 1. Wait for visibility explicitly
+    await page.getByTestId("new-comment-input").waitFor({ state: "visible" });
+
+    // 2. Or use an assertion (best for tests)
+    await expect(page.getByTestId("new-comment-input")).toBeVisible();
+
+    // 3. Now perform the action
     await page.getByTestId("new-comment-input").fill(commentText);
+    
+    await page.waitForTimeout(1000);
 
     // Wait until Vue has synced the reactive value before submitting
     await expect(page.getByTestId("new-comment-input")).toHaveValue(
