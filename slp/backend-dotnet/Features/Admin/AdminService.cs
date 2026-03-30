@@ -29,9 +29,9 @@ public class AdminService : IAdminService
     }
 
     // --- Users ---
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+    public async Task<IEnumerable<UserDto>> GetAllUsersAsync(string? search = null)
     {
-        var users = await _userRepo.GetAllAsync();
+        var users = await _userRepo.GetAllAsync(search);
         return users.Select(u => new UserDto
         {
             Id = u.Id,
@@ -84,9 +84,9 @@ public class AdminService : IAdminService
     }
 
     // --- Quizzes ---
-    public async Task<IEnumerable<QuizAdminDto>> GetAllQuizzesAsync()
+    public async Task<IEnumerable<QuizAdminDto>> GetAllQuizzesAsync(string? search = null)
     {
-        var quizzes = await _quizRepo.GetAllForAdminAsync(); // need to add this method
+        var quizzes = await _quizRepo.GetAllForAdminAsync(search); // need to add this method
         return quizzes.Select(q => new QuizAdminDto
         {
             Id = q.Id,
@@ -138,11 +138,9 @@ public class AdminService : IAdminService
     }
 
     // --- Comments ---
-    public async Task<IEnumerable<CommentAdminDto>> GetAllCommentsAsync(bool includeDeleted = false)
+    public async Task<IEnumerable<CommentAdminDto>> GetAllCommentsAsync(bool includeDeleted = false, string? search = null)
     {
-        // You may need to extend ICommentRepository with a method to get all comments (admin view)
-        // For now, we'll assume we have a method GetAllAsync
-        var comments = await _commentRepo.GetAllAsync(includeDeleted);
+        var comments = await _commentRepo.GetAllAsync(includeDeleted, search);
         return comments.Select(c => new CommentAdminDto
         {
             Id = c.Id,
@@ -189,9 +187,9 @@ public class AdminService : IAdminService
     }
 
     // --- Logs ---
-    public async Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(int count = 100)
+    public async Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(int count = 100, string? search = null)
     {
-        var logs = await _logRepo.GetRecentAsync(count);
+        var logs = await _logRepo.GetRecentAsync(count, search);
         return logs.Select(l => new AdminLogDto
         {
             Id = l.Id,

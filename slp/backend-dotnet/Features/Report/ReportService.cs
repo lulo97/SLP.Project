@@ -19,9 +19,9 @@ public class ReportService : IReportService
         return report == null ? null : MapToDto(report);
     }
 
-    public async Task<IEnumerable<ReportDto>> GetUnresolvedAsync()
+    public async Task<IEnumerable<ReportDto>> GetUnresolvedAsync(string? search = null)
     {
-        var reports = await _reportRepo.GetUnresolvedAsync();
+        var reports = await _reportRepo.GetUnresolvedAsync(search);
         return reports.Select(MapToDto);
     }
 

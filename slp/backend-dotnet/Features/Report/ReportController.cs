@@ -18,9 +18,9 @@ public class ReportController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpGet]
-    public async Task<IActionResult> GetUnresolved()
+    public async Task<IActionResult> GetUnresolved([FromQuery] string? search = null)
     {
-        var reports = await _reportService.GetUnresolvedAsync();
+        var reports = await _reportService.GetUnresolvedAsync(search);
         return Ok(reports);
     }
 

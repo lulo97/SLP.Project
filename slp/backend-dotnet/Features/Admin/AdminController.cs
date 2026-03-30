@@ -19,9 +19,9 @@ public class AdminController : ControllerBase
 
     // Users
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetUsers([FromQuery] string? search = null)
     {
-        var users = await _adminService.GetAllUsersAsync();
+        var users = await _adminService.GetAllUsersAsync(search);
         return Ok(users);
     }
 
@@ -45,9 +45,9 @@ public class AdminController : ControllerBase
 
     // Quizzes
     [HttpGet("quizzes")]
-    public async Task<IActionResult> GetQuizzes()
+    public async Task<IActionResult> GetQuizzes([FromQuery] string? search = null)
     {
-        var quizzes = await _adminService.GetAllQuizzesAsync();
+        var quizzes = await _adminService.GetAllQuizzesAsync(search);
         return Ok(quizzes);
     }
 
@@ -71,9 +71,11 @@ public class AdminController : ControllerBase
 
     // Comments
     [HttpGet("comments")]
-    public async Task<IActionResult> GetComments([FromQuery] bool includeDeleted = false)
+    public async Task<IActionResult> GetComments(
+    [FromQuery] bool includeDeleted = false,
+    [FromQuery] string? search = null)
     {
-        var comments = await _adminService.GetAllCommentsAsync(includeDeleted);
+        var comments = await _adminService.GetAllCommentsAsync(includeDeleted, search);
         return Ok(comments);
     }
 
@@ -97,9 +99,11 @@ public class AdminController : ControllerBase
 
     // Logs
     [HttpGet("logs")]
-    public async Task<IActionResult> GetLogs([FromQuery] int count = 100)
+    public async Task<IActionResult> GetLogs(
+    [FromQuery] int count = 100,
+    [FromQuery] string? search = null)
     {
-        var logs = await _adminService.GetRecentLogsAsync(count);
+        var logs = await _adminService.GetRecentLogsAsync(count, search);
         return Ok(logs);
     }
 }

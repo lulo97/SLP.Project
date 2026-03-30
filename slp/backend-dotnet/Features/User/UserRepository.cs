@@ -57,11 +57,17 @@ public class UserRepository : IUserRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<User>> GetAllAsync(string? search = null)
     {
-        return await _db.Users
-            .OrderBy(u => u.Id)
-            .ToListAsync();
+        var query = _db.Users.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search}%";
+            query = query.Where(u =>
+                EF.Functions.ILike(u.Username, pattern) ||
+                EF.Functions.ILike(u.Email, pattern));
+        }
+        return await query.OrderBy(u => u.Id).ToListAsync();
     }
 
     public async Task<UserStatsDto> GetUserStatsAsync(int userId)

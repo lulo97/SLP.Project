@@ -19,11 +19,23 @@ public class ReportRepository : IReportRepository
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
-    public async Task<IEnumerable<Report>> GetUnresolvedAsync()
+    public async Task<IEnumerable<Report>> GetUnresolvedAsync(string? search = null)
     {
-        return await _db.Reports
+        var query = _db.Reports
             .Include(r => r.User)
             .Where(r => !r.Resolved)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search}%";
+            query = query.Where(r =>
+                (r.User != null && EF.Functions.ILike(r.User.Username, pattern)) ||
+                EF.Functions.ILike(r.TargetType, pattern) ||
+                EF.Functions.ILike(r.Reason, pattern));
+        }
+
+        return await query
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
     }

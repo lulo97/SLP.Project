@@ -327,12 +327,22 @@ public class QuizRepository : IQuizRepository
         }
     }
 
-    public async Task<IEnumerable<Quiz>> GetAllForAdminAsync()
+    public async Task<IEnumerable<Quiz>> GetAllForAdminAsync(string? search = null)
     {
-        // Ignore the global query filter (Disabled == false) to see all quizzes
-        return await _context.Quizzes
+        var query = _context.Quizzes
             .IgnoreQueryFilters()
             .Include(q => q.User)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search}%";
+            query = query.Where(q =>
+                EF.Functions.ILike(q.Title, pattern) ||
+                (q.User != null && EF.Functions.ILike(q.User.Username, pattern)));
+        }
+
+        return await query
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
     }

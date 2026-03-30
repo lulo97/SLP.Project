@@ -1,9 +1,14 @@
-import { defineStore } from 'pinia';
-import apiClient from '@/lib/api/client';
-import { message } from 'ant-design-vue';
-import type { UserDto, QuizAdminDto, CommentAdminDto, AdminLogDto } from '../types/admin.types.ts';
+import { defineStore } from "pinia";
+import apiClient from "@/lib/api/client";
+import { message } from "ant-design-vue";
+import type {
+  UserDto,
+  QuizAdminDto,
+  CommentAdminDto,
+  AdminLogDto,
+} from "../types/admin.types.ts";
 
-export const useAdminStore = defineStore('admin', {
+export const useAdminStore = defineStore("admin", {
   state: () => ({
     users: [] as UserDto[],
     quizzes: [] as QuizAdminDto[],
@@ -19,119 +24,122 @@ export const useAdminStore = defineStore('admin', {
   }),
 
   actions: {
-    // --- Users ---
-    async fetchUsers() {
-      this.loading.users = true;
-      this.error = null;
-      try {
-        const response = await apiClient.get<UserDto[]>('/admin/users');
-        this.users = response.data;
-      } catch (err: any) {
-        this.error = err.response?.data?.error || 'Failed to fetch users';
-        message.error(this.error);
-      } finally {
-        this.loading.users = false;
-      }
-    },
-
     async banUser(userId: number) {
       try {
         await apiClient.post(`/admin/users/${userId}/ban`);
-        message.success('User banned successfully');
+        message.success("User banned successfully");
         await this.fetchUsers(); // refresh list
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Ban failed');
+        message.error(err.response?.data?.error || "Ban failed");
       }
     },
 
     async unbanUser(userId: number) {
       try {
         await apiClient.post(`/admin/users/${userId}/unban`);
-        message.success('User unbanned successfully');
+        message.success("User unbanned successfully");
         await this.fetchUsers();
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Unban failed');
-      }
-    },
-
-    // --- Quizzes ---
-    async fetchQuizzes() {
-      this.loading.quizzes = true;
-      try {
-        const response = await apiClient.get<QuizAdminDto[]>('/admin/quizzes');
-        this.quizzes = response.data;
-      } catch (err: any) {
-        message.error('Failed to fetch quizzes');
-      } finally {
-        this.loading.quizzes = false;
+        message.error(err.response?.data?.error || "Unban failed");
       }
     },
 
     async disableQuiz(quizId: number) {
       try {
         await apiClient.post(`/admin/quizzes/${quizId}/disable`);
-        message.success('Quiz disabled');
+        message.success("Quiz disabled");
         await this.fetchQuizzes();
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Disable failed');
+        message.error(err.response?.data?.error || "Disable failed");
       }
     },
 
     async enableQuiz(quizId: number) {
       try {
         await apiClient.post(`/admin/quizzes/${quizId}/enable`);
-        message.success('Quiz enabled');
+        message.success("Quiz enabled");
         await this.fetchQuizzes();
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Enable failed');
-      }
-    },
-
-    // --- Comments ---
-    async fetchComments(includeDeleted = false) {
-      this.loading.comments = true;
-      try {
-        const response = await apiClient.get<CommentAdminDto[]>('/admin/comments', {
-          params: { includeDeleted },
-        });
-        this.comments = response.data;
-      } catch (err: any) {
-        message.error('Failed to fetch comments');
-      } finally {
-        this.loading.comments = false;
+        message.error(err.response?.data?.error || "Enable failed");
       }
     },
 
     async deleteComment(commentId: number) {
       try {
         await apiClient.delete(`/admin/comments/${commentId}`);
-        message.success('Comment deleted');
+        message.success("Comment deleted");
         await this.fetchComments(true);
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Delete failed');
+        message.error(err.response?.data?.error || "Delete failed");
       }
     },
 
     async restoreComment(commentId: number) {
       try {
         await apiClient.post(`/admin/comments/${commentId}/restore`);
-        message.success('Comment restored');
+        message.success("Comment restored");
         await this.fetchComments(true);
       } catch (err: any) {
-        message.error(err.response?.data?.error || 'Restore failed');
+        message.error(err.response?.data?.error || "Restore failed");
       }
     },
 
-    // --- Logs ---
-    async fetchLogs(count = 100) {
+    async fetchUsers(search?: string) {
+      this.loading.users = true;
+      this.error = null;
+      try {
+        const response = await apiClient.get<UserDto[]>("/admin/users", {
+          params: { search },
+        });
+        this.users = response.data;
+      } catch (err: any) {
+        this.error = err.response?.data?.error || "Failed to fetch users";
+        message.error(this.error);
+      } finally {
+        this.loading.users = false;
+      }
+    },
+
+    async fetchQuizzes(search?: string) {
+      this.loading.quizzes = true;
+      try {
+        const response = await apiClient.get<QuizAdminDto[]>("/admin/quizzes", {
+          params: { search },
+        });
+        this.quizzes = response.data;
+      } catch (err: any) {
+        message.error("Failed to fetch quizzes");
+      } finally {
+        this.loading.quizzes = false;
+      }
+    },
+
+    async fetchComments(includeDeleted = false, search?: string) {
+      this.loading.comments = true;
+      try {
+        const response = await apiClient.get<CommentAdminDto[]>(
+          "/admin/comments",
+          {
+            params: { includeDeleted, search },
+          },
+        );
+        this.comments = response.data;
+      } catch (err: any) {
+        message.error("Failed to fetch comments");
+      } finally {
+        this.loading.comments = false;
+      }
+    },
+
+    async fetchLogs(count = 100, search?: string) {
       this.loading.logs = true;
       try {
-        const response = await apiClient.get<AdminLogDto[]>('/admin/logs', {
-          params: { count },
+        const response = await apiClient.get<AdminLogDto[]>("/admin/logs", {
+          params: { count, search },
         });
         this.logs = response.data;
       } catch (err: any) {
-        message.error('Failed to fetch logs');
+        message.error("Failed to fetch logs");
       } finally {
         this.loading.logs = false;
       }

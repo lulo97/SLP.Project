@@ -5,7 +5,7 @@ namespace backend_dotnet.Features.Report;
 public interface IReportService
 {
     Task<ReportDto?> GetByIdAsync(int id);
-    Task<IEnumerable<ReportDto>> GetUnresolvedAsync();
+    Task<IEnumerable<ReportDto>> GetUnresolvedAsync(string? search = null);
     Task<ReportDto> CreateAsync(int userId, CreateReportRequest request);
     Task<bool> ResolveAsync(int adminId, int reportId);
     Task<IEnumerable<ReportDto>> GetByUserIdAsync(int userId);

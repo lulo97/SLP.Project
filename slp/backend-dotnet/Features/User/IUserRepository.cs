@@ -13,7 +13,7 @@ namespace backend_dotnet.Features.User
         Task UpdateAsync(User user);
         Task CreateAsync(User user);
         Task DeleteAsync(User user);
-        Task<IEnumerable<User>> GetAllAsync();
+        Task<IEnumerable<User>> GetAllAsync(string? search = null);
         Task<UserStatsDto> GetUserStatsAsync(int userId);
     }
 }

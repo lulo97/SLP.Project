@@ -18,10 +18,22 @@ public class AdminLogRepository : IAdminLogRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<AdminLog>> GetRecentAsync(int count = 100)
+    public async Task<IEnumerable<AdminLog>> GetRecentAsync(int count = 100, string? search = null)
     {
-        return await _db.AdminLogs
+        var query = _db.AdminLogs
             .Include(l => l.Admin)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search}%";
+            query = query.Where(l =>
+                (l.Admin != null && EF.Functions.ILike(l.Admin.Username, pattern)) ||
+                EF.Functions.ILike(l.Action, pattern) ||
+                (l.TargetType != null && EF.Functions.ILike(l.TargetType, pattern)));
+        }
+
+        return await query
             .OrderByDescending(l => l.CreatedAt)
             .Take(count)
             .ToListAsync();

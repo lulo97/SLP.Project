@@ -8,7 +8,7 @@ public interface ICommentRepository
     Task UpdateAsync(Comment comment);
     Task<bool> DeleteAsync(int id);
     Task<bool> RestoreAsync(int id);
-    Task<IEnumerable<Comment>> GetAllAsync(bool includeDeleted = false);
+    Task<IEnumerable<Comment>> GetAllAsync(bool includeDeleted = false, string? search = null);
 
     // History
     Task AddHistoryAsync(CommentHistory entry);

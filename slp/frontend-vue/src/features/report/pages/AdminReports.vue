@@ -1,7 +1,13 @@
 <template>
   <div>
     <h2 class="text-xl font-semibold mb-4">Reports</h2>
-
+    <a-input-search
+      v-model:value="searchTerm"
+      placeholder="Search by reporter, target type, or reason..."
+      style="margin-bottom: 16px"
+      @search="handleSearch"
+      data-testid="admin-reports-search"
+    />
     <a-table
       :data-source="reports"
       :loading="loading"
@@ -51,7 +57,12 @@
               cancel-text="No"
               @confirm="handleDeleteComment(record)"
             >
-              <a-button size="small" danger ghost data-testid="delete-comment-btn">
+              <a-button
+                size="small"
+                danger
+                ghost
+                data-testid="delete-comment-btn"
+              >
                 Delete Comment
               </a-button>
             </a-popconfirm>
@@ -64,13 +75,22 @@
               cancel-text="No"
               @confirm="handleDisableQuiz(record)"
             >
-              <a-button size="small" danger ghost data-testid="disable-quiz-btn">
+              <a-button
+                size="small"
+                danger
+                ghost
+                data-testid="disable-quiz-btn"
+              >
                 Disable Quiz
               </a-button>
             </a-popconfirm>
 
             <!-- View target link -->
-            <a-button size="small" @click="viewTarget(record)" data-testid="view-target-btn">
+            <a-button
+              size="small"
+              @click="viewTarget(record)"
+              data-testid="view-target-btn"
+            >
               View
             </a-button>
           </div>
@@ -87,17 +107,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { message } from 'ant-design-vue';
-import { useRouter } from 'vue-router';
-import apiClient from '@/lib/api/client';
-import dayjs from 'dayjs';
+import { ref, onMounted, computed } from "vue";
+import { message } from "ant-design-vue";
+import { useRouter } from "vue-router";
+import apiClient from "@/lib/api/client";
+import dayjs from "dayjs";
 
 interface ReportDto {
   id: number;
   userId: number;
   username: string;
-  targetType: 'quiz' | 'question' | 'comment';
+  targetType: "quiz" | "question" | "comment";
   targetId: number;
   reason: string;
   resolved: boolean;
@@ -108,90 +128,96 @@ interface ReportDto {
 const reports = ref<ReportDto[]>([]);
 const loading = ref(false);
 const resolvingIds = ref<number[]>([]);
-
-const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: 'Reporter', dataIndex: 'username', key: 'username' },
-  { title: 'Target', key: 'target' },
-  { title: 'Reason', key: 'reason' },
-  { title: 'Created', key: 'createdAt', width: 150 },
-  { title: 'Actions', key: 'actions', width: 240 },
-];
-
-const router = useRouter();
-
-const truncate = (text: string, length: number) => {
-  return text.length > length ? text.slice(0, length) + '…' : text;
-};
-
-const formatDate = (dateStr: string) => {
-  return dayjs(dateStr).format('YYYY-MM-DD HH:mm');
-};
+const searchTerm = ref("");
 
 const fetchReports = async () => {
   loading.value = true;
   try {
-    const response = await apiClient.get<ReportDto[]>('/reports');
-    // The endpoint returns unresolved reports by default (see backend)
+    const response = await apiClient.get<ReportDto[]>("/reports", {
+      params: { search: searchTerm.value },
+    });
     reports.value = response.data;
   } catch (err: any) {
-    message.error('Failed to load reports');
+    message.error("Failed to load reports");
     console.error(err);
   } finally {
     loading.value = false;
   }
 };
 
+const handleSearch = () => {
+  fetchReports();
+};
+
+const columns = [
+  { title: "ID", dataIndex: "id", key: "id", width: 60 },
+  { title: "Reporter", dataIndex: "username", key: "username" },
+  { title: "Target", key: "target" },
+  { title: "Reason", key: "reason" },
+  { title: "Created", key: "createdAt", width: 150 },
+  { title: "Actions", key: "actions", width: 240 },
+];
+
+const router = useRouter();
+
+const truncate = (text: string, length: number) => {
+  return text.length > length ? text.slice(0, length) + "…" : text;
+};
+
+const formatDate = (dateStr: string) => {
+  return dayjs(dateStr).format("YYYY-MM-DD HH:mm");
+};
+
 const handleResolve = async (reportId: number) => {
   resolvingIds.value.push(reportId);
   try {
     await apiClient.post(`/reports/${reportId}/resolve`);
-    message.success('Report resolved');
-    // Remove from list
-    reports.value = reports.value.filter(r => r.id !== reportId);
+    message.success("Report resolved");
+    reports.value = reports.value.filter((r) => r.id !== reportId);
+    await fetchReports();
   } catch (err: any) {
-    message.error(err.response?.data?.error || 'Failed to resolve report');
+    message.error(err.response?.data?.error || "Failed to resolve report");
   } finally {
-    resolvingIds.value = resolvingIds.value.filter(id => id !== reportId);
+    resolvingIds.value = resolvingIds.value.filter((id) => id !== reportId);
   }
 };
 
 const handleDeleteComment = async (report: ReportDto) => {
   try {
     await apiClient.delete(`/admin/comments/${report.targetId}`);
-    message.success('Comment deleted');
+    message.success("Comment deleted");
     // Optionally resolve the report automatically
     await handleResolve(report.id);
   } catch (err: any) {
-    message.error(err.response?.data?.error || 'Failed to delete comment');
+    message.error(err.response?.data?.error || "Failed to delete comment");
   }
 };
 
 const handleDisableQuiz = async (report: ReportDto) => {
   try {
     await apiClient.post(`/admin/quizzes/${report.targetId}/disable`);
-    message.success('Quiz disabled');
+    message.success("Quiz disabled");
     await handleResolve(report.id);
   } catch (err: any) {
-    message.error(err.response?.data?.error || 'Failed to disable quiz');
+    message.error(err.response?.data?.error || "Failed to disable quiz");
   }
 };
 
 const viewTarget = (report: ReportDto) => {
   switch (report.targetType) {
-    case 'quiz':
+    case "quiz":
       router.push(`/quiz/${report.targetId}`);
       break;
-    case 'comment':
+    case "comment":
       // Comments don't have standalone pages, but we could navigate to the parent entity
       // For simplicity, we'll just show a message
-      message.info('Comments are viewed on their parent pages');
+      message.info("Comments are viewed on their parent pages");
       break;
-    case 'question':
+    case "question":
       router.push(`/question/${report.targetId}`);
       break;
     default:
-      message.warning('Unknown target type');
+      message.warning("Unknown target type");
   }
 };
 

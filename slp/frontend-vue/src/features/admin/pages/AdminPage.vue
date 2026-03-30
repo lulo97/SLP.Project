@@ -9,7 +9,7 @@
         <div data-testid="admin-users-panel">
           <a-input-search
             v-model:value="userSearch"
-            placeholder="Search users..."
+            placeholder="Search by username or email..."
             style="margin-bottom: 16px"
             @search="handleUserSearch"
             data-testid="admin-users-search"
@@ -17,7 +17,7 @@
           <!-- Desktop table -->
           <div class="desktop-table">
             <a-table
-              :data-source="filteredUsers"
+              :data-source="adminStore.users"
               :loading="adminStore.loading.users"
               :columns="userColumns"
               row-key="id"
@@ -37,22 +37,32 @@
                 </template>
                 <template v-else-if="column.key === 'emailConfirmed'">
                   <a-tag :color="record.emailConfirmed ? 'green' : 'orange'">
-                    {{ record.emailConfirmed ? 'Verified' : 'Unverified' }}
+                    {{ record.emailConfirmed ? "Verified" : "Unverified" }}
                   </a-tag>
                 </template>
                 <template v-else-if="column.key === 'actions'">
                   <div class="flex gap-2">
                     <a-popconfirm
-                      :title="record.status === 'active' ? 'Ban this user?' : 'Unban this user?'"
-                      @confirm="record.status === 'active' ? adminStore.banUser(record.id) : adminStore.unbanUser(record.id)"
+                      :title="
+                        record.status === 'active'
+                          ? 'Ban this user?'
+                          : 'Unban this user?'
+                      "
+                      @confirm="
+                        record.status === 'active'
+                          ? adminStore.banUser(record.id)
+                          : adminStore.unbanUser(record.id)
+                      "
                     >
                       <a-button
-                        :type="record.status === 'active' ? 'primary' : 'default'"
+                        :type="
+                          record.status === 'active' ? 'primary' : 'default'
+                        "
                         :danger="record.status === 'active'"
                         size="small"
                         :data-testid="`admin-user-${record.status === 'active' ? 'ban' : 'unban'}-${record.id}`"
                       >
-                        {{ record.status === 'active' ? 'Ban' : 'Unban' }}
+                        {{ record.status === "active" ? "Ban" : "Unban" }}
                       </a-button>
                     </a-popconfirm>
                   </div>
@@ -63,7 +73,7 @@
           <!-- Mobile cards -->
           <div class="mobile-cards">
             <a-card
-              v-for="user in filteredUsers"
+              v-for="user in adminStore.users"
               :key="user.id"
               class="mobile-card"
               size="small"
@@ -78,25 +88,29 @@
               </div>
               <div class="field-row">
                 <span class="field-label">Email:</span>
-                <span class="field-value">{{ user.email || '—' }}</span>
+                <span class="field-value">{{ user.email || "—" }}</span>
               </div>
               <div class="field-row">
                 <span class="field-label">Role:</span>
                 <span class="field-value">
-                  <a-tag :color="user.role === 'admin' ? 'red' : 'blue'">{{ user.role }}</a-tag>
+                  <a-tag :color="user.role === 'admin' ? 'red' : 'blue'">{{
+                    user.role
+                  }}</a-tag>
                 </span>
               </div>
               <div class="field-row">
                 <span class="field-label">Status:</span>
                 <span class="field-value">
-                  <a-tag :color="user.status === 'active' ? 'green' : 'red'">{{ user.status }}</a-tag>
+                  <a-tag :color="user.status === 'active' ? 'green' : 'red'">{{
+                    user.status
+                  }}</a-tag>
                 </span>
               </div>
               <div class="field-row">
                 <span class="field-label">Email Confirmed:</span>
                 <span class="field-value">
                   <a-tag :color="user.emailConfirmed ? 'green' : 'orange'">
-                    {{ user.emailConfirmed ? 'Verified' : 'Unverified' }}
+                    {{ user.emailConfirmed ? "Verified" : "Unverified" }}
                   </a-tag>
                 </span>
               </div>
@@ -106,8 +120,16 @@
               </div>
               <div class="actions">
                 <a-popconfirm
-                  :title="user.status === 'active' ? 'Ban this user?' : 'Unban this user?'"
-                  @confirm="user.status === 'active' ? adminStore.banUser(user.id) : adminStore.unbanUser(user.id)"
+                  :title="
+                    user.status === 'active'
+                      ? 'Ban this user?'
+                      : 'Unban this user?'
+                  "
+                  @confirm="
+                    user.status === 'active'
+                      ? adminStore.banUser(user.id)
+                      : adminStore.unbanUser(user.id)
+                  "
                 >
                   <a-button
                     :type="user.status === 'active' ? 'primary' : 'default'"
@@ -115,7 +137,7 @@
                     class="touch-button"
                     :data-testid="`admin-user-${user.status === 'active' ? 'ban' : 'unban'}-${user.id}`"
                   >
-                    {{ user.status === 'active' ? 'Ban' : 'Unban' }}
+                    {{ user.status === "active" ? "Ban" : "Unban" }}
                   </a-button>
                 </a-popconfirm>
               </div>
@@ -132,7 +154,7 @@
         <div data-testid="admin-quizzes-panel">
           <a-input-search
             v-model:value="quizSearch"
-            placeholder="Search quizzes..."
+            placeholder="Search by title or username..."
             style="margin-bottom: 16px"
             @search="handleQuizSearch"
             data-testid="admin-quizzes-search"
@@ -140,7 +162,7 @@
           <!-- Desktop table -->
           <div class="desktop-table">
             <a-table
-              :data-source="filteredQuizzes"
+              :data-source="adminStore.quizzes"
               :loading="adminStore.loading.quizzes"
               :columns="quizColumns"
               row-key="id"
@@ -149,20 +171,30 @@
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'visibility'">
-                  <a-tag :color="record.visibility === 'public' ? 'green' : 'orange'">
+                  <a-tag
+                    :color="record.visibility === 'public' ? 'green' : 'orange'"
+                  >
                     {{ record.visibility }}
                   </a-tag>
                 </template>
                 <template v-else-if="column.key === 'disabled'">
                   <a-tag :color="record.disabled ? 'red' : 'green'">
-                    {{ record.disabled ? 'Disabled' : 'Enabled' }}
+                    {{ record.disabled ? "Disabled" : "Enabled" }}
                   </a-tag>
                 </template>
                 <template v-else-if="column.key === 'actions'">
                   <div class="flex gap-2">
                     <a-popconfirm
-                      :title="record.disabled ? 'Enable this quiz?' : 'Disable this quiz?'"
-                      @confirm="record.disabled ? adminStore.enableQuiz(record.id) : adminStore.disableQuiz(record.id)"
+                      :title="
+                        record.disabled
+                          ? 'Enable this quiz?'
+                          : 'Disable this quiz?'
+                      "
+                      @confirm="
+                        record.disabled
+                          ? adminStore.enableQuiz(record.id)
+                          : adminStore.disableQuiz(record.id)
+                      "
                     >
                       <a-button
                         :type="record.disabled ? 'primary' : 'default'"
@@ -170,7 +202,7 @@
                         size="small"
                         :data-testid="`admin-quiz-${record.disabled ? 'enable' : 'disable'}-${record.id}`"
                       >
-                        {{ record.disabled ? 'Enable' : 'Disable' }}
+                        {{ record.disabled ? "Enable" : "Disable" }}
                       </a-button>
                     </a-popconfirm>
                   </div>
@@ -181,7 +213,7 @@
           <!-- Mobile cards -->
           <div class="mobile-cards">
             <a-card
-              v-for="quiz in filteredQuizzes"
+              v-for="quiz in adminStore.quizzes"
               :key="quiz.id"
               class="mobile-card"
               size="small"
@@ -201,14 +233,17 @@
               <div class="field-row">
                 <span class="field-label">Visibility:</span>
                 <span class="field-value">
-                  <a-tag :color="quiz.visibility === 'public' ? 'green' : 'orange'">{{ quiz.visibility }}</a-tag>
+                  <a-tag
+                    :color="quiz.visibility === 'public' ? 'green' : 'orange'"
+                    >{{ quiz.visibility }}</a-tag
+                  >
                 </span>
               </div>
               <div class="field-row">
                 <span class="field-label">Status:</span>
                 <span class="field-value">
                   <a-tag :color="quiz.disabled ? 'red' : 'green'">
-                    {{ quiz.disabled ? 'Disabled' : 'Enabled' }}
+                    {{ quiz.disabled ? "Disabled" : "Enabled" }}
                   </a-tag>
                 </span>
               </div>
@@ -218,8 +253,14 @@
               </div>
               <div class="actions">
                 <a-popconfirm
-                  :title="quiz.disabled ? 'Enable this quiz?' : 'Disable this quiz?'"
-                  @confirm="quiz.disabled ? adminStore.enableQuiz(quiz.id) : adminStore.disableQuiz(quiz.id)"
+                  :title="
+                    quiz.disabled ? 'Enable this quiz?' : 'Disable this quiz?'
+                  "
+                  @confirm="
+                    quiz.disabled
+                      ? adminStore.enableQuiz(quiz.id)
+                      : adminStore.disableQuiz(quiz.id)
+                  "
                 >
                   <a-button
                     :type="quiz.disabled ? 'primary' : 'default'"
@@ -227,7 +268,7 @@
                     class="touch-button"
                     :data-testid="`admin-quiz-${quiz.disabled ? 'enable' : 'disable'}-${quiz.id}`"
                   >
-                    {{ quiz.disabled ? 'Enable' : 'Disable' }}
+                    {{ quiz.disabled ? "Enable" : "Disable" }}
                   </a-button>
                 </a-popconfirm>
               </div>
@@ -243,11 +284,29 @@
         </template>
         <div data-testid="admin-comments-panel">
           <div class="mb-4 flex items-center gap-2">
-            <a-checkbox v-model:checked="includeDeleted" @change="handleIncludeDeletedChange" data-testid="admin-comments-show-deleted">
+            <a-checkbox
+              v-model:checked="includeDeleted"
+              @change="handleIncludeDeletedChange"
+              data-testid="admin-comments-show-deleted"
+            >
               Show deleted
             </a-checkbox>
-            <a-button size="small" @click="refreshComments" data-testid="admin-comments-refresh">Refresh</a-button>
+            <a-button
+              size="small"
+              @click="refreshComments"
+              data-testid="admin-comments-refresh"
+              >Refresh</a-button
+            >
           </div>
+
+          <a-input-search
+            v-model:value="commentSearch"
+            placeholder="Search by username or content..."
+            style="margin-bottom: 16px"
+            @search="handleCommentSearch"
+            data-testid="admin-comments-search"
+          />
+
           <!-- Desktop table -->
           <div class="desktop-table">
             <a-table
@@ -264,7 +323,7 @@
                 </template>
                 <template v-else-if="column.key === 'deletedAt'">
                   <a-tag :color="record.deletedAt ? 'red' : 'green'">
-                    {{ record.deletedAt ? 'Deleted' : 'Active' }}
+                    {{ record.deletedAt ? "Deleted" : "Active" }}
                   </a-tag>
                 </template>
                 <template v-else-if="column.key === 'actions'">
@@ -274,14 +333,24 @@
                       title="Delete this comment?"
                       @confirm="adminStore.deleteComment(record.id)"
                     >
-                      <a-button danger size="small" :data-testid="`admin-comment-delete-${record.id}`">Delete</a-button>
+                      <a-button
+                        danger
+                        size="small"
+                        :data-testid="`admin-comment-delete-${record.id}`"
+                        >Delete</a-button
+                      >
                     </a-popconfirm>
                     <a-popconfirm
                       v-if="record.deletedAt"
                       title="Restore this comment?"
                       @confirm="adminStore.restoreComment(record.id)"
                     >
-                      <a-button type="primary" size="small" :data-testid="`admin-comment-restore-${record.id}`">Restore</a-button>
+                      <a-button
+                        type="primary"
+                        size="small"
+                        :data-testid="`admin-comment-restore-${record.id}`"
+                        >Restore</a-button
+                      >
                     </a-popconfirm>
                   </div>
                 </template>
@@ -306,17 +375,21 @@
               </div>
               <div class="field-row">
                 <span class="field-label">Content:</span>
-                <span class="field-value line-clamp-2">{{ comment.content }}</span>
+                <span class="field-value line-clamp-2">{{
+                  comment.content
+                }}</span>
               </div>
               <div class="field-row">
                 <span class="field-label">Target:</span>
-                <span class="field-value">{{ comment.targetType }} #{{ comment.targetId }}</span>
+                <span class="field-value"
+                  >{{ comment.targetType }} #{{ comment.targetId }}</span
+                >
               </div>
               <div class="field-row">
                 <span class="field-label">Status:</span>
                 <span class="field-value">
                   <a-tag :color="comment.deletedAt ? 'red' : 'green'">
-                    {{ comment.deletedAt ? 'Deleted' : 'Active' }}
+                    {{ comment.deletedAt ? "Deleted" : "Active" }}
                   </a-tag>
                 </span>
               </div>
@@ -330,14 +403,24 @@
                   title="Delete this comment?"
                   @confirm="adminStore.deleteComment(comment.id)"
                 >
-                  <a-button danger class="touch-button" :data-testid="`admin-comment-delete-${comment.id}`">Delete</a-button>
+                  <a-button
+                    danger
+                    class="touch-button"
+                    :data-testid="`admin-comment-delete-${comment.id}`"
+                    >Delete</a-button
+                  >
                 </a-popconfirm>
                 <a-popconfirm
                   v-if="comment.deletedAt"
                   title="Restore this comment?"
                   @confirm="adminStore.restoreComment(comment.id)"
                 >
-                  <a-button type="primary" class="touch-button" :data-testid="`admin-comment-restore-${comment.id}`">Restore</a-button>
+                  <a-button
+                    type="primary"
+                    class="touch-button"
+                    :data-testid="`admin-comment-restore-${comment.id}`"
+                    >Restore</a-button
+                  >
                 </a-popconfirm>
               </div>
             </a-card>
@@ -351,6 +434,14 @@
           <span data-testid="admin-tab-logs">Logs</span>
         </template>
         <div data-testid="admin-logs-panel">
+          <a-input-search
+            v-model:value="logSearch"
+            placeholder="Search by admin, action, or target type..."
+            style="margin-bottom: 16px"
+            @search="handleLogSearch"
+            data-testid="admin-logs-search"
+          />
+
           <!-- Desktop table -->
           <div class="desktop-table">
             <a-table
@@ -366,7 +457,9 @@
                   <a-tag color="blue">{{ record.action }}</a-tag>
                 </template>
                 <template v-if="column.key === 'details'">
-                  <span v-if="record.details" class="text-xs text-gray-500">(details)</span>
+                  <span v-if="record.details" class="text-xs text-gray-500"
+                    >(details)</span
+                  >
                 </template>
               </template>
             </a-table>
@@ -389,15 +482,19 @@
               </div>
               <div class="field-row">
                 <span class="field-label">Action:</span>
-                <span class="field-value"><a-tag color="blue">{{ log.action }}</a-tag></span>
+                <span class="field-value"
+                  ><a-tag color="blue">{{ log.action }}</a-tag></span
+                >
               </div>
               <div class="field-row">
                 <span class="field-label">Target:</span>
-                <span class="field-value">{{ log.targetType }} #{{ log.targetId }}</span>
+                <span class="field-value"
+                  >{{ log.targetType }} #{{ log.targetId }}</span
+                >
               </div>
               <div class="field-row">
                 <span class="field-label">Details:</span>
-                <span class="field-value">{{ log.details ? 'Yes' : '—' }}</span>
+                <span class="field-value">{{ log.details ? "Yes" : "—" }}</span>
               </div>
               <div class="field-row">
                 <span class="field-label">Created:</span>
@@ -442,7 +539,9 @@
               </div>
               <div class="field-row">
                 <span class="field-label">Status:</span>
-                <span class="field-value"><a-tag color="orange">Pending</a-tag></span>
+                <span class="field-value"
+                  ><a-tag color="orange">Pending</a-tag></span
+                >
               </div>
               <div class="field-row">
                 <span class="field-label">Created:</span>
@@ -454,7 +553,8 @@
               </div>
             </a-card>
             <p v-else class="text-gray-500 p-4 text-center">
-              Mobile view for reports is under development. Please use desktop or the reports component directly.
+              Mobile view for reports is under development. Please use desktop
+              or the reports component directly.
             </p>
           </div>
         </div>
@@ -464,11 +564,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { Tabs, TabPane, Input, Table, Tag, Button, Popconfirm, Checkbox } from 'ant-design-vue';
-import MobileLayout from '@/layouts/MobileLayout.vue';
-import { useAdminStore } from '../stores/adminStore';
-import AdminReports from '@/features/report/pages/AdminReports.vue'; // Import reports component
+import { ref, computed, onMounted } from "vue";
+import {
+  Tabs,
+  TabPane,
+  Input,
+  Table,
+  Tag,
+  Button,
+  Popconfirm,
+  Checkbox,
+} from "ant-design-vue";
+import MobileLayout from "@/layouts/MobileLayout.vue";
+import { useAdminStore } from "../stores/adminStore";
+import AdminReports from "@/features/report/pages/AdminReports.vue"; // Import reports component
 
 const ATabs = Tabs;
 const ATabPane = TabPane;
@@ -481,77 +590,79 @@ const ACheckbox = Checkbox;
 
 const adminStore = useAdminStore();
 
-const activeTab = ref('users');
-const userSearch = ref('');
-const quizSearch = ref('');
+const activeTab = ref("users");
+const userSearch = ref("");
+const quizSearch = ref("");
 const includeDeleted = ref(false);
+const commentSearch = ref("");
+const logSearch = ref("");
+
+const handleUserSearch = () => {
+  adminStore.fetchUsers(userSearch.value);
+};
+
+const handleQuizSearch = () => {
+  adminStore.fetchQuizzes(quizSearch.value);
+};
+
+const handleCommentSearch = () => {
+  adminStore.fetchComments(includeDeleted.value, commentSearch.value);
+};
+
+const handleLogSearch = () => {
+  adminStore.fetchLogs(100, logSearch.value);
+};
+
+// Update the includeDeleted change to refresh comments with current search
+const handleIncludeDeletedChange = () => {
+  adminStore.fetchComments(includeDeleted.value, commentSearch.value);
+};
+
+const refreshComments = () => {
+  adminStore.fetchComments(includeDeleted.value, commentSearch.value);
+};
 
 const userColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: 'Username', dataIndex: 'username', key: 'username' },
-  { title: 'Email', dataIndex: 'email', key: 'email' },
-  { title: 'Role', key: 'role' },
-  { title: 'Status', key: 'status' },
-  { title: 'Email Confirmed', key: 'emailConfirmed' },
-  { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
-  { title: 'Actions', key: 'actions', width: 100 },
+  { title: "ID", dataIndex: "id", key: "id", width: 60 },
+  { title: "Username", dataIndex: "username", key: "username" },
+  { title: "Email", dataIndex: "email", key: "email" },
+  { title: "Role", key: "role" },
+  { title: "Status", key: "status" },
+  { title: "Email Confirmed", key: "emailConfirmed" },
+  { title: "Created", dataIndex: "createdAt", key: "createdAt" },
+  { title: "Actions", key: "actions", width: 100 },
 ];
 
 const quizColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: 'Title', dataIndex: 'title', key: 'title' },
-  { title: 'User', dataIndex: 'username', key: 'username' },
-  { title: 'Visibility', key: 'visibility' },
-  { title: 'Status', key: 'disabled' },
-  { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
-  { title: 'Actions', key: 'actions', width: 100 },
+  { title: "ID", dataIndex: "id", key: "id", width: 60 },
+  { title: "Title", dataIndex: "title", key: "title" },
+  { title: "User", dataIndex: "username", key: "username" },
+  { title: "Visibility", key: "visibility" },
+  { title: "Status", key: "disabled" },
+  { title: "Created", dataIndex: "createdAt", key: "createdAt" },
+  { title: "Actions", key: "actions", width: 100 },
 ];
 
 const commentColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: 'User', dataIndex: 'username', key: 'username' },
-  { title: 'Content', key: 'content' },
-  { title: 'Target', key: 'targetType' },
-  { title: 'Target ID', dataIndex: 'targetId', key: 'targetId' },
-  { title: 'Status', key: 'deletedAt' },
-  { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
-  { title: 'Actions', key: 'actions', width: 100 },
+  { title: "ID", dataIndex: "id", key: "id", width: 60 },
+  { title: "User", dataIndex: "username", key: "username" },
+  { title: "Content", key: "content" },
+  { title: "Target", key: "targetType" },
+  { title: "Target ID", dataIndex: "targetId", key: "targetId" },
+  { title: "Status", key: "deletedAt" },
+  { title: "Created", dataIndex: "createdAt", key: "createdAt" },
+  { title: "Actions", key: "actions", width: 100 },
 ];
 
 const logColumns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: 'Admin', dataIndex: 'adminName', key: 'adminName' },
-  { title: 'Action', key: 'action' },
-  { title: 'Target Type', dataIndex: 'targetType', key: 'targetType' },
-  { title: 'Target ID', dataIndex: 'targetId', key: 'targetId' },
-  { title: 'Details', key: 'details' },
-  { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
+  { title: "ID", dataIndex: "id", key: "id", width: 60 },
+  { title: "Admin", dataIndex: "adminName", key: "adminName" },
+  { title: "Action", key: "action" },
+  { title: "Target Type", dataIndex: "targetType", key: "targetType" },
+  { title: "Target ID", dataIndex: "targetId", key: "targetId" },
+  { title: "Details", key: "details" },
+  { title: "Created", dataIndex: "createdAt", key: "createdAt" },
 ];
-
-const filteredUsers = computed(() => {
-  if (!userSearch.value) return adminStore.users;
-  const search = userSearch.value.toLowerCase();
-  return adminStore.users.filter(
-    u => u.username.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search)
-  );
-});
-
-const filteredQuizzes = computed(() => {
-  if (!quizSearch.value) return adminStore.quizzes;
-  const search = quizSearch.value.toLowerCase();
-  return adminStore.quizzes.filter(
-    q => q.title.toLowerCase().includes(search) || q.username.toLowerCase().includes(search)
-  );
-});
-
-const handleUserSearch = () => {};
-const handleQuizSearch = () => {};
-const handleIncludeDeletedChange = () => {
-  adminStore.fetchComments(includeDeleted.value);
-};
-const refreshComments = () => {
-  adminStore.fetchComments(includeDeleted.value);
-};
 
 onMounted(() => {
   adminStore.fetchUsers();

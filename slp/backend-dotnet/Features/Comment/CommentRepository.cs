@@ -67,17 +67,24 @@ public class CommentRepository : ICommentRepository
         return true;
     }
 
-    public async Task<IEnumerable<Comment>> GetAllAsync(bool includeDeleted = false)
+    public async Task<IEnumerable<Comment>> GetAllAsync(bool includeDeleted = false, string? search = null)
     {
         var query = _db.Comments
             .Include(c => c.User)
-            .Include(c => c.Replies)
             .AsQueryable();
 
         if (!includeDeleted)
             query = query.Where(c => c.DeletedAt == null);
         else
             query = query.IgnoreQueryFilters(); // to see soft-deleted comments
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search}%";
+            query = query.Where(c =>
+                EF.Functions.ILike(c.Content, pattern) ||
+                (c.User != null && EF.Functions.ILike(c.User.Username, pattern)));
+        }
 
         return await query
             .OrderByDescending(c => c.CreatedAt)
