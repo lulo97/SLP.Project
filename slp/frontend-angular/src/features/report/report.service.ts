@@ -1,14 +1,15 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiClientService } from '../../services/api-client.service';
-import { ReportDto } from './report.model';
+import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
+import { ApiClientService } from "../../services/api-client.service";
+import { ReportDto } from "./report.model";
+import { HttpParams } from "@angular/common/http";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ReportService {
   constructor(private apiClient: ApiClientService) {}
 
   getMyReports(): Observable<ReportDto[]> {
-    return this.apiClient.get<ReportDto[]>('/reports/mine');
+    return this.apiClient.get<ReportDto[]>("/reports/mine");
   }
 
   createReport(payload: {
@@ -17,7 +18,7 @@ export class ReportService {
     reason: string;
     attemptId?: number;
   }): Observable<ReportDto> {
-    return this.apiClient.post<ReportDto>('/reports', payload);
+    return this.apiClient.post<ReportDto>("/reports", payload);
   }
 
   deleteMyReport(id: number): Observable<void> {
@@ -25,8 +26,13 @@ export class ReportService {
   }
 
   // Admin endpoints
-  getUnresolvedReports(): Observable<ReportDto[]> {
-    return this.apiClient.get<ReportDto[]>('/reports'); // backend returns unresolved by default
+
+  getUnresolvedReports(search?: string): Observable<ReportDto[]> {
+    let params = new HttpParams();
+    if (search) {
+      params = params.set("search", search);
+    }
+    return this.apiClient.get<ReportDto[]>("/reports", { params });
   }
 
   resolveReport(id: number): Observable<void> {

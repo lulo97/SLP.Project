@@ -1,84 +1,118 @@
 <div class="p-4">
-  <h2 class="text-xl font-semibold mb-4">{{ "nav.reports" | translate }}</h2>
+  <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ "nav.reports" | translate }}</h2>
 
-  <nz-table
-    [nzData]="reports"
-    [nzLoading]="loading"
-    [nzShowPagination]="false"
-    [nzFrontPagination]="false"
-    nzSize="middle"
-  >
-    <thead>
-      <tr>
-        <th *ngFor="let col of columns">{{ col.title }}</th>
-      </tr>
-    </thead>
+  <nz-input-group [nzSuffix]="searchSuffix" class="mb-6">
+    <input
+      nz-input
+      [(ngModel)]="searchTerm"
+      placeholder="{{ 'report.searchPlaceholder' | translate }}"
+      (ngModelChange)="handleSearch()"
+      data-testid="admin-reports-search"
+      class="rounded-md"
+    />
+  </nz-input-group>
+  <ng-template #searchSuffix>
+    <i nz-icon nzType="search" class="text-gray-400"></i>
+  </ng-template>
 
-    <tbody>
-      <tr *ngFor="let report of reports">
-        <td>{{ report.id }}</td>
-        <td>{{ report.username }}</td>
-        <td>{{ report.targetType }} #{{ report.targetId }}</td>
-        <td></td>
+  @if (loading) {
+    <div class="flex justify-center items-center py-12">
+      <nz-spin nzSimple></nz-spin>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      @for (report of reports; track report.id) {
+        <nz-card 
+          nzSize="small" 
+          [nzBodyStyle]="{ padding: '1.25rem' }"
+          class="shadow-sm border-gray-200"
+          data-testid="report-card"
+        >
+          <div class="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 text-sm">
+            
+            <span class="font-medium text-gray-500">{{ "report.id" | translate }}:</span>
+            <span class="text-gray-900 font-mono">{{ report.id }}</span>
 
-        <td>
-          <span nz-tooltip [nzTooltipTitle]="report.reason">
-            {{ truncate(report.reason, 50) }}
-          </span>
-        </td>
+            <span class="font-medium text-gray-500">{{ "report.reporter" | translate }}:</span>
+            <span class="text-gray-900">{{ report.username }}</span>
 
-        <td>{{ formatDate(report.createdAt) }}</td>
+            <span class="font-medium text-gray-500">{{ "report.target" | translate }}:</span>
+            <span class="text-gray-900">
+              <span class="capitalize">{{ report.targetType }}</span> 
+              <span class="text-gray-400 ml-1">#{{ report.targetId }}</span>
+            </span>
 
-        <td>
-          <div class="flex gap-2 flex-wrap">
+            <span class="font-medium text-gray-500">{{ "report.reason" | translate }}:</span>
+            <span class="text-gray-700 whitespace-pre-wrap italic border-l-2 border-gray-100 pl-3">
+              {{ report.reason }}
+            </span>
+
+            <span class="font-medium text-gray-500">{{ "report.createdAt" | translate }}:</span>
+            <span class="text-gray-400">{{ formatDate(report.createdAt) }}</span>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-50">
             <button
               nz-button
-              nzSize="small"
               nzType="primary"
               nzGhost
               [nzLoading]="resolvingIds.includes(report.id)"
               (click)="resolveReport(report.id)"
+              class="min-h-[44px] px-4 flex items-center justify-center rounded-md"
+              data-testid="resolve-report-btn"
             >
               {{ "report.resolve" | translate }}
             </button>
 
-            <button
-              *ngIf="report.targetType === 'comment'"
-              nz-button
-              nzSize="small"
-              nzDanger
-              nzGhost
-              nz-popconfirm
-              [nzPopconfirmTitle]="'report.deleteCommentConfirm' | translate"
-              (nzOnConfirm)="deleteComment(report)"
-            >
-              {{ "report.deleteComment" | translate }}
-            </button>
+            @if (report.targetType === "comment") {
+              <button
+                nz-button
+                nzDanger
+                nzGhost
+                nz-popconfirm
+                [nzPopconfirmTitle]="'report.deleteCommentConfirm' | translate"
+                (nzOnConfirm)="deleteComment(report)"
+                class="min-h-[44px] px-4 flex items-center justify-center rounded-md"
+                data-testid="delete-comment-btn"
+              >
+                {{ "report.deleteComment" | translate }}
+              </button>
+            }
+
+            @if (report.targetType === "quiz") {
+              <button
+                nz-button
+                nzDanger
+                nzGhost
+                nz-popconfirm
+                [nzPopconfirmTitle]="'report.disableQuizConfirm' | translate"
+                (nzOnConfirm)="disableQuiz(report)"
+                class="min-h-[44px] px-4 flex items-center justify-center rounded-md"
+                data-testid="disable-quiz-btn"
+              >
+                {{ "report.disableQuiz" | translate }}
+              </button>
+            }
 
             <button
-              *ngIf="report.targetType === 'quiz'"
               nz-button
-              nzSize="small"
-              nzDanger
-              nzGhost
-              nz-popconfirm
-              [nzPopconfirmTitle]="'report.disableQuizConfirm' | translate"
-              (nzOnConfirm)="disableQuiz(report)"
+              class="min-h-[44px] px-4 flex items-center justify-center rounded-md"
+              (click)="viewTarget(report)"
+              data-testid="view-target-btn"
             >
-              {{ "report.disableQuiz" | translate }}
-            </button>
-            <button nz-button nzSize="small" (click)="viewTarget(report)">
+              <i nz-icon nzType="eye" class="mr-1"></i>
               {{ "report.view" | translate }}
             </button>
           </div>
-        </td>
-      </tr>
+        </nz-card>
+      }
+    </div>
 
-      <tr *ngIf="!loading && reports.length === 0">
-        <td colspan="6" class="text-center py-8 text-gray-500">
-          {{ "report.adminEmpty" | translate }}
-        </td>
-      </tr>
-    </tbody>
-  </nz-table>
+    @if (!loading && reports.length === 0) {
+      <nz-empty
+        [nzNotFoundContent]="'report.adminEmpty' | translate"
+        class="mt-12 opacity-60"
+      ></nz-empty>
+    }
+  }
 </div>

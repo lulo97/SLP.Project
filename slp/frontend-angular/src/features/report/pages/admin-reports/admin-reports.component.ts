@@ -1,13 +1,17 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, inject } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 
 import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzEmptyModule } from "ng-zorro-antd/empty";
 import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzInputModule } from "ng-zorro-antd/input";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzPopconfirmModule } from "ng-zorro-antd/popconfirm";
-import { NzTableModule } from "ng-zorro-antd/table";
-import { NzToolTipModule } from "ng-zorro-antd/tooltip"; // use the symbol your compiler expects
+import { NzSpinModule } from "ng-zorro-antd/spin";
+import { NzTagModule } from "ng-zorro-antd/tag";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { ReportService } from "../../report.service";
@@ -18,11 +22,15 @@ import { ReportDto } from "../../report.model";
   standalone: true,
   imports: [
     CommonModule,
-    NzTableModule,
-    NzToolTipModule,
+    FormsModule,
     NzButtonModule,
-    NzPopconfirmModule,
+    NzCardModule,
+    NzEmptyModule,
     NzIconModule,
+    NzInputModule,
+    NzPopconfirmModule,
+    NzSpinModule,
+    NzTagModule,
     TranslateModule,
   ],
   templateUrl: "./admin-reports.component.html",
@@ -36,15 +44,7 @@ export class AdminReportsComponent implements OnInit {
   reports: ReportDto[] = [];
   loading = false;
   resolvingIds: number[] = [];
-
-  columns = [
-    { title: "ID", key: "id", width: 60 },
-    { title: "Reporter", key: "username" },
-    { title: "Target", key: "target" },
-    { title: "Reason", key: "reason" },
-    { title: "Created", key: "createdAt", width: 150 },
-    { title: "Actions", key: "actions", width: 260 },
-  ];
+  searchTerm = "";
 
   ngOnInit(): void {
     this.fetchReports();
@@ -52,27 +52,33 @@ export class AdminReportsComponent implements OnInit {
 
   fetchReports(): void {
     this.loading = true;
-
-    this.reportService.getUnresolvedReports().subscribe({
+    this.reportService.getUnresolvedReports(this.searchTerm).subscribe({
       next: (data) => {
         this.reports = data;
       },
-      error: () => this.message.error(this.translate.instant("report.loadError")),
+      error: () => {
+        this.message.error(this.translate.instant("report.loadError"));
+      },
       complete: () => {
         this.loading = false;
       },
     });
   }
 
+  handleSearch(): void {
+    this.fetchReports();
+  }
+
   resolveReport(id: number): void {
     this.resolvingIds = [...this.resolvingIds, id];
-
     this.reportService.resolveReport(id).subscribe({
       next: () => {
         this.reports = this.reports.filter((r) => r.id !== id);
         this.message.success(this.translate.instant("report.resolveSuccess"));
       },
-      error: () => this.message.error(this.translate.instant("report.resolveError")),
+      error: () => {
+        this.message.error(this.translate.instant("report.resolveError"));
+      },
       complete: () => {
         this.resolvingIds = this.resolvingIds.filter((rid) => rid !== id);
       },
@@ -82,20 +88,28 @@ export class AdminReportsComponent implements OnInit {
   deleteComment(report: ReportDto): void {
     this.reportService.deleteComment(report.targetId).subscribe({
       next: () => {
-        this.message.success(this.translate.instant("report.deleteCommentSuccess"));
+        this.message.success(
+          this.translate.instant("report.deleteCommentSuccess")
+        );
         this.resolveReport(report.id);
       },
-      error: () => this.message.error(this.translate.instant("report.deleteCommentError")),
+      error: () => {
+        this.message.error(this.translate.instant("report.deleteCommentError"));
+      },
     });
   }
 
   disableQuiz(report: ReportDto): void {
     this.reportService.disableQuiz(report.targetId).subscribe({
       next: () => {
-        this.message.success(this.translate.instant("report.disableQuizSuccess"));
+        this.message.success(
+          this.translate.instant("report.disableQuizSuccess")
+        );
         this.resolveReport(report.id);
       },
-      error: () => this.message.error(this.translate.instant("report.disableQuizError")),
+      error: () => {
+        this.message.error(this.translate.instant("report.disableQuizError"));
+      },
     });
   }
 
@@ -110,10 +124,6 @@ export class AdminReportsComponent implements OnInit {
       default:
         this.message.info(this.translate.instant("report.viewCommentHint"));
     }
-  }
-
-  truncate(text: string, length: number): string {
-    return text.length > length ? `${text.slice(0, length)}…` : text;
   }
 
   formatDate(iso: string): string {
