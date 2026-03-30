@@ -29,14 +29,18 @@ import { SourceService } from "../services/source.service";
     NzFormModule,
   ],
   template: `
-    <nz-card class="shadow-sm" data-testid="source-upload-card">
+    <nz-card class="shadow-md rounded-lg" data-testid="source-upload-card">
       <form
         nz-form
+        nzLayout="vertical"
         (ngSubmit)="handleUpload()"
         data-testid="source-upload-form"
+        class="flex flex-col gap-4"
       >
-        <nz-form-item>
-          <nz-form-label>{{ "source.title" | translate }}</nz-form-label>
+        <nz-form-item class="mb-0">
+          <nz-form-label class="font-semibold text-gray-700">
+            {{ "source.title" | translate }}
+          </nz-form-label>
           <nz-form-control>
             <input
               nz-input
@@ -44,51 +48,58 @@ import { SourceService } from "../services/source.service";
               name="title"
               [placeholder]="'source.titlePlaceholder' | translate"
               data-testid="source-upload-title-input"
+              class="rounded-md"
             />
           </nz-form-control>
         </nz-form-item>
 
-        <nz-form-item>
-          <nz-upload
-            nzType="drag"
-            [nzFileList]="fileList"
-            [nzBeforeUpload]="beforeUpload"
-            (nzFileListChange)="handleChange($event)"
-            [nzMultiple]="false"
-            [nzLimit]="1"
-            data-testid="source-upload-dragger"
-          >
-            <p
-              class="ant-upload-drag-icon"
-              data-testid="source-upload-dragger-icon"
+        <nz-form-item class="mb-0">
+          <nz-form-control>
+            <nz-upload
+              nzType="drag"
+              [nzFileList]="fileList"
+              [nzBeforeUpload]="beforeUpload"
+              (nzFileListChange)="handleChange($event)"
+              [nzMultiple]="false"
+              [nzLimit]="1"
+              data-testid="source-upload-dragger"
+              class="block w-full"
             >
-              <i nz-icon nzType="inbox"></i>
-            </p>
-            <p class="ant-upload-text" data-testid="source-upload-dragger-text">
-              {{ "source.dragText" | translate }}
-            </p>
-            <p class="ant-upload-hint" data-testid="source-upload-dragger-hint">
-              {{ "source.uploadHint" | translate }}
-            </p>
-          </nz-upload>
+              <div class="py-4">
+                <p class="text-4xl text-blue-500 mb-2">
+                  <i nz-icon nzType="inbox"></i>
+                </p>
+                <p class="text-base font-medium text-gray-800">
+                  {{ "source.dragText" | translate }}
+                </p>
+                <p class="text-sm text-gray-500">
+                  {{ "source.uploadHint" | translate }}
+                </p>
+              </div>
+            </nz-upload>
 
-          <div
-            *ngIf="fileList.length > 0"
-            class="mt-2 text-xs text-gray-500"
-            data-testid="source-upload-selected-file"
-          >
-            {{ "source.selected" | translate }}: {{ fileList[0].name }}
-          </div>
+            <div
+              *ngIf="fileList.length > 0"
+              class="mt-3 p-2 bg-blue-50 border border-blue-100 rounded-md flex items-center gap-2 text-sm text-blue-700"
+              data-testid="source-upload-selected-file"
+            >
+              <i nz-icon nzType="paper-clip"></i>
+              <span class="font-medium"
+                >{{ "source.selected" | translate }}:</span
+              >
+              <span class="truncate">{{ fileList[0].name }}</span>
+            </div>
+          </nz-form-control>
         </nz-form-item>
 
-        <div class="mt-4">
+        <div class="pt-2">
           <button
             nz-button
             nzType="primary"
             type="submit"
             [disabled]="!fileList.length"
             [nzLoading]="(loading$ | async)!"
-            block
+            class="w-full h-10 font-semibold rounded-md flex justify-center items-center"
             data-testid="source-upload-submit-btn"
           >
             {{ "source.upload" | translate }}
