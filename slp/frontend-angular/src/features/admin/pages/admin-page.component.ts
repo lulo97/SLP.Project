@@ -34,11 +34,15 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
     <div>
       <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="admin-tabs">
         <!-- Users Tab -->
-        <nz-tab nzTitle="Users">
-          <div>
+        <nz-tab>
+          <ng-template #nzTabHeading>
+            <span data-testid="admin-tab-users">Users</span>
+          </ng-template>
+          <div data-testid="admin-users-panel">
             <nz-input-group [nzSuffix]="userSearchSuffix">
               <input
                 nz-input
+                data-testid="admin-users-search"
                 [(ngModel)]="userSearch"
                 placeholder="Search by username or email..."
                 (ngModelChange)="handleUserSearch()"
@@ -83,10 +87,9 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
                     <span class="field-label">Email Confirmed:</span>
                     <nz-tag
                       [nzColor]="user.emailConfirmed ? 'green' : 'orange'"
-                      >{{
-                        user.emailConfirmed ? "Verified" : "Unverified"
-                      }}</nz-tag
                     >
+                      {{ user.emailConfirmed ? "Verified" : "Unverified" }}
+                    </nz-tag>
                   </div>
                   <div class="field-row">
                     <span class="field-label">Created:</span
@@ -124,11 +127,15 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Quizzes Tab -->
-        <nz-tab nzTitle="Quizzes">
-          <div>
+        <nz-tab>
+          <ng-template #nzTabHeading>
+            <span data-testid="admin-tab-quizzes">Quizzes</span>
+          </ng-template>
+          <div data-testid="admin-quizzes-panel">
             <nz-input-group [nzSuffix]="quizSearchSuffix">
               <input
                 nz-input
+                data-testid="admin-quizzes-search"
                 [(ngModel)]="quizSearch"
                 placeholder="Search by title or username..."
                 (ngModelChange)="handleQuizSearch()"
@@ -204,22 +211,32 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Comments Tab -->
-        <nz-tab nzTitle="Comments">
-          <div>
+        <nz-tab>
+          <ng-template #nzTabHeading>
+            <span data-testid="admin-tab-comments">Comments</span>
+          </ng-template>
+          <div data-testid="admin-comments-panel">
             <div class="mb-4 flex items-center gap-2">
               <label
                 nz-checkbox
+                data-testid="admin-comments-show-deleted"
                 [(ngModel)]="includeDeleted"
                 (ngModelChange)="handleIncludeDeletedChange()"
                 >Show deleted</label
               >
-              <button nz-button nzSize="small" (click)="refreshComments()">
+              <button
+                nz-button
+                nzSize="small"
+                data-testid="admin-comments-refresh"
+                (click)="refreshComments()"
+              >
                 Refresh
               </button>
             </div>
             <nz-input-group [nzSuffix]="commentSearchSuffix">
               <input
                 nz-input
+                data-testid="admin-comments-search"
                 [(ngModel)]="commentSearch"
                 placeholder="Search by username or content..."
                 (ngModelChange)="handleCommentSearch()"
@@ -290,8 +307,11 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Logs Tab -->
-        <nz-tab nzTitle="Logs">
-          <div>
+        <nz-tab>
+          <ng-template #nzTabHeading>
+            <span data-testid="admin-tab-logs">Logs</span>
+          </ng-template>
+          <div data-testid="admin-logs-panel">
             <app-admin-log-filters (applyFilters)="handleLogFilters($event)" />
             @if (adminService.loading().logs) {
               <div class="loading-state"><nz-spin></nz-spin></div>
@@ -328,8 +348,13 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Reports Tab -->
-        <nz-tab nzTitle="Reports">
-          <app-admin-reports />
+        <nz-tab>
+          <ng-template #nzTabHeading>
+            <span data-testid="admin-tab-reports">Reports</span>
+          </ng-template>
+          <div data-testid="admin-reports-panel">
+            <app-admin-reports />
+          </div>
         </nz-tab>
       </nz-tabset>
     </div>

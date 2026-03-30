@@ -27,11 +27,14 @@ import { NzIconModule } from "ng-zorro-antd/icon";
     NzIconModule,
   ],
   template: `
-    <div>
-      <div class="space-y-4">
-        <nz-card [nzBodyStyle]="{ padding: '12px 16px' }">
+    <div data-testid="metrics-layout">
+      <div data-testid="metrics-container" class="space-y-4">
+        <nz-card
+          data-testid="metrics-time-range-card"
+          [nzBodyStyle]="{ padding: '12px 16px' }"
+        >
           <div class="controls-row">
-            <div class="preset-buttons">
+            <div class="preset-buttons" data-testid="metrics-preset-group">
               <button
                 nz-button
                 *ngFor="let preset of PRESETS"
@@ -40,6 +43,9 @@ import { NzIconModule } from "ng-zorro-antd/icon";
                   activePreset() === preset.label ? 'primary' : 'default'
                 "
                 nzSize="small"
+                [attr.data-testid]="
+                  'preset-' + preset.label.toLowerCase().replace(/ /g, '-')
+                "
               >
                 {{ preset.label }}
               </button>
@@ -51,12 +57,14 @@ import { NzIconModule } from "ng-zorro-antd/icon";
               nzSize="small"
               class="range-picker"
               (ngModelChange)="onRangeChange()"
+              data-testid="metrics-range-picker"
             >
             </nz-range-picker>
             <button
               nz-button
               nzType="primary"
               nzSize="small"
+              data-testid="metrics-refresh-button"
               (click)="loadAll()"
               [nzLoading]="anyLoading()"
             >
@@ -65,9 +73,12 @@ import { NzIconModule } from "ng-zorro-antd/icon";
           </div>
         </nz-card>
 
-        <div class="stats-grid">
+        <div class="stats-grid" data-testid="metrics-stats-grid">
           <nz-card
             *ngFor="let stat of summaryStats()"
+            [attr.data-testid]="
+              'stat-card-' + stat.label.toLowerCase().replace(/ /g, '-')
+            "
             [nzBodyStyle]="{ padding: '16px' }"
           >
             <div class="stat-inner">
@@ -81,8 +92,21 @@ import { NzIconModule } from "ng-zorro-antd/icon";
                 ></i>
               </div>
               <div class="stat-body">
-                <p class="stat-label">{{ stat.label }}</p>
-                <p class="stat-value" [style.color]="stat.color">
+                <p
+                  class="stat-label"
+                  [attr.data-testid]="
+                    'stat-label-' + stat.label.toLowerCase().replace(/ /g, '-')
+                  "
+                >
+                  {{ stat.label }}
+                </p>
+                <p
+                  class="stat-value"
+                  [style.color]="stat.color"
+                  [attr.data-testid]="
+                    'stat-value-' + stat.label.toLowerCase().replace(/ /g, '-')
+                  "
+                >
                   {{ stat.value }}
                 </p>
                 <p class="stat-sub" *ngIf="stat.sub">{{ stat.sub }}</p>
@@ -91,7 +115,7 @@ import { NzIconModule } from "ng-zorro-antd/icon";
           </nz-card>
         </div>
 
-        <nz-card title="Requests / min">
+        <nz-card data-testid="chart-card-requests" title="Requests / min">
           <div
             *ngIf="metricsService.loading().requests"
             class="chart-placeholder"
@@ -117,7 +141,7 @@ import { NzIconModule } from "ng-zorro-antd/icon";
           </canvas>
         </nz-card>
 
-        <nz-card title="Errors / min">
+        <nz-card data-testid="chart-card-errors" title="Errors / min">
           <div
             *ngIf="metricsService.loading().errors"
             class="chart-placeholder"
@@ -143,7 +167,7 @@ import { NzIconModule } from "ng-zorro-antd/icon";
           </canvas>
         </nz-card>
 
-        <nz-card title="Latency (ms)">
+        <nz-card data-testid="chart-card-latency" title="Latency (ms)">
           <div
             *ngIf="metricsService.loading().latency"
             class="chart-placeholder"

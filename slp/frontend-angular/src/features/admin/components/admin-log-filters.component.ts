@@ -1,14 +1,14 @@
-import { Component, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import dayjs, { Dayjs } from 'dayjs';
+import { Component, output, signal } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzDatePickerModule } from "ng-zorro-antd/date-picker";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import dayjs, { Dayjs } from "dayjs";
 
 @Component({
-  selector: 'app-admin-log-filters',
+  selector: "app-admin-log-filters",
   standalone: true,
   imports: [
     CommonModule,
@@ -21,31 +21,70 @@ import dayjs, { Dayjs } from 'dayjs';
   template: `
     <div class="log-filters">
       <nz-select
+        data-testid="log-filter-action"
         [(ngModel)]="filters.action"
         nzAllowClear
         nzPlaceHolder="Action"
         style="width: 150px"
       >
-        <nz-option nzValue="ban_user" nzLabel="ban_user"></nz-option>
-        <nz-option nzValue="unban_user" nzLabel="unban_user"></nz-option>
-        <nz-option nzValue="disable_quiz" nzLabel="disable_quiz"></nz-option>
-        <nz-option nzValue="enable_quiz" nzLabel="enable_quiz"></nz-option>
-        <nz-option nzValue="delete_comment" nzLabel="delete_comment"></nz-option>
-        <nz-option nzValue="restore_comment" nzLabel="restore_comment"></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-ban_user"
+          nzValue="ban_user"
+          nzLabel="ban_user"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-unban_user"
+          nzValue="unban_user"
+          nzLabel="unban_user"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-disable_quiz"
+          nzValue="disable_quiz"
+          nzLabel="disable_quiz"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-enable_quiz"
+          nzValue="enable_quiz"
+          nzLabel="enable_quiz"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-delete_comment"
+          nzValue="delete_comment"
+          nzLabel="delete_comment"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-action-option-restore_comment"
+          nzValue="restore_comment"
+          nzLabel="restore_comment"
+        ></nz-option>
       </nz-select>
 
       <nz-select
+        data-testid="log-filter-target-type"
         [(ngModel)]="filters.targetType"
         nzAllowClear
         nzPlaceHolder="Target type"
         style="width: 120px"
       >
-        <nz-option nzValue="user" nzLabel="user"></nz-option>
-        <nz-option nzValue="quiz" nzLabel="quiz"></nz-option>
-        <nz-option nzValue="comment" nzLabel="comment"></nz-option>
+        <nz-option
+          data-testid="log-filter-target-type-option-user"
+          nzValue="user"
+          nzLabel="user"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-target-type-option-quiz"
+          nzValue="quiz"
+          nzLabel="quiz"
+        ></nz-option>
+        <nz-option
+          data-testid="log-filter-target-type-option-comment"
+          nzValue="comment"
+          nzLabel="comment"
+        ></nz-option>
       </nz-select>
 
       <nz-range-picker
+        data-testid="log-filter-date-range"
         [(ngModel)]="filters.dateRange"
         [nzShowTime]="true"
         nzFormat="yyyy-MM-dd HH:mm"
@@ -53,29 +92,43 @@ import dayjs, { Dayjs } from 'dayjs';
       ></nz-range-picker>
 
       <nz-input-group [nzSuffix]="suffixTemplate">
-        <input nz-input [(ngModel)]="filters.search" placeholder="Search by admin, action, target ID, details..." />
+        <input
+          nz-input
+          data-testid="log-filter-search"
+          [(ngModel)]="filters.search"
+          placeholder="Search by admin, action, target ID, details..."
+        />
       </nz-input-group>
       <ng-template #suffixTemplate>
         <i nz-icon nzType="search" (click)="apply()"></i>
       </ng-template>
 
-      <button nz-button nzType="primary" (click)="apply()">Apply</button>
+      <button
+        nz-button
+        nzType="primary"
+        data-testid="log-apply-filters"
+        (click)="apply()"
+      >
+        Apply
+      </button>
     </div>
   `,
-  styles: [`
-    .log-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
-      align-items: center;
-    }
-    @media (max-width: 768px) {
-      .log-filters > * {
-        width: 100% !important;
+  styles: [
+    `
+      .log-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+        align-items: center;
       }
-    }
-  `]
+      @media (max-width: 768px) {
+        .log-filters > * {
+          width: 100% !important;
+        }
+      }
+    `,
+  ],
 })
 export class AdminLogFiltersComponent {
   applyFilters = output<any>();
@@ -84,7 +137,7 @@ export class AdminLogFiltersComponent {
     action: null as string | null,
     targetType: null as string | null,
     dateRange: null as [Dayjs, Dayjs] | null,
-    search: '',
+    search: "",
   };
 
   apply() {

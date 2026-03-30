@@ -28,12 +28,13 @@ interface ServiceHealth {
   ],
   template: `
     <div>
-      <nz-card>
+      <nz-card data-testid="health-card">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold">System Services</h2>
           <button
             nz-button
             nzType="primary"
+            data-testid="refresh-button"
             (click)="refresh()"
             [nzLoading]="loading()"
           >
@@ -41,6 +42,7 @@ interface ServiceHealth {
           </button>
         </div>
         <nz-table
+          data-testid="services-table"
           [nzData]="services()"
           [nzLoading]="loading()"
           [nzShowPagination]="false"
@@ -68,7 +70,7 @@ interface ServiceHealth {
             }
           </tbody>
         </nz-table>
-        <div class="mt-4 text-xs text-gray-500">
+        <div data-testid="last-updated" class="mt-4 text-xs text-gray-500">
           Last updated: {{ timestamp() ? (timestamp() | date: "medium") : "—" }}
         </div>
       </nz-card>
