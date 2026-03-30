@@ -10,16 +10,22 @@ export class AdminLogRepository {
     private readonly repo: Repository<AdminLog>,
   ) {}
 
-  async log(log: Partial<AdminLog>): Promise<void> {
-    const entity = this.repo.create(log);
-    await this.repo.save(entity);
+  async log(adminId: number, action: string, targetType?: string, targetId?: number, details?: any): Promise<void> {
+    const log = this.repo.create({
+      adminId,
+      action,
+      targetType,
+      targetId,
+      details,
+    });
+    await this.repo.save(log);
   }
 
-  async getRecent(count: number = 100): Promise<AdminLog[]> {
+  async getRecent(limit: number = 100): Promise<AdminLog[]> {
     return this.repo.find({
       relations: ['admin'],
       order: { createdAt: 'DESC' },
-      take: count,
+      take: limit,
     });
   }
 }

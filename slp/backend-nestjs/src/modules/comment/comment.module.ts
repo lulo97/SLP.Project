@@ -4,6 +4,7 @@ import { CommentController } from "./comment.controller";
 import { CommentService } from "./comment.service";
 import { Comment } from "./comment.entity";
 import { CommentHistory } from "./comment-history.entity";
+import { CommentRepository } from "./comment.repository";
 import { AdminModule } from "../admin/admin.module";
 import { SessionModule } from "../session/session.module";
 
@@ -14,7 +15,7 @@ import { SessionModule } from "../session/session.module";
     SessionModule,
   ],
   controllers: [CommentController],
-  providers: [CommentService],
-  exports: [CommentService],
+  providers: [CommentService, CommentRepository],
+  exports: [CommentRepository],
 })
 export class CommentModule {}
