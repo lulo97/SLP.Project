@@ -1,20 +1,21 @@
 <template>
-  <MobileLayout title="API Metrics">
-    <div class="metrics-page space-y-4">
-      <!-- ── Time Range Controls ─────────────────────────────────────── -->
+  <MobileLayout title="API Metrics" data-testid="metrics-layout">
+    <div class="metrics-page space-y-4" data-testid="metrics-container">
       <a-card
         :bodyStyle="{ padding: '12px 16px' }"
         data-testid="metrics-time-range-card"
       >
-        <div class="controls-row">
-          <div class="preset-buttons">
+        <div class="controls-row" data-testid="metrics-controls-row">
+          <div class="preset-buttons" data-testid="metrics-preset-group">
             <a-button
               v-for="preset in PRESETS"
               :key="preset.label"
               :type="activePreset === preset.label ? 'primary' : 'default'"
               size="small"
               @click="applyPreset(preset)"
-              :data-testid="'preset-' + preset.label.toLowerCase()"
+              :data-testid="
+                'preset-' + preset.label.toLowerCase().replace(/\s+/g, '-')
+              "
             >
               {{ preset.label }}
             </a-button>
@@ -44,8 +45,7 @@
         </div>
       </a-card>
 
-      <!-- ── Summary Stats ───────────────────────────────────────────── -->
-      <div class="stats-grid">
+      <div class="stats-grid" data-testid="metrics-stats-grid">
         <a-card
           v-for="stat in summaryStats"
           :key="stat.label"
@@ -54,26 +54,45 @@
             'stat-card-' + stat.label.toLowerCase().replace(/\s+/g, '-')
           "
         >
-          <div class="stat-inner">
-            <div class="stat-icon" :style="{ background: stat.bg }">
+          <div class="stat-inner" data-testid="stat-inner-container">
+            <div
+              class="stat-icon"
+              :style="{ background: stat.bg }"
+              data-testid="stat-icon-box"
+            >
               <component
                 :is="stat.icon"
                 :size="20"
                 :style="{ color: stat.color }"
+                data-testid="stat-icon-component"
               />
             </div>
             <div class="stat-body">
-              <p class="stat-label">{{ stat.label }}</p>
-              <p class="stat-value" :style="{ color: stat.color }">
+              <p
+                class="stat-label"
+                :data-testid="
+                  'stat-label-' + stat.label.toLowerCase().replace(/\s+/g, '-')
+                "
+              >
+                {{ stat.label }}
+              </p>
+              <p
+                class="stat-value"
+                :style="{ color: stat.color }"
+                :data-testid="
+                  'stat-value-' + stat.label.toLowerCase().replace(/\s+/g, '-')
+                "
+              >
                 {{ stat.value }}
               </p>
-              <p v-if="stat.sub" class="stat-sub">{{ stat.sub }}</p>
+              <p v-if="stat.sub" class="stat-sub" data-testid="stat-sub-text">
+                {{ stat.sub }}
+              </p>
             </div>
           </div>
         </a-card>
       </div>
 
-      <!-- ── Requests Chart ──────────────────────────────────────────── -->
       <a-card
         title="Requests / min"
         :bodyStyle="{ padding: '8px 16px 16px' }"
@@ -98,7 +117,6 @@
         />
       </a-card>
 
-      <!-- ── Errors Chart ────────────────────────────────────────────── -->
       <a-card
         title="Errors / min"
         :bodyStyle="{ padding: '8px 16px 16px' }"
@@ -123,7 +141,6 @@
         />
       </a-card>
 
-      <!-- ── Latency Chart ───────────────────────────────────────────── -->
       <a-card
         title="Latency (ms)"
         :bodyStyle="{ padding: '8px 16px 16px' }"

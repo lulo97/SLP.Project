@@ -1,1 +1,1 @@
-npx playwright test health.spec --headed
+npx playwright test admin_metrics.spec --headed
