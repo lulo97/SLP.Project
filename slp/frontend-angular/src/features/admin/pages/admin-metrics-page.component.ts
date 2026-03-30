@@ -256,15 +256,21 @@ export class AdminMetricsPageComponent implements OnInit {
     { label: "Last 24h", hours: 24 },
   ];
   activePreset = signal("Last 1h");
-  pickerRange: [Dayjs, Dayjs] = [dayjs().subtract(1, "hour"), dayjs()];
-
+  pickerRange: [Date, Date] = [
+    dayjs().subtract(1, "hour").toDate(),
+    dayjs().toDate(),
+  ];
   ngOnInit() {
     this.loadAll();
   }
 
   applyPreset(preset: { label: string; hours: number }) {
     this.activePreset.set(preset.label);
-    this.pickerRange = [dayjs().subtract(preset.hours, "hour"), dayjs()];
+    // Use .toDate() here
+    this.pickerRange = [
+      dayjs().subtract(preset.hours, "hour").toDate(),
+      dayjs().toDate(),
+    ];
     this.loadAll();
   }
 
@@ -284,7 +290,13 @@ export class AdminMetricsPageComponent implements OnInit {
 
   loadAll() {
     const [from, to] = this.pickerRange;
-    this.metricsService.fetchAll(from.toISOString(), to.toISOString());
+    if (!from || !to) return;
+
+    // Wrap back in dayjs to get ISO strings
+    this.metricsService.fetchAll(
+      dayjs(from).toISOString(),
+      dayjs(to).toISOString(),
+    );
   }
 
   // Chart data helpers

@@ -51,6 +51,7 @@ import {
   SyncOutline,
   ClockCircleOutline,
   RiseOutline,
+  HeartOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -96,6 +97,7 @@ const icons = [
   SyncOutline,
   ClockCircleOutline,
   RiseOutline,
+  HeartOutline,
 ];
 
 import { provideCharts, withDefaultRegisterables } from "ng2-charts";

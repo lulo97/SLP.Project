@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, ForbiddenException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import type { Request } from 'express';
@@ -32,8 +32,8 @@ export class MetricsController {
   @Get('requests')
   async getRequests(
     @Query('from') from: string,
-    @Query('to') to: string,
-    req: Request,
+    @Query('to') to: string, 
+    @Req() req: Request,
   ) {
     this.checkAdmin(req);
     const { start, end } = this.getRange(from, to);
@@ -49,7 +49,7 @@ export class MetricsController {
   async getErrors(
     @Query('from') from: string,
     @Query('to') to: string,
-    req: Request,
+    @Req() req: Request,
   ) {
     this.checkAdmin(req);
     const { start, end } = this.getRange(from, to);
@@ -65,7 +65,7 @@ export class MetricsController {
   async getLatency(
     @Query('from') from: string,
     @Query('to') to: string,
-    req: Request,
+    @Req() req: Request,
   ) {
     this.checkAdmin(req);
     const { start, end } = this.getRange(from, to);
