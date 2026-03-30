@@ -42,9 +42,6 @@ export async function login(page: Page, username: string, password: string) {
  * @param page Playwright page object
  */
 export async function logout(page: Page) {
-  // Ensure mobile viewport to guarantee the sidebar toggle is needed
-  await page.setViewportSize({ width: 375, height: 667 });
-
   const toggleButton = page.getByTestId('sidebar-toggle-button');
   await toggleButton.click();
 

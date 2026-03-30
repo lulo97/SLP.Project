@@ -1,1 +1,1 @@
-npx playwright test admin_access_restricted.spec --headed
+npx playwright test ban_unban_user.spec --headed
