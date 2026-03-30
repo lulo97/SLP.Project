@@ -66,13 +66,13 @@ import { NoteService } from "./note.service";
           nzDanger
           nz-popconfirm
           [nzPopconfirmTitle]="'common.confirm' | translate"
-          nzOkText="{{ 'common.delete' | translate }}"
+          nzOkText="{{ 'common.yes' | translate }}"
           nzCancelText="{{ 'common.cancel' | translate }}"
           (nzOnConfirm)="deleteNote(note.id)"
           data-testid="delete-note-confirm"
         >
           <i nz-icon nzType="delete" class="mr-1"></i>
-          {{ "common.delete" | translate }}
+          {{ "common.yes" | translate }}
         </button>
       </div>
     </div>

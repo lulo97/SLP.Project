@@ -126,7 +126,7 @@ import { Comment } from "../../models/comment.model";
             (nzOnConfirm)="handleDeleteClick()"
             data-testid="delete-button"
           >
-            <i nz-icon nzType="delete"></i> {{ "common.delete" | translate }}
+            <i nz-icon nzType="delete"></i> {{ "common.yes" | translate }}
           </span>
         </nz-comment-action>
       </nz-comment>

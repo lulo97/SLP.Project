@@ -79,13 +79,13 @@ import { FavoriteService } from './favourite.service';
           nzDanger
           nz-popconfirm
           [nzPopconfirmTitle]="'common.confirm' | translate"
-          nzOkText="{{ 'common.delete' | translate }}"
+          nzOkText="{{ 'common.yes' | translate }}"
           nzCancelText="{{ 'common.cancel' | translate }}"
           (nzOnConfirm)="deleteFavorite(fav.id)"
           data-testid="delete-favourite-confirm"
         >
           <i nz-icon nzType="delete" class="mr-1"></i>
-          {{ 'common.delete' | translate }}
+          {{ 'common.yes' | translate }}
         </button>
       </div>
     </div>

@@ -145,7 +145,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
                   size="small"
                   nz-popconfirm
                   [nzPopconfirmTitle]="'common.confirm' | translate"
-                  nzOkText="{{ 'common.delete' | translate }}"
+                  nzOkText="{{ 'common.yes' | translate }}"
                   nzCancelText="{{ 'common.cancel' | translate }}"
                   (nzOnConfirm)="deleteFavorite(fav.id)"
                   (click)="$event.stopPropagation()"

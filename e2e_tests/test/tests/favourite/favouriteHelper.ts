@@ -208,7 +208,7 @@ export async function deleteFavouriteViaUI(
 ): Promise<void> {
   const deleteIcon = page.getByTestId(`delete-favourite-icon-${id}`);
   await deleteIcon.click();
-  await page.getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("button", { name: "Yes" }).click();
 
   const successMessage = page.getByText("Favourite deleted successfully!");
   await expect(successMessage).toBeVisible();

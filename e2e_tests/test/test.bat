@@ -1,1 +1,1 @@
-npx playwright test tests/favourite --headed
+npx playwright test read-explain.spec --headed
