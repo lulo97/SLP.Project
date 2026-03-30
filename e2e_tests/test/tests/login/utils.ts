@@ -1,15 +1,15 @@
 // utils.ts
-import { Page, BrowserContext } from '@playwright/test';
+import { Page, BrowserContext } from "@playwright/test";
 
 // ----------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------
-export const FRONTEND_URL = 'http://localhost:4000';
-export const BACKEND_URL = 'http://localhost:5140';
+export const FRONTEND_URL = "http://localhost:4000";
+export const BACKEND_URL = "http://localhost:5140";
 
 export const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: '123',
+  username: "admin",
+  password: "123",
 };
 
 // ----------------------------------------------------------------------
@@ -23,9 +23,9 @@ export const ADMIN_CREDENTIALS = {
  * @param password password to fill
  */
 export async function login(page: Page, username: string, password: string) {
-  const usernameInput = page.getByPlaceholder('Enter your username');
-  const passwordInput = page.getByPlaceholder('Enter your password');
-  const signInButton = page.getByRole('button', { name: 'Sign In' });
+  const usernameInput = page.getByPlaceholder("Enter your username");
+  const passwordInput = page.getByPlaceholder("Enter your password");
+  const signInButton = page.getByRole("button", { name: "Sign In" });
 
   await usernameInput.fill(username);
   await passwordInput.fill(password);
@@ -42,13 +42,13 @@ export async function login(page: Page, username: string, password: string) {
  * @param page Playwright page object
  */
 export async function logout(page: Page) {
-  const toggleButton = page.getByTestId('sidebar-toggle-button');
+  const toggleButton = page.getByTestId("sidebar-toggle-button");
   await toggleButton.click();
 
-  const sidebar = page.getByTestId('sidebar-container');
-  await sidebar.waitFor({ state: 'visible' });
+  const sidebar = page.getByTestId("sidebar-container");
+  await sidebar.waitFor({ state: "visible" });
 
-  const logoutItem = page.getByTestId('nav-item-logout');
+  const logoutItem = page.getByTestId("nav-item-logout");
   await logoutItem.click();
 }
 
@@ -57,11 +57,11 @@ export async function logout(page: Page) {
  * @returns object containing unique username, email, and a fixed password
  */
 export function generateUniqueUser() {
-  const timestamp = Date.now();
+  const id = crypto.randomUUID(); // Generates something like '123e4567-e89b-12d3...'
   return {
-    username: `testuser${timestamp}`,
-    email: `test${timestamp}@example.com`,
-    password: 'Test123!',
+    username: `user_${id.slice(0, 8)}`, // Use a portion or the whole thing
+    email: `test_${id}@example.com`,
+    password: "Test123!",
   };
 }
 
@@ -71,5 +71,5 @@ export function generateUniqueUser() {
  * @returns session token string or null if not found
  */
 export async function getSessionToken(page: Page): Promise<string | null> {
-  return await page.evaluate(() => localStorage.getItem('session_token'));
+  return await page.evaluate(() => localStorage.getItem("session_token"));
 }

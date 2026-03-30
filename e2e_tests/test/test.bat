@@ -1,1 +1,1 @@
-npx playwright test ban_unban_user.spec --headed
+npx playwright test disable_enable_quiz.spec --headed
