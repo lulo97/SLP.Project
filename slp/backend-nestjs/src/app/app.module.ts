@@ -7,7 +7,7 @@ import { AuthModule } from "../modules/auth/auth.module";
 import { UserModule } from "../modules/user/user.module";
 import { SessionModule } from "../modules/session/session.module";
 import { MetricsModule } from "../modules/metrics/metrics.module";
-import configuration from "../config/configuration";
+import configuration from "../configuration";
 import { QuizModule } from "../modules/quiz/quiz.module";
 import { SourceModule } from "../modules/source/source.module";
 import { NoteModule } from "../modules/note/note.module";
