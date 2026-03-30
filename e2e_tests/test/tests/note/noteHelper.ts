@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from '@playwright/test';
 
-export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
-const BACKEND_URL = process.env.BACKEND_URL || 'https://localhost:7297';
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3009';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3008';
 
 // ----------------------------------------------------------------------
 // API Helpers (unchanged)
