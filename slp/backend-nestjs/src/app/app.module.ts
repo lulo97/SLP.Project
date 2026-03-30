@@ -14,9 +14,9 @@ import { NoteModule } from "../modules/note/note.module";
 import { ProgressModule } from "../modules/progress/progress.module";
 import { FavoriteModule } from "../modules/favorite/favorite.module";
 import { ReportModule } from "../modules/report/report.module";
-// import { AdminModule } from './modules/admin/admin.module';
+import { AdminModule } from "../modules/admin/admin.module";
 // import { DashboardModule } from './modules/dashboard/dashboard.module';
-// import { HealthModule } from './modules/health/health.module';
+import { HealthModule } from "../modules/health/health.module";
 import { LlmModule } from "../modules/llm/llm.module";
 import { QueueModule } from "../modules/queue/queue.module";
 import { EmailModule } from "../modules/email/email.module";
@@ -54,9 +54,9 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     FavoriteModule,
     CommentModule,
     ReportModule,
-    // AdminModule,
+    AdminModule,
     // DashboardModule,
-    // HealthModule,
+    HealthModule,
     LlmModule,
     QueueModule,
     EmailModule,

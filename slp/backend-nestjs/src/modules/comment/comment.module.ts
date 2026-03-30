@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommentController } from "./comment.controller";
 import { CommentService } from "./comment.service";
@@ -11,7 +11,7 @@ import { SessionModule } from "../session/session.module";
 @Module({
   imports: [
     TypeOrmModule.forFeature([Comment, CommentHistory]),
-    AdminModule,
+    forwardRef(() => AdminModule),
     SessionModule,
   ],
   controllers: [CommentController],

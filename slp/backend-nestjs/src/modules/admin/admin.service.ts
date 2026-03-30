@@ -57,7 +57,12 @@ export class AdminService {
     quiz.disabled = true;
     await this.quizRepo.update(quiz);
 
-    await this.logRepo.log(adminId, "disable_quiz", "quiz", quizId);
+    await this.logRepo.log({
+      adminId,
+      action: "disable_quiz",
+      targetType: "quiz",
+      targetId: quizId,
+    });
   }
 
   async enableQuiz(adminId: number, quizId: number): Promise<void> {
@@ -67,7 +72,12 @@ export class AdminService {
     quiz.disabled = false;
     await this.quizRepo.update(quiz);
 
-    await this.logRepo.log(adminId, "enable_quiz", "quiz", quizId);
+    await this.logRepo.log({
+      adminId,
+      action: "enable_quiz",
+      targetType: "quiz",
+      targetId: quizId,
+    });
   }
 
   async banUser(adminId: number, userId: number): Promise<void> {
@@ -82,7 +92,12 @@ export class AdminService {
     // Revoke all sessions
     await this.sessionRepo.revokeAllForUser(userId);
 
-    await this.logRepo.log(adminId, "ban_user", "user", userId);
+    await this.logRepo.log({
+      adminId,
+      action: "ban_user",
+      targetType: "user",
+      targetId: userId,
+    });
   }
 
   async unbanUser(adminId: number, userId: number): Promise<void> {
@@ -92,7 +107,12 @@ export class AdminService {
     user.status = "active";
     await this.userRepo.update(user);
 
-    await this.logRepo.log(adminId, "unban_user", "user", userId);
+    await this.logRepo.log({
+      adminId,
+      action: "unban_user",
+      targetType: "user",
+      targetId: userId,
+    });
   }
 
   async getAllComments(
@@ -115,14 +135,24 @@ export class AdminService {
     const success = await this.commentRepo.softDelete(commentId);
     if (!success) throw new NotFoundException("Comment not found");
 
-    await this.logRepo.log(adminId, "delete_comment", "comment", commentId);
+    await this.logRepo.log({
+      adminId,
+      action: "delete_comment",
+      targetType: "comment",
+      targetId: commentId,
+    });
   }
 
   async restoreComment(adminId: number, commentId: number): Promise<void> {
     const success = await this.commentRepo.restore(commentId);
     if (!success) throw new NotFoundException("Comment not found");
 
-    await this.logRepo.log(adminId, "restore_comment", "comment", commentId);
+    await this.logRepo.log({
+      adminId,
+      action: "restore_comment",
+      targetType: "comment",
+      targetId: commentId,
+    });
   }
 
   // Logs

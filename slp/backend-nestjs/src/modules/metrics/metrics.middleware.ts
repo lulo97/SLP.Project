@@ -1,7 +1,6 @@
 import { Injectable, NestMiddleware, Inject } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { METRICS_COLLECTOR } from '../../modules/metrics/metrics.module';
-import type { IMetricsCollector } from '../../modules/metrics/metrics-collector.interface';
+import { METRICS_COLLECTOR, type IMetricsCollector } from './metrics-collector.interface';
 
 @Injectable()
 export class MetricsMiddleware implements NestMiddleware {

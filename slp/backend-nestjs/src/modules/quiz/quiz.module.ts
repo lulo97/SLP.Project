@@ -43,6 +43,7 @@ import { SessionModule } from "../session/session.module";
   ],
   exports: [
     QuizService,
+    QuizRepository,
     // Export token để các module khác có thể inject
     'IQuizRepository',
   ],

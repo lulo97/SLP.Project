@@ -1,21 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('metrics')
 export class MetricEntry {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  @Index()
+  @Column({ name: 'name', type: 'varchar' })
   name: string;
 
-  @Column({ type: 'timestamptz' })
-  @Index()
+  @Column({ name: 'timestamp', type: 'timestamp' })
   timestamp: Date;
 
-  @Column('double precision')
+  @Column({ name: 'value', type: 'float' })
   value: number;
 
-  @Column({ nullable: true })
-  tags?: string;
+  @Column({ name: 'tags', type: 'jsonb', nullable: true })
+  tags: any;
 }

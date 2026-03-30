@@ -1,84 +1,103 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Redis } from 'ioredis';
-import { ConfigService } from '@nestjs/config';
 import { MetricEntry } from './metric-entry.entity';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
-export class MetricsFlushService implements OnApplicationBootstrap {
+export class MetricsFlushService {
   private readonly logger = new Logger(MetricsFlushService.name);
-  private redis: Redis;
-  private interval: NodeJS.Timeout;
 
   constructor(
-    private configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis, // Change this line
     @InjectRepository(MetricEntry)
-    private metricRepo: Repository<MetricEntry>,
-  ) {
-    const redisUrl = this.configService.get<string>('redis.url');
-    if (!redisUrl) throw new Error("No redisUrl!");
-    this.redis = new Redis(redisUrl);
-  }
+    private readonly metricRepo: Repository<MetricEntry>,
+  ) {}
 
-  async onApplicationBootstrap() {
-    this.logger.log('MetricsFlushService started');
-    this.interval = setInterval(() => this.flush(), 60_000);
-  }
-
-  async flush(): Promise<void> {
+  @Cron('* * * * *') // every minute
+  async flushMetrics() {
     try {
-      const now = new Date();
-      const activeBucket = now.toISOString().slice(0, 16);
-      const entries: MetricEntry[] = [];
-
-      // Requests
-      const requestKeys = await this.redis.keys('metric:requests:*');
-      for (const key of requestKeys) {
-        const bucket = key.replace('metric:requests:', '');
-        if (bucket === activeBucket) continue;
-        const count = await this.redis.get(key);
-        if (count) {
-          entries.push(this.makeEntry('requests', bucket, parseInt(count, 10)));
-        }
-        await this.redis.del(key);
-      }
-
-      // Errors
-      const errorKeys = await this.redis.keys('metric:errors:*');
-      for (const key of errorKeys) {
-        const bucket = key.replace('metric:errors:', '');
-        if (bucket === activeBucket) continue;
-        const count = await this.redis.get(key);
-        if (count) {
-          entries.push(this.makeEntry('errors', bucket, parseInt(count, 10)));
-        }
-        await this.redis.del(key);
-      }
-
-      // Latency
-      const latencyKeys = await this.redis.keys('metric:latency:*');
-      for (const key of latencyKeys) {
-        const bucket = key.replace('metric:latency:', '');
-        if (bucket === activeBucket) continue;
-        const values = await this.redis.lrange(key, 0, -1);
-        const nums = values.map(v => parseFloat(v)).filter(v => !isNaN(v)).sort((a,b)=>a-b);
-        if (nums.length > 0) {
-          const ts = this.parseBucket(bucket);
-          const p95Index = Math.ceil(0.95 * nums.length) - 1;
-          entries.push(this.makeEntry('latency_avg', bucket, nums.reduce((a,b)=>a+b,0)/nums.length));
-          entries.push(this.makeEntry('latency_p95', bucket, nums[p95Index]));
-        }
-        await this.redis.del(key);
-      }
-
-      if (entries.length > 0) {
-        await this.metricRepo.save(entries);
-        this.logger.log(`Flushed ${entries.length} metric entries to PostgreSQL`);
-      }
-    } catch (err) {
-      this.logger.error(`Flush error: ${err.message}`, err.stack);
+      await this.flush();
+    } catch (error) {
+      this.logger.error(`Flush failed: ${error.message}`, error.stack);
     }
+  }
+
+  private async flush(): Promise<void> {
+    const activeBucket = this.getCurrentBucket();
+
+    const entries: MetricEntry[] = [];
+
+    // ---- Requests ----
+    await this.processCounters('requests', activeBucket, entries);
+    // ---- Errors ----
+    await this.processCounters('errors', activeBucket, entries);
+    // ---- Latency ----
+    await this.processLatency(activeBucket, entries);
+
+    if (entries.length === 0) return;
+
+    await this.metricRepo.save(entries);
+    this.logger.log(`Flushed ${entries.length} metric entries to PostgreSQL`);
+  }
+
+  private async processCounters(name: string, activeBucket: string, entries: MetricEntry[]) {
+    const pattern = `metric:${name}:*`;
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      cursor = nextCursor;
+
+      for (const key of keys) {
+        const bucket = key.split(':')[2];
+        if (bucket === activeBucket) continue;
+
+        const value = await this.redis.get(key);
+        if (value !== null) {
+          const count = parseInt(value, 10);
+          entries.push(
+            this.makeEntry(name, bucket, count),
+          );
+        }
+        await this.redis.del(key);
+      }
+    } while (cursor !== '0');
+  }
+
+  private async processLatency(activeBucket: string, entries: MetricEntry[]) {
+    const pattern = 'metric:latency:*';
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      cursor = nextCursor;
+
+      for (const key of keys) {
+        const bucket = key.split(':')[2];
+        if (bucket === activeBucket) continue;
+
+        const values = await this.redis.lrange(key, 0, -1);
+        if (values.length === 0) {
+          await this.redis.del(key);
+          continue;
+        }
+
+        const numbers = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+        if (numbers.length > 0) {
+          numbers.sort((a, b) => a - b);
+          const avg = numbers.reduce((a, b) => a + b, 0) / numbers.length;
+          const p95Index = Math.ceil(0.95 * numbers.length) - 1;
+          const p95 = numbers[p95Index] || numbers[numbers.length - 1];
+
+          const ts = this.parseBucket(bucket);
+          entries.push(this.makeEntry('latency_avg', bucket, avg));
+          entries.push(this.makeEntry('latency_p95', bucket, p95));
+        }
+
+        await this.redis.del(key);
+      }
+    } while (cursor !== '0');
   }
 
   private makeEntry(name: string, bucket: string, value: number): MetricEntry {
@@ -86,10 +105,25 @@ export class MetricsFlushService implements OnApplicationBootstrap {
     entry.name = name;
     entry.timestamp = this.parseBucket(bucket);
     entry.value = value;
+    entry.tags = null;
     return entry;
   }
 
   private parseBucket(bucket: string): Date {
-    return new Date(bucket + ':00Z');
+    // bucket format: YYYY-MM-DDTHH:mm
+    const [datePart, timePart] = bucket.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    return new Date(Date.UTC(year, month - 1, day, hour, minute));
+  }
+
+  private getCurrentBucket(): string {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hour = String(now.getUTCHours()).padStart(2, '0');
+    const minute = String(now.getUTCMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hour}:${minute}`;
   }
 }
