@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Comment } from './comment.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Comment } from "./comment.entity";
 
 @Injectable()
 export class CommentRepository {
@@ -10,15 +10,26 @@ export class CommentRepository {
     private readonly repo: Repository<Comment>,
   ) {}
 
-  async findAllWithUser(includeDeleted: boolean = false): Promise<Comment[]> {
+  async findAllWithUser(
+    includeDeleted: boolean = false,
+    search?: string,
+  ): Promise<Comment[]> {
     const query = this.repo
-      .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
-      .orderBy('comment.createdAt', 'DESC');
+      .createQueryBuilder("comment")
+      .leftJoinAndSelect("comment.user", "user")
+      .orderBy("comment.createdAt", "DESC");
 
     if (!includeDeleted) {
-      query.andWhere('comment.deletedAt IS NULL');
+      query.andWhere("comment.deletedAt IS NULL");
     }
+
+    if (search) {
+      query.andWhere(
+        "(LOWER(comment.content) LIKE :search OR LOWER(user.username) LIKE :search)",
+        { search: `%${search.toLowerCase()}%` },
+      );
+    }
+
     return query.getMany();
   }
 

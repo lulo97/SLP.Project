@@ -296,12 +296,20 @@ export class QuizRepository {
   }
 
   // ---------- Admin ----------
-  async getAllForAdmin(): Promise<Quiz[]> {
-    return this.quizRepo.find({
-      relations: ["user"],
-      order: { createdAt: "DESC" },
-    });
+  async getAllForAdmin(search?: string): Promise<Quiz[]> {
+  const query = this.quizRepo
+    .createQueryBuilder('quiz')
+    .leftJoinAndSelect('quiz.user', 'user');
+
+  if (search) {
+    query.where(
+      '(LOWER(quiz.title) LIKE :search OR LOWER(user.username) LIKE :search)',
+      { search: `%${search.toLowerCase()}%` }
+    );
   }
+
+  return query.orderBy('quiz.createdAt', 'DESC').getMany();
+}
 
   async getTopQuizzesByAttempts(limit: number): Promise<TopQuizDto[]> {
     // Note: This would require joining with QuizAttempts. Adjust according to your attempts entity.

@@ -12,6 +12,7 @@ import { CommentAdminDto } from "./dto/comment-admin.dto";
 import { AdminLogDto } from "./dto/admin-log.dto";
 import { SessionRepository } from "../session/session.repository";
 import { CommentRepository } from "../comment/comment.repository";
+import { AdminLogFilterDto } from "./dto/admin-log-filter.dto";
 
 @Injectable()
 export class AdminService {
@@ -24,8 +25,8 @@ export class AdminService {
   ) {}
 
   // Users
-  async getAllUsers(): Promise<UserDto[]> {
-    const users = await this.userRepo.getAll(); // changed from findAll()
+  async getAllUsers(search?: string): Promise<UserDto[]> {
+    const users = await this.userRepo.getAllWithSearch(search);
     return users.map((u) => ({
       id: u.id,
       username: u.username,
@@ -37,8 +38,8 @@ export class AdminService {
     }));
   }
 
-  async getAllQuizzes(): Promise<QuizAdminDto[]> {
-    const quizzes = await this.quizRepo.getAllForAdmin(); // changed from findAllWithUser()
+  async getAllQuizzes(search?: string): Promise<QuizAdminDto[]> {
+    const quizzes = await this.quizRepo.getAllForAdmin(search);
     return quizzes.map((q) => ({
       id: q.id,
       title: q.title,
@@ -117,8 +118,12 @@ export class AdminService {
 
   async getAllComments(
     includeDeleted: boolean = false,
+    search?: string,
   ): Promise<CommentAdminDto[]> {
-    const comments = await this.commentRepo.findAllWithUser(includeDeleted);
+    const comments = await this.commentRepo.findAllWithUser(
+      includeDeleted,
+      search,
+    );
     return comments.map((c) => ({
       id: c.id,
       userId: c.userId,
@@ -156,8 +161,8 @@ export class AdminService {
   }
 
   // Logs
-  async getRecentLogs(limit: number = 100): Promise<AdminLogDto[]> {
-    const logs = await this.logRepo.getRecent(limit);
+  async getRecentLogs(filter: AdminLogFilterDto): Promise<AdminLogDto[]> {
+    const logs = await this.logRepo.getRecentWithFilter(filter);
     return logs.map((l) => ({
       id: l.id,
       adminId: l.adminId,

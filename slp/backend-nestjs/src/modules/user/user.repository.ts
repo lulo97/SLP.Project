@@ -1,8 +1,8 @@
-import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
-import { UserStatsDto } from './dto/user-stats.dto';
+import { Repository } from "typeorm";
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { User } from "./user.entity";
+import { UserStatsDto } from "./dto/user-stats.dto";
 
 export interface IUserRepository {
   getById(id: number): Promise<User | null>;
@@ -13,7 +13,7 @@ export interface IUserRepository {
   update(user: User): Promise<void>;
   create(user: User): Promise<void>;
   delete(user: User): Promise<void>;
-  getAll(): Promise<User[]>;
+  getAllWithSearch(search?: string): Promise<User[]>;
   getUserStats(userId: number): Promise<UserStatsDto>;
 }
 
@@ -56,8 +56,17 @@ export class UserRepository implements IUserRepository {
     await this.repo.remove(user);
   }
 
-  async getAll(): Promise<User[]> {
-    return this.repo.find({ order: { id: 'ASC' } });
+  async getAllWithSearch(search?: string): Promise<User[]> {
+    const query = this.repo.createQueryBuilder("user");
+    if (search) {
+      query.where(
+        "LOWER(user.username) LIKE :search OR LOWER(user.email) LIKE :search",
+        {
+          search: `%${search.toLowerCase()}%`,
+        },
+      );
+    }
+    return query.orderBy("user.id", "ASC").getMany();
   }
 
   async getUserStats(userId: number): Promise<UserStatsDto> {
