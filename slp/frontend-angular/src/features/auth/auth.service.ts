@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { BehaviorSubject, Observable, of } from "rxjs";
-import { catchError, map, switchMap, tap } from "rxjs/operators";
+import { BehaviorSubject, Observable, of, throwError } from "rxjs";
+import { catchError, filter, map, switchMap, tap } from "rxjs/operators";
 import { environment } from "../../environments/environment";
 
 // ─── Public Models ────────────────────────────────────────────────────────────
@@ -58,14 +58,21 @@ export class AuthService {
   private readonly baseUrl = environment.apiBackendUrl;
   private readonly fileStorageUrl = environment.fileStorageUrl;
 
-  private userSubject = new BehaviorSubject<User | null>(null);
-  /** Observable stream of the currently authenticated user (null if logged out). */
-  user$: Observable<User | null> = this.userSubject.asObservable();
+  // Thay vì BehaviorSubject<User | null>
+  private userSubject = new BehaviorSubject<User | null | undefined>(undefined);
+  public user$ = this.userSubject.asObservable().pipe(
+    // Bỏ qua giá trị undefined – chỉ emit khi đã load xong (có user hoặc null)
+    filter((user): user is User | null => user !== undefined),
+  );
 
   constructor(private http: HttpClient) {
-    // Rehydrate user from an existing session on app startup
     if (this.sessionToken) {
-      this.fetchCurrentUser().subscribe({ error: () => this.clearSession() });
+      this.fetchCurrentUser().subscribe({
+        error: () => this.clearSession(),
+      });
+    } else {
+      // Không có token → coi như không có user ngay lập tức
+      this.userSubject.next(null);
     }
   }
 
@@ -80,7 +87,7 @@ export class AuthService {
   }
 
   get currentUser(): User | null {
-    return this.userSubject.value;
+    return this.userSubject.value || null;
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -182,6 +189,10 @@ export class AuthService {
     return this.http.get<UserApiResponse>(`${this.baseUrl}/users/me`).pipe(
       tap((raw) => this.userSubject.next(this.mapUser(raw))),
       map((raw) => this.mapUser(raw)),
+      catchError((err) => {
+        this.clearSession();
+        return throwError(() => err);
+      }),
     );
   }
 
