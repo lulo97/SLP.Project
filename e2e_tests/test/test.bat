@@ -1,1 +1,1 @@
-npx playwright test delete_restore_comment.spec --headed
+npx playwright test admin_log.spec --headed
