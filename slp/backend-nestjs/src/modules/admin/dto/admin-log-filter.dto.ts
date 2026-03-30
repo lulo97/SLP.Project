@@ -1,9 +1,38 @@
+import { IsOptional, IsString, IsInt, IsDate, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class AdminLogFilterDto {
-  search?: string;          // free‑text search (username, action, targetType, targetId, details)
-  action?: string;          // exact match
-  targetType?: string;      // exact match
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  action?: string;
+
+  @IsOptional()
+  @IsString()
+  targetType?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
   from?: Date;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
   to?: Date;
-  adminId?: number;         // kept for future use
-  count?: number;           // max number of logs to return, default 100
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  adminId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  count?: number;
 }

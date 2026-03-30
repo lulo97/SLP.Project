@@ -1,10 +1,10 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Redis } from 'ioredis';
-import { MetricEntry } from './metric-entry.entity';
-import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Injectable, Logger, Inject } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Redis } from "ioredis";
+import { MetricEntry } from "./metric-entry.entity";
+import { InjectRedis } from "@nestjs-modules/ioredis";
 
 @Injectable()
 export class MetricsFlushService {
@@ -16,7 +16,7 @@ export class MetricsFlushService {
     private readonly metricRepo: Repository<MetricEntry>,
   ) {}
 
-  @Cron('* * * * *') // every minute
+  @Cron("* * * * *") // every minute
   async flushMetrics() {
     try {
       await this.flush();
@@ -31,9 +31,9 @@ export class MetricsFlushService {
     const entries: MetricEntry[] = [];
 
     // ---- Requests ----
-    await this.processCounters('requests', activeBucket, entries);
+    await this.processCounters("requests", activeBucket, entries);
     // ---- Errors ----
-    await this.processCounters('errors', activeBucket, entries);
+    await this.processCounters("errors", activeBucket, entries);
     // ---- Latency ----
     await this.processLatency(activeBucket, entries);
 
@@ -43,39 +43,60 @@ export class MetricsFlushService {
     this.logger.log(`Flushed ${entries.length} metric entries to PostgreSQL`);
   }
 
-  private async processCounters(name: string, activeBucket: string, entries: MetricEntry[]) {
+  private async processCounters(
+    name: string,
+    activeBucket: string,
+    entries: MetricEntry[],
+  ) {
     const pattern = `metric:${name}:*`;
-    let cursor = '0';
+    let cursor = "0";
     do {
-      const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      const [nextCursor, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100,
+      );
       cursor = nextCursor;
 
       for (const key of keys) {
-        const bucket = key.split(':')[2];
+        const bucket = key.split(":")[2];
         if (bucket === activeBucket) continue;
 
         const value = await this.redis.get(key);
         if (value !== null) {
           const count = parseInt(value, 10);
-          entries.push(
-            this.makeEntry(name, bucket, count),
-          );
+          const entry = this.makeEntry(name, bucket, count);
+          if (entry) entries.push(entry);
         }
         await this.redis.del(key);
       }
-    } while (cursor !== '0');
+    } while (cursor !== "0");
   }
 
   private async processLatency(activeBucket: string, entries: MetricEntry[]) {
-    const pattern = 'metric:latency:*';
-    let cursor = '0';
+    const pattern = "metric:latency:*";
+    let cursor = "0";
     do {
-      const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      const [nextCursor, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100,
+      );
       cursor = nextCursor;
 
       for (const key of keys) {
-        const bucket = key.split(':')[2];
+        const bucket = key.split(":")[2];
         if (bucket === activeBucket) continue;
+        
+        // Skip if bucket is invalid
+        if (!this.parseBucket(bucket)) {
+          await this.redis.del(key);
+          continue;
+        }
 
         const values = await this.redis.lrange(key, 0, -1);
         if (values.length === 0) {
@@ -83,7 +104,9 @@ export class MetricsFlushService {
           continue;
         }
 
-        const numbers = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+        const numbers = values
+          .map((v) => parseFloat(v))
+          .filter((v) => !isNaN(v));
         if (numbers.length > 0) {
           numbers.sort((a, b) => a - b);
           const avg = numbers.reduce((a, b) => a + b, 0) / numbers.length;
@@ -91,39 +114,50 @@ export class MetricsFlushService {
           const p95 = numbers[p95Index] || numbers[numbers.length - 1];
 
           const ts = this.parseBucket(bucket);
-          entries.push(this.makeEntry('latency_avg', bucket, avg));
-          entries.push(this.makeEntry('latency_p95', bucket, p95));
+          const avgEntry = this.makeEntry("latency_avg", bucket, avg);
+          const p95Entry = this.makeEntry("latency_p95", bucket, p95);
+          if (avgEntry) entries.push(avgEntry);
+          if (p95Entry) entries.push(p95Entry);
         }
 
         await this.redis.del(key);
       }
-    } while (cursor !== '0');
+    } while (cursor !== "0");
   }
 
-  private makeEntry(name: string, bucket: string, value: number): MetricEntry {
+  private makeEntry(
+    name: string,
+    bucket: string,
+    value: number,
+  ): MetricEntry | null {
+    const timestamp = this.parseBucket(bucket);
+    if (!timestamp) return null;
     const entry = new MetricEntry();
     entry.name = name;
-    entry.timestamp = this.parseBucket(bucket);
+    entry.timestamp = timestamp;
     entry.value = value;
     entry.tags = null;
     return entry;
   }
 
-  private parseBucket(bucket: string): Date {
-    // bucket format: YYYY-MM-DDTHH:mm
-    const [datePart, timePart] = bucket.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hour, minute] = timePart.split(':').map(Number);
+  private parseBucket(bucket: string): Date | null {
+    // Expected format: YYYY-MM-DDTHH:MM
+    const match = bucket.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if (!match) {
+      this.logger.warn(`Skipping invalid bucket format: ${bucket}`);
+      return null;
+    }
+    const [, year, month, day, hour, minute] = match.map(Number);
     return new Date(Date.UTC(year, month - 1, day, hour, minute));
   }
 
   private getCurrentBucket(): string {
     const now = new Date();
     const year = now.getUTCFullYear();
-    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(now.getUTCDate()).padStart(2, '0');
-    const hour = String(now.getUTCHours()).padStart(2, '0');
-    const minute = String(now.getUTCMinutes()).padStart(2, '0');
+    const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(now.getUTCDate()).padStart(2, "0");
+    const hour = String(now.getUTCHours()).padStart(2, "0");
+    const minute = String(now.getUTCMinutes()).padStart(2, "0");
     return `${year}-${month}-${day}T${hour}:${minute}`;
   }
 }

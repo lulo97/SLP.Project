@@ -14,6 +14,9 @@ import { AdminGuard } from "../features/auth/admin.guard";
 import { QuizPlayerComponent } from "../features/quiz-attempt/pages/quiz-player.component";
 import { AttemptReviewComponent } from "../features/quiz-attempt/pages/attempt-review.component";
 import { SourceDetailComponent } from "../features/source/pages/source-detail.component";
+import { AdminPageComponent } from "../features/admin/pages/admin-page.component";
+import { AdminHealthPageComponent } from "../features/admin/pages/admin-health-page.component";
+import { AdminMetricsPageComponent } from "../features/admin/pages/admin-metrics-page.component";
 
 export const routes: Routes = [
   {
@@ -179,15 +182,6 @@ export const routes: Routes = [
         data: { breadcrumb: "nav.reports" },
       },
       {
-        path: "admin/reports",
-        loadComponent: () =>
-          import("../features/report/pages/admin-reports/admin-reports.component").then(
-            (m) => m.AdminReportsComponent,
-          ),
-        canActivate: [AdminGuard],
-        data: { breadcrumb: "Admin Reports" },
-      },
-      {
         path: "quiz/:quizId/attempt",
         component: QuizPlayerComponent,
       },
@@ -231,6 +225,24 @@ export const routes: Routes = [
             (m) => m.FavoriteFormComponent,
           ),
         data: { breadcrumb: "favourite.editFavourite" },
+      },
+      {
+        path: "admin",
+        component: AdminPageComponent,
+        canActivate: [AdminGuard],
+        data: { breadcrumb: "Admin Panel" },
+      },
+      {
+        path: "admin/health",
+        component: AdminHealthPageComponent,
+        canActivate: [AdminGuard],
+        data: { breadcrumb: "Service Health" },
+      },
+      {
+        path: "admin/metrics",
+        component: AdminMetricsPageComponent,
+        canActivate: [AdminGuard],
+        data: { breadcrumb: "API Metrics" },
       },
     ],
   },

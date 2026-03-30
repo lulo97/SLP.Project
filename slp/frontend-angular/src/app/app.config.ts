@@ -49,6 +49,8 @@ import {
   DeleteOutline,
   InboxOutline,
   SyncOutline,
+  ClockCircleOutline,
+  RiseOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -92,7 +94,11 @@ const icons = [
   DeleteOutline,
   InboxOutline,
   SyncOutline,
+  ClockCircleOutline,
+  RiseOutline,
 ];
+
+import { provideCharts, withDefaultRegisterables } from "ng2-charts";
 
 const ngZorroConfig: NzConfig = {
   theme: {
@@ -117,6 +123,7 @@ export const appConfig: ApplicationConfig = {
 
     provideNzIcons(icons),
     provideNzConfig(ngZorroConfig),
+    provideCharts(withDefaultRegisterables()),
 
     { provide: NZ_I18N, useValue: en_US },
 
