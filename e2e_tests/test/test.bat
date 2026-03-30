@@ -1,1 +1,1 @@
-npx playwright test read-grammar.spec --headed
+npx playwright test admin_access_restricted.spec --headed
