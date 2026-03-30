@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from '@playwright/test';
 
-export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3009';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3008';
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://localhost:7297';
 
 // ----------------------------------------------------------------------
 // API Helpers (unchanged)
@@ -124,7 +124,7 @@ export async function verifyNoteFormValues(page: Page, expectedTitle: string, ex
 export async function deleteNoteViaUI(page: Page, noteId: string): Promise<void> {
   const deleteIcon = page.getByTestId(`delete-note-icon-${noteId}`);
   await deleteIcon.click();
-  await page.getByRole('button', { name: 'Yes' }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
 
   const successMessage = page.getByText('Note deleted successfully!');
   await expect(successMessage).toBeVisible();

@@ -203,7 +203,7 @@ import { NzAlertModule } from "ng-zorro-antd/alert";
                 nzDanger
                 nz-popconfirm
                 nzPopconfirmTitle="{{ 'common.confirm' | translate }}"
-                nzOkText="{{ 'common.yes' | translate }}"
+                nzOkText="{{ 'common.delete' | translate }}"
                 nzCancelText="{{ 'common.cancel' | translate }}"
                 (nzOnConfirm)="deleteSource(item.id)"
                 [attr.data-testid]="'source-list-delete-confirm-' + item.id"

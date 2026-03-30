@@ -180,7 +180,7 @@ import { AuthService } from "../../auth/auth.service";
                     nzDanger
                     nz-popconfirm
                     [nzPopconfirmTitle]="'common.confirm' | translate"
-                    nzOkText="{{ 'common.yes' | translate }}"
+                    nzOkText="{{ 'common.delete' | translate }}"
                     nzCancelText="{{ 'common.cancel' | translate }}"
                     (nzOnConfirm)="deleteQuiz(quiz.id)"
                     [attr.data-testid]="'delete-quiz-' + quiz.id"
