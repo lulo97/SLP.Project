@@ -166,7 +166,7 @@ import { trigger, transition, style, animate } from "@angular/animations";
           </svg>
           <span
             *ngIf="explanations.length"
-            class="absolute top-0.5 right-1 bg-[#7c6af5] text-white text-[9px] font-bold min-w-[14px] h-[14px] rounded-[7px] flex items-center justify-center px-[3px]"
+            class="absolute top-0.5 right-1 py-[2px] px-[3px] rounded-full bg-[#7c6af5] text-white text-[9px] font-bold"
             data-testid="source-detail-explanations-badge"
           >
             {{ explanations.length }}
