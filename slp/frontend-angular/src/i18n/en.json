@@ -28,7 +28,9 @@
     "menu": "Menu",
     "reports": "My Reports",
     "favourites": "Favourites",
-    "myNotes": "My Notes"
+    "myNotes": "My Notes",
+    "serviceHealth": "Service Health",
+    "apiMetrics": "API Metrics"
   },
   "auth": {
     "login": "Login",

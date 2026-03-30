@@ -27,7 +27,9 @@
     "menu": "Menu",
     "reports": "Báo cáo của tôi",
     "favourites": "Yêu thích",
-    "myNotes": "Ghi chú của tôi"
+    "myNotes": "Ghi chú của tôi",
+    "serviceHealth": "Sức khỏe dịch vụ",
+    "apiMetrics": "Số liệu API"
   },
   "auth": {
     "login": "Đăng nhập",
