@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <h2 class="text-xl font-semibold mb-4">Reports</h2>
+  <div data-testid="admin-reports-panel">
     <a-input-search
       v-model:value="searchTerm"
       placeholder="Search by reporter, target type, or reason..."
@@ -8,107 +7,107 @@
       @search="handleSearch"
       data-testid="admin-reports-search"
     />
-    <a-table
-      :data-source="reports"
-      :loading="loading"
-      :columns="columns"
-      row-key="id"
-      :pagination="false"
-      data-testid="admin-reports-table"
-    >
-      <template #bodyCell="{ column, record }">
-        <!-- Target info -->
-        <template v-if="column.key === 'target'">
-          {{ record.targetType }} #{{ record.targetId }}
-        </template>
 
-        <!-- Reason with truncation -->
-        <template v-if="column.key === 'reason'">
-          <a-tooltip :title="record.reason">
-            <span>{{ truncate(record.reason, 50) }}</span>
-          </a-tooltip>
-        </template>
+    <div v-if="loading" class="loading-state">
+      <a-spin />
+    </div>
 
-        <!-- Created at -->
-        <template v-if="column.key === 'createdAt'">
-          {{ formatDate(record.createdAt) }}
-        </template>
-
-        <!-- Actions -->
-        <template v-if="column.key === 'actions'">
-          <div class="space-x-2">
-            <!-- Resolve button -->
-            <a-button
-              size="small"
-              type="primary"
-              ghost
-              @click="handleResolve(record.id)"
-              :loading="resolvingIds.includes(record.id)"
-              data-testid="resolve-report-btn"
-            >
-              Resolve
-            </a-button>
-
-            <!-- Delete comment (if target is comment) -->
-            <a-popconfirm
-              v-if="record.targetType === 'comment'"
-              title="Delete this comment?"
-              ok-text="Yes"
-              cancel-text="No"
-              @confirm="handleDeleteComment(record)"
-            >
-              <a-button
-                size="small"
-                danger
-                ghost
-                data-testid="delete-comment-btn"
-              >
-                Delete Comment
-              </a-button>
-            </a-popconfirm>
-
-            <!-- Disable quiz (if target is quiz) -->
-            <a-popconfirm
-              v-if="record.targetType === 'quiz'"
-              title="Disable this quiz?"
-              ok-text="Yes"
-              cancel-text="No"
-              @confirm="handleDisableQuiz(record)"
-            >
-              <a-button
-                size="small"
-                danger
-                ghost
-                data-testid="disable-quiz-btn"
-              >
-                Disable Quiz
-              </a-button>
-            </a-popconfirm>
-
-            <!-- View target link -->
-            <a-button
-              size="small"
-              @click="viewTarget(record)"
-              data-testid="view-target-btn"
-            >
-              View
-            </a-button>
-          </div>
-        </template>
-      </template>
-
-      <template #emptyText>
-        <div class="text-center py-8 text-gray-500" data-testid="no-reports">
-          No unresolved reports.
+    <template v-else>
+      <a-card
+        v-for="report in reports"
+        :key="report.id"
+        class="mobile-card"
+        size="small"
+      >
+        <div class="field-row">
+          <span class="field-label">ID:</span>
+          <span class="field-value">{{ report.id }}</span>
         </div>
-      </template>
-    </a-table>
+        <div class="field-row">
+          <span class="field-label">Reporter:</span>
+          <span class="field-value">{{ report.username }}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Target:</span>
+          <span class="field-value">
+            {{ report.targetType }} #{{ report.targetId }}
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Reason:</span>
+          <span class="field-value reason-text">{{ report.reason }}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Created:</span>
+          <span class="field-value">{{ formatDate(report.createdAt) }}</span>
+        </div>
+
+        <div class="actions">
+          <a-button
+            type="primary"
+            ghost
+            class="touch-button"
+            :loading="resolvingIds.includes(report.id)"
+            @click="handleResolve(report.id)"
+            data-testid="resolve-report-btn"
+          >
+            Resolve
+          </a-button>
+
+          <a-popconfirm
+            v-if="report.targetType === 'comment'"
+            title="Delete this comment?"
+            ok-text="Yes"
+            cancel-text="No"
+            @confirm="handleDeleteComment(report)"
+          >
+            <a-button
+              danger
+              ghost
+              class="touch-button"
+              data-testid="delete-comment-btn"
+            >
+              Delete Comment
+            </a-button>
+          </a-popconfirm>
+
+          <a-popconfirm
+            v-if="report.targetType === 'quiz'"
+            title="Disable this quiz?"
+            ok-text="Yes"
+            cancel-text="No"
+            @confirm="handleDisableQuiz(report)"
+          >
+            <a-button
+              danger
+              ghost
+              class="touch-button"
+              data-testid="disable-quiz-btn"
+            >
+              Disable Quiz
+            </a-button>
+          </a-popconfirm>
+
+          <a-button
+            class="touch-button"
+            @click="viewTarget(report)"
+            data-testid="view-target-btn"
+          >
+            View
+          </a-button>
+        </div>
+      </a-card>
+
+      <div v-if="!reports.length" class="empty-state" data-testid="no-reports">
+        No unresolved reports.
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { message } from "ant-design-vue";
+import { ref, onMounted } from "vue";
+import { message, Spin } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import apiClient from "@/lib/api/client";
 import dayjs from "dayjs";
@@ -125,10 +124,13 @@ interface ReportDto {
   createdAt: string;
 }
 
+const ASpin = Spin;
+
 const reports = ref<ReportDto[]>([]);
 const loading = ref(false);
 const resolvingIds = ref<number[]>([]);
 const searchTerm = ref("");
+const router = useRouter();
 
 const fetchReports = async () => {
   loading.value = true;
@@ -149,21 +151,6 @@ const handleSearch = () => {
   fetchReports();
 };
 
-const columns = [
-  { title: "ID", dataIndex: "id", key: "id", width: 60 },
-  { title: "Reporter", dataIndex: "username", key: "username" },
-  { title: "Target", key: "target" },
-  { title: "Reason", key: "reason" },
-  { title: "Created", key: "createdAt", width: 150 },
-  { title: "Actions", key: "actions", width: 240 },
-];
-
-const router = useRouter();
-
-const truncate = (text: string, length: number) => {
-  return text.length > length ? text.slice(0, length) + "…" : text;
-};
-
 const formatDate = (dateStr: string) => {
   return dayjs(dateStr).format("YYYY-MM-DD HH:mm");
 };
@@ -174,7 +161,6 @@ const handleResolve = async (reportId: number) => {
     await apiClient.post(`/reports/${reportId}/resolve`);
     message.success("Report resolved");
     reports.value = reports.value.filter((r) => r.id !== reportId);
-    await fetchReports();
   } catch (err: any) {
     message.error(err.response?.data?.error || "Failed to resolve report");
   } finally {
@@ -186,7 +172,6 @@ const handleDeleteComment = async (report: ReportDto) => {
   try {
     await apiClient.delete(`/admin/comments/${report.targetId}`);
     message.success("Comment deleted");
-    // Optionally resolve the report automatically
     await handleResolve(report.id);
   } catch (err: any) {
     message.error(err.response?.data?.error || "Failed to delete comment");
@@ -209,8 +194,6 @@ const viewTarget = (report: ReportDto) => {
       router.push(`/quiz/${report.targetId}`);
       break;
     case "comment":
-      // Comments don't have standalone pages, but we could navigate to the parent entity
-      // For simplicity, we'll just show a message
       message.info("Comments are viewed on their parent pages");
       break;
     case "question":
@@ -225,3 +208,62 @@ onMounted(() => {
   fetchReports();
 });
 </script>
+
+<style scoped>
+.mobile-card {
+  margin-bottom: 12px;
+}
+.mobile-card :deep(.ant-card-body) {
+  padding: 16px;
+}
+
+.field-row {
+  display: flex;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.field-label {
+  width: 80px;
+  font-weight: 500;
+  color: #666;
+  flex-shrink: 0;
+}
+.field-value {
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Show full reason text on mobile instead of truncating */
+.reason-text {
+  white-space: pre-wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.touch-button {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 32px 0;
+  font-size: 14px;
+}
+</style>
