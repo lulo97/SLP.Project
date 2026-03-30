@@ -1,4 +1,3 @@
-// src/features/llm/llmService.ts
 import apiClient from '@/lib/api/client';
 
 export interface LlmExplainRequest {

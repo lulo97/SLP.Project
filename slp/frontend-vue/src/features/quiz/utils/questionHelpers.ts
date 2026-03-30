@@ -1,5 +1,3 @@
-// src/features/quiz/utils/questionHelpers.ts
-
 import type { DisplayQuestion } from "../types";
 
 export function formatQuestionType(type: string): string {

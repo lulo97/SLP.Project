@@ -1,4 +1,3 @@
-// src/layouts/mobile-layout/
 import { Injectable, TemplateRef } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 

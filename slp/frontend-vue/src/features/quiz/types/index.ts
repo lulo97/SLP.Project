@@ -1,5 +1,3 @@
-// src/features/quiz/types/index.ts
-
 export interface QuizQuestion {
   id: number;
   quizId: number;

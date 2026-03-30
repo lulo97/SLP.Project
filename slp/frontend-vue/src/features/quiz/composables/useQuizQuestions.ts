@@ -1,5 +1,3 @@
-// src/features/quiz/composables/useQuizQuestions.ts
-
 import { ref } from "vue";
 import { useQuizStore } from "../stores/quizStore";
 import type { DisplayQuestion, QuizQuestion } from "../types";

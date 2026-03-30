@@ -1,4 +1,3 @@
-// src/features/tts/useTts.ts
 import { ref, shallowRef } from "vue";
 
 export type TtsState = "idle" | "loading" | "playing" | "paused" | "error";
