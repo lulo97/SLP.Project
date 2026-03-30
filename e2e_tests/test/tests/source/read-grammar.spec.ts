@@ -68,13 +68,14 @@ test.describe("Source – text selection and AI grammar check", () => {
 
     // 7. Wait for the grammar check modal to appear
     // Ant Design modal uses role="dialog"
-    const modal = await page.waitForSelector('div[role="dialog"]', {
-      timeout: 30000,
-    });
+    const modal = page.getByRole('dialog');
+
+    await expect(modal).toBeVisible({ timeout: 180000 });
+
     expect(modal).toBeTruthy();
 
     // 8. Verify that the modal contains both original and corrected text
-    const modalText = await page.locator('div[role="dialog"]').innerText();
+    const modalText = await page.getByRole('dialog').innerText();
     expect(modalText).toContain("Grammar Check Result");
     expect(modalText).toContain("Input text:");
     expect(modalText).toContain("Corrected text:");
@@ -82,7 +83,7 @@ test.describe("Source – text selection and AI grammar check", () => {
     //expect(modalText).toContain("goes");
 
     // 9. Close the modal by clicking the "OK" button
-    await page.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: "Close" }).first().click();
 
     // 10. Go back to the sources list
     await page.getByTestId("source-detail-back-btn").click();

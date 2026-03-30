@@ -1,1 +1,1 @@
-npx playwright test read-explain.spec --headed
+npx playwright test read-grammar.spec --headed
