@@ -14,25 +14,14 @@ export class SessionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    console.log(
-      "[SessionGuard] Token extracted:",
-      token ? token.substring(0, 20) + "..." : "none",
-    );
 
     if (!token) {
       throw new UnauthorizedException("Session required");
     }
 
     const hash = SessionTokenService.hashToken(token);
-    console.log("[SessionGuard] Token hash:", hash);
 
     const session = await this.sessionRepo.getByTokenHash(hash);
-    console.log(
-      "[SessionGuard] Session found:",
-      !!session,
-      session?.revoked,
-      session?.expiresAt,
-    );
 
     if (!session || session.revoked || session.expiresAt < new Date()) {
       throw new UnauthorizedException("Invalid or expired session");

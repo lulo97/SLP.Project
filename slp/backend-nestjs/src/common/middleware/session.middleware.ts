@@ -27,13 +27,9 @@ export class SessionMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     const token = req.headers["x-session-token"] as string;
-    console.log(
-      `[SessionMiddleware] Token received: ${token ? token.substring(0, 20) + "..." : "none"}`,
-    );
 
     if (token) {
       const hash = SessionTokenService.hashToken(token);
-      console.log(`[SessionMiddleware] Computed token hash: ${hash}`);
 
       const session = await this.sessionRepository.findOne({
         where: { tokenHash: hash, revoked: false },
@@ -41,9 +37,6 @@ export class SessionMiddleware implements NestMiddleware {
       });
 
       if (session) {
-        console.log(
-          `[SessionMiddleware] Session found. ID: ${session.id}, revoked: ${session.revoked}, expiresAt: ${session.expiresAt}`,
-        );
         if (session.expiresAt > new Date()) {
           const user = session.user;
           if (!user) {
@@ -59,9 +52,6 @@ export class SessionMiddleware implements NestMiddleware {
             role: user.role,
             sessionId: session.id,
           };
-          console.log(
-            `[SessionMiddleware] User attached: ${user.username} (id: ${user.id})`,
-          );
         } else {
           this.logger.warn(
             `[SessionMiddleware] Session expired at ${session.expiresAt}, current time: ${new Date()}`,
@@ -73,7 +63,6 @@ export class SessionMiddleware implements NestMiddleware {
         );
       }
     } else {
-      console.log("[SessionMiddleware] No X-Session-Token header present");
     }
 
     next();
