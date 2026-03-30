@@ -145,7 +145,7 @@ public class HealthCheckService : IHealthCheckService
     private async Task<ServiceHealthDto> CheckMail()
     {
         var start = DateTime.UtcNow;
-        var baseUrl = _configuration["MailApi:BaseUrl"] ?? "http://mail:3000"; // adjust port
+        var baseUrl = _configuration["Email:BaseUrl"] ?? "http://mail:3000"; // adjust port
         var healthUrl = baseUrl.TrimEnd('/') + "/health";
         var httpClient = _httpClientFactory.CreateClient();
 
