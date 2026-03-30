@@ -21,5 +21,5 @@ public interface IAdminService
     Task<bool> RestoreCommentAsync(int adminId, int commentId);
 
     // Logs
-    Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(int count = 100, string? search = null);
+    Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(AdminLogFilterDto filter);
 }

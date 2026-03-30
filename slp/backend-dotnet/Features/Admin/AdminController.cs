@@ -99,11 +99,9 @@ public class AdminController : ControllerBase
 
     // Logs
     [HttpGet("logs")]
-    public async Task<IActionResult> GetLogs(
-    [FromQuery] int count = 100,
-    [FromQuery] string? search = null)
+    public async Task<IActionResult> GetLogs([FromQuery] AdminLogFilterDto filter)
     {
-        var logs = await _adminService.GetRecentLogsAsync(count, search);
+        var logs = await _adminService.GetRecentLogsAsync(filter);
         return Ok(logs);
     }
 }

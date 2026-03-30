@@ -187,9 +187,9 @@ public class AdminService : IAdminService
     }
 
     // --- Logs ---
-    public async Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(int count = 100, string? search = null)
+    public async Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(AdminLogFilterDto filter)
     {
-        var logs = await _logRepo.GetRecentAsync(count, search);
+        var logs = await _logRepo.GetRecentAsync(filter);
         return logs.Select(l => new AdminLogDto
         {
             Id = l.Id,

@@ -1,0 +1,4 @@
+create user A
+admin ban user A
+admin go to tab log of http://localhost:4000/admin
+admin search record 

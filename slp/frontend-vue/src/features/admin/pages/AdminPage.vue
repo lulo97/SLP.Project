@@ -434,13 +434,8 @@
           <span data-testid="admin-tab-logs">Logs</span>
         </template>
         <div data-testid="admin-logs-panel">
-          <a-input-search
-            v-model:value="logSearch"
-            placeholder="Search by admin, action, or target type..."
-            style="margin-bottom: 16px"
-            @search="handleLogSearch"
-            data-testid="admin-logs-search"
-          />
+          <!-- New filter component -->
+          <AdminLogFilters @apply="handleLogFilters" />
 
           <!-- Desktop table -->
           <div class="desktop-table">
@@ -464,6 +459,7 @@
               </template>
             </a-table>
           </div>
+
           <!-- Mobile cards -->
           <div class="mobile-cards">
             <a-card
@@ -476,10 +472,7 @@
                 <span class="field-label">ID:</span>
                 <span class="field-value">{{ log.id }}</span>
               </div>
-              <div class="field-row">
-                <span class="field-label">Admin:</span>
-                <span class="field-value">{{ log.adminName }}</span>
-              </div>
+              <!-- Admin field removed -->
               <div class="field-row">
                 <span class="field-label">Action:</span>
                 <span class="field-value"
@@ -500,7 +493,6 @@
                 <span class="field-label">Created:</span>
                 <span class="field-value">{{ log.createdAt }}</span>
               </div>
-              <!-- No actions for logs -->
             </a-card>
           </div>
         </div>
@@ -577,7 +569,8 @@ import {
 } from "ant-design-vue";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useAdminStore } from "../stores/adminStore";
-import AdminReports from "@/features/report/pages/AdminReports.vue"; // Import reports component
+import AdminReports from "@/features/report/pages/AdminReports.vue";
+import AdminLogFilters from "../components/AdminLogFilters.vue";
 
 const ATabs = Tabs;
 const ATabPane = TabPane;
@@ -612,6 +605,10 @@ const handleCommentSearch = () => {
 const handleLogSearch = () => {
   adminStore.fetchLogs(100, logSearch.value);
 };
+
+function handleLogFilters(filters: any) {
+  adminStore.fetchLogs(filters);
+}
 
 // Update the includeDeleted change to refresh comments with current search
 const handleIncludeDeletedChange = () => {
@@ -656,7 +653,7 @@ const commentColumns = [
 
 const logColumns = [
   { title: "ID", dataIndex: "id", key: "id", width: 60 },
-  { title: "Admin", dataIndex: "adminName", key: "adminName" },
+  // { title: "Admin", dataIndex: "adminName", key: "adminName" }, // REMOVED
   { title: "Action", key: "action" },
   { title: "Target Type", dataIndex: "targetType", key: "targetType" },
   { title: "Target ID", dataIndex: "targetId", key: "targetId" },
@@ -668,7 +665,7 @@ onMounted(() => {
   adminStore.fetchUsers();
   adminStore.fetchQuizzes();
   adminStore.fetchComments(false);
-  adminStore.fetchLogs();
+  adminStore.fetchLogs({});
 });
 </script>
 

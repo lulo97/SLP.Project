@@ -131,11 +131,18 @@ export const useAdminStore = defineStore("admin", {
       }
     },
 
-    async fetchLogs(count = 100, search?: string) {
+    async fetchLogs(params?: {
+      action?: string;
+      targetType?: string;
+      from?: string;
+      to?: string;
+      search?: string;
+      count?: number;
+    }) {
       this.loading.logs = true;
       try {
         const response = await apiClient.get<AdminLogDto[]>("/admin/logs", {
-          params: { count, search },
+          params,
         });
         this.logs = response.data;
       } catch (err: any) {
