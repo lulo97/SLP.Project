@@ -32,7 +32,11 @@ export class AdminLogRepository {
     });
   }
 
-  async getRecentWithFilter(filter: AdminLogFilterDto): Promise<AdminLog[]> {
+  async getRecentWithFilterPaginated(
+    filter: AdminLogFilterDto,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: AdminLog[]; total: number }> {
     const query = this.repo
       .createQueryBuilder("log")
       .leftJoinAndSelect("log.admin", "admin");
@@ -55,7 +59,6 @@ export class AdminLogRepository {
       });
     }
 
-    // Apply search if provided
     if (filter.search) {
       const searchTerm = `%${filter.search.toLowerCase()}%`;
       query.andWhere(
@@ -70,9 +73,14 @@ export class AdminLogRepository {
       );
     }
 
-    return query
+    const total = await query.getCount();
+
+    const items = await query
       .orderBy("log.createdAt", "DESC")
-      .take(filter.count ?? 100)
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
       .getMany();
+
+    return { items, total };
   }
 }

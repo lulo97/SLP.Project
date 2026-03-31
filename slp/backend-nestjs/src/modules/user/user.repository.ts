@@ -13,7 +13,11 @@ export interface IUserRepository {
   update(user: User): Promise<void>;
   create(user: User): Promise<void>;
   delete(user: User): Promise<void>;
-  getAllWithSearch(search?: string): Promise<User[]>;
+  getAllWithSearchPaginated(
+    search?: string,
+    page?: number,
+    pageSize?: number,
+  ): Promise<{ items: User[]; total: number }>;
   getUserStats(userId: number): Promise<UserStatsDto>;
 }
 
@@ -56,17 +60,29 @@ export class UserRepository implements IUserRepository {
     await this.repo.remove(user);
   }
 
-  async getAllWithSearch(search?: string): Promise<User[]> {
+  async getAllWithSearchPaginated(
+    search?: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: User[]; total: number }> {
     const query = this.repo.createQueryBuilder("user");
+
     if (search) {
       query.where(
         "LOWER(user.username) LIKE :search OR LOWER(user.email) LIKE :search",
-        {
-          search: `%${search.toLowerCase()}%`,
-        },
+        { search: `%${search.toLowerCase()}%` },
       );
     }
-    return query.orderBy("user.id", "ASC").getMany();
+
+    const total = await query.getCount();
+
+    const items = await query
+      .orderBy("user.id", "ASC")
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+
+    return { items, total };
   }
 
   async getUserStats(userId: number): Promise<UserStatsDto> {

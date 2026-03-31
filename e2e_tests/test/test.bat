@@ -1,1 +1,1 @@
-npx playwright test admin_log.spec --headed
+npx playwright test disable_enable_quiz.spec --headed

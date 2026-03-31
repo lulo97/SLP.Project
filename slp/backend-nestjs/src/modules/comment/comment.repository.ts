@@ -10,10 +10,12 @@ export class CommentRepository {
     private readonly repo: Repository<Comment>,
   ) {}
 
-  async findAllWithUser(
-    includeDeleted: boolean = false,
+  async findAllWithUserPaginated(
+    includeDeleted = false,
     search?: string,
-  ): Promise<Comment[]> {
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: Comment[]; total: number }> {
     const query = this.repo
       .createQueryBuilder("comment")
       .leftJoinAndSelect("comment.user", "user")
@@ -30,7 +32,14 @@ export class CommentRepository {
       );
     }
 
-    return query.getMany();
+    const total = await query.getCount();
+
+    const items = await query
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+
+    return { items, total };
   }
 
   async softDelete(id: number): Promise<boolean> {

@@ -19,6 +19,7 @@ import { QuizAdminDto } from "./dto/quiz-admin.dto";
 import { CommentAdminDto } from "./dto/comment-admin.dto";
 import { AdminLogDto } from "./dto/admin-log.dto";
 import { AdminLogFilterDto } from "./dto/admin-log-filter.dto";
+import { PaginatedResult } from "../../helpers/pagination.helper";
 
 @Controller("api/admin")
 @UseGuards(SessionGuard, RolesGuard)
@@ -28,8 +29,14 @@ export class AdminController {
 
   // Users
   @Get("users")
-  async getUsers(@Query("search") search?: string): Promise<UserDto[]> {
-    return this.adminService.getAllUsers(search);
+  async getUsers(
+    @Query("search") search?: string,
+    @Query("page") page = 1,
+    @Query("pageSize") pageSize = 20,
+  ): Promise<PaginatedResult<UserDto>> {
+    page = page < 1 ? 1 : page;
+    pageSize = pageSize < 1 ? 20 : pageSize > 100 ? 100 : pageSize;
+    return this.adminService.getAllUsers(search, page, pageSize);
   }
 
   @Post("users/:id/ban")
@@ -46,8 +53,14 @@ export class AdminController {
 
   // Quizzes
   @Get("quizzes")
-  async getQuizzes(@Query("search") search?: string): Promise<QuizAdminDto[]> {
-    return this.adminService.getAllQuizzes(search);
+  async getQuizzes(
+    @Query("search") search?: string,
+    @Query("page") page = 1,
+    @Query("pageSize") pageSize = 20,
+  ): Promise<PaginatedResult<QuizAdminDto>> {
+    page = page < 1 ? 1 : page;
+    pageSize = pageSize < 1 ? 20 : pageSize > 100 ? 100 : pageSize;
+    return this.adminService.getAllQuizzes(search, page, pageSize);
   }
 
   @Post("quizzes/:id/disable")
@@ -65,10 +78,19 @@ export class AdminController {
   // Comments
   @Get("comments")
   async getComments(
-    @Query("includeDeleted") includeDeleted: string = "false",
+    @Query("includeDeleted") includeDeleted = "false",
     @Query("search") search?: string,
-  ): Promise<CommentAdminDto[]> {
-    return this.adminService.getAllComments(includeDeleted === "true", search);
+    @Query("page") page = 1,
+    @Query("pageSize") pageSize = 20,
+  ): Promise<PaginatedResult<CommentAdminDto>> {
+    page = page < 1 ? 1 : page;
+    pageSize = pageSize < 1 ? 20 : pageSize > 100 ? 100 : pageSize;
+    return this.adminService.getAllComments(
+      includeDeleted === "true",
+      search,
+      page,
+      pageSize,
+    );
   }
 
   @Delete("comments/:id")
@@ -85,8 +107,13 @@ export class AdminController {
 
   // Logs
   @Get("logs")
-  async getLogs(@Query() filter: AdminLogFilterDto): Promise<AdminLogDto[]> {
-    if (!filter.count) filter.count = 100;
-    return this.adminService.getRecentLogs(filter);
+  async getLogs(
+    @Query() filter: AdminLogFilterDto,
+    @Query("page") page = 1,
+    @Query("pageSize") pageSize = 20,
+  ): Promise<PaginatedResult<AdminLogDto>> {
+    page = page < 1 ? 1 : page;
+    pageSize = pageSize < 1 ? 20 : pageSize > 100 ? 100 : pageSize;
+    return this.adminService.getRecentLogs(filter, page, pageSize);
   }
 }

@@ -296,20 +296,32 @@ export class QuizRepository {
   }
 
   // ---------- Admin ----------
-  async getAllForAdmin(search?: string): Promise<Quiz[]> {
-  const query = this.quizRepo
-    .createQueryBuilder('quiz')
-    .leftJoinAndSelect('quiz.user', 'user');
+  async getAllForAdminPaginated(
+    search?: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: Quiz[]; total: number }> {
+    const query = this.quizRepo
+      .createQueryBuilder("quiz")
+      .leftJoinAndSelect("quiz.user", "user");
 
-  if (search) {
-    query.where(
-      '(LOWER(quiz.title) LIKE :search OR LOWER(user.username) LIKE :search)',
-      { search: `%${search.toLowerCase()}%` }
-    );
+    if (search) {
+      query.where(
+        "(LOWER(quiz.title) LIKE :search OR LOWER(user.username) LIKE :search)",
+        { search: `%${search.toLowerCase()}%` },
+      );
+    }
+
+    const total = await query.getCount();
+
+    const items = await query
+      .orderBy("quiz.createdAt", "DESC")
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+
+    return { items, total };
   }
-
-  return query.orderBy('quiz.createdAt', 'DESC').getMany();
-}
 
   async getTopQuizzesByAttempts(limit: number): Promise<TopQuizDto[]> {
     // Note: This would require joining with QuizAttempts. Adjust according to your attempts entity.

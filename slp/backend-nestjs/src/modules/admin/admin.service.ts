@@ -13,6 +13,7 @@ import { AdminLogDto } from "./dto/admin-log.dto";
 import { SessionRepository } from "../session/session.repository";
 import { CommentRepository } from "../comment/comment.repository";
 import { AdminLogFilterDto } from "./dto/admin-log-filter.dto";
+import { paginate, PaginatedResult } from "../../helpers/pagination.helper";
 
 @Injectable()
 export class AdminService {
@@ -25,34 +26,60 @@ export class AdminService {
   ) {}
 
   // Users
-  async getAllUsers(search?: string): Promise<UserDto[]> {
-    const users = await this.userRepo.getAllWithSearch(search);
-    return users.map((u) => ({
-      id: u.id,
-      username: u.username,
-      email: u.email,
-      emailConfirmed: u.emailConfirmed,
-      role: u.role,
-      status: u.status,
-      createdAt: u.createdAt,
-    }));
+  async getAllUsers(
+    search?: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedResult<UserDto>> {
+    const { items, total } = await this.userRepo.getAllWithSearchPaginated(
+      search,
+      page,
+      pageSize,
+    );
+    return paginate(
+      items.map((u) => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        emailConfirmed: u.emailConfirmed,
+        role: u.role,
+        status: u.status,
+        createdAt: u.createdAt,
+      })),
+      total,
+      page,
+      pageSize,
+    );
   }
 
-  async getAllQuizzes(search?: string): Promise<QuizAdminDto[]> {
-    const quizzes = await this.quizRepo.getAllForAdmin(search);
-    return quizzes.map((q) => ({
-      id: q.id,
-      title: q.title,
-      userId: q.userId,
-      username: q.user?.username || "deleted",
-      visibility: q.visibility,
-      disabled: q.disabled,
-      createdAt: q.createdAt,
-    }));
+  async getAllQuizzes(
+    search?: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedResult<QuizAdminDto>> {
+    const { items, total } = await this.quizRepo.getAllForAdminPaginated(
+      search,
+      page,
+      pageSize,
+    );
+    return paginate(
+      items.map((q) => ({
+        id: q.id,
+        title: q.title,
+        userId: q.userId,
+        username: q.user?.username || "deleted",
+        visibility: q.visibility,
+        disabled: q.disabled,
+        createdAt: q.createdAt,
+      })),
+      total,
+      page,
+      pageSize,
+    );
   }
 
   async disableQuiz(adminId: number, quizId: number): Promise<void> {
-    const quiz = await this.quizRepo.getById(quizId, true); // changed from findById()
+    const quiz = await this.quizRepo.getById(quizId, true);
     if (!quiz) throw new NotFoundException("Quiz not found");
 
     quiz.disabled = true;
@@ -82,7 +109,7 @@ export class AdminService {
   }
 
   async banUser(adminId: number, userId: number): Promise<void> {
-    const user = await this.userRepo.getById(userId); // changed from findById()
+    const user = await this.userRepo.getById(userId);
     if (!user) throw new NotFoundException("User not found");
     if (user.role === "admin")
       throw new BadRequestException("Cannot ban an admin");
@@ -90,7 +117,6 @@ export class AdminService {
     user.status = "banned";
     await this.userRepo.update(user);
 
-    // Revoke all sessions
     await this.sessionRepo.revokeAllForUser(userId);
 
     await this.logRepo.log({
@@ -117,23 +143,32 @@ export class AdminService {
   }
 
   async getAllComments(
-    includeDeleted: boolean = false,
+    includeDeleted = false,
     search?: string,
-  ): Promise<CommentAdminDto[]> {
-    const comments = await this.commentRepo.findAllWithUser(
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedResult<CommentAdminDto>> {
+    const { items, total } = await this.commentRepo.findAllWithUserPaginated(
       includeDeleted,
       search,
+      page,
+      pageSize,
     );
-    return comments.map((c) => ({
-      id: c.id,
-      userId: c.userId,
-      username: c.user?.username || "deleted",
-      content: c.content,
-      targetType: c.targetType,
-      targetId: c.targetId,
-      createdAt: c.createdAt,
-      deletedAt: c.deletedAt ?? undefined,
-    }));
+    return paginate(
+      items.map((c) => ({
+        id: c.id,
+        userId: c.userId,
+        username: c.user?.username || "deleted",
+        content: c.content,
+        targetType: c.targetType,
+        targetId: c.targetId,
+        createdAt: c.createdAt,
+        deletedAt: c.deletedAt ?? undefined,
+      })),
+      total,
+      page,
+      pageSize,
+    );
   }
 
   async deleteComment(adminId: number, commentId: number): Promise<void> {
@@ -161,17 +196,30 @@ export class AdminService {
   }
 
   // Logs
-  async getRecentLogs(filter: AdminLogFilterDto): Promise<AdminLogDto[]> {
-    const logs = await this.logRepo.getRecentWithFilter(filter);
-    return logs.map((l) => ({
-      id: l.id,
-      adminId: l.adminId,
-      adminName: l.admin?.username || "unknown",
-      action: l.action,
-      targetType: l.targetType ?? undefined,
-      targetId: l.targetId ?? undefined,
-      details: l.details,
-      createdAt: l.createdAt,
-    }));
+  async getRecentLogs(
+    filter: AdminLogFilterDto,
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedResult<AdminLogDto>> {
+    const { items, total } = await this.logRepo.getRecentWithFilterPaginated(
+      filter,
+      page,
+      pageSize,
+    );
+    return paginate(
+      items.map((l) => ({
+        id: l.id,
+        adminId: l.adminId,
+        adminName: l.admin?.username || "unknown",
+        action: l.action,
+        targetType: l.targetType ?? undefined,
+        targetId: l.targetId ?? undefined,
+        details: l.details,
+        createdAt: l.createdAt,
+      })),
+      total,
+      page,
+      pageSize,
+    );
   }
 }
