@@ -186,7 +186,7 @@ const handlePageChange = (page: number) => {
   fetchReports();
 };
 
-const handleSizeChange = (current: number, size: number) => {
+const handleSizeChange = (_current: number, size: number) => {
   pageSize.value = size;
   currentPage.value = 1;
   fetchReports();
