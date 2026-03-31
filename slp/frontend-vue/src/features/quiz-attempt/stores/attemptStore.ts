@@ -81,7 +81,7 @@ export const useAttemptStore = defineStore("attempt", {
         this.currentAttempt = data;
         return data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to start attempt";
+        this.error = err.response?.data?.message || "Failed to start attempt";
         throw err;
       } finally {
         this.loading = false;
@@ -108,7 +108,7 @@ export const useAttemptStore = defineStore("attempt", {
         this.attemptDetails = data;
         return data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch attempt";
+        this.error = err.response?.data?.message || "Failed to fetch attempt";
         throw err;
       } finally {
         this.loading = false;
@@ -125,7 +125,7 @@ export const useAttemptStore = defineStore("attempt", {
         this.attemptReview = response.data;
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch review";
+        this.error = err.response?.data?.message || "Failed to fetch review";
         throw err;
       } finally {
         this.loading = false;
@@ -157,7 +157,7 @@ export const useAttemptStore = defineStore("attempt", {
         );
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to submit attempt";
+        this.error = err.response?.data?.message || "Failed to submit attempt";
         throw err;
       } finally {
         this.loading = false;
@@ -174,7 +174,7 @@ export const useAttemptStore = defineStore("attempt", {
         this.userAttempts = response.data;
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch attempts";
+        this.error = err.response?.data?.message || "Failed to fetch attempts";
         throw err;
       } finally {
         this.loading = false;

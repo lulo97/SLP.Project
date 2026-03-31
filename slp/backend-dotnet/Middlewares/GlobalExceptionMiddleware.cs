@@ -35,13 +35,13 @@ public class GlobalExceptionMiddleware
 
         var response = new ErrorResponse
         {
-            Error = "An internal server error occurred. Please try again later."
+            Message = "An internal server error occurred. Please try again later."
         };
 
         // Optionally include more details in development environment
         if (context.RequestServices.GetService<IWebHostEnvironment>()?.IsDevelopment() == true)
         {
-            response.Error = exception.Message;
+            response.Message = exception.Message;
         }
 
         var json = JsonSerializer.Serialize(response);
@@ -51,6 +51,6 @@ public class GlobalExceptionMiddleware
 
 public class ErrorResponse
 {
-    [JsonPropertyName("error")]
-    public string Error { get; set; } = string.Empty;
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
 }

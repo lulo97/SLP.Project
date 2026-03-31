@@ -97,7 +97,7 @@ export const useQuizStore = defineStore("quiz", {
         this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error =
-          err.response?.data?.error || "Failed to fetch your quizzes";
+          err.response?.data?.message || "Failed to fetch your quizzes";
       } finally {
         this.loading = false;
       }
@@ -122,7 +122,7 @@ export const useQuizStore = defineStore("quiz", {
         this.currentPage = response.data.page ?? page;
       } catch (err: any) {
         this.error =
-          err.response?.data?.error || "Failed to fetch public quizzes";
+          err.response?.data?.message || "Failed to fetch public quizzes";
       } finally {
         this.loading = false;
       }
@@ -141,7 +141,7 @@ export const useQuizStore = defineStore("quiz", {
         this.total = response.data.total ?? 0;
         this.currentPage = response.data.page ?? page;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Search failed";
+        this.error = err.response?.data?.message || "Search failed";
       } finally {
         this.loading = false;
       }
@@ -154,7 +154,7 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.get<QuizDto>(`/quiz/${id}`);
         this.currentQuiz = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch quiz";
+        this.error = err.response?.data?.message || "Failed to fetch quiz";
       } finally {
         this.loading = false;
       }
@@ -167,7 +167,7 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.post<QuizDto>("/quiz", payload);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to create quiz";
+        this.error = err.response?.data?.message || "Failed to create quiz";
         return null;
       } finally {
         this.loading = false;
@@ -181,7 +181,7 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.put<QuizDto>(`/quiz/${id}`, payload);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to update quiz";
+        this.error = err.response?.data?.message || "Failed to update quiz";
         return null;
       } finally {
         this.loading = false;
@@ -195,7 +195,7 @@ export const useQuizStore = defineStore("quiz", {
         await apiClient.delete(`/quiz/${id}`);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to delete quiz";
+        this.error = err.response?.data?.message || "Failed to delete quiz";
         return false;
       } finally {
         this.loading = false;
@@ -209,7 +209,7 @@ export const useQuizStore = defineStore("quiz", {
         const response = await apiClient.post<QuizDto>(`/quiz/${id}/duplicate`);
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to duplicate quiz";
+        this.error = err.response?.data?.message || "Failed to duplicate quiz";
         return null;
       } finally {
         this.loading = false;
@@ -227,7 +227,7 @@ export const useQuizStore = defineStore("quiz", {
         return response.data;
       } catch (err: any) {
         this.error =
-          err.response?.data?.error || "Failed to fetch quiz questions";
+          err.response?.data?.message || "Failed to fetch quiz questions";
         return [];
       } finally {
         this.loading = false;
@@ -249,7 +249,7 @@ export const useQuizStore = defineStore("quiz", {
         });
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to create question";
+        this.error = err.response?.data?.message || "Failed to create question";
         throw err;
       }
     },
@@ -267,7 +267,7 @@ export const useQuizStore = defineStore("quiz", {
         });
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to update question";
+        this.error = err.response?.data?.message || "Failed to update question";
         throw err;
       }
     },
@@ -278,7 +278,7 @@ export const useQuizStore = defineStore("quiz", {
         await apiClient.delete(`/quiz/questions/${questionId}`);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to delete question";
+        this.error = err.response?.data?.message || "Failed to delete question";
         return false;
       }
     },
@@ -294,7 +294,7 @@ export const useQuizStore = defineStore("quiz", {
         );
         this.notes = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch notes";
+        this.error = err.response?.data?.message || "Failed to fetch notes";
       } finally {
         this.notesLoading = false;
       }
@@ -315,7 +315,7 @@ export const useQuizStore = defineStore("quiz", {
         this.notes = [...this.notes, response.data];
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to add note";
+        this.error = err.response?.data?.message || "Failed to add note";
         throw err;
       } finally {
         this.noteSaving = false;
@@ -335,7 +335,7 @@ export const useQuizStore = defineStore("quiz", {
         }
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to update note";
+        this.error = err.response?.data?.message || "Failed to update note";
         throw err;
       } finally {
         this.noteSaving = false;
@@ -351,7 +351,7 @@ export const useQuizStore = defineStore("quiz", {
         this.notes = this.notes.filter((n) => n.id !== noteId);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to remove note";
+        this.error = err.response?.data?.message || "Failed to remove note";
         return false;
       } finally {
         this.noteSaving = false;
@@ -369,7 +369,7 @@ export const useQuizStore = defineStore("quiz", {
         );
         this.sources = response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch sources";
+        this.error = err.response?.data?.message || "Failed to fetch sources";
       } finally {
         this.sourcesLoading = false;
       }
@@ -387,7 +387,7 @@ export const useQuizStore = defineStore("quiz", {
         this.sources = [...this.sources, response.data];
         return response.data;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to attach source";
+        this.error = err.response?.data?.message || "Failed to attach source";
         throw err;
       } finally {
         this.sourceSaving = false;
@@ -403,7 +403,7 @@ export const useQuizStore = defineStore("quiz", {
         this.sources = this.sources.filter((s) => s.id !== sourceId);
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to detach source";
+        this.error = err.response?.data?.message || "Failed to detach source";
         return false;
       } finally {
         this.sourceSaving = false;

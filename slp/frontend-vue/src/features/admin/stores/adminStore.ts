@@ -36,7 +36,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("User banned successfully");
         await this.fetchUsers(); // refresh list
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Ban failed");
+        message.error(err.response?.data?.message || "Ban failed");
       }
     },
 
@@ -46,7 +46,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("User unbanned successfully");
         await this.fetchUsers();
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Unban failed");
+        message.error(err.response?.data?.message || "Unban failed");
       }
     },
 
@@ -56,7 +56,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("Quiz disabled");
         await this.fetchQuizzes();
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Disable failed");
+        message.error(err.response?.data?.message || "Disable failed");
       }
     },
 
@@ -66,7 +66,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("Quiz enabled");
         await this.fetchQuizzes();
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Enable failed");
+        message.error(err.response?.data?.message || "Enable failed");
       }
     },
 
@@ -76,7 +76,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("Comment deleted");
         await this.fetchComments(true);
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Delete failed");
+        message.error(err.response?.data?.message || "Delete failed");
       }
     },
 
@@ -86,7 +86,7 @@ export const useAdminStore = defineStore("admin", {
         message.success("Comment restored");
         await this.fetchComments(true);
       } catch (err: any) {
-        message.error(err.response?.data?.error || "Restore failed");
+        message.error(err.response?.data?.message || "Restore failed");
       }
     },
 
@@ -104,7 +104,7 @@ export const useAdminStore = defineStore("admin", {
           total: response.data.total,
         };
       } catch (err: any) {
-        this.error = err.response?.data?.error || "Failed to fetch users";
+        this.error = err.response?.data?.message || "Failed to fetch users";
         message.error(this.error);
       } finally {
         this.loading.users = false;

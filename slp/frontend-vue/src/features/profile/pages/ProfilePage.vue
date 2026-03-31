@@ -278,7 +278,7 @@ async function handleFileSelected(event: Event) {
     message.success("Avatar updated!");
   } catch (err: any) {
     const detail =
-      err.response?.data?.error ?? "Upload failed. Please try again.";
+      err.response?.data?.message ?? "Upload failed. Please try again.";
     message.error(detail);
   } finally {
     avatarUploading.value = false;

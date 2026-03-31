@@ -107,7 +107,7 @@ export const useSearchStore = defineStore('search', {
         this.lastQuery = q;
         this.lastType = this.activeType;
       } catch (err: any) {
-        this.error = err.response?.data?.error || 'Search failed. Please try again.';
+        this.error = err.response?.data?.message || 'Search failed. Please try again.';
         this.results = [];
         this.totalCount = 0;
         this.totalPages = 0;

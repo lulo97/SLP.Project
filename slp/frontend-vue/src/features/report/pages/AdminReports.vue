@@ -203,7 +203,7 @@ const handleResolve = async (reportId: number) => {
     message.success("Report resolved");
     await fetchReports(); // Refresh current page
   } catch (err: any) {
-    message.error(err.response?.data?.error || "Failed to resolve report");
+    message.error(err.response?.data?.message || "Failed to resolve report");
   } finally {
     resolvingIds.value = resolvingIds.value.filter((id) => id !== reportId);
   }
@@ -215,7 +215,7 @@ const handleDeleteComment = async (report: ReportDto) => {
     message.success("Comment deleted");
     await fetchReports(); // Refresh current page
   } catch (err: any) {
-    message.error(err.response?.data?.error || "Failed to delete comment");
+    message.error(err.response?.data?.message || "Failed to delete comment");
   }
 };
 
@@ -225,7 +225,7 @@ const handleDisableQuiz = async (report: ReportDto) => {
     message.success("Quiz disabled");
     await fetchReports(); // Refresh current page
   } catch (err: any) {
-    message.error(err.response?.data?.error || "Failed to disable quiz");
+    message.error(err.response?.data?.message || "Failed to disable quiz");
   }
 };
 
