@@ -6,9 +6,10 @@ import { DbWordOfTheDayProvider } from "./providers/db-word-of-the-day.provider"
 import { QuizModule } from "../quiz/quiz.module";
 import { UserModule } from "../user/user.module";
 import { DailyWord } from "./daily-word.entity";
+import { SessionModule } from "../session/session.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DailyWord]), QuizModule, UserModule],
+  imports: [TypeOrmModule.forFeature([DailyWord]), QuizModule, UserModule, SessionModule],
   controllers: [DashboardController],
   providers: [
     DashboardService,
