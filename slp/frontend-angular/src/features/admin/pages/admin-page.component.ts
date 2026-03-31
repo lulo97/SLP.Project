@@ -34,8 +34,8 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
     <div>
       <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="admin-tabs">
         <!-- Users Tab -->
-        <nz-tab>
-          <ng-template #nzTabHeading>
+        <nz-tab [nzTitle]="tabUsers">
+          <ng-template #tabUsers>
             <span data-testid="admin-tab-users">Users</span>
           </ng-template>
           <div data-testid="admin-users-panel">
@@ -127,8 +127,8 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Quizzes Tab -->
-        <nz-tab>
-          <ng-template #nzTabHeading>
+        <nz-tab [nzTitle]="tabQuizzes">
+          <ng-template #tabQuizzes>
             <span data-testid="admin-tab-quizzes">Quizzes</span>
           </ng-template>
           <div data-testid="admin-quizzes-panel">
@@ -211,8 +211,8 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Comments Tab -->
-        <nz-tab>
-          <ng-template #nzTabHeading>
+        <nz-tab [nzTitle]="tabComments">
+          <ng-template #tabComments>
             <span data-testid="admin-tab-comments">Comments</span>
           </ng-template>
           <div data-testid="admin-comments-panel">
@@ -307,8 +307,8 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Logs Tab -->
-        <nz-tab>
-          <ng-template #nzTabHeading>
+        <nz-tab [nzTitle]="tabLogs">
+          <ng-template #tabLogs>
             <span data-testid="admin-tab-logs">Logs</span>
           </ng-template>
           <div data-testid="admin-logs-panel">
@@ -348,8 +348,8 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
         </nz-tab>
 
         <!-- Reports Tab -->
-        <nz-tab>
-          <ng-template #nzTabHeading>
+        <nz-tab [nzTitle]="tabReports">
+          <ng-template #tabReports>
             <span data-testid="admin-tab-reports">Reports</span>
           </ng-template>
           <div data-testid="admin-reports-panel">

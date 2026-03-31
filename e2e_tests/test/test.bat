@@ -1,1 +1,1 @@
-npx playwright test admin_metrics.spec --headed
+npx playwright test admin_log.spec --headed

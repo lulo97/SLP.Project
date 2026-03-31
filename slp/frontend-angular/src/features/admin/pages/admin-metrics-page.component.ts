@@ -27,14 +27,15 @@ import { NzIconModule } from "ng-zorro-antd/icon";
     NzIconModule,
   ],
   template: `
-    <div data-testid="metrics-layout">
-      <div data-testid="metrics-container" class="space-y-4">
+    <div data-testid="metrics-layout" class="p-4 bg-gray-50 min-h-screen">
+      <div data-testid="metrics-container" class="max-w-7xl mx-auto space-y-6">
         <nz-card
           data-testid="metrics-time-range-card"
           [nzBodyStyle]="{ padding: '12px 16px' }"
+          class="shadow-sm border-gray-200"
         >
-          <div class="controls-row">
-            <div class="preset-buttons" data-testid="metrics-preset-group">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex gap-1 shrink-0" data-testid="metrics-preset-group">
               <button
                 nz-button
                 *ngFor="let preset of PRESETS"
@@ -43,23 +44,24 @@ import { NzIconModule } from "ng-zorro-antd/icon";
                   activePreset() === preset.label ? 'primary' : 'default'
                 "
                 nzSize="small"
-                [attr.data-testid]="
-                  'preset-' + preset.label.toLowerCase().replace(/ /g, '-')
-                "
+                [attr.data-testid]="'preset-' + slugify(preset.label)"
+                class="rounded"
               >
                 {{ preset.label }}
               </button>
             </div>
+
             <nz-range-picker
               [(ngModel)]="pickerRange"
               [nzShowTime]="true"
               nzFormat="yyyy-MM-dd HH:mm"
               nzSize="small"
-              class="range-picker"
+              class="flex-1 min-w-[280px]"
               (ngModelChange)="onRangeChange()"
               data-testid="metrics-range-picker"
             >
             </nz-range-picker>
+
             <button
               nz-button
               nzType="primary"
@@ -67,209 +69,162 @@ import { NzIconModule } from "ng-zorro-antd/icon";
               data-testid="metrics-refresh-button"
               (click)="loadAll()"
               [nzLoading]="anyLoading()"
+              class="flex items-center gap-1"
             >
               <i nz-icon nzType="sync"></i> Refresh
             </button>
           </div>
         </nz-card>
 
-        <div class="stats-grid" data-testid="metrics-stats-grid">
+        <div
+          class="grid grid-cols-2 md:grid-cols-4 gap-4"
+          data-testid="metrics-stats-grid"
+        >
           <nz-card
             *ngFor="let stat of summaryStats()"
-            [attr.data-testid]="
-              'stat-card-' + stat.label.toLowerCase().replace(/ /g, '-')
-            "
+            [attr.data-testid]="'stat-card-' + slugify(stat.label)"
             [nzBodyStyle]="{ padding: '16px' }"
+            class="shadow-sm border-gray-100"
           >
-            <div class="stat-inner">
-              <div class="stat-icon" [style.background]="stat.bg">
+            <div class="flex items-start gap-3">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                [style.background]="stat.bg"
+              >
                 <i
                   nz-icon
                   [nzType]="stat.icon"
                   nzTheme="outline"
                   [style.color]="stat.color"
-                  style="font-size:20px"
+                  class="text-xl"
                 ></i>
               </div>
-              <div class="stat-body">
+              <div class="min-w-0">
                 <p
-                  class="stat-label"
-                  [attr.data-testid]="
-                    'stat-label-' + stat.label.toLowerCase().replace(/ /g, '-')
-                  "
+                  class="text-xs text-gray-500 mb-0.5"
+                  [attr.data-testid]="'stat-label-' + slugify(stat.label)"
                 >
                   {{ stat.label }}
                 </p>
                 <p
-                  class="stat-value"
+                  class="text-2xl font-bold leading-tight mb-0.5"
                   [style.color]="stat.color"
-                  [attr.data-testid]="
-                    'stat-value-' + stat.label.toLowerCase().replace(/ /g, '-')
-                  "
+                  [attr.data-testid]="'stat-value-' + slugify(stat.label)"
                 >
                   {{ stat.value }}
                 </p>
-                <p class="stat-sub" *ngIf="stat.sub">{{ stat.sub }}</p>
+                <p class="text-[11px] text-gray-400 truncate" *ngIf="stat.sub">
+                  {{ stat.sub }}
+                </p>
               </div>
             </div>
           </nz-card>
         </div>
 
-        <nz-card data-testid="chart-card-requests" title="Requests / min">
-          <div
-            *ngIf="metricsService.loading().requests"
-            class="chart-placeholder"
+        <div class="grid grid-cols-1 gap-6">
+          <nz-card
+            data-testid="chart-card-requests"
+            title="Requests / min"
+            class="shadow-sm"
           >
-            <nz-spin></nz-spin>
-          </div>
-          <div
-            *ngIf="
-              !metricsService.loading().requests &&
-              metricsService.requests().length === 0
-            "
-            class="chart-empty"
-          >
-            No data for this period
-          </div>
-          <canvas
-            baseChart
-            *ngIf="metricsService.requests().length > 0"
-            [data]="requestsChartData()"
-            [options]="areaOptions('#4f88ff')"
-            [type]="'line'"
-          >
-          </canvas>
-        </nz-card>
+            <div
+              *ngIf="metricsService.loading().requests"
+              class="h-[200px] flex items-center justify-center"
+            >
+              <nz-spin></nz-spin>
+            </div>
+            <div
+              *ngIf="
+                !metricsService.loading().requests &&
+                metricsService.requests().length === 0
+              "
+              class="h-[200px] flex items-center justify-center text-gray-400"
+            >
+              No data for this period
+            </div>
+            <div
+              class="h-[200px] w-full"
+              *ngIf="metricsService.requests().length > 0"
+            >
+              <canvas
+                baseChart
+                [data]="requestsChartData()"
+                [options]="areaOptions('#4f88ff')"
+                [type]="'line'"
+              ></canvas>
+            </div>
+          </nz-card>
 
-        <nz-card data-testid="chart-card-errors" title="Errors / min">
-          <div
-            *ngIf="metricsService.loading().errors"
-            class="chart-placeholder"
+          <nz-card
+            data-testid="chart-card-errors"
+            title="Errors / min"
+            class="shadow-sm"
           >
-            <nz-spin></nz-spin>
-          </div>
-          <div
-            *ngIf="
-              !metricsService.loading().errors &&
-              metricsService.errors().length === 0
-            "
-            class="chart-empty"
-          >
-            No data for this period
-          </div>
-          <canvas
-            baseChart
-            *ngIf="metricsService.errors().length > 0"
-            [data]="errorsChartData()"
-            [options]="areaOptions('#ff4d4f')"
-            [type]="'line'"
-          >
-          </canvas>
-        </nz-card>
+            <div
+              *ngIf="metricsService.loading().errors"
+              class="h-[200px] flex items-center justify-center"
+            >
+              <nz-spin></nz-spin>
+            </div>
+            <div
+              *ngIf="
+                !metricsService.loading().errors &&
+                metricsService.errors().length === 0
+              "
+              class="h-[200px] flex items-center justify-center text-gray-400"
+            >
+              No data for this period
+            </div>
+            <div
+              class="h-[200px] w-full"
+              *ngIf="metricsService.errors().length > 0"
+            >
+              <canvas
+                baseChart
+                [data]="errorsChartData()"
+                [options]="areaOptions('#ff4d4f')"
+                [type]="'line'"
+              ></canvas>
+            </div>
+          </nz-card>
 
-        <nz-card data-testid="chart-card-latency" title="Latency (ms)">
-          <div
-            *ngIf="metricsService.loading().latency"
-            class="chart-placeholder"
+          <nz-card
+            data-testid="chart-card-latency"
+            title="Latency (ms)"
+            class="shadow-sm"
           >
-            <nz-spin></nz-spin>
-          </div>
-          <div
-            *ngIf="
-              !metricsService.loading().latency &&
-              metricsService.latency().length === 0
-            "
-            class="chart-empty"
-          >
-            No data for this period
-          </div>
-          <canvas
-            baseChart
-            *ngIf="metricsService.latency().length > 0"
-            [data]="latencyChartData()"
-            [options]="latencyOptions"
-            [type]="'line'"
-          >
-          </canvas>
-        </nz-card>
+            <div
+              *ngIf="metricsService.loading().latency"
+              class="h-[200px] flex items-center justify-center"
+            >
+              <nz-spin></nz-spin>
+            </div>
+            <div
+              *ngIf="
+                !metricsService.loading().latency &&
+                metricsService.latency().length === 0
+              "
+              class="h-[200px] flex items-center justify-center text-gray-400"
+            >
+              No data for this period
+            </div>
+            <div
+              class="h-[200px] w-full"
+              *ngIf="metricsService.latency().length > 0"
+            >
+              <canvas
+                baseChart
+                [data]="latencyChartData()"
+                [options]="latencyOptions"
+                [type]="'line'"
+              ></canvas>
+            </div>
+          </nz-card>
+        </div>
       </div>
     </div>
   `,
-  styles: [
-    `
-      .controls-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .preset-buttons {
-        display: flex;
-        gap: 4px;
-        flex-shrink: 0;
-      }
-      .range-picker {
-        flex: 1;
-        min-width: 240px;
-      }
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-      @media (min-width: 768px) {
-        .stats-grid {
-          grid-template-columns: repeat(4, 1fr);
-        }
-      }
-      .stat-inner {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      .stat-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .stat-body {
-        min-width: 0;
-      }
-      .stat-label {
-        font-size: 12px;
-        color: #8c8c8c;
-        margin: 0 0 2px;
-      }
-      .stat-value {
-        font-size: 22px;
-        font-weight: 700;
-        line-height: 1.2;
-        margin: 0 0 2px;
-      }
-      .stat-sub {
-        font-size: 11px;
-        color: #bfbfbf;
-        margin: 0;
-      }
-      .chart-placeholder,
-      .chart-empty {
-        height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #bfbfbf;
-      }
-      canvas {
-        display: block;
-        height: 200px !important;
-        width: 100%;
-      }
-    `,
-  ],
+  styles: [], // CSS removed in favor of Tailwind
 })
 export class AdminMetricsPageComponent implements OnInit {
   metricsService = inject(MetricsService);
@@ -279,18 +234,24 @@ export class AdminMetricsPageComponent implements OnInit {
     { label: "Last 6h", hours: 6 },
     { label: "Last 24h", hours: 24 },
   ];
+
   activePreset = signal("Last 1h");
   pickerRange: [Date, Date] = [
     dayjs().subtract(1, "hour").toDate(),
     dayjs().toDate(),
   ];
+
   ngOnInit() {
     this.loadAll();
   }
 
+  // Fixes the NG5002 parser error
+  slugify(text: string): string {
+    return text ? text.toLowerCase().split(" ").join("-") : "";
+  }
+
   applyPreset(preset: { label: string; hours: number }) {
     this.activePreset.set(preset.label);
-    // Use .toDate() here
     this.pickerRange = [
       dayjs().subtract(preset.hours, "hour").toDate(),
       dayjs().toDate(),
@@ -316,14 +277,12 @@ export class AdminMetricsPageComponent implements OnInit {
     const [from, to] = this.pickerRange;
     if (!from || !to) return;
 
-    // Wrap back in dayjs to get ISO strings
     this.metricsService.fetchAll(
       dayjs(from).toISOString(),
       dayjs(to).toISOString(),
     );
   }
 
-  // Chart data helpers
   private formatTs(ts: string): string {
     return new Date(ts).toLocaleTimeString([], {
       hour: "2-digit",
