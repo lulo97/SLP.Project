@@ -1,4 +1,5 @@
 using backend_dotnet.Features.Admin;
+using backend_dotnet.Features.Helpers;
 
 namespace backend_dotnet.Features.Report;
 
@@ -19,10 +20,18 @@ public class ReportService : IReportService
         return report == null ? null : MapToDto(report);
     }
 
-    public async Task<IEnumerable<ReportDto>> GetUnresolvedAsync(string? search = null)
+    public async Task<PaginatedResult<ReportDto>> GetUnresolvedAsync(string? search = null, int page = 1, int pageSize = 20)
     {
-        var reports = await _reportRepo.GetUnresolvedAsync(search);
-        return reports.Select(MapToDto);
+        var (reports, total) = await _reportRepo.GetUnresolvedAsync(search, page, pageSize);
+        var dtos = reports.Select(MapToDto).ToList();
+
+        return new PaginatedResult<ReportDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<ReportDto> CreateAsync(int userId, CreateReportRequest request)
@@ -56,6 +65,22 @@ public class ReportService : IReportService
         return success;
     }
 
+    public async Task<IEnumerable<ReportDto>> GetByUserIdAsync(int userId)
+    {
+        var reports = await _reportRepo.GetByUserIdAsync(userId);
+        return reports.Select(MapToDto);
+    }
+
+    public async Task<bool> DeleteAsync(int userId, int reportId)
+    {
+        var report = await _reportRepo.GetByIdAsync(reportId);
+        if (report == null) return false;
+        if (report.UserId != userId) return false;
+        if (report.Resolved) return false;
+
+        return await _reportRepo.DeleteAsync(reportId);
+    }
+
     private ReportDto MapToDto(Report r)
     {
         return new ReportDto
@@ -68,24 +93,8 @@ public class ReportService : IReportService
             Reason = r.Reason,
             Resolved = r.Resolved,
             ResolvedAt = r.ResolvedAt,
-            CreatedAt = r.CreatedAt
+            CreatedAt = r.CreatedAt,
+            AttemptId = r.AttemptId
         };
-    }
-
-    public async Task<IEnumerable<ReportDto>> GetByUserIdAsync(int userId)
-    {
-        var reports = await _reportRepo.GetByUserIdAsync(userId);
-        return reports.Select(MapToDto);
-    }
-
-    public async Task<bool> DeleteAsync(int userId, int reportId)
-    {
-        var report = await _reportRepo.GetByIdAsync(reportId);
-
-        if (report == null) return false;               // not found
-        if (report.UserId != userId) return false;      // not owner  → 404 (don't leak existence)
-        if (report.Resolved) return false;              // already resolved → caller maps to 409
-
-        return await _reportRepo.DeleteAsync(reportId);
     }
 }

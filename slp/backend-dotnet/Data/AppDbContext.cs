@@ -263,6 +263,23 @@ public class AppDbContext : DbContext
             b.HasQueryFilter(c => c.DeletedAt == null); // soft delete filter
         });
 
+        // ── CommentHistory ─────────────────────────────────────────────────────
+        modelBuilder.Entity<CommentHistory>(b =>
+        {
+            b.ToTable("comment_history");
+            b.HasKey(h => h.Id);
+
+            // FIX: Comment has a soft-delete query filter (DeletedAt == null).
+            // Marking this as IsRequired(false) suppresses the warning about 
+            // unexpected results when the parent Comment is filtered out.
+            b.HasOne(h => h.Comment)
+                .WithMany() // or .WithMany(c => c.Histories) if you add a collection to Comment
+                .HasForeignKey(h => h.CommentId)
+                .IsRequired(false);
+
+            b.HasIndex(h => h.CommentId);
+        });
+
         // ── Report ─────────────────────────────────────────────────────
         modelBuilder.Entity<Report>(b =>
         {

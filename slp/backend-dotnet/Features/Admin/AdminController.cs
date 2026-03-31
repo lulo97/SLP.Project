@@ -19,10 +19,15 @@ public class AdminController : ControllerBase
 
     // Users
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] string? search = null)
+    public async Task<IActionResult> GetUsers(
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var users = await _adminService.GetAllUsersAsync(search);
-        return Ok(users);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        var result = await _adminService.GetAllUsersAsync(search, page, pageSize);
+        return Ok(result);
     }
 
     [HttpPost("users/{id}/ban")]
@@ -45,10 +50,15 @@ public class AdminController : ControllerBase
 
     // Quizzes
     [HttpGet("quizzes")]
-    public async Task<IActionResult> GetQuizzes([FromQuery] string? search = null)
+    public async Task<IActionResult> GetQuizzes(
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var quizzes = await _adminService.GetAllQuizzesAsync(search);
-        return Ok(quizzes);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        var result = await _adminService.GetAllQuizzesAsync(search, page, pageSize);
+        return Ok(result);
     }
 
     [HttpPost("quizzes/{id}/disable")]
@@ -72,11 +82,15 @@ public class AdminController : ControllerBase
     // Comments
     [HttpGet("comments")]
     public async Task<IActionResult> GetComments(
-    [FromQuery] bool includeDeleted = false,
-    [FromQuery] string? search = null)
+        [FromQuery] bool includeDeleted = false,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var comments = await _adminService.GetAllCommentsAsync(includeDeleted, search);
-        return Ok(comments);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        var result = await _adminService.GetAllCommentsAsync(includeDeleted, search, page, pageSize);
+        return Ok(result);
     }
 
     [HttpDelete("comments/{id}")]
@@ -99,9 +113,14 @@ public class AdminController : ControllerBase
 
     // Logs
     [HttpGet("logs")]
-    public async Task<IActionResult> GetLogs([FromQuery] AdminLogFilterDto filter)
+    public async Task<IActionResult> GetLogs(
+        [FromQuery] AdminLogFilterDto filter,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var logs = await _adminService.GetRecentLogsAsync(filter);
-        return Ok(logs);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        var result = await _adminService.GetRecentLogsAsync(filter, page, pageSize);
+        return Ok(result);
     }
 }

@@ -19,7 +19,7 @@ public class ReportRepository : IReportRepository
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
-    public async Task<IEnumerable<Report>> GetUnresolvedAsync(string? search = null)
+    public async Task<(IEnumerable<Report> Items, int TotalCount)> GetUnresolvedAsync(string? search, int page, int pageSize)
     {
         var query = _db.Reports
             .Include(r => r.User)
@@ -35,9 +35,15 @@ public class ReportRepository : IReportRepository
                 EF.Functions.ILike(r.Reason, pattern));
         }
 
-        return await query
+        var total = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, total);
     }
 
     public async Task<IEnumerable<Report>> GetAllAsync(bool includeResolved = false)

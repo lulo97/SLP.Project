@@ -67,7 +67,7 @@ public class CommentRepository : ICommentRepository
         return true;
     }
 
-    public async Task<IEnumerable<Comment>> GetAllAsync(bool includeDeleted = false, string? search = null)
+    public async Task<(IEnumerable<Comment> Items, int TotalCount)> GetAllAsync(bool includeDeleted, string? search, int page, int pageSize)
     {
         var query = _db.Comments
             .Include(c => c.User)
@@ -76,7 +76,7 @@ public class CommentRepository : ICommentRepository
         if (!includeDeleted)
             query = query.Where(c => c.DeletedAt == null);
         else
-            query = query.IgnoreQueryFilters(); // to see soft-deleted comments
+            query = query.IgnoreQueryFilters();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -86,9 +86,15 @@ public class CommentRepository : ICommentRepository
                 (c.User != null && EF.Functions.ILike(c.User.Username, pattern)));
         }
 
-        return await query
+        var total = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, total);
     }
 
     public async Task AddHistoryAsync(CommentHistory entry)

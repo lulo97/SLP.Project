@@ -10,5 +10,4 @@ public class AdminLogFilterDto
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
     public int? AdminId { get; set; }            // kept for future use, but not used by frontend
-    public int? Count { get; set; } = 100;       // max number of logs to return
 }

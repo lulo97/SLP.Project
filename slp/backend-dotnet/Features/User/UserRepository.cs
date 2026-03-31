@@ -57,9 +57,10 @@ public class UserRepository : IUserRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync(string? search = null)
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetAllAsync(string? search, int page, int pageSize)
     {
         var query = _db.Users.AsQueryable();
+
         if (!string.IsNullOrWhiteSpace(search))
         {
             var pattern = $"%{search}%";
@@ -67,7 +68,16 @@ public class UserRepository : IUserRepository
                 EF.Functions.ILike(u.Username, pattern) ||
                 EF.Functions.ILike(u.Email, pattern));
         }
-        return await query.OrderBy(u => u.Id).ToListAsync();
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(u => u.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, total);
     }
 
     public async Task<UserStatsDto> GetUserStatsAsync(int userId)

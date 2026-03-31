@@ -327,7 +327,7 @@ public class QuizRepository : IQuizRepository
         }
     }
 
-    public async Task<IEnumerable<Quiz>> GetAllForAdminAsync(string? search = null)
+    public async Task<(IEnumerable<Quiz> Items, int TotalCount)> GetAllForAdminAsync(string? search, int page, int pageSize)
     {
         var query = _context.Quizzes
             .IgnoreQueryFilters()
@@ -342,9 +342,15 @@ public class QuizRepository : IQuizRepository
                 (q.User != null && EF.Functions.ILike(q.User.Username, pattern)));
         }
 
-        return await query
+        var total = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(q => q.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, total);
     }
 
     public async Task<List<TopQuizDto>> GetTopQuizzesByAttemptsAsync(int limit)

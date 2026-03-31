@@ -18,7 +18,7 @@ public class AdminLogRepository : IAdminLogRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<AdminLog>> GetRecentAsync(AdminLogFilterDto filter)
+    public async Task<(IEnumerable<AdminLog> Items, int TotalCount)> GetRecentAsync(AdminLogFilterDto filter, int page, int pageSize)
     {
         var query = _db.AdminLogs
             .Include(l => l.Admin)
@@ -35,30 +35,27 @@ public class AdminLogRepository : IAdminLogRepository
         if (!string.IsNullOrWhiteSpace(filter.TargetType))
             query = query.Where(l => l.TargetType == filter.TargetType);
 
-        // No search term → use database ordering and limit
-        if (string.IsNullOrWhiteSpace(filter.Search))
+        // Apply search in memory after fetching
+        var logs = await query.OrderByDescending(l => l.CreatedAt).ToListAsync();
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            return await query
-                .OrderByDescending(l => l.CreatedAt)
-                .Take(filter.Count ?? 100)
-                .ToListAsync();
+            var searchTerm = filter.Search.Trim().ToLowerInvariant();
+            logs = logs.Where(l =>
+                (l.Admin != null && l.Admin.Username.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
+                l.Action.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
+                (l.TargetType != null && l.TargetType.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
+                (l.TargetId.HasValue && l.TargetId.Value.ToString().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
+                (l.Details != null && l.Details.ToString().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
+            ).ToList();
         }
 
-        // With search term → fetch all matching exact filters, then apply search in memory
-        var logs = await query.ToListAsync();
-
-        var searchTerm = filter.Search.Trim().ToLowerInvariant();
-        var filteredLogs = logs.Where(l =>
-            (l.Admin != null && l.Admin.Username.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
-            l.Action.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
-            (l.TargetType != null && l.TargetType.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
-            (l.TargetId.HasValue && l.TargetId.Value.ToString().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase)) ||
-            (l.Details != null && l.Details.ToString().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
-        );
-
-        return filteredLogs
-            .OrderByDescending(l => l.CreatedAt)
-            .Take(filter.Count ?? 100)
+        var total = logs.Count;
+        var items = logs
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
+
+        return (items, total);
     }
 }

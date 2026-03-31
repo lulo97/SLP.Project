@@ -5,5 +5,5 @@ namespace backend_dotnet.Features.Admin;
 public interface IAdminLogRepository
 {
     Task LogAsync(AdminLog log);
-    Task<IEnumerable<AdminLog>> GetRecentAsync(AdminLogFilterDto filter);
+    Task<(IEnumerable<AdminLog> Items, int TotalCount)> GetRecentAsync(AdminLogFilterDto filter, int page, int pageSize);
 }

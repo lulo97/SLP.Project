@@ -35,7 +35,7 @@ public interface IQuizRepository
     Task<IEnumerable<Source.Source>> GetSourcesByQuizIdAsync(int quizId);
     Task AddSourceToQuizAsync(int quizId, int sourceId);
     Task RemoveSourceFromQuizAsync(int quizId, int sourceId);
-    Task<IEnumerable<Quiz>> GetAllForAdminAsync(string? search = null);
+    Task<(IEnumerable<Quiz> Items, int TotalCount)> GetAllForAdminAsync(string? search, int page, int pageSize);
     Task<List<TopQuizDto>> GetTopQuizzesByAttemptsAsync(int limit);
 
 }

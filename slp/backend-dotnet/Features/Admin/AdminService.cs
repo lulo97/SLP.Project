@@ -1,4 +1,5 @@
 using backend_dotnet.Features.Comment;
+using backend_dotnet.Features.Helpers;
 using backend_dotnet.Features.Quiz;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.User;
@@ -19,7 +20,7 @@ public class AdminService : IAdminService
         IQuizRepository quizRepo,
         ICommentRepository commentRepo,
         IAdminLogRepository logRepo,
-        ISessionRepository sessionRepo) // add this
+        ISessionRepository sessionRepo)
     {
         _userRepo = userRepo;
         _quizRepo = quizRepo;
@@ -29,10 +30,10 @@ public class AdminService : IAdminService
     }
 
     // --- Users ---
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync(string? search = null)
+    public async Task<PaginatedResult<UserDto>> GetAllUsersAsync(string? search = null, int page = 1, int pageSize = 20)
     {
-        var users = await _userRepo.GetAllAsync(search);
-        return users.Select(u => new UserDto
+        var (users, total) = await _userRepo.GetAllAsync(search, page, pageSize);
+        var dtos = users.Select(u => new UserDto
         {
             Id = u.Id,
             Username = u.Username,
@@ -41,7 +42,15 @@ public class AdminService : IAdminService
             Role = u.Role,
             Status = u.Status,
             CreatedAt = u.CreatedAt
-        });
+        }).ToList();
+
+        return new PaginatedResult<UserDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<bool> BanUserAsync(int adminId, int userId)
@@ -51,8 +60,6 @@ public class AdminService : IAdminService
 
         user.Status = "banned";
         await _userRepo.UpdateAsync(user);
-
-        // Revoke all sessions of this user
         await _sessionRepo.RevokeAllForUserAsync(userId);
 
         await _logRepo.LogAsync(new AdminLog
@@ -84,10 +91,10 @@ public class AdminService : IAdminService
     }
 
     // --- Quizzes ---
-    public async Task<IEnumerable<QuizAdminDto>> GetAllQuizzesAsync(string? search = null)
+    public async Task<PaginatedResult<QuizAdminDto>> GetAllQuizzesAsync(string? search = null, int page = 1, int pageSize = 20)
     {
-        var quizzes = await _quizRepo.GetAllForAdminAsync(search); // need to add this method
-        return quizzes.Select(q => new QuizAdminDto
+        var (quizzes, total) = await _quizRepo.GetAllForAdminAsync(search, page, pageSize);
+        var dtos = quizzes.Select(q => new QuizAdminDto
         {
             Id = q.Id,
             Title = q.Title,
@@ -96,12 +103,19 @@ public class AdminService : IAdminService
             Visibility = q.Visibility,
             Disabled = q.Disabled,
             CreatedAt = q.CreatedAt
-        });
+        }).ToList();
+
+        return new PaginatedResult<QuizAdminDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<bool> DisableQuizAsync(int adminId, int quizId)
     {
-        // Include disabled quizzes so we can fetch even if already disabled
         var quiz = await _quizRepo.GetByIdAsync(quizId, includeDisabled: true);
         if (quiz == null) return false;
 
@@ -120,7 +134,6 @@ public class AdminService : IAdminService
 
     public async Task<bool> EnableQuizAsync(int adminId, int quizId)
     {
-        // Include disabled quizzes so we can fetch the disabled one
         var quiz = await _quizRepo.GetByIdAsync(quizId, includeDisabled: true);
         if (quiz == null) return false;
 
@@ -138,10 +151,10 @@ public class AdminService : IAdminService
     }
 
     // --- Comments ---
-    public async Task<IEnumerable<CommentAdminDto>> GetAllCommentsAsync(bool includeDeleted = false, string? search = null)
+    public async Task<PaginatedResult<CommentAdminDto>> GetAllCommentsAsync(bool includeDeleted = false, string? search = null, int page = 1, int pageSize = 20)
     {
-        var comments = await _commentRepo.GetAllAsync(includeDeleted, search);
-        return comments.Select(c => new CommentAdminDto
+        var (comments, total) = await _commentRepo.GetAllAsync(includeDeleted, search, page, pageSize);
+        var dtos = comments.Select(c => new CommentAdminDto
         {
             Id = c.Id,
             UserId = c.UserId,
@@ -151,7 +164,15 @@ public class AdminService : IAdminService
             TargetId = c.TargetId,
             CreatedAt = c.CreatedAt,
             DeletedAt = c.DeletedAt
-        });
+        }).ToList();
+
+        return new PaginatedResult<CommentAdminDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<bool> DeleteCommentAsync(int adminId, int commentId)
@@ -187,10 +208,10 @@ public class AdminService : IAdminService
     }
 
     // --- Logs ---
-    public async Task<IEnumerable<AdminLogDto>> GetRecentLogsAsync(AdminLogFilterDto filter)
+    public async Task<PaginatedResult<AdminLogDto>> GetRecentLogsAsync(AdminLogFilterDto filter, int page = 1, int pageSize = 20)
     {
-        var logs = await _logRepo.GetRecentAsync(filter);
-        return logs.Select(l => new AdminLogDto
+        var (logs, total) = await _logRepo.GetRecentAsync(filter, page, pageSize);
+        var dtos = logs.Select(l => new AdminLogDto
         {
             Id = l.Id,
             AdminId = l.AdminId,
@@ -200,6 +221,14 @@ public class AdminService : IAdminService
             TargetId = l.TargetId,
             Details = l.Details,
             CreatedAt = l.CreatedAt
-        });
+        }).ToList();
+
+        return new PaginatedResult<AdminLogDto>
+        {
+            Items = dtos,
+            Total = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 }

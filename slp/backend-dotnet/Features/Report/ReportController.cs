@@ -18,10 +18,15 @@ public class ReportController : ControllerBase
 
     [Authorize(Roles = "admin")]
     [HttpGet]
-    public async Task<IActionResult> GetUnresolved([FromQuery] string? search = null)
+    public async Task<IActionResult> GetUnresolved(
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var reports = await _reportService.GetUnresolvedAsync(search);
-        return Ok(reports);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        var result = await _reportService.GetUnresolvedAsync(search, page, pageSize);
+        return Ok(result);
     }
 
     [Authorize(Roles = "admin")]
@@ -52,7 +57,6 @@ public class ReportController : ControllerBase
         return Ok();
     }
 
-    // GET /api/reports/mine
     [Authorize]
     [HttpGet("mine")]
     public async Task<IActionResult> GetMyReports()
@@ -62,14 +66,11 @@ public class ReportController : ControllerBase
         return Ok(reports);
     }
 
-    // DELETE /api/reports/mine/{id}
     [Authorize]
     [HttpDelete("mine/{id}")]
     public async Task<IActionResult> DeleteMyReport(int id)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        // Need to distinguish "resolved" from "not found/not owner"
         var report = await _reportService.GetByIdAsync(id);
         if (report == null || report.UserId != userId) return NotFound();
         if (report.Resolved) return Conflict(new { message = "Cannot delete a resolved report." });
