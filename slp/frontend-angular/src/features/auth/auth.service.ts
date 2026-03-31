@@ -76,6 +76,15 @@ export class AuthService {
     }
   }
 
+  private extractErrorMessage(error: any): string {
+    // If error.error is the parsed JSON body from the backend
+    if (error.error?.message) {
+      return error.error.message;
+    }
+    // Fallback to a generic message
+    return error.message || "An error occurred";
+  }
+
   // ─── Getters ────────────────────────────────────────────────────────────────
 
   get sessionToken(): string | null {
@@ -166,12 +175,15 @@ export class AuthService {
     username: string,
     email: string,
     password: string,
-  ): Observable<boolean> {
+  ): Observable<{ success: boolean; message?: string }> {
     return this.http
       .post(`${this.baseUrl}/auth/register`, { username, email, password })
       .pipe(
-        map(() => true),
-        catchError(() => of(false)),
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const message = this.extractErrorMessage(error);
+          return of({ success: false, message });
+        }),
       );
   }
 
@@ -208,24 +220,32 @@ export class AuthService {
 
   // ─── Password management ─────────────────────────────────────────────────────
 
-  requestPasswordReset(email: string): Observable<boolean> {
+  requestPasswordReset(
+    email: string,
+  ): Observable<{ success: boolean; message?: string }> {
     return this.http
       .post(`${this.baseUrl}/auth/forgot-password`, { email })
       .pipe(
-        map(() => true),
-        catchError(() => of(false)),
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const message = this.extractErrorMessage(error);
+          return of({ success: false, message });
+        }),
       );
   }
 
   confirmPasswordReset(
     token: string,
     newPassword: string,
-  ): Observable<boolean> {
+  ): Observable<{ success: boolean; message?: string }> {
     return this.http
       .post(`${this.baseUrl}/auth/reset-password`, { token, newPassword })
       .pipe(
-        map(() => true),
-        catchError(() => of(false)),
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const message = this.extractErrorMessage(error);
+          return of({ success: false, message });
+        }),
       );
   }
 
@@ -257,21 +277,29 @@ export class AuthService {
 
   // ─── Email verification ──────────────────────────────────────────────────────
 
-  verifyEmail(token: string): Observable<boolean> {
+  verifyEmail(
+    token: string,
+  ): Observable<{ success: boolean; message?: string }> {
     return this.http.post(`${this.baseUrl}/auth/verify-email`, { token }).pipe(
       tap(() => {
         const user = this.userSubject.value;
         if (user) this.userSubject.next({ ...user, emailVerified: true });
       }),
-      map(() => true),
-      catchError(() => of(false)),
+      map(() => ({ success: true })),
+      catchError((error) => {
+        const message = this.extractErrorMessage(error);
+        return of({ success: false, message });
+      }),
     );
   }
 
-  sendVerificationEmail(): Observable<boolean> {
+  sendVerificationEmail(): Observable<{ success: boolean; message?: string }> {
     return this.http.post(`${this.baseUrl}/auth/resend-verification`, {}).pipe(
-      map(() => true),
-      catchError(() => of(false)),
+      map(() => ({ success: true })),
+      catchError((error) => {
+        const message = this.extractErrorMessage(error);
+        return of({ success: false, message });
+      }),
     );
   }
 

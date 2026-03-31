@@ -34,7 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // In development, include more details
     const isDev = process.env.NODE_ENV === 'development';
     response.status(status).json({
-      error: message,
+      message: message,
       ...(isDev && { stack: exception instanceof Error ? exception.stack : null }),
     });
   }

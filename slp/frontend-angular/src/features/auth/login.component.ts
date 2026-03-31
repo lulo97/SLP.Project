@@ -137,32 +137,32 @@ export class LoginComponent {
       return;
     }
     this.resetLoading = true;
-    const success = await firstValueFrom(
+    const result = await firstValueFrom(
       this.authService.requestPasswordReset(this.resetEmail),
     );
     this.resetLoading = false;
 
-    if (success) {
+    if (result.success) {
       this.message.success("Password reset email sent if account exists");
       this.showForgotPassword = false;
       this.resetEmail = "";
     } else {
-      this.message.error("Failed to send reset email");
+      this.message.error(result.message || "Failed to send reset email");
     }
   }
 
   async resendVerification(): Promise<void> {
     this.resending = true;
-    const success = await firstValueFrom(
+    const result = await firstValueFrom(
       this.authService.sendVerificationEmail(),
     );
     this.resending = false;
 
-    if (success) {
+    if (result.success) {
       this.message.success("Verification email sent!");
       this.showVerificationAlert = false;
     } else {
-      this.message.error("Failed to send verification email");
+      this.message.error(result.message || "Failed to send verification email");
     }
   }
 }

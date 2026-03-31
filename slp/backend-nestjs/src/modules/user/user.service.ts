@@ -37,6 +37,9 @@ export class UserService {
     const existing = await this.userRepo.getByEmail(dto.email);
     if (existing) throw new ConflictException("Email already exists");
 
+    const existingUsername = await this.userRepo.getByUsername(dto.username);
+    if (existingUsername) throw new ConflictException("Username already exists");
+
     const user = new User();
     user.username = dto.username;
     user.email = dto.email;

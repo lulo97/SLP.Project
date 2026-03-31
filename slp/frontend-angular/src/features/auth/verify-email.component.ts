@@ -1,19 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
+import { Component, OnInit } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { CommonModule } from "@angular/common";
+import { firstValueFrom } from "rxjs";
 
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzResultModule } from 'ng-zorro-antd/result';
-import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzSpinModule } from "ng-zorro-antd/spin";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzResultModule } from "ng-zorro-antd/result";
+import { NzMessageService } from "ng-zorro-antd/message";
 
-import { AuthService } from './auth.service';
+import { AuthService } from "./auth.service";
 
 @Component({
-  selector: 'app-verify-email',
+  selector: "app-verify-email",
   standalone: true,
   imports: [
     CommonModule,
@@ -23,12 +23,12 @@ import { AuthService } from './auth.service';
     NzIconModule,
     NzResultModule,
   ],
-  templateUrl: './verify-email.component.html',
+  templateUrl: "./verify-email.component.html",
 })
 export class VerifyEmailComponent implements OnInit {
   loading = true;
   verified = false;
-  error = '';
+  error = "";
 
   constructor(
     private route: ActivatedRoute,
@@ -38,22 +38,22 @@ export class VerifyEmailComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    const token = this.route.snapshot.queryParamMap.get('token');
+    const token = this.route.snapshot.queryParamMap.get("token");
 
     if (!token) {
-      this.error = 'Invalid verification token.';
+      this.error = "Invalid verification token.";
       this.loading = false;
       return;
     }
 
-    const success = await firstValueFrom(this.authService.verifyEmail(token));
+    const result = await firstValueFrom(this.authService.verifyEmail(token));
     this.loading = false;
 
-    if (success) {
+    if (result.success) {
       this.verified = true;
-      this.message.success('Email verified successfully!');
+      this.message.success("Email verified successfully!");
     } else {
-      this.error = 'Invalid or expired verification token.';
+      this.error = result.message || "Invalid or expired verification token.";
     }
   }
 }
