@@ -15,15 +15,14 @@ import { ProgressModule } from "../modules/progress/progress.module";
 import { FavoriteModule } from "../modules/favorite/favorite.module";
 import { ReportModule } from "../modules/report/report.module";
 import { AdminModule } from "../modules/admin/admin.module";
-// import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { DashboardModule } from "../modules/dashboard/dashboard.module";
 import { HealthModule } from "../modules/health/health.module";
 import { LlmModule } from "../modules/llm/llm.module";
 import { QueueModule } from "../modules/queue/queue.module";
 import { EmailModule } from "../modules/email/email.module";
-// import { FileStorageModule } from './modules/file-storage/file-storage.module';
-// import { SearchModule } from './modules/search/search.module';
+import { FileStorageModule } from "../modules/file-storage/file-storage.module";
+// import { SearchModule } from '../modules/search/search.module';
 import { QuizAttemptModule } from "../modules/quiz-attempt/quiz-attempt.module";
-// import { DailyWordModule } from './modules/daily-word/daily-word.module';
 import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
 import { CommentModule } from "../modules/comment/comment.module";
@@ -55,12 +54,12 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     CommentModule,
     ReportModule,
     AdminModule,
-    // DashboardModule,
+    DashboardModule,
     HealthModule,
     LlmModule,
     QueueModule,
     EmailModule,
-    // FileStorageModule,
+    FileStorageModule,
     MetricsModule,
 
     TagModule,

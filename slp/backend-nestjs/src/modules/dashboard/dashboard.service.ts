@@ -1,28 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import type { IWordOfTheDayProvider } from './providers/word-of-the-day.provider';
-import { WordOfTheDayDto } from './dto/word-of-the-day.dto';
-import { TopQuizDto } from './dto/top-quiz.dto';
-import { UserStatsDto } from './dto/user-stats.dto';
+import type { IWordOfTheDayProvider } from './interfaces/word-of-the-day-provider.interface';
 import { QuizRepository } from '../quiz/quiz.repository';
 import { UserRepository } from '../user/user.repository';
+import { TopQuizDto } from './dto/top-quiz.dto';
+import { UserStatsDto } from './dto/user-stats.dto';
+import { WordOfTheDayDto } from './dto/word-of-the-day.dto';
 
 @Injectable()
 export class DashboardService {
   constructor(
     private readonly wordProvider: IWordOfTheDayProvider,
-    private readonly quizRepository: QuizRepository,
-    private readonly userRepository: UserRepository,
+    private readonly quizRepo: QuizRepository,
+    private readonly userRepo: UserRepository,
   ) {}
 
   async getWordOfTheDay(): Promise<WordOfTheDayDto> {
-    return this.wordProvider.getWordOfTheDay();
+    return this.wordProvider.getWordOfTheDayAsync();
   }
 
   async getTopQuizzes(limit: number): Promise<TopQuizDto[]> {
-    return this.quizRepository.getTopQuizzesByAttempts(limit);
+    // Use the existing method in QuizRepository (assumed to exist)
+    return this.quizRepo.getTopQuizzesByAttempts(limit);
   }
 
   async getUserStats(userId: number): Promise<UserStatsDto> {
-    return this.userRepository.getUserStats(userId);
+    return this.userRepo.getUserStats(userId);
   }
 }

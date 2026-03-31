@@ -6,3 +6,4 @@ export class TopQuizDto {
   commentCount: number;
   questionCount: number;
 }
+

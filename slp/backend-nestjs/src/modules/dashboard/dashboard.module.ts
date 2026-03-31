@@ -2,13 +2,10 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { DashboardController } from "./dashboard.controller";
 import { DashboardService } from "./dashboard.service";
-import { DailyWord } from "./daily-word.entity";
-import {
-  DbWordOfTheDayProvider,
-  WORD_OF_THE_DAY_PROVIDER,
-} from "./providers/word-of-the-day.provider";
+import { DbWordOfTheDayProvider } from "./providers/db-word-of-the-day.provider";
 import { QuizModule } from "../quiz/quiz.module";
 import { UserModule } from "../user/user.module";
+import { DailyWord } from "./daily-word.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([DailyWord]), QuizModule, UserModule],
@@ -16,9 +13,10 @@ import { UserModule } from "../user/user.module";
   providers: [
     DashboardService,
     {
-      provide: WORD_OF_THE_DAY_PROVIDER,
-      useClass: DbWordOfTheDayProvider, // or StaticWordOfTheDayProvider
+      provide: "IWordOfTheDayProvider",
+      useClass: DbWordOfTheDayProvider,
     },
   ],
+  exports: [DashboardService],
 })
 export class DashboardModule {}
