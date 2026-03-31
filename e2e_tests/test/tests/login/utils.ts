@@ -4,8 +4,8 @@ import { Page, BrowserContext } from "@playwright/test";
 // ----------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------
-export const FRONTEND_URL = "http://localhost:3002";
-export const BACKEND_URL = "http://localhost:3001";
+export const FRONTEND_URL = "http://localhost:4000";
+export const BACKEND_URL = "http://localhost:5140";
 
 export const ADMIN_CREDENTIALS = {
   username: "admin",

@@ -39,8 +39,13 @@ public class UserService : IUserService
 
     public async Task<User> RegisterAsync(RegisterUserRequest request)
     {
-        var existing = await _users.GetByEmailAsync(request.Email);
-        if (existing != null)
+        var existingUsername = await _users.GetByUsernameAsync(request.Username);
+        if (existingUsername != null)
+            throw new Exception("Username already exists");
+
+
+        var existingEmail = await _users.GetByEmailAsync(request.Email);
+        if (existingEmail != null)
             throw new Exception("Email already exists");
 
         var user = new User

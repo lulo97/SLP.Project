@@ -1,1 +1,1 @@
-npx playwright test disable_enable_quiz.spec --headed
+npx playwright test duplicate_username_email.spec --headed
