@@ -52,6 +52,6 @@ test.describe("Admin Metrics UI", () => {
 
     // 5. Verify Page Heading (Testing the MobileLayout prop)
     // MobileLayout usually renders the title prop in an h1 or header
-    await expect(page.getByText("API Metrics")).toBeVisible();
+    await expect(page.getByText("API Metrics").first()).toBeVisible();
   });
 });

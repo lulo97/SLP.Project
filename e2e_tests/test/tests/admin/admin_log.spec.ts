@@ -73,8 +73,6 @@ test.describe("Admin Log", () => {
       await page.goto(`${FRONTEND_URL}/admin`);
       await expect(page).toHaveURL(`${FRONTEND_URL}/admin`);
 
-      await page.pause()
-
       // Wait for the admin tabs to be present and click the "Logs" tab
       const logsTab = page.getByTestId("admin-tab-logs");
       await logsTab.click();
