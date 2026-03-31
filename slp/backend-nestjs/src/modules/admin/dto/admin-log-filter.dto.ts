@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsInt, IsDate, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsInt, IsDate, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
 
 export class AdminLogFilterDto {
   @IsOptional()
@@ -33,6 +33,12 @@ export class AdminLogFilterDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(1000)
-  count?: number;
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
 }

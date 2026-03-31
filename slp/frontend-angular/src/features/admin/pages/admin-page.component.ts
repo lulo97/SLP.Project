@@ -12,6 +12,7 @@ import { NzCheckboxModule } from "ng-zorro-antd/checkbox";
 import { AdminService } from "../services/admin.service";
 import { AdminLogFiltersComponent } from "../components/admin-log-filters.component";
 import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-reports.component";
+import { NzPaginationModule } from "ng-zorro-antd/pagination";
 
 @Component({
   selector: "app-admin-page",
@@ -29,6 +30,7 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
     NzCheckboxModule,
     AdminLogFiltersComponent,
     AdminReportsComponent,
+    NzPaginationModule,
   ],
   template: `
     <div>
@@ -122,6 +124,17 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
               @if (!adminService.users().length) {
                 <p class="empty-state">No users found.</p>
               }
+              <div class="pagination-wrapper">
+                <nz-pagination
+                  [nzPageIndex]="userPage"
+                  [nzPageSize]="userPageSize"
+                  [nzTotal]="adminService.usersPagination().total"
+                  [nzShowSizeChanger]="true"
+                  [nzPageSizeOptions]="[10, 20, 50, 100]"
+                  (nzPageIndexChange)="onUserPageChange($event)"
+                  (nzPageSizeChange)="onUserPageSizeChange($event)"
+                ></nz-pagination>
+              </div>
             }
           </div>
         </nz-tab>
@@ -206,6 +219,17 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
               @if (!adminService.quizzes().length) {
                 <p class="empty-state">No quizzes found.</p>
               }
+              <div class="pagination-wrapper">
+                <nz-pagination
+                  [nzPageIndex]="quizPage"
+                  [nzPageSize]="quizPageSize"
+                  [nzTotal]="adminService.quizzesPagination().total"
+                  [nzShowSizeChanger]="true"
+                  [nzPageSizeOptions]="[10, 20, 50, 100]"
+                  (nzPageIndexChange)="onQuizPageChange($event)"
+                  (nzPageSizeChange)="onQuizPageSizeChange($event)"
+                ></nz-pagination>
+              </div>
             }
           </div>
         </nz-tab>
@@ -302,6 +326,17 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
               @if (!adminService.comments().length) {
                 <p class="empty-state">No comments found.</p>
               }
+              <div class="pagination-wrapper">
+                <nz-pagination
+                  [nzPageIndex]="commentPage"
+                  [nzPageSize]="commentPageSize"
+                  [nzTotal]="adminService.commentsPagination().total"
+                  [nzShowSizeChanger]="true"
+                  [nzPageSizeOptions]="[10, 20, 50, 100]"
+                  (nzPageIndexChange)="onCommentPageChange($event)"
+                  (nzPageSizeChange)="onCommentPageSizeChange($event)"
+                ></nz-pagination>
+              </div>
             }
           </div>
         </nz-tab>
@@ -343,6 +378,17 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
               @if (!adminService.logs().length) {
                 <p class="empty-state">No logs found.</p>
               }
+              <div class="pagination-wrapper">
+                <nz-pagination
+                  [nzPageIndex]="logPage"
+                  [nzPageSize]="logPageSize"
+                  [nzTotal]="adminService.logsPagination().total"
+                  [nzShowSizeChanger]="true"
+                  [nzPageSizeOptions]="[10, 20, 50, 100]"
+                  (nzPageIndexChange)="onLogPageChange($event)"
+                  (nzPageSizeChange)="onLogPageSizeChange($event)"
+                ></nz-pagination>
+              </div>
             }
           </div>
         </nz-tab>
@@ -411,34 +457,174 @@ import { AdminReportsComponent } from "../../report/pages/admin-reports/admin-re
 export class AdminPageComponent implements OnInit {
   adminService = inject(AdminService);
   activeTabIndex = 0;
+
+  // Users
   userSearch = "";
+  userPage = 1;
+  userPageSize = 20;
+
+  // Quizzes
   quizSearch = "";
+  quizPage = 1;
+  quizPageSize = 20;
+
+  // Comments
   commentSearch = "";
   includeDeleted = false;
+  commentPage = 1;
+  commentPageSize = 20;
+
+  // Logs
+  logPage = 1;
+  logPageSize = 20;
+  logFilters: any = {};
 
   ngOnInit() {
-    this.adminService.fetchUsers();
-    this.adminService.fetchQuizzes();
-    this.adminService.fetchComments(false);
-    this.adminService.fetchLogs({});
+    this.adminService.fetchUsers(undefined, this.userPage, this.userPageSize);
+    this.adminService.fetchQuizzes(undefined, this.quizPage, this.quizPageSize);
+    this.adminService.fetchComments(
+      false,
+      undefined,
+      this.commentPage,
+      this.commentPageSize,
+    );
+    this.adminService.fetchLogs({}, this.logPage, this.logPageSize);
   }
 
+  // Users
   handleUserSearch() {
-    this.adminService.fetchUsers(this.userSearch);
+    this.userPage = 1;
+    this.adminService.fetchUsers(
+      this.userSearch,
+      this.userPage,
+      this.userPageSize,
+    );
   }
+  onUserPageChange(page: number) {
+    this.userPage = page;
+    this.adminService.fetchUsers(
+      this.userSearch,
+      this.userPage,
+      this.userPageSize,
+    );
+  }
+  onUserPageSizeChange(size: number) {
+    this.userPageSize = size;
+    this.userPage = 1;
+    this.adminService.fetchUsers(
+      this.userSearch,
+      this.userPage,
+      this.userPageSize,
+    );
+  }
+
+  // Quizzes
   handleQuizSearch() {
-    this.adminService.fetchQuizzes(this.quizSearch);
+    this.quizPage = 1;
+    this.adminService.fetchQuizzes(
+      this.quizSearch,
+      this.quizPage,
+      this.quizPageSize,
+    );
   }
+  onQuizPageChange(page: number) {
+    this.quizPage = page;
+    this.adminService.fetchQuizzes(
+      this.quizSearch,
+      this.quizPage,
+      this.quizPageSize,
+    );
+  }
+  onQuizPageSizeChange(size: number) {
+    this.quizPageSize = size;
+    this.quizPage = 1;
+    this.adminService.fetchQuizzes(
+      this.quizSearch,
+      this.quizPage,
+      this.quizPageSize,
+    );
+  }
+
+  // Comments
   handleCommentSearch() {
-    this.adminService.fetchComments(this.includeDeleted, this.commentSearch);
+    this.commentPage = 1;
+    this.adminService.setCommentsParams(
+      this.includeDeleted,
+      this.commentSearch,
+    );
+    this.adminService.fetchComments(
+      this.includeDeleted,
+      this.commentSearch,
+      this.commentPage,
+      this.commentPageSize,
+    );
   }
   handleIncludeDeletedChange() {
-    this.adminService.fetchComments(this.includeDeleted, this.commentSearch);
+    this.commentPage = 1;
+    this.adminService.setCommentsParams(
+      this.includeDeleted,
+      this.commentSearch,
+    );
+    this.adminService.fetchComments(
+      this.includeDeleted,
+      this.commentSearch,
+      this.commentPage,
+      this.commentPageSize,
+    );
   }
   refreshComments() {
-    this.adminService.fetchComments(this.includeDeleted, this.commentSearch);
+    this.adminService.fetchComments(
+      this.includeDeleted,
+      this.commentSearch,
+      this.commentPage,
+      this.commentPageSize,
+    );
   }
+  onCommentPageChange(page: number) {
+    this.commentPage = page;
+    this.adminService.fetchComments(
+      this.includeDeleted,
+      this.commentSearch,
+      this.commentPage,
+      this.commentPageSize,
+    );
+  }
+  onCommentPageSizeChange(size: number) {
+    this.commentPageSize = size;
+    this.commentPage = 1;
+    this.adminService.fetchComments(
+      this.includeDeleted,
+      this.commentSearch,
+      this.commentPage,
+      this.commentPageSize,
+    );
+  }
+
+  // Logs
   handleLogFilters(filters: any) {
-    this.adminService.fetchLogs(filters);
+    this.logFilters = filters;
+    this.logPage = 1;
+    this.adminService.fetchLogs(
+      this.logFilters,
+      this.logPage,
+      this.logPageSize,
+    );
+  }
+  onLogPageChange(page: number) {
+    this.logPage = page;
+    this.adminService.fetchLogs(
+      this.logFilters,
+      this.logPage,
+      this.logPageSize,
+    );
+  }
+  onLogPageSizeChange(size: number) {
+    this.logPageSize = size;
+    this.logPage = 1;
+    this.adminService.fetchLogs(
+      this.logFilters,
+      this.logPage,
+      this.logPageSize,
+    );
   }
 }

@@ -16,6 +16,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { ReportService } from "../../report.service";
 import { ReportDto } from "../../report.model";
+import { NzPaginationModule } from "ng-zorro-antd/pagination";
 
 @Component({
   selector: "app-admin-reports",
@@ -25,6 +26,7 @@ import { ReportDto } from "../../report.model";
     FormsModule,
     NzButtonModule,
     NzCardModule,
+    NzPaginationModule,
     NzEmptyModule,
     NzIconModule,
     NzInputModule,
@@ -46,26 +48,48 @@ export class AdminReportsComponent implements OnInit {
   resolvingIds: number[] = [];
   searchTerm = "";
 
+  // Pagination
+  currentPage = 1;
+  pageSize = 20;
+  totalReports = 0;
+
   ngOnInit(): void {
     this.fetchReports();
   }
 
   fetchReports(): void {
     this.loading = true;
-    this.reportService.getUnresolvedReports(this.searchTerm).subscribe({
-      next: (data) => {
-        this.reports = data;
-      },
-      error: () => {
-        this.message.error(this.translate.instant("report.loadError"));
-      },
-      complete: () => {
-        this.loading = false;
-      },
-    });
+    this.reportService
+      .getUnresolvedReports(this.searchTerm, this.currentPage, this.pageSize)
+      .subscribe({
+        next: (data) => {
+          this.reports = data.items;
+          this.totalReports = data.total;
+          this.currentPage = data.page;
+          this.pageSize = data.pageSize;
+        },
+        error: () => {
+          this.message.error(this.translate.instant("report.loadError"));
+        },
+        complete: () => {
+          this.loading = false;
+        },
+      });
   }
 
   handleSearch(): void {
+    this.currentPage = 1;
+    this.fetchReports();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.fetchReports();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
     this.fetchReports();
   }
 
@@ -74,7 +98,13 @@ export class AdminReportsComponent implements OnInit {
     this.reportService.resolveReport(id).subscribe({
       next: () => {
         this.reports = this.reports.filter((r) => r.id !== id);
+        this.totalReports--;
         this.message.success(this.translate.instant("report.resolveSuccess"));
+        // If current page becomes empty and not first page, go to previous page
+        if (this.reports.length === 0 && this.currentPage > 1) {
+          this.currentPage--;
+          this.fetchReports();
+        }
       },
       error: () => {
         this.message.error(this.translate.instant("report.resolveError"));
@@ -89,7 +119,7 @@ export class AdminReportsComponent implements OnInit {
     this.reportService.deleteComment(report.targetId).subscribe({
       next: () => {
         this.message.success(
-          this.translate.instant("report.deleteCommentSuccess")
+          this.translate.instant("report.deleteCommentSuccess"),
         );
         this.resolveReport(report.id);
       },
@@ -103,7 +133,7 @@ export class AdminReportsComponent implements OnInit {
     this.reportService.disableQuiz(report.targetId).subscribe({
       next: () => {
         this.message.success(
-          this.translate.instant("report.disableQuizSuccess")
+          this.translate.instant("report.disableQuizSuccess"),
         );
         this.resolveReport(report.id);
       },
