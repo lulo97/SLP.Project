@@ -441,7 +441,7 @@ const handleUserPageChange = (page: number) => {
   userPage.value = page;
   adminStore.fetchUsers(userSearch.value, page, userPageSize.value);
 };
-const handleUserSizeChange = (current: number, size: number) => {
+const handleUserSizeChange = (_current: number, size: number) => {
   userPageSize.value = size;
   userPage.value = 1;
   adminStore.fetchUsers(userSearch.value, 1, size);
@@ -452,7 +452,7 @@ const handleQuizPageChange = (page: number) => {
   quizPage.value = page;
   adminStore.fetchQuizzes(quizSearch.value, page, quizPageSize.value);
 };
-const handleQuizSizeChange = (current: number, size: number) => {
+const handleQuizSizeChange = (_current: number, size: number) => {
   quizPageSize.value = size;
   quizPage.value = 1;
   adminStore.fetchQuizzes(quizSearch.value, 1, size);
@@ -468,7 +468,7 @@ const handleCommentPageChange = (page: number) => {
     commentPageSize.value,
   );
 };
-const handleCommentSizeChange = (current: number, size: number) => {
+const handleCommentSizeChange = (_current: number, size: number) => {
   commentPageSize.value = size;
   commentPage.value = 1;
   adminStore.fetchComments(includeDeleted.value, commentSearch.value, 1, size);
@@ -479,7 +479,7 @@ const handleLogPageChange = (page: number) => {
   logPage.value = page;
   adminStore.fetchLogs(logFilters.value, page, logPageSize.value);
 };
-const handleLogSizeChange = (current: number, size: number) => {
+const handleLogSizeChange = (_current: number, size: number) => {
   logPageSize.value = size;
   logPage.value = 1;
   adminStore.fetchLogs(logFilters.value, 1, size);
