@@ -21,6 +21,12 @@ export const useAdminStore = defineStore("admin", {
       logs: false,
     },
     error: null as string | null,
+    pagination: {
+      users: { page: 1, pageSize: 20, total: 0 },
+      quizzes: { page: 1, pageSize: 20, total: 0 },
+      comments: { page: 1, pageSize: 20, total: 0 },
+      logs: { page: 1, pageSize: 20, total: 0 },
+    },
   }),
 
   actions: {
@@ -84,14 +90,19 @@ export const useAdminStore = defineStore("admin", {
       }
     },
 
-    async fetchUsers(search?: string) {
+    async fetchUsers(search?: string, page = 1, pageSize = 20) {
       this.loading.users = true;
       this.error = null;
       try {
-        const response = await apiClient.get<UserDto[]>("/admin/users", {
-          params: { search },
+        const response = await apiClient.get("/admin/users", {
+          params: { search, page, pageSize },
         });
-        this.users = response.data;
+        this.users = response.data.items;
+        this.pagination.users = {
+          page: response.data.page,
+          pageSize: response.data.pageSize,
+          total: response.data.total,
+        };
       } catch (err: any) {
         this.error = err.response?.data?.error || "Failed to fetch users";
         message.error(this.error);
@@ -100,13 +111,18 @@ export const useAdminStore = defineStore("admin", {
       }
     },
 
-    async fetchQuizzes(search?: string) {
+    async fetchQuizzes(search?: string, page = 1, pageSize = 20) {
       this.loading.quizzes = true;
       try {
-        const response = await apiClient.get<QuizAdminDto[]>("/admin/quizzes", {
-          params: { search },
+        const response = await apiClient.get("/admin/quizzes", {
+          params: { search, page, pageSize },
         });
-        this.quizzes = response.data;
+        this.quizzes = response.data.items;
+        this.pagination.quizzes = {
+          page: response.data.page,
+          pageSize: response.data.pageSize,
+          total: response.data.total,
+        };
       } catch (err: any) {
         message.error("Failed to fetch quizzes");
       } finally {
@@ -114,16 +130,23 @@ export const useAdminStore = defineStore("admin", {
       }
     },
 
-    async fetchComments(includeDeleted = false, search?: string) {
+    async fetchComments(
+      includeDeleted = false,
+      search?: string,
+      page = 1,
+      pageSize = 20,
+    ) {
       this.loading.comments = true;
       try {
-        const response = await apiClient.get<CommentAdminDto[]>(
-          "/admin/comments",
-          {
-            params: { includeDeleted, search },
-          },
-        );
-        this.comments = response.data;
+        const response = await apiClient.get("/admin/comments", {
+          params: { includeDeleted, search, page, pageSize },
+        });
+        this.comments = response.data.items;
+        this.pagination.comments = {
+          page: response.data.page,
+          pageSize: response.data.pageSize,
+          total: response.data.total,
+        };
       } catch (err: any) {
         message.error("Failed to fetch comments");
       } finally {
@@ -131,20 +154,28 @@ export const useAdminStore = defineStore("admin", {
       }
     },
 
-    async fetchLogs(params?: {
-      action?: string;
-      targetType?: string;
-      from?: string;
-      to?: string;
-      search?: string;
-      count?: number;
-    }) {
+    async fetchLogs(
+      params?: {
+        action?: string;
+        targetType?: string;
+        from?: string;
+        to?: string;
+        search?: string;
+      },
+      page = 1,
+      pageSize = 20,
+    ) {
       this.loading.logs = true;
       try {
-        const response = await apiClient.get<AdminLogDto[]>("/admin/logs", {
-          params,
+        const response = await apiClient.get("/admin/logs", {
+          params: { ...params, page, pageSize },
         });
-        this.logs = response.data;
+        this.logs = response.data.items;
+        this.pagination.logs = {
+          page: response.data.page,
+          pageSize: response.data.pageSize,
+          total: response.data.total,
+        };
       } catch (err: any) {
         message.error("Failed to fetch logs");
       } finally {

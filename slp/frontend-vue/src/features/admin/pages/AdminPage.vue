@@ -95,6 +95,16 @@
             <p v-if="!adminStore.users.length" class="empty-state">
               No users found.
             </p>
+            <a-pagination
+              v-model:current="userPage"
+              v-model:pageSize="userPageSize"
+              :total="adminStore.pagination.users.total"
+              show-size-changer
+              :page-size-options="['10', '20', '50', '100']"
+              @change="handleUserPageChange"
+              @showSizeChange="handleUserSizeChange"
+              class="pagination-wrapper"
+            />
           </template>
         </div>
       </a-tab-pane>
@@ -180,6 +190,16 @@
             <p v-if="!adminStore.quizzes.length" class="empty-state">
               No quizzes found.
             </p>
+            <a-pagination
+              v-model:current="quizPage"
+              v-model:pageSize="quizPageSize"
+              :total="adminStore.pagination.quizzes.total"
+              show-size-changer
+              :page-size-options="['10', '20', '50', '100']"
+              @change="handleQuizPageChange"
+              @showSizeChange="handleQuizSizeChange"
+              class="pagination-wrapper"
+            />
           </template>
         </div>
       </a-tab-pane>
@@ -284,6 +304,16 @@
             <p v-if="!adminStore.comments.length" class="empty-state">
               No comments found.
             </p>
+            <a-pagination
+              v-model:current="commentPage"
+              v-model:pageSize="commentPageSize"
+              :total="adminStore.pagination.comments.total"
+              show-size-changer
+              :page-size-options="['10', '20', '50', '100']"
+              @change="handleCommentPageChange"
+              @showSizeChange="handleCommentSizeChange"
+              class="pagination-wrapper"
+            />
           </template>
         </div>
       </a-tab-pane>
@@ -333,6 +363,16 @@
             <p v-if="!adminStore.logs.length" class="empty-state">
               No logs found.
             </p>
+            <a-pagination
+              v-model:current="logPage"
+              v-model:pageSize="logPageSize"
+              :total="adminStore.pagination.logs.total"
+              show-size-changer
+              :page-size-options="['10', '20', '50', '100']"
+              @change="handleLogPageChange"
+              @showSizeChange="handleLogSizeChange"
+              class="pagination-wrapper"
+            />
           </template>
         </div>
       </a-tab-pane>
@@ -348,7 +388,6 @@
         </div>
       </a-tab-pane>
     </a-tabs>
-
   </MobileLayout>
 </template>
 
@@ -385,25 +424,103 @@ const userSearch = ref("");
 const quizSearch = ref("");
 const includeDeleted = ref(false);
 const commentSearch = ref("");
+const userPage = ref(1);
+const userPageSize = ref(20);
+
+const quizPage = ref(1);
+const quizPageSize = ref(20);
+
+const commentPage = ref(1);
+const commentPageSize = ref(20);
+
+const logPage = ref(1);
+const logPageSize = ref(20);
+
+// Users
+const handleUserPageChange = (page: number) => {
+  userPage.value = page;
+  adminStore.fetchUsers(userSearch.value, page, userPageSize.value);
+};
+const handleUserSizeChange = (current: number, size: number) => {
+  userPageSize.value = size;
+  userPage.value = 1;
+  adminStore.fetchUsers(userSearch.value, 1, size);
+};
+
+// Quizzes (same pattern)
+const handleQuizPageChange = (page: number) => {
+  quizPage.value = page;
+  adminStore.fetchQuizzes(quizSearch.value, page, quizPageSize.value);
+};
+const handleQuizSizeChange = (current: number, size: number) => {
+  quizPageSize.value = size;
+  quizPage.value = 1;
+  adminStore.fetchQuizzes(quizSearch.value, 1, size);
+};
+
+// Comments
+const handleCommentPageChange = (page: number) => {
+  commentPage.value = page;
+  adminStore.fetchComments(
+    includeDeleted.value,
+    commentSearch.value,
+    page,
+    commentPageSize.value,
+  );
+};
+const handleCommentSizeChange = (current: number, size: number) => {
+  commentPageSize.value = size;
+  commentPage.value = 1;
+  adminStore.fetchComments(includeDeleted.value, commentSearch.value, 1, size);
+};
+
+// Logs
+const handleLogPageChange = (page: number) => {
+  logPage.value = page;
+  adminStore.fetchLogs(logFilters.value, page, logPageSize.value);
+};
+const handleLogSizeChange = (current: number, size: number) => {
+  logPageSize.value = size;
+  logPage.value = 1;
+  adminStore.fetchLogs(logFilters.value, 1, size);
+};
+
+const logFilters = ref<any>({});
+
+const handleLogFilters = (filters: any) => {
+  logFilters.value = filters;
+  logPage.value = 1;
+  adminStore.fetchLogs(filters, 1, logPageSize.value);
+};
 
 const handleUserSearch = () => {
-  adminStore.fetchUsers(userSearch.value);
+  userPage.value = 1;
+  adminStore.fetchUsers(userSearch.value, 1, userPageSize.value);
 };
 
 const handleQuizSearch = () => {
-  adminStore.fetchQuizzes(quizSearch.value);
+  quizPage.value = 1;
+  adminStore.fetchQuizzes(quizSearch.value, 1, quizPageSize.value);
 };
 
 const handleCommentSearch = () => {
-  adminStore.fetchComments(includeDeleted.value, commentSearch.value);
-};
-
-const handleLogFilters = (filters: any) => {
-  adminStore.fetchLogs(filters);
+  commentPage.value = 1;
+  adminStore.fetchComments(
+    includeDeleted.value,
+    commentSearch.value,
+    1,
+    commentPageSize.value,
+  );
 };
 
 const handleIncludeDeletedChange = () => {
-  adminStore.fetchComments(includeDeleted.value, commentSearch.value);
+  commentPage.value = 1;
+  adminStore.fetchComments(
+    includeDeleted.value,
+    commentSearch.value,
+    1,
+    commentPageSize.value,
+  );
 };
 
 const refreshComments = () => {
@@ -411,10 +528,10 @@ const refreshComments = () => {
 };
 
 onMounted(() => {
-  adminStore.fetchUsers();
-  adminStore.fetchQuizzes();
-  adminStore.fetchComments(false);
-  adminStore.fetchLogs({});
+  adminStore.fetchUsers(undefined, 1, userPageSize.value);
+  adminStore.fetchQuizzes(undefined, 1, quizPageSize.value);
+  adminStore.fetchComments(false, undefined, 1, commentPageSize.value);
+  adminStore.fetchLogs({}, 1, logPageSize.value);
 });
 </script>
 
@@ -426,7 +543,11 @@ onMounted(() => {
 .mobile-card :deep(.ant-card-body) {
   padding: 16px;
 }
-
+.pagination-wrapper {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
 .field-row {
   display: flex;
   margin-bottom: 8px;
