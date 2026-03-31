@@ -261,41 +261,6 @@ const isOwner = computed(() => {
   return !!quiz && currentUser?.id === quiz.userId;
 });
 
-watch(
-  attemptValue,
-  (val) => {
-    console.log(
-      "[QuizPlayer] attemptValue changed:",
-      val
-        ? {
-            attemptId: val.attemptId,
-            questionCount: val.questionCount,
-            questionsLength: val.questions?.length,
-          }
-        : null,
-    );
-  },
-  { immediate: true },
-);
-
-watch(
-  () => composable.currentQuestion.value,
-  (newVal) => {
-    console.log(
-      "[QuizPlayer] currentQuestion changed:",
-      newVal
-        ? {
-            quizQuestionId: newVal?.quizQuestionId,
-            hasSnapshot: !!newVal?.questionSnapshotJson,
-            snapshotType: typeof newVal?.questionSnapshotJson,
-            snapshotLength: newVal?.questionSnapshotJson?.length,
-          }
-        : null,
-    );
-  },
-  { immediate: true },
-);
-
 const loading = ref(true);
 
 onMounted(async () => {

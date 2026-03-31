@@ -215,23 +215,11 @@ export function useAttempt(quizId: number) {
 
   const currentQuestion = computed(() => {
     computedRunCount++;
-    console.log(
-      `[useAttempt] currentQuestion computed run #${computedRunCount}`,
-      {
-        attemptExists: !!attempt.value,
-        currentIndex: currentIndex.value,
-      },
-    );
 
     if (!attempt.value) {
-      console.log("[useAttempt] attempt.value is null");
       return null;
     }
     if (!attempt.value.questions || !Array.isArray(attempt.value.questions)) {
-      console.error(
-        "[useAttempt] currentQuestion: questions invalid",
-        attempt.value,
-      );
       return null;
     }
     const q = attempt.value.questions[currentIndex.value];
@@ -239,13 +227,6 @@ export function useAttempt(quizId: number) {
       console.error(`[useAttempt] no question at index ${currentIndex.value}`);
       return null;
     }
-    console.log("[useAttempt] currentQuestion:", {
-      quizQuestionId: q.quizQuestionId,
-      hasSnapshot: !!q.questionSnapshotJson,
-      snapshotType: typeof q.questionSnapshotJson,
-      snapshotLength: q.questionSnapshotJson?.length,
-      snapshotPreview: q.questionSnapshotJson?.slice(0, 50),
-    });
     return q;
   });
 
@@ -265,18 +246,11 @@ export function useAttempt(quizId: number) {
   watchEffect(() => {
     // This will re-run whenever any reactive dependency inside changes
     const q = currentQuestion.value;
-    console.log(
-      "[useAttempt] watchEffect triggered, currentQuestion:",
-      q ? { id: q.quizQuestionId } : null,
-    );
   });
 
   watch(
     attempt,
     () => {
-      console.log(
-        "[useAttempt] watch attempt triggered, forcing currentQuestion re-eval",
-      );
       // Accessing the computed forces it to re-evaluate if dependencies changed
       //const q = currentQuestion.value;
     },

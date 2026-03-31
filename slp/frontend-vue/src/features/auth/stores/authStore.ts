@@ -59,7 +59,6 @@ export const useAuthStore = defineStore("auth", {
     isAuthenticated: (state) => !!state.sessionToken,
     isAdmin: (state) => {
       const output = state.user?.role === "admin";
-      console.log(output);
       return output;
     },
     isEmailVerified: (state) => state.user?.emailConfirmed || false,

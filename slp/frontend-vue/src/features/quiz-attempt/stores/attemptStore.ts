@@ -65,12 +65,7 @@ export const useAttemptStore = defineStore("attempt", {
           { randomizeOrder }, // ← send as JSON body
         );
         const data = response.data;
-        console.log("[attemptStore] startAttempt response:", {
-          attemptId: data.attemptId,
-          questionCount: data.questionCount,
-          firstQuestionSnapshot:
-            data.questions?.[0]?.questionSnapshotJson?.slice(0, 50),
-        });
+
         if (!data) throw new Error("startAttempt returned null data");
         if (!data.questions || !Array.isArray(data.questions))
           throw new Error(
@@ -94,15 +89,7 @@ export const useAttemptStore = defineStore("attempt", {
       try {
         const response = await apiClient.get<Attempt>(`/attempts/${attemptId}`);
         const data = response.data;
-        console.log("[attemptStore] fetchAttempt response:", {
-          id: data.id,
-          status: data.status,
-          answersLength: data.answers?.length,
-          firstAnswerSnapshot: data.answers?.[0]?.questionSnapshotJson?.slice(
-            0,
-            50,
-          ),
-        });
+
         if (!data) throw new Error("fetchAttempt returned null data");
         if (!data.answers) console.warn("fetchAttempt: answers missing", data);
         this.attemptDetails = data;
