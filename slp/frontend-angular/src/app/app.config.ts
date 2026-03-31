@@ -52,6 +52,9 @@ import {
   ClockCircleOutline,
   RiseOutline,
   HeartOutline,
+  CameraOutline,
+  KeyOutline,
+  SafetyCertificateOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -85,6 +88,7 @@ const icons = [
   FlagOutline,
   SecurityScanOutline,
   SettingOutline,
+  CameraOutline,
   LogoutOutline,
   // Status
   CheckCircleOutline,
@@ -98,6 +102,8 @@ const icons = [
   ClockCircleOutline,
   RiseOutline,
   HeartOutline,
+  KeyOutline,
+  SafetyCertificateOutline,
 ];
 
 import { provideCharts, withDefaultRegisterables } from "ng2-charts";

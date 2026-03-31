@@ -1,0 +1,244 @@
+<div>
+  <div class="space-y-4">
+    <!-- Profile Header Card -->
+    <nz-card class="shadow-sm text-center">
+      <!-- Avatar with upload overlay -->
+      <div class="relative inline-block">
+        <img
+          *ngIf="user?.avatarUrl"
+          [src]="user?.avatarUrl"
+          alt="Avatar"
+          class="w-24 h-24 rounded-full object-cover mx-auto border-2 border-gray-200"
+          data-testid="avatar-image"
+        />
+        <div
+          *ngIf="!user?.avatarUrl"
+          class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 mx-auto flex items-center justify-center text-white text-3xl font-bold"
+          data-testid="avatar-initials"
+        >
+          {{ user?.username?.charAt(0)?.toUpperCase() }}
+        </div>
+
+        <!-- Hidden file input -->
+        <input
+          #fileInput
+          type="file"
+          accept="image/jpeg,image/png"
+          class="hidden"
+          (change)="onFileSelected($event)"
+          data-testid="avatar-input"
+        />
+
+        <!-- Camera button -->
+        <button
+          (click)="fileInput.click()"
+          [disabled]="avatarUploading"
+          class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 disabled:opacity-50"
+          title="Change avatar"
+          data-testid="avatar-upload-button"
+        >
+          <nz-spin *ngIf="avatarUploading" nzSize="small" />
+          <i
+            *ngIf="!avatarUploading"
+            nz-icon
+            nzType="camera"
+            nzTheme="outline"
+          ></i>
+        </button>
+      </div>
+
+      <h2 class="text-xl font-semibold mt-4" data-testid="username">
+        {{ user?.username }}
+      </h2>
+      <p class="text-gray-500" data-testid="email">{{ user?.email }}</p>
+
+      <!-- Remove avatar link (only shown when an avatar exists) -->
+      <div *ngIf="user?.avatarUrl" class="mt-2">
+        <button
+          nz-button
+          nzType="link"
+          nzDanger
+          nzSize="small"
+          [nzLoading]="avatarDeleting"
+          (click)="deleteAvatar()"
+          data-testid="remove-avatar-button"
+        >
+          Remove photo
+        </button>
+      </div>
+    </nz-card>
+
+    <!-- Account Settings Card -->
+    <nz-card
+      nzTitle="Account Settings"
+      class="shadow-sm"
+      [nzBodyStyle]="{ padding: '16px' }"
+      data-testid="account-settings-card"
+    >
+      <div class="space-y-3">
+        <!-- Email Verification -->
+        <div class="flex items-center justify-between py-1">
+          <div class="flex items-start min-w-0 flex-1 mr-2">
+            <i
+              nz-icon
+              nzType="mail"
+              nzTheme="outline"
+              class="mr-2 mt-0.5 flex-shrink-0 text-gray-400"
+            ></i>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-700 truncate">
+                Email Verification
+              </p>
+              <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center flex-shrink-0">
+            <nz-tag
+              [nzColor]="user?.emailVerified ? 'success' : 'warning'"
+              class="m-0 border-none px-2 text-[11px] leading-5 rounded-full"
+              data-testid="email-verified-tag"
+            >
+              {{ user?.emailVerified ? "Verified" : "Pending" }}
+            </nz-tag>
+
+            <button
+              *ngIf="!user?.emailVerified"
+              nz-button
+              nzType="link"
+              nzSize="small"
+              [nzLoading]="sendingVerification"
+              (click)="sendVerification()"
+              class="ml-1 px-1 h-auto text-xs font-semibold"
+              data-testid="send-verification-button"
+            >
+              Verify Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="flex items-start justify-between">
+          <div class="flex items-start min-w-0 flex-1">
+            <i
+              nz-icon
+              nzType="key"
+              nzTheme="outline"
+              class="mr-2 mt-0.5 flex-shrink-0 text-gray-500"
+            ></i>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Password</p>
+              <p class="text-xs text-gray-500 truncate">
+                Keep your account secure
+              </p>
+            </div>
+          </div>
+          <button
+            nz-button
+            nzType="link"
+            (click)="openChangePassword()"
+            class="ml-2 flex-shrink-0 text-xs px-2 h-auto"
+            data-testid="change-password-button"
+          >
+            Change
+          </button>
+        </div>
+
+        <!-- Account Status -->
+        <div class="flex items-start justify-between">
+          <div class="flex items-start min-w-0 flex-1">
+            <i
+              nz-icon
+              nzType="safety-certificate"
+              nzTheme="outline"
+              class="mr-2 mt-0.5 flex-shrink-0 text-gray-500"
+            ></i>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Account Status</p>
+              <p class="text-xs text-gray-500 capitalize truncate">
+                {{ user?.status }}
+              </p>
+            </div>
+          </div>
+          <nz-tag
+            [nzColor]="user?.status === 'active' ? 'success' : 'default'"
+            class="ml-2 flex-shrink-0 text-xs"
+            data-testid="account-status-tag"
+          >
+            {{ user?.status }}
+          </nz-tag>
+        </div>
+      </div>
+    </nz-card>
+  </div>
+
+  <!-- Change Password Modal -->
+  <nz-modal
+    [(nzVisible)]="showChangePassword"
+    nzTitle="Change Password"
+    [nzOkLoading]="passwordLoading"
+    nzOkText="Update Password"
+    (nzOnOk)="handleChangePassword()"
+    (nzOnCancel)="resetPasswordForm()"
+    data-testid="change-password-modal"
+  >
+    <ng-template nzModalContent>
+      <form [formGroup]="passwordForm" class="pt-2">
+        <nz-form-item>
+          <nz-form-label nzRequired>Current Password</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="
+              passwordForm.get('current')?.errors?.['required']
+                ? 'Current password is required.'
+                : passwordForm.get('current')?.errors?.['incorrect']
+                  ? 'Current password is incorrect.'
+                  : ''
+            "
+          >
+            <input
+              nz-input
+              type="password"
+              formControlName="current"
+              placeholder="Enter your current password"
+              data-testid="current-password-input"
+            />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>New Password</nz-form-label>
+          <nz-form-control>
+            <input
+              nz-input
+              type="password"
+              formControlName="new"
+              placeholder="New password"
+              data-testid="new-password-input"
+            />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>Confirm New Password</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="
+              passwordForm.get('confirm')?.errors?.['required']
+                ? 'Please confirm your new password.'
+                : passwordMismatch
+                  ? 'Passwords do not match.'
+                  : ''
+            "
+          >
+            <input
+              nz-input
+              type="password"
+              formControlName="confirm"
+              placeholder="Repeat new password"
+              data-testid="confirm-password-input"
+            />
+          </nz-form-control>
+        </nz-form-item>
+      </form>
+    </ng-template>
+  </nz-modal>
+</div>

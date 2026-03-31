@@ -54,6 +54,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "profile",
+        loadComponent: () =>
+          import("../features/profile/profile.component").then(
+            (m) => m.ProfileComponent,
+          ),
+        data: { breadcrumb: "Profile" },
+      },
+      {
         data: { breadcrumb: "Questions" },
         path: "questions",
         loadComponent: () =>
