@@ -1,4 +1,4 @@
-import { ref, computed, watch, watchEffect } from "vue";
+import { ref, computed, watch } from "vue";
 import {
   useAttemptStore,
   type StartAttemptResponse,
@@ -240,12 +240,6 @@ export function useAttempt(quizId: number) {
         answers.value[currentQuestion.value.quizQuestionId] = val;
       }
     },
-  });
-
-  // Force reactivity: watchEffect and watch on attempt to trigger computed re-evaluation
-  watchEffect(() => {
-    // This will re-run whenever any reactive dependency inside changes
-    const q = currentQuestion.value;
   });
 
   watch(
