@@ -21,7 +21,7 @@ import { LlmModule } from "../modules/llm/llm.module";
 import { QueueModule } from "../modules/queue/queue.module";
 import { EmailModule } from "../modules/email/email.module";
 import { FileStorageModule } from "../modules/file-storage/file-storage.module";
-// import { SearchModule } from '../modules/search/search.module';
+import { SearchModule } from "../modules/search/search.module";
 import { QuizAttemptModule } from "../modules/quiz-attempt/quiz-attempt.module";
 import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
@@ -66,6 +66,7 @@ import { AvatarModule } from "src/modules/avatar/avatar.module";
     TagModule,
     QuestionModule,
     QuizAttemptModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

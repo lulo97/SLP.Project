@@ -1,6 +1,6 @@
 <template>
   <MobileLayout title="Search" data-testid="search-page-layout">
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-2xl mx-auto" data-testid="search-content-container">
       <div class="mb-4" data-testid="search-input-container">
         <a-input-search
           v-model:value="searchStore.query"
@@ -16,7 +16,7 @@
       </div>
 
       <div class="mb-4 overflow-x-auto" data-testid="search-tabs-container">
-        <div class="flex gap-2 min-w-max pb-1">
+        <div class="flex gap-2 min-w-max pb-1" data-testid="search-tabs-list">
           <button
             v-for="tab in tabs"
             :key="tab.type"
@@ -29,7 +29,11 @@
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600',
             ]"
           >
-            <component :is="tab.icon" :size="14" />
+            <component
+              :is="tab.icon"
+              :size="14"
+              data-testid="search-tab-icon"
+            />
             {{ tab.label }}
             <span
               v-if="searchStore.hasSearched && getTabCount(tab.type) !== null"
@@ -65,10 +69,15 @@
       >
         <div
           class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4"
+          data-testid="initial-state-icon-wrapper"
         >
-          <Search :size="28" class="text-blue-400" />
+          <Search
+            :size="28"
+            class="text-blue-400"
+            data-testid="initial-state-icon"
+          />
         </div>
-        <p class="text-gray-500 text-sm">
+        <p class="text-gray-500 text-sm" data-testid="initial-state-text">
           Search across your quizzes, questions, sources and favorites.
         </p>
       </div>
@@ -82,13 +91,29 @@
           v-for="i in 5"
           :key="i"
           class="bg-white rounded-xl border border-gray-100 p-4 animate-pulse"
+          :data-testid="`loading-skeleton-item-${i}`"
         >
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />
-            <div class="flex-1 space-y-2">
-              <div class="h-4 bg-gray-100 rounded w-3/4" />
-              <div class="h-3 bg-gray-100 rounded w-full" />
-              <div class="h-3 bg-gray-100 rounded w-1/2" />
+          <div class="flex items-start gap-3" data-testid="skeleton-layout">
+            <div
+              class="w-8 h-8 rounded-lg bg-gray-100 shrink-0"
+              data-testid="skeleton-avatar"
+            />
+            <div
+              class="flex-1 space-y-2"
+              data-testid="skeleton-lines-container"
+            >
+              <div
+                class="h-4 bg-gray-100 rounded w-3/4"
+                data-testid="skeleton-line-1"
+              />
+              <div
+                class="h-3 bg-gray-100 rounded w-full"
+                data-testid="skeleton-line-2"
+              />
+              <div
+                class="h-3 bg-gray-100 rounded w-1/2"
+                data-testid="skeleton-line-3"
+              />
             </div>
           </div>
         </div>
@@ -101,11 +126,21 @@
       >
         <div
           class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4"
+          data-testid="no-results-icon-wrapper"
         >
-          <SearchX :size="28" class="text-gray-300" />
+          <SearchX
+            :size="28"
+            class="text-gray-300"
+            data-testid="no-results-icon"
+          />
         </div>
-        <p class="font-medium text-gray-700 mb-1">No results found</p>
-        <p class="text-sm text-gray-400">
+        <p
+          class="font-medium text-gray-700 mb-1"
+          data-testid="no-results-title"
+        >
+          No results found
+        </p>
+        <p class="text-sm text-gray-400" data-testid="no-results-description">
           Try different keywords or switch to a different category.
         </p>
       </div>
@@ -119,10 +154,15 @@
             searchStore.totalCount !== 1 ? "s" : ""
           }}
           for
-          <span class="font-medium text-gray-600"
+          <span
+            class="font-medium text-gray-600"
+            data-testid="search-results-query"
             >"{{ searchStore.lastQuery }}"</span
           >
-          <span v-if="searchStore.activeType !== 'all'">
+          <span
+            v-if="searchStore.activeType !== 'all'"
+            data-testid="search-results-filter-type"
+          >
             in {{ searchStore.activeType }}s
           </span>
         </p>
@@ -134,8 +174,9 @@
           class="bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer p-4 group"
           @click="navigateTo(item)"
         >
-          <div class="flex items-start gap-3">
+          <div class="flex items-start gap-3" data-testid="result-item-layout">
             <div
+              :data-testid="`result-item-icon-wrapper-${item.resultType}`"
               :class="[
                 'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5',
                 typeConfig[item.resultType].bg,
@@ -144,12 +185,16 @@
               <component
                 :is="typeConfig[item.resultType].icon"
                 :size="16"
+                data-testid="result-item-icon"
                 :class="typeConfig[item.resultType].color"
               />
             </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2 mb-1">
+            <div class="flex-1 min-w-0" data-testid="result-item-content">
+              <div
+                class="flex items-start justify-between gap-2 mb-1"
+                data-testid="result-item-header"
+              >
                 <p
                   class="font-medium text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2"
                   v-html="item.title"
@@ -176,7 +221,10 @@
                 data-testid="result-item-snippet"
               />
 
-              <div class="flex items-center gap-2 flex-wrap">
+              <div
+                class="flex items-center gap-2 flex-wrap"
+                data-testid="result-item-footer"
+              >
                 <span
                   data-testid="result-item-type-pill"
                   :class="[
@@ -190,7 +238,7 @@
                 <span
                   v-for="tag in item.tags.slice(0, 3)"
                   :key="tag"
-                  data-testid="result-item-tag"
+                  :data-testid="`result-item-tag-${tag}`"
                   class="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 font-medium"
                 >
                   #{{ tag }}
@@ -217,7 +265,7 @@
 
         <div
           v-if="searchStore.totalPages > 1"
-          data-testid="search-pagination"
+          data-testid="search-pagination-container"
           class="flex justify-center pt-4 pb-2"
         >
           <a-pagination
@@ -226,6 +274,7 @@
             :page-size="searchStore.pageSize"
             :show-size-changer="false"
             size="small"
+            data-testid="search-pagination"
             @change="(page: number) => searchStore.setPage(page)"
           />
         </div>
