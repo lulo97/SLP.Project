@@ -224,7 +224,6 @@ import { Camera, Mail, Key, Shield } from "lucide-vue-next";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import apiClient from "@/lib/api/client";
-import router from "@/router";
 
 const ACard = Card;
 const AForm = Form;
