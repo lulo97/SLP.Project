@@ -96,13 +96,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   //---------------
-  // ── Password match validator (same as Vue) ───────────────────────────
+  // ── Password match validator ───────────────────────────
   private passwordMatchValidator(
     group: FormGroup,
-  ): { mismatch: boolean } | null {
+  ): { [key: string]: any } | null {
     const newPw = group.get("new")?.value;
     const confirm = group.get("confirm")?.value;
-    return newPw === confirm ? null : { mismatch: true };
+    const confirmCtrl = group.get("confirm");
+
+    if (newPw !== confirm) {
+      // Manually set the error on the control so Ng-Zorro detects it
+      confirmCtrl?.setErrors({ mismatch: true });
+      return { mismatch: true };
+    } else {
+      // If they match, we need to make sure we don't overwrite other errors like 'required'
+      if (confirmCtrl?.hasError("mismatch")) {
+        confirmCtrl.setErrors(null);
+      }
+      return null;
+    }
   }
 
   get passwordMismatch(): boolean {
@@ -110,7 +122,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return !!this.passwordForm.errors?.["mismatch"] && !!confirmCtrl?.dirty;
   }
 
-  // ── Clear custom errors on input (matching Vue's @input) ─────────────
+  // ── Clear custom errors on input ─────────────
   clearCurrentError(): void {
     const currentCtrl = this.passwordForm.get("current");
     if (currentCtrl?.errors?.["incorrect"]) {
@@ -121,13 +133,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   clearNewError(): void {
-    // Vue clears new password error on input; Angular's required error disappears automatically,
-    // but we keep this for consistency (if any custom error added later)
+    // Angular's required error disappears automatically,
   }
 
   clearConfirmError(): void {
-    // Vue clears confirm error on input; Angular's mismatch error is on the group,
-    // but the field's validity will update when user types.
     // Mark as dirty to re-evaluate group validator
     this.passwordForm.get("confirm")?.updateValueAndValidity();
   }
@@ -212,7 +221,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Change password modal (matching Vue logic) ──────────────────────
+  // ── Change password modal ──────────────────────
   openChangePassword(): void {
     this.resetPasswordForm();
     this.showChangePassword = true;
@@ -259,7 +268,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.showChangePassword = false;
           this.resetPasswordForm();
         } else {
-          // Show the exact message from backend (like Vue)
+          // Show the exact message from backend
           this.message.error(result.message ?? "Failed to change password.");
           // If error is "Current password is incorrect", set custom error on current field
           if (

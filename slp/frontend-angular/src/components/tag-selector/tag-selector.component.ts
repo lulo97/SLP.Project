@@ -38,7 +38,7 @@ export class TagSelectorComponent implements ControlValueAccessor, OnInit {
 
   constructor(private tagService: TagService) {}
 
-  // Getter để tạo danh sách options (giống logic computed trong Vue)
+  // Getter để tạo danh sách options
   get options() {
     const apiTags = this.tags.map((t) => ({ value: t.name, label: t.name }));
     const currentValues = (this.control.value || []).map((v) => ({
