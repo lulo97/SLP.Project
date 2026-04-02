@@ -1,1 +1,1 @@
-npx playwright test change-password-wrong-current.spec --headed
+npx playwright test change-password-same-as-current.spec --headed
