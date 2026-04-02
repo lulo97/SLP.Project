@@ -102,19 +102,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ): { [key: string]: any } | null {
     const newPw = group.get("new")?.value;
     const confirm = group.get("confirm")?.value;
-    const confirmCtrl = group.get("confirm");
 
-    if (newPw !== confirm) {
-      // Manually set the error on the control so Ng-Zorro detects it
-      confirmCtrl?.setErrors({ mismatch: true });
-      return { mismatch: true };
-    } else {
-      // If they match, we need to make sure we don't overwrite other errors like 'required'
-      if (confirmCtrl?.hasError("mismatch")) {
-        confirmCtrl.setErrors(null);
-      }
+    if (!confirm || !newPw) {
       return null;
     }
+
+    return newPw === confirm ? null : { mismatch: true };
   }
 
   get passwordMismatch(): boolean {
