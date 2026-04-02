@@ -14,6 +14,7 @@ import {
   ForbiddenException,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserService } from "../user/user.service";
@@ -177,25 +178,15 @@ export class AuthController {
       req.user.id,
       dto.currentPassword,
       dto.newPassword,
+      req.user.sessionId, // pass current session ID
     );
 
     if (!result.success) {
-      switch (result.errorCode) {
-        case "INVALID_CURRENT_PASSWORD":
-          throw new UnauthorizedException({
-            code: result.errorCode,
-            message: result.message,
-          });
-        case "USER_NOT_FOUND":
-          throw new NotFoundException({
-            code: result.errorCode,
-            message: result.message,
-          });
-        default:
-          throw new InternalServerErrorException({
-            message: "An unexpected error occurred.",
-          });
-      }
+      // Always return 400 BadRequest
+      throw new BadRequestException({
+        code: result.errorCode,
+        message: result.message,
+      });
     }
 
     return { message: "Password changed successfully." };

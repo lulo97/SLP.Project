@@ -169,6 +169,7 @@ export class AuthService implements IAuthService {
     userId: number,
     currentPassword: string,
     newPassword: string,
+    currentSessionId?: string,
   ): Promise<ChangePasswordResult> {
     const user = await this.userRepo.getById(userId);
     if (!user) {
@@ -176,6 +177,22 @@ export class AuthService implements IAuthService {
         success: false,
         errorCode: "USER_NOT_FOUND",
         message: "User not found.",
+      };
+    }
+
+    if (!currentPassword) {
+      return {
+        success: false,
+        errorCode: "INVALID_CURRENT_PASSWORD",
+        message: "Current password is required.",
+      };
+    }
+
+    if (!newPassword) {
+      return {
+        success: false,
+        errorCode: "NO_NEW_PASSWORD",
+        message: "New password null.",
       };
     }
 
@@ -191,13 +208,25 @@ export class AuthService implements IAuthService {
       };
     }
 
+    if (currentPassword === newPassword) {
+      return {
+        success: false,
+        errorCode: "INVALID_CURRENT_PASSWORD",
+        message: "Current password and new password must different.",
+      };
+    }
+
+    // ─── Update password ──────────────────────────────────────────
     user.passwordHash = await PasswordHasher.hash(newPassword);
     user.updatedAt = new Date();
     await this.userRepo.update(user);
 
-    // Revoke all sessions except the current one? .NET revokes all sessions.
-    // The current session remains active (user stays logged in on this device).
-    await this.sessionRepo.revokeAllForUser(user.id);
+    // ─── Revoke all sessions EXCEPT the current one ───────────────
+    if (currentSessionId) {
+      await this.sessionRepo.revokeAllForUserExcept(user.id, currentSessionId);
+    } else {
+      await this.sessionRepo.revokeAllForUser(user.id);
+    }
 
     return { success: true };
   }

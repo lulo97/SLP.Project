@@ -95,9 +95,8 @@ export class AvatarController {
     user.updatedAt = new Date();
     await this.userRepo.update(user);
 
-    // Build public URL
-    const avatarUrl = `${this.frontendBaseUrl.endsWith("/") ? this.frontendBaseUrl.slice(0, -1) : this.frontendBaseUrl}/files/${newFilename}`;
-    return { avatarUrl };
+    // Return only the bare filename
+    return { avatarUrl: newFilename };
   }
 
   @Delete()
