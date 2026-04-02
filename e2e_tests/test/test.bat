@@ -1,1 +1,1 @@
-npx playwright test avatar.spec --headed
+npx playwright test change-password-current-password-null.spec --headed

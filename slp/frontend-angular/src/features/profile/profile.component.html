@@ -246,8 +246,8 @@
               type="password"
               formControlName="new"
               placeholder="At least 8 characters"
-            />
-            <ng-template #newPasswordErrorTpl>
+              data-testid="input-new-password"
+            /><ng-template #newPasswordErrorTpl>
               <ng-container
                 *ngIf="passwordForm.get('new')?.hasError('required')"
                 >New password is required.</ng-container
@@ -264,9 +264,8 @@
               type="password"
               formControlName="confirm"
               placeholder="Repeat new password"
-            />
-
-            <ng-template #confirmErrorTpl>
+              data-testid="input-confirm-password"
+            /><ng-template #confirmErrorTpl>
               <ng-container
                 *ngIf="passwordForm.get('confirm')?.hasError('required')"
               >
@@ -285,6 +284,7 @@
         </nz-form-item>
       </form>
     </ng-template>
+
     <ng-template nzModalFooter>
       <button
         nz-button
