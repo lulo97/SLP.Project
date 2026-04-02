@@ -272,7 +272,7 @@ import {
 } from "ant-design-vue";
 import { Camera, Mail, Key, Shield } from "lucide-vue-next";
 import MobileLayout from "@/layouts/MobileLayout.vue";
-import { useAuthStore } from "@/features/auth/stores/authStore";
+import { buildAvatarUrl, useAuthStore } from "@/features/auth/stores/authStore";
 import apiClient from "@/lib/api/client";
 
 const ACard = Card;
@@ -322,7 +322,7 @@ async function handleFileSelected(event: Event) {
 
     // Patch the local user object so the UI updates immediately
     if (authStore.user) {
-      authStore.user.avatarUrl = data.avatarUrl;
+      authStore.user.avatarUrl = buildAvatarUrl(data.avatarUrl);
     }
 
     message.success("Avatar updated!");

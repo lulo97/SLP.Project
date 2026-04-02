@@ -39,7 +39,7 @@ export interface ChangePasswordResult {
   message?: string;
 }
 
-function buildAvatarUrl(
+export function buildAvatarUrl(
   filename: string | null | undefined,
 ): string | undefined {
   if (!filename) return undefined;

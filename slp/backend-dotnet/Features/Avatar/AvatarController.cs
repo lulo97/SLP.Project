@@ -95,7 +95,7 @@ public sealed class AvatarController : ControllerBase
         await _users.UpdateAsync(user);
 
         // --- Return the constructed public URL to the client ---
-        return Ok(new { avatarUrl = BuildUrl(newFilename) });
+        return Ok(new { avatarUrl = newFilename });
     }
 
     // ── DELETE /api/avatar ────────────────────────────────────────────────────
@@ -133,11 +133,4 @@ public sealed class AvatarController : ControllerBase
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return int.TryParse(raw, out var id) ? id : null;
     }
-
-    /// <summary>
-    /// Constructs the public URL from the stored filename.
-    /// e.g. "a3f9c1.jpg" → "http://filestorage:8090/files/a3f9c1.jpg"
-    /// </summary>
-    private string BuildUrl(string filename) =>
-        $"{_settings.BaseUrlFrontend.TrimEnd('/')}/files/{filename}";
 }
