@@ -1,1 +1,1 @@
-npx playwright test tests/profile/change-password.spec.ts --headed
+npx playwright test change-password-current-password-null.spec --headed
