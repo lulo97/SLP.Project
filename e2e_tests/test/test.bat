@@ -1,1 +1,1 @@
-npx playwright test duplicate_username_email.spec --headed
+npx playwright test tests/profile/change-password.spec.ts --headed

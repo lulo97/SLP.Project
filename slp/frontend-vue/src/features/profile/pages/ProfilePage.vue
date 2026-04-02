@@ -1,83 +1,98 @@
 <template>
-  <MobileLayout title="Profile">
-    <div class="space-y-4">
-      <!-- Profile Header -->
-      <a-card class="shadow-sm text-center">
-        <!-- Avatar with upload overlay -->
-        <div class="relative inline-block">
-          <!-- Show uploaded avatar or initials fallback -->
+  <MobileLayout title="Profile" data-testid="profile-page-layout">
+    <div class="space-y-4" data-testid="profile-container">
+      <a-card class="shadow-sm text-center" data-testid="profile-header-card">
+        <div class="relative inline-block" data-testid="avatar-wrapper">
           <img
             v-if="authStore.user?.avatarUrl"
             :src="authStore.user.avatarUrl"
             alt="Avatar"
             class="w-24 h-24 rounded-full object-cover mx-auto border-2 border-gray-200"
+            data-testid="profile-avatar-img"
           />
           <div
             v-else
             class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 mx-auto flex items-center justify-center text-white text-3xl font-bold"
+            data-testid="profile-avatar-fallback"
           >
             {{ authStore.user?.username.charAt(0).toUpperCase() }}
           </div>
 
-          <!-- Hidden file input -->
           <input
             ref="fileInputRef"
             type="file"
             accept="image/jpeg,image/png"
             class="hidden"
             @change="handleFileSelected"
+            data-testid="avatar-file-input"
           />
 
-          <!-- Camera button -->
           <button
             @click="fileInputRef?.click()"
             :disabled="avatarUploading"
             class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 disabled:opacity-50"
             title="Change avatar"
+            data-testid="btn-upload-avatar"
           >
-            <a-spin v-if="avatarUploading" :size="'small'" />
-            <Camera v-else :size="16" />
+            <a-spin
+              v-if="avatarUploading"
+              :size="'small'"
+              data-testid="avatar-upload-spinner"
+            />
+            <Camera v-else :size="16" data-testid="icon-camera" />
           </button>
         </div>
 
-        <h2 class="text-xl font-semibold mt-4">
+        <h2 class="text-xl font-semibold mt-4" data-testid="profile-username">
           {{ authStore.user?.username }}
         </h2>
-        <p class="text-gray-500">{{ authStore.user?.email }}</p>
+        <p class="text-gray-500" data-testid="profile-email-display">
+          {{ authStore.user?.email }}
+        </p>
 
-        <!-- Remove avatar link (only shown when an avatar exists) -->
-        <div v-if="authStore.user?.avatarUrl" class="mt-2">
+        <div
+          v-if="authStore.user?.avatarUrl"
+          class="mt-2"
+          data-testid="remove-photo-container"
+        >
           <a-button
             type="link"
             danger
             size="small"
             :loading="avatarDeleting"
             @click="handleDeleteAvatar"
+            data-testid="btn-remove-photo"
           >
             Remove photo
           </a-button>
         </div>
       </a-card>
 
-      <!-- Account Settings -->
       <a-card
         title="Account Settings"
         class="shadow-sm"
         :bodyStyle="{ padding: '16px' }"
+        data-testid="account-settings-card"
       >
         <div class="space-y-3">
-          <!-- Email Verification -->
-          <div class="flex items-center justify-between py-1">
+          <div
+            class="flex items-center justify-between py-1"
+            data-testid="setting-item-email"
+          >
             <div class="flex items-start min-w-0 flex-1 mr-2">
               <Mail
                 :size="18"
                 class="mr-2 mt-0.5 flex-shrink-0 text-gray-400"
+                data-testid="icon-mail"
               />
               <div class="min-w-0">
                 <p class="text-sm font-medium text-gray-700 truncate">
                   Email Verification
                 </p>
-                <p class="text-xs text-gray-500 truncate">
+                <p
+                  class="text-xs text-gray-500 truncate"
+                  data-testid="setting-email-value"
+                >
                   {{ authStore.user?.email }}
                 </p>
               </div>
@@ -87,6 +102,7 @@
               <a-tag
                 :color="authStore.isEmailVerified ? 'success' : 'warning'"
                 class="m-0 border-none px-2 text-[11px] leading-5 rounded-full"
+                data-testid="tag-email-status"
               >
                 {{ authStore.isEmailVerified ? "Verified" : "Pending" }}
               </a-tag>
@@ -98,16 +114,23 @@
                 :loading="sendingVerification"
                 @click="sendVerification"
                 class="ml-1 px-1 h-auto text-xs font-semibold"
+                data-testid="btn-verify-email"
               >
                 Verify Now
               </a-button>
             </div>
           </div>
 
-          <!-- Password -->
-          <div class="flex items-start justify-between">
+          <div
+            class="flex items-start justify-between"
+            data-testid="setting-item-password"
+          >
             <div class="flex items-start min-w-0 flex-1">
-              <Key :size="18" class="mr-2 mt-0.5 flex-shrink-0 text-gray-500" />
+              <Key
+                :size="18"
+                class="mr-2 mt-0.5 flex-shrink-0 text-gray-500"
+                data-testid="icon-key"
+              />
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">Password</p>
                 <p class="text-xs text-gray-500 truncate">
@@ -119,21 +142,28 @@
               type="link"
               @click="openChangePassword"
               class="ml-2 flex-shrink-0 text-xs px-2 h-auto"
+              data-testid="btn-open-change-password"
             >
               Change
             </a-button>
           </div>
 
-          <!-- Account Status -->
-          <div class="flex items-start justify-between">
+          <div
+            class="flex items-start justify-between"
+            data-testid="setting-item-status"
+          >
             <div class="flex items-start min-w-0 flex-1">
               <Shield
                 :size="18"
                 class="mr-2 mt-0.5 flex-shrink-0 text-gray-500"
+                data-testid="icon-shield"
               />
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">Account Status</p>
-                <p class="text-xs text-gray-500 capitalize truncate">
+                <p
+                  class="text-xs text-gray-500 capitalize truncate"
+                  data-testid="status-text-value"
+                >
                   {{ authStore.user?.status }}
                 </p>
               </div>
@@ -143,6 +173,7 @@
                 authStore.user?.status === 'active' ? 'success' : 'default'
               "
               class="ml-2 flex-shrink-0 text-xs"
+              data-testid="tag-account-status"
             >
               {{ authStore.user?.status }}
             </a-tag>
@@ -151,60 +182,79 @@
       </a-card>
     </div>
 
-    <!-- ── Change Password Modal ─────────────────────────────────────────── -->
     <a-modal
       v-model:open="showChangePassword"
       title="Change Password"
       :confirm-loading="passwordLoading"
-      :ok-text="'Update Password'"
-      @ok="handleChangePassword"
       @cancel="resetPasswordForm"
+      data-testid="modal-change-password"
     >
-      <a-form layout="vertical" class="pt-2">
-        <!-- Current password -->
+      <a-form layout="vertical" class="pt-2" data-testid="form-change-password">
         <a-form-item
           label="Current Password"
           :validate-status="pwErrors.current ? 'error' : undefined"
           :help="pwErrors.current"
           required
+          data-testid="form-item-current-password"
         >
           <a-input-password
             v-model:value="passwordForm.current"
             placeholder="Enter your current password"
             @input="pwErrors.current = ''"
+            data-testid="input-current-password"
           />
         </a-form-item>
 
-        <!-- New password -->
         <a-form-item
           label="New Password"
           :validate-status="pwErrors.new ? 'error' : undefined"
           :help="pwErrors.new"
           required
+          data-testid="form-item-new-password"
         >
           <a-input-password
             v-model:value="passwordForm.new"
             placeholder="At least 8 characters"
             @input="pwErrors.new = ''"
+            data-testid="input-new-password"
           />
         </a-form-item>
 
-        <!-- Confirm new password -->
         <a-form-item
           label="Confirm New Password"
           :validate-status="pwErrors.confirm ? 'error' : undefined"
           :help="pwErrors.confirm"
           required
+          data-testid="form-item-confirm-password"
         >
           <a-input-password
             v-model:value="passwordForm.confirm"
             placeholder="Repeat new password"
             @input="pwErrors.confirm = ''"
+            data-testid="input-confirm-password"
           />
         </a-form-item>
       </a-form>
+
+      <template #footer>
+        <a-button
+          key="back"
+          @click="showChangePassword = false"
+          data-testid="btn-cancel-password"
+        >
+          Cancel
+        </a-button>
+        <a-button
+          key="submit"
+          type="primary"
+          :loading="passwordLoading"
+          @click="handleChangePassword"
+          data-testid="btn-update-password"
+        >
+          Update Password
+        </a-button>
+      </template>
     </a-modal>
-    <!-- ─────────────────────────────────────────────────────────────────── -->
   </MobileLayout>
 </template>
 
