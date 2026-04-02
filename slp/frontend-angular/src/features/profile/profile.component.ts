@@ -163,9 +163,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.http
       .post<{
         avatarUrl: string;
-      }>(`${environment.apiBackendUrl}/avatar`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      }>(`${environment.apiBackendUrl}/avatar`, formData)
       .subscribe({
         next: () => {
           this.message.success("Avatar updated!");
@@ -253,7 +251,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // Front-end validation: required fields + password match
     if (this.passwordForm.invalid) {
       // The template will show error tips automatically
-      console.log("Form invalid, form = ", this.passwordForm.value);
+      ///console.log("Form invalid, form = ", this.passwordForm.value);
       return;
     }
 

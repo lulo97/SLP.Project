@@ -34,7 +34,6 @@ export default () => ({
   fileStorage: {
     baseUrl:
       process.env.FILE_STORAGE_BASE_URL || "http://filestorage-container:3007",
-    baseUrlFrontend: process.env.FILE_STORAGE_BASE_URL_FRONTEND || null,
     apiKey: process.env.FILE_STORAGE_API_KEY || "",
   },
   ttsApi: {

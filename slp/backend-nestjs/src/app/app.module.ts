@@ -27,6 +27,7 @@ import { TagModule } from "../modules/tag/tag.module";
 import { QuestionModule } from "../modules/question/question.module";
 import { CommentModule } from "../modules/comment/comment.module";
 import { ExplanationModule } from "../modules/explanation/explanation.module";
+import { AvatarModule } from "src/modules/avatar/avatar.module";
 
 @Module({
   imports: [
@@ -61,7 +62,7 @@ import { ExplanationModule } from "../modules/explanation/explanation.module";
     EmailModule,
     FileStorageModule,
     MetricsModule,
-
+    AvatarModule,
     TagModule,
     QuestionModule,
     QuizAttemptModule,
