@@ -224,6 +224,7 @@ import { Camera, Mail, Key, Shield } from "lucide-vue-next";
 import MobileLayout from "@/layouts/MobileLayout.vue";
 import { useAuthStore } from "@/features/auth/stores/authStore";
 import apiClient from "@/lib/api/client";
+import router from "@/router";
 
 const ACard = Card;
 const AForm = Form;
@@ -375,17 +376,7 @@ async function handleChangePassword() {
     showChangePassword.value = false;
     resetPasswordForm();
   } else {
-    // Map API error codes back to the relevant field
-    switch (result.code) {
-      case "INVALID_CURRENT_PASSWORD":
-        pwErrors.value.current = "Current password is incorrect.";
-        break;
-      case "WEAK_PASSWORD":
-        pwErrors.value.new = result.message ?? "Password is too weak.";
-        break;
-      default:
-        message.error(result.message ?? "Failed to change password.");
-    }
+    message.error(result.message ?? "Failed to change password.");
   }
 }
 

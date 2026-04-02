@@ -1,9 +1,9 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ChangePasswordRequest {
   @IsString()
   currentPassword: string;
 
-  @MinLength(6)
+  @IsNotEmpty()
   newPassword: string;
 }

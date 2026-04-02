@@ -6,4 +6,5 @@ public interface ISessionRepository
     Task<Session?> GetByTokenHashAsync(string hash);
     Task RevokeAsync(string sessionId);
     Task RevokeAllForUserAsync(int userId);
+    Task RevokeAllForUserExceptAsync(int userId, string exceptSessionId);
 }

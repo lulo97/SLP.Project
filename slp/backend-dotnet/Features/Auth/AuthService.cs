@@ -2,9 +2,7 @@
 using backend_dotnet.Features.Email;
 using backend_dotnet.Features.Session;
 using backend_dotnet.Features.User;
-using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
-using System.Text;
 
 public class AuthService : IAuthService
 {
@@ -159,8 +157,9 @@ public class AuthService : IAuthService
     public async Task<ChangePasswordResult> ChangePasswordAsync(
         string userId,
         string currentPassword,
-        string newPassword)
+        string newPassword, string? currentSessionId = null)
     {
+        //userId must exist
         if (!int.TryParse(userId, out var id))
         {
             return new ChangePasswordResult
@@ -171,6 +170,7 @@ public class AuthService : IAuthService
             };
         }
 
+        //User found by userId must also exist
         var user = await _users.GetByIdAsync(id);
         if (user == null)
         {
@@ -182,6 +182,40 @@ public class AuthService : IAuthService
             };
         }
 
+        //Current password user input must exist
+        if (string.IsNullOrEmpty(currentPassword))
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "INVALID_CURRENT_PASSWORD",
+                Message = "Current password is required."
+            };
+        }
+
+        //Current password in database must exist
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "NO_LOCAL_PASSWORD",
+                Message = "User does not have a password set."
+            };
+        }
+
+        //New password must exist
+        if (string.IsNullOrEmpty(newPassword))
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "NO_NEW_PASSWORD",
+                Message = "New password null."
+            };
+        }
+
+        //Current password of user input vs database must match
         if (!PasswordHasher.Verify(currentPassword, user.PasswordHash))
         {
             return new ChangePasswordResult
@@ -192,14 +226,26 @@ public class AuthService : IAuthService
             };
         }
 
+        //New password must not match current password
+        if (currentPassword == newPassword)
+        {
+            return new ChangePasswordResult
+            {
+                Success = false,
+                ErrorCode = "INVALID_CURRENT_PASSWORD",
+                Message = "Current password and new password must different."
+            };
+        }
+
         user.PasswordHash = PasswordHasher.Hash(newPassword);
         user.UpdatedAt = DateTime.UtcNow;
         await _users.UpdateAsync(user);
 
-        // Revoke all sessions so other devices must re-login.
-        // The current session is intentionally kept alive so the user
-        // is not immediately logged out on this device.
-        await _sessions.RevokeAllForUserAsync(user.Id);
+        // Revoke all OTHER sessions; keep current one so user stays logged in
+        if (currentSessionId != null)
+            await _sessions.RevokeAllForUserExceptAsync(user.Id, currentSessionId);
+        else
+            await _sessions.RevokeAllForUserAsync(user.Id);
 
         return new ChangePasswordResult { Success = true };
     }

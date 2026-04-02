@@ -12,15 +12,10 @@ public interface IAuthService
     Task<bool> VerifyEmailAsync(string token);
     Task SendVerificationEmailAsync(string userId);
 
-    /// <summary>
-    /// Validates <paramref name="currentPassword"/> against the stored hash,
-    /// then replaces it with <paramref name="newPassword"/> and revokes all
-    /// existing sessions so the user must re-login on other devices.
-    /// Returns false when the current password is wrong or the user is not found.
-    /// </summary>
     Task<ChangePasswordResult> ChangePasswordAsync(
         string userId,
         string currentPassword,
-        string newPassword);
+        string newPassword,
+        string? currentSessionId);
 }
 
