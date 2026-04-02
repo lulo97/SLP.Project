@@ -77,7 +77,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.passwordForm = this.fb.group(
       {
         current: ["", Validators.required],
-        new: ["", [Validators.required, ]],
+        new: ["", [Validators.required]],
         confirm: ["", Validators.required],
       },
       { validators: this.passwordMatchValidator },
@@ -95,7 +95,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.userSub?.unsubscribe();
   }
 
-  // ── Password match validator ────────────────────────────────────────
+  //---------------
+  // ── Password match validator (same as Vue) ───────────────────────────
   private passwordMatchValidator(
     group: FormGroup,
   ): { mismatch: boolean } | null {
@@ -109,13 +110,34 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return !!this.passwordForm.errors?.["mismatch"] && !!confirmCtrl?.dirty;
   }
 
+  // ── Clear custom errors on input (matching Vue's @input) ─────────────
+  clearCurrentError(): void {
+    const currentCtrl = this.passwordForm.get("current");
+    if (currentCtrl?.errors?.["incorrect"]) {
+      // Remove the custom 'incorrect' error
+      const { incorrect, ...rest } = currentCtrl.errors;
+      currentCtrl.setErrors(Object.keys(rest).length ? rest : null);
+    }
+  }
+
+  clearNewError(): void {
+    // Vue clears new password error on input; Angular's required error disappears automatically,
+    // but we keep this for consistency (if any custom error added later)
+  }
+
+  clearConfirmError(): void {
+    // Vue clears confirm error on input; Angular's mismatch error is on the group,
+    // but the field's validity will update when user types.
+    // Mark as dirty to re-evaluate group validator
+    this.passwordForm.get("confirm")?.updateValueAndValidity();
+  }
+
   // ── Avatar upload ────────────────────────────────────────────────────
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
-    // Client-side validation
     if (!["image/jpeg", "image/png"].includes(file.type)) {
       this.message.error("Only JPEG and PNG images are allowed.");
       return;
@@ -130,17 +152,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     formData.append("file", file);
 
     this.http
-      .post<{ avatarUrl: string }>(
-        `${environment.apiBackendUrl}/avatar`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      )
+      .post<{
+        avatarUrl: string;
+      }>(`${environment.apiBackendUrl}/avatar`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
       .subscribe({
         next: () => {
           this.message.success("Avatar updated!");
-          // Refresh user data to get the new avatarUrl
           this.authService.fetchCurrentUser().subscribe();
         },
         error: (err) => {
@@ -150,7 +169,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           this.avatarUploading = false;
-          // Reset file input so the same file can be reselected
           if (this.fileInput) this.fileInput.nativeElement.value = "";
         },
       });
@@ -161,7 +179,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.http.delete(`${environment.apiBackendUrl}/avatar`).subscribe({
       next: () => {
         this.message.success("Avatar removed.");
-        // Refresh user data
         this.authService.fetchCurrentUser().subscribe();
       },
       error: () => {
@@ -195,7 +212,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Change password modal ───────────────────────────────────────────
+  // ── Change password modal (matching Vue logic) ──────────────────────
   openChangePassword(): void {
     this.resetPasswordForm();
     this.showChangePassword = true;
@@ -205,13 +222,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.passwordForm.reset({ current: "", new: "", confirm: "" });
     this.passwordForm.markAsPristine();
     this.passwordForm.markAsUntouched();
+    // Clear any custom errors
+    const currentCtrl = this.passwordForm.get("current");
+    if (currentCtrl?.errors?.["incorrect"]) {
+      const { incorrect, ...rest } = currentCtrl.errors;
+      currentCtrl.setErrors(Object.keys(rest).length ? rest : null);
+    }
   }
 
   handleChangePassword(): void {
-    // Mark all fields as touched to trigger validation messages
-    Object.values(this.passwordForm.controls).forEach((c) => c.markAsDirty());
+    // 1. Mark everything as dirty and touched
+    Object.values(this.passwordForm.controls).forEach((c) => {
+      c.markAsDirty();
+      c.markAsTouched();
+      c.updateValueAndValidity(); // Force sync
+    });
 
-    if (this.passwordForm.invalid) return;
+    // 2. Also update the group validity (important for the mismatch validator)
+    this.passwordForm.updateValueAndValidity();
+
+    // Front-end validation: required fields + password match
+    if (this.passwordForm.invalid) {
+      // The template will show error tips automatically
+      console.log("Form invalid, form = ", this.passwordForm.value);
+      return;
+    }
 
     this.passwordLoading = true;
     const { current, new: newPassword } = this.passwordForm.value;
@@ -224,22 +259,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.showChangePassword = false;
           this.resetPasswordForm();
         } else {
-          // Map API error codes to the relevant field
-          switch (result.code) {
-            case "INVALID_CURRENT_PASSWORD":
-              this.passwordForm.get("current")?.setErrors({ incorrect: true });
-              this.passwordForm.get("current")?.markAsDirty();
-              this.message.error("Current password is incorrect.");
-              break;
-            case "WEAK_PASSWORD":
-              this.passwordForm.get("new")?.setErrors({ weak: true });
-              this.passwordForm.get("new")?.markAsDirty();
-              this.message.error(result.message ?? "Password is too weak.");
-              break;
-            default:
-              this.message.error(
-                result.message ?? "Failed to change password.",
-              );
+          // Show the exact message from backend (like Vue)
+          this.message.error(result.message ?? "Failed to change password.");
+          // If error is "Current password is incorrect", set custom error on current field
+          if (
+            result.code === "INVALID_CURRENT_PASSWORD" &&
+            result.message?.toLowerCase().includes("incorrect")
+          ) {
+            const currentCtrl = this.passwordForm.get("current");
+            currentCtrl?.setErrors({ incorrect: true });
+            currentCtrl?.markAsDirty();
           }
         }
       },
