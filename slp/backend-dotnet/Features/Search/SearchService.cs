@@ -4,25 +4,11 @@ using Microsoft.EntityFrameworkCore;
 namespace backend_dotnet.Features.Search;
 
 /// <summary>
-///   Implements full-text search using PostgreSQL's built-in FTS engine.
-///
-///   Implementation notes
-///   ────────────────────
-///   • plainto_tsquery is used instead of to_tsquery because it is safe for raw
-///     user input — no special operator syntax is accepted so malformed queries
-///     never raise an exception.
-///   • ts_headline wraps matched lexemes in &lt;mark&gt;…&lt;/mark&gt; so the frontend
-///     can apply CSS highlight without parsing.
-///   • COUNT(*) OVER() (window function) returns the total matching row count in
-///     the same database round-trip as the paged data, avoiding a separate COUNT
-///     query.
-///   • Tag-name matching uses a simple ILIKE '%term%' sub-select so that short
-///     words not present in English FTS dictionaries (stop words, abbreviations)
-///     are still found when they are used as tags.
-///   • NOTE: The quiz table currently has no GIN index for FTS. With ~1 000 users
-///     a sequential scan is acceptable. For larger datasets add:
-///       CREATE INDEX idx_quiz_fts ON quiz
-///         USING gin(to_tsvector('english', title || ' ' || COALESCE(description,'')));
+///   Simple search using ILIKE (case‑insensitive substring match) on:
+///     - Quizzes   → title
+///     - Questions → content
+///     - Sources   → title
+///     - Favorites → text
 /// </summary>
 public class SearchService : ISearchService
 {
@@ -42,76 +28,80 @@ public class SearchService : ISearchService
 
     public async Task<SearchResponse> SearchAsync(SearchRequest req, int userId)
     {
-        var q        = (req.Q ?? string.Empty).Trim();
-        var page     = Math.Max(1, req.Page);
+        var q = (req.Q ?? string.Empty).Trim();
+        var page = Math.Max(1, req.Page);
         var pageSize = Math.Clamp(req.PageSize, 1, 50);
-        var offset   = (page - 1) * pageSize;
-        var type     = ValidTypes.Contains(req.Type ?? "all")
+        var offset = (page - 1) * pageSize;
+        var type = ValidTypes.Contains(req.Type ?? "all")
                          ? req.Type!.ToLowerInvariant()
                          : "all";
 
-        // Require at least one non-whitespace character
         if (q.Length == 0)
         {
             return new SearchResponse
             {
-                Query = q, Type = type, Page = page, PageSize = pageSize,
-                TotalCount = 0, TotalPages = 0,
+                Query = q,
+                Type = type,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = 0,
+                TotalPages = 0,
                 Results = new List<SearchResultItem>()
             };
         }
 
         return type switch
         {
-            "quiz"     => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "quiz"),
+            "quiz" => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "quiz"),
             "question" => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "question"),
-            "source"   => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "source"),
+            "source" => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "source"),
             "favorite" => await SearchSingleTypeAsync(q, userId, page, pageSize, offset, "favorite"),
-            _          => await SearchAllAsync(q, userId, pageSize),
+            _ => await SearchAllAsync(q, userId, pageSize),
         };
     }
 
-    // ── Single-type search (with proper pagination) ──────────────────────────
+    // ── Single-type search (with pagination) ─────────────────────────────────
 
     private async Task<SearchResponse> SearchSingleTypeAsync(
         string q, int userId, int page, int pageSize, int offset, string type)
     {
         var (items, totalCount) = type switch
         {
-            "quiz"     => await SearchQuizzesAsync(q, userId, offset, pageSize),
+            "quiz" => await SearchQuizzesAsync(q, userId, offset, pageSize),
             "question" => await SearchQuestionsAsync(q, userId, offset, pageSize),
-            "source"   => await SearchSourcesAsync(q, userId, offset, pageSize),
+            "source" => await SearchSourcesAsync(q, userId, offset, pageSize),
             "favorite" => await SearchFavoritesAsync(q, userId, offset, pageSize),
-            _          => (new List<SearchResultItem>(), 0),
+            _ => (new List<SearchResultItem>(), 0),
         };
 
         return new SearchResponse
         {
-            Query      = q,
-            Type       = type,
-            Page       = page,
-            PageSize   = pageSize,
+            Query = q,
+            Type = type,
+            Page = page,
+            PageSize = pageSize,
             TotalCount = totalCount,
             TotalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize),
-            Results    = items,
+            Results = items,
         };
     }
 
     // ── "All" search: fetch up to pageSize from each category, merge by rank ─
+    //    (Rank is now a simple 1.0 for all matches – ordering is by created_at desc)
 
     private async Task<SearchResponse> SearchAllAsync(string q, int userId, int pageSize)
     {
-        // Run sequentially — DbContext is not thread-safe for concurrent async calls.
-        var (quizItems,     quizCount)     = await SearchQuizzesAsync(q, userId, 0, pageSize);
+        var (quizItems, quizCount) = await SearchQuizzesAsync(q, userId, 0, pageSize);
         var (questionItems, questionCount) = await SearchQuestionsAsync(q, userId, 0, pageSize);
-        var (sourceItems,   sourceCount)   = await SearchSourcesAsync(q, userId, 0, pageSize);
+        var (sourceItems, sourceCount) = await SearchSourcesAsync(q, userId, 0, pageSize);
         var (favoriteItems, favoriteCount) = await SearchFavoritesAsync(q, userId, 0, pageSize);
 
+        // Merge and sort by most recent first (no rank scoring)
         var merged = quizItems
             .Concat(questionItems)
             .Concat(sourceItems)
             .Concat(favoriteItems)
-            .OrderByDescending(r => r.Rank)
+            .OrderByDescending(r => r.CreatedAt)
             .Take(pageSize)
             .ToList();
 
@@ -119,97 +109,82 @@ public class SearchService : ISearchService
 
         return new SearchResponse
         {
-            Query      = q,
-            Type       = "all",
-            Page       = 1,
-            PageSize   = pageSize,
+            Query = q,
+            Type = "all",
+            Page = 1,
+            PageSize = pageSize,
             TotalCount = totalCount,
-            // For "all" mode there is no deeper pagination; callers should narrow the type.
             TotalPages = 1,
-            Results    = merged,
+            Results = merged,
             CategoryCounts = new CategoryCounts
             {
-                Quizzes   = quizCount,
+                Quizzes = quizCount,
                 Questions = questionCount,
-                Sources   = sourceCount,
+                Sources = sourceCount,
                 Favorites = favoriteCount,
             },
         };
     }
 
-    // ── Per-category search methods ──────────────────────────────────────────
+    // ── Per-category search methods (simple ILIKE) ───────────────────────────
 
-    /// <remarks>
-    ///   Searches public quizzes and the user's own private quizzes.
-    ///   Matches on title, description, and tag names.
-    /// </remarks>
     private async Task<(List<SearchResultItem>, int)> SearchQuizzesAsync(
         string q, int userId, int offset, int limit)
     {
         try
         {
-            var rows = await _context.Database
-                .SqlQuery<QuizSearchRow>($"""
-                    SELECT
-                        q.id                                                    AS "Id",
-                        q.title                                                 AS "Title",
-                        q.visibility                                            AS "Visibility",
-                        q.created_at                                            AS "CreatedAt",
-                        ts_rank(
-                            to_tsvector('english',
-                                q.title || ' ' || COALESCE(q.description, '')),
-                            plainto_tsquery('english', {q})
-                        )                                                       AS "Rank",
-                        ts_headline(
-                            'english',
-                            COALESCE(q.description, q.title),
-                            plainto_tsquery('english', {q}),
-                            'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-                        )                                                       AS "Snippet",
-                        COUNT(*) OVER()::int                                    AS "TotalCount"
-                    FROM quiz q
-                    WHERE q.disabled = false
-                      AND (q.visibility = 'public' OR q.user_id = {userId})
-                      AND (
-                            to_tsvector('english',
-                                q.title || ' ' || COALESCE(q.description, ''))
-                            @@ plainto_tsquery('english', {q})
-                          OR EXISTS (
-                                SELECT 1
-                                FROM   quiz_tag qt
-                                JOIN   tag      t  ON t.id = qt.tag_id
-                                WHERE  qt.quiz_id = q.id
-                                  AND  t.name ILIKE '%' || {q} || '%'
-                            )
-                      )
-                    ORDER BY "Rank" DESC, q.created_at DESC
-                    LIMIT {limit} OFFSET {offset}
-                    """)
-                .ToListAsync();
+            // Build the pattern for ILIKE
+            var pattern = $"%{q}%";
 
-            if (rows.Count == 0)
+            var query = _context.Quizzes
+                .Where(quiz => !quiz.Disabled &&
+                               (quiz.Visibility == "public" || quiz.UserId == userId) &&
+                               EF.Functions.ILike(quiz.Title, pattern))
+                .OrderByDescending(quiz => quiz.CreatedAt)
+                .Skip(offset)
+                .Take(limit)
+                .Select(quiz => new
+                {
+                    quiz.Id,
+                    quiz.Title,
+                    quiz.Visibility,
+                    quiz.CreatedAt,
+                    Snippet = quiz.Title.Length > 200
+                        ? quiz.Title.Substring(0, 200) + "..."
+                        : quiz.Title
+                });
+
+            var itemsList = await query.ToListAsync();
+
+            // Get total count separately (EF Core doesn't support COUNT(*) OVER() easily with Skip/Take)
+            var totalCount = await _context.Quizzes
+                .Where(quiz => !quiz.Disabled &&
+                               (quiz.Visibility == "public" || quiz.UserId == userId) &&
+                               EF.Functions.ILike(quiz.Title, pattern))
+                .CountAsync();
+
+            if (itemsList.Count == 0)
                 return (new List<SearchResultItem>(), 0);
 
-            var totalCount = rows[0].TotalCount;
+            var quizIds = itemsList.Select(x => x.Id).ToList();
 
-            // Batch-load tags for all returned quiz IDs in a single query
-            var quizIds  = rows.Select(r => r.Id).ToList();
+            // Load tags for display
             var tagLookup = (await _context.QuizTags
                 .Where(qt => quizIds.Contains(qt.QuizId))
                 .Select(qt => new { qt.QuizId, qt.Tag.Name })
                 .ToListAsync())
                 .ToLookup(x => x.QuizId, x => x.Name);
 
-            var items = rows.Select(r => new SearchResultItem
+            var items = itemsList.Select(r => new SearchResultItem
             {
                 ResultType = "quiz",
-                Id         = r.Id,
-                Title      = r.Title,
-                Snippet    = r.Snippet,
-                Rank       = r.Rank,
+                Id = r.Id,
+                Title = r.Title,
+                Snippet = r.Snippet,
+                Rank = 1.0,          // no relevance scoring
                 Visibility = r.Visibility,
-                CreatedAt  = r.CreatedAt,
-                Tags       = tagLookup[r.Id].ToList(),
+                CreatedAt = r.CreatedAt,
+                Tags = tagLookup[r.Id].ToList(),
             }).ToList();
 
             return (items, totalCount);
@@ -221,58 +196,43 @@ public class SearchService : ISearchService
         }
     }
 
-    /// <remarks>
-    ///   Only returns questions belonging to the authenticated user.
-    ///   Matches on question content, explanation text, and tag names.
-    /// </remarks>
     private async Task<(List<SearchResultItem>, int)> SearchQuestionsAsync(
         string q, int userId, int offset, int limit)
     {
         try
         {
-            var rows = await _context.Database
-                .SqlQuery<QuestionSearchRow>($"""
-                    SELECT
-                        q.id                                                    AS "Id",
-                        LEFT(q.content, 120)                                    AS "Title",
-                        q.type                                                  AS "SubType",
-                        q.created_at                                            AS "CreatedAt",
-                        ts_rank(
-                            to_tsvector('english',
-                                q.content || ' ' || COALESCE(q.explanation, '')),
-                            plainto_tsquery('english', {q})
-                        )                                                       AS "Rank",
-                        ts_headline(
-                            'english',
-                            q.content || ' ' || COALESCE(q.explanation, ''),
-                            plainto_tsquery('english', {q}),
-                            'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-                        )                                                       AS "Snippet",
-                        COUNT(*) OVER()::int                                    AS "TotalCount"
-                    FROM question q
-                    WHERE q.user_id = {userId}
-                      AND (
-                            to_tsvector('english',
-                                q.content || ' ' || COALESCE(q.explanation, ''))
-                            @@ plainto_tsquery('english', {q})
-                          OR EXISTS (
-                                SELECT 1
-                                FROM   question_tag qt
-                                JOIN   tag          t  ON t.id = qt.tag_id
-                                WHERE  qt.question_id = q.id
-                                  AND  t.name ILIKE '%' || {q} || '%'
-                            )
-                      )
-                    ORDER BY "Rank" DESC, q.created_at DESC
-                    LIMIT {limit} OFFSET {offset}
-                    """)
-                .ToListAsync();
+            var pattern = $"%{q}%";
 
-            if (rows.Count == 0)
+            var query = _context.Questions
+                .Where(question => question.UserId == userId &&
+                                   EF.Functions.ILike(question.Content, pattern))
+                .OrderByDescending(question => question.CreatedAt)
+                .Skip(offset)
+                .Take(limit)
+                .Select(question => new
+                {
+                    question.Id,
+                    Title = question.Content.Length > 120
+                        ? question.Content.Substring(0, 120)
+                        : question.Content,
+                    question.Type,
+                    question.CreatedAt,
+                    Snippet = question.Content.Length > 200
+                        ? question.Content.Substring(0, 200) + "..."
+                        : question.Content
+                });
+
+            var itemsList = await query.ToListAsync();
+
+            var totalCount = await _context.Questions
+                .Where(question => question.UserId == userId &&
+                                   EF.Functions.ILike(question.Content, pattern))
+                .CountAsync();
+
+            if (itemsList.Count == 0)
                 return (new List<SearchResultItem>(), 0);
 
-            var totalCount   = rows[0].TotalCount;
-            var questionIds  = rows.Select(r => r.Id).ToList();
+            var questionIds = itemsList.Select(x => x.Id).ToList();
 
             var tagLookup = (await _context.QuestionTags
                 .Where(qt => questionIds.Contains(qt.QuestionId))
@@ -280,16 +240,16 @@ public class SearchService : ISearchService
                 .ToListAsync())
                 .ToLookup(x => x.QuestionId, x => x.Name);
 
-            var items = rows.Select(r => new SearchResultItem
+            var items = itemsList.Select(r => new SearchResultItem
             {
                 ResultType = "question",
-                Id         = r.Id,
-                Title      = r.Title,
-                Snippet    = r.Snippet,
-                Rank       = r.Rank,
-                SubType    = r.SubType,
-                CreatedAt  = r.CreatedAt,
-                Tags       = tagLookup[r.Id].ToList(),
+                Id = r.Id,
+                Title = r.Title,
+                Snippet = r.Snippet,
+                Rank = 1.0,
+                SubType = r.Type,
+                CreatedAt = r.CreatedAt,
+                Tags = tagLookup[r.Id].ToList(),
             }).ToList();
 
             return (items, totalCount);
@@ -301,61 +261,52 @@ public class SearchService : ISearchService
         }
     }
 
-    /// <remarks>
-    ///   Only returns non-deleted sources belonging to the authenticated user.
-    ///   Matches on title and raw_text.
-    ///   raw_text can be large, so ts_headline is applied only to the title + first
-    ///   2 000 characters of raw_text to keep the query fast.
-    /// </remarks>
     private async Task<(List<SearchResultItem>, int)> SearchSourcesAsync(
         string q, int userId, int offset, int limit)
     {
         try
         {
-            var rows = await _context.Database
-                .SqlQuery<SourceSearchRow>($"""
-                    SELECT
-                        s.id                                                    AS "Id",
-                        s.title                                                 AS "Title",
-                        s.type                                                  AS "SubType",
-                        s.created_at                                            AS "CreatedAt",
-                        ts_rank(
-                            to_tsvector('english',
-                                s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), '')),
-                            plainto_tsquery('english', {q})
-                        )                                                       AS "Rank",
-                        ts_headline(
-                            'english',
-                            s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), ''),
-                            plainto_tsquery('english', {q}),
-                            'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-                        )                                                       AS "Snippet",
-                        COUNT(*) OVER()::int                                    AS "TotalCount"
-                    FROM source s
-                    WHERE s.user_id = {userId}
-                      AND s.deleted_at IS NULL
-                      AND to_tsvector('english',
-                              s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), ''))
-                          @@ plainto_tsquery('english', {q})
-                    ORDER BY "Rank" DESC, s.created_at DESC
-                    LIMIT {limit} OFFSET {offset}
-                    """)
-                .ToListAsync();
+            var pattern = $"%{q}%";
 
-            if (rows.Count == 0)
+            var query = _context.Sources
+                .Where(source => source.UserId == userId &&
+                                 source.DeletedAt == null &&
+                                 EF.Functions.ILike(source.Title, pattern))
+                .OrderByDescending(source => source.CreatedAt)
+                .Skip(offset)
+                .Take(limit)
+                .Select(source => new
+                {
+                    source.Id,
+                    source.Title,
+                    source.Type,
+                    source.CreatedAt,
+                    Snippet = source.Title.Length > 200
+                        ? source.Title.Substring(0, 200) + "..."
+                        : source.Title
+                });
+
+            var itemsList = await query.ToListAsync();
+
+            var totalCount = await _context.Sources
+                .Where(source => source.UserId == userId &&
+                                 source.DeletedAt == null &&
+                                 EF.Functions.ILike(source.Title, pattern))
+                .CountAsync();
+
+            if (itemsList.Count == 0)
                 return (new List<SearchResultItem>(), 0);
 
-            var totalCount = rows[0].TotalCount;
-            var items = rows.Select(r => new SearchResultItem
+            var items = itemsList.Select(r => new SearchResultItem
             {
                 ResultType = "source",
-                Id         = r.Id,
-                Title      = r.Title,
-                Snippet    = r.Snippet,
-                Rank       = r.Rank,
-                SubType    = r.SubType,
-                CreatedAt  = r.CreatedAt,
-                Tags       = new List<string>(), // sources don't use tags
+                Id = r.Id,
+                Title = r.Title,
+                Snippet = r.Snippet,
+                Rank = 1.0,
+                SubType = r.Type,
+                CreatedAt = r.CreatedAt,
+                Tags = new List<string>(),
             }).ToList();
 
             return (items, totalCount);
@@ -367,58 +318,50 @@ public class SearchService : ISearchService
         }
     }
 
-    /// <remarks>
-    ///   Only returns favorites belonging to the authenticated user.
-    ///   Matches on the item text and its note field.
-    /// </remarks>
     private async Task<(List<SearchResultItem>, int)> SearchFavoritesAsync(
         string q, int userId, int offset, int limit)
     {
         try
         {
-            var rows = await _context.Database
-                .SqlQuery<FavoriteSearchRow>($"""
-                    SELECT
-                        fi.id                                                   AS "Id",
-                        fi.text                                                 AS "Title",
-                        fi.type                                                 AS "SubType",
-                        fi.created_at                                           AS "CreatedAt",
-                        ts_rank(
-                            to_tsvector('english',
-                                fi.text || ' ' || COALESCE(fi.note, '')),
-                            plainto_tsquery('english', {q})
-                        )                                                       AS "Rank",
-                        ts_headline(
-                            'english',
-                            fi.text || ' ' || COALESCE(fi.note, ''),
-                            plainto_tsquery('english', {q}),
-                            'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-                        )                                                       AS "Snippet",
-                        COUNT(*) OVER()::int                                    AS "TotalCount"
-                    FROM favorite_item fi
-                    WHERE fi.user_id = {userId}
-                      AND to_tsvector('english',
-                              fi.text || ' ' || COALESCE(fi.note, ''))
-                          @@ plainto_tsquery('english', {q})
-                    ORDER BY "Rank" DESC, fi.created_at DESC
-                    LIMIT {limit} OFFSET {offset}
-                    """)
-                .ToListAsync();
+            var pattern = $"%{q}%";
 
-            if (rows.Count == 0)
+            var query = _context.FavoriteItems
+                .Where(fav => fav.UserId == userId &&
+                              EF.Functions.ILike(fav.Text, pattern))
+                .OrderByDescending(fav => fav.CreatedAt)
+                .Skip(offset)
+                .Take(limit)
+                .Select(fav => new
+                {
+                    fav.Id,
+                    fav.Text,
+                    fav.Type,
+                    fav.CreatedAt,
+                    Snippet = fav.Text.Length > 200
+                        ? fav.Text.Substring(0, 200) + "..."
+                        : fav.Text
+                });
+
+            var itemsList = await query.ToListAsync();
+
+            var totalCount = await _context.FavoriteItems
+                .Where(fav => fav.UserId == userId &&
+                              EF.Functions.ILike(fav.Text, pattern))
+                .CountAsync();
+
+            if (itemsList.Count == 0)
                 return (new List<SearchResultItem>(), 0);
 
-            var totalCount = rows[0].TotalCount;
-            var items = rows.Select(r => new SearchResultItem
+            var items = itemsList.Select(r => new SearchResultItem
             {
                 ResultType = "favorite",
-                Id         = r.Id,
-                Title      = r.Title,
-                Snippet    = r.Snippet,
-                Rank       = r.Rank,
-                SubType    = r.SubType,
-                CreatedAt  = r.CreatedAt,
-                Tags       = new List<string>(),
+                Id = r.Id,
+                Title = r.Text,
+                Snippet = r.Snippet,
+                Rank = 1.0,
+                SubType = r.Type,
+                CreatedAt = r.CreatedAt,
+                Tags = new List<string>(),
             }).ToList();
 
             return (items, totalCount);
