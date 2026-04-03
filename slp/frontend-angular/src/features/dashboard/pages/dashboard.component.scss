@@ -1,0 +1,26 @@
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+/* Slide animation for expanded content */
+.transition-all {
+  transition: all 0.3s ease-out;
+}
+
+/* Fix for ng-zorro card body padding */
+:host ::ng-deep .ant-card-body {
+  padding: 16px;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

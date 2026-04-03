@@ -1,9 +1,9 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterModule, Router } from "@angular/router";
 import { NzIconModule } from "ng-zorro-antd/icon";
 import { TranslateService } from "@ngx-translate/core";
-import { combineLatest, map, Subject, takeUntil } from "rxjs";
+import { Subject, takeUntil } from "rxjs";
 
 interface BreadcrumbItem {
   label: string;
@@ -18,7 +18,7 @@ interface BreadcrumbItem {
   templateUrl: "./breadcrumb.component.html",
   styleUrls: ["./breadcrumb.component.scss"],
 })
-export class BreadcrumbComponent implements OnInit {
+export class BreadcrumbComponent implements OnInit, OnDestroy {
   @Input() fallbackTitle = "";
   @Input() maxItems = 3;
   private destroy$ = new Subject<void>();
@@ -32,31 +32,51 @@ export class BreadcrumbComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Update breadcrumb on route changes
     this.router.events
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.updateBreadcrumb());
+
+    // Update breadcrumb when language changes (home label translation)
+    this.translate.onLangChange
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.updateBreadcrumb());
+
     this.updateBreadcrumb();
   }
 
   private updateBreadcrumb(): void {
+    // 1. Build breadcrumb items from route data
     const route = this.router.routerState.snapshot.root;
-    let items: BreadcrumbItem[] = [];
+    let routeItems: BreadcrumbItem[] = [];
     let current = route;
     while (current) {
       const data = current.routeConfig?.data as any;
       if (data?.breadcrumb) {
-        items.unshift({ label: data.breadcrumb, path: this.getPath(current) });
+        routeItems.unshift({
+          label: data.breadcrumb,
+          path: this.getPath(current),
+        });
       }
       if (current.firstChild) {
         current = current.firstChild;
       } else {
-        break; // or set current = null;
+        break;
       }
     }
-    if (items.length === 0) {
-      items = [{ label: this.fallbackTitle }];
-    }
-    this.items = items;
+
+    // 2. Always prepend a "Home" item (translated)
+    const homeItem: BreadcrumbItem = {
+      label: this.translate.instant("nav.dashboard"),
+      path: "/dashboard",
+    };
+
+    // Avoid duplicate home if somehow a route already has breadcrumb "Dashboard"
+    const hasHome =
+      routeItems.length > 0 && routeItems[0].label === homeItem.label;
+    this.items = hasHome ? routeItems : [homeItem, ...routeItems];
+
+    // 3. Update displayed items (with ellipsis if needed)
     this.updateDisplayItems();
   }
 

@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, EntityManager, IsNull } from "typeorm";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./user.entity";
@@ -26,6 +26,7 @@ export class UserRepository implements IUserRepository {
   constructor(
     @InjectRepository(User)
     private readonly repo: Repository<User>,
+    private readonly entityManager: EntityManager,
   ) {}
 
   async getById(id: number): Promise<User | null> {
@@ -86,13 +87,31 @@ export class UserRepository implements IUserRepository {
   }
 
   async getUserStats(userId: number): Promise<UserStatsDto> {
-    // Placeholder – actual counts require relations to other tables
-    // You'll need to inject other repositories or use query builder
+    // Count quizzes (only those not disabled)
+    const quizCount = await this.entityManager.count("Quiz", {
+      where: { userId, disabled: false },
+    });
+
+    // Count questions
+    const questionCount = await this.entityManager.count("Question", {
+      where: { userId },
+    });
+
+    // Count sources (only those not soft-deleted)
+    const sourceCount = await this.entityManager.count("Source", {
+      where: { userId, deletedAt: IsNull() },
+    });
+
+    // Count favorite items
+    const favoriteCount = await this.entityManager.count("FavoriteItem", {
+      where: { userId },
+    });
+
     return {
-      quizCount: 0,
-      questionCount: 0,
-      sourceCount: 0,
-      favoriteCount: 0,
+      quizCount,
+      questionCount,
+      sourceCount,
+      favoriteCount,
     };
   }
 }

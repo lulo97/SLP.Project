@@ -35,26 +35,38 @@ export class TagSelectorComponent implements ControlValueAccessor, OnInit {
 
   private onChange: any = () => {};
   private onTouched: any = () => {};
+  options: { value: string; label: string }[] = [];
 
   constructor(private tagService: TagService) {}
-
-  // Getter để tạo danh sách options
-  get options() {
+  private rebuildOptions(): void {
     const apiTags = this.tags.map((t) => ({ value: t.name, label: t.name }));
     const currentValues = (this.control.value || []).map((v) => ({
       value: v,
       label: v,
     }));
-
-    // De-duplicate dựa trên lowercase value
     const map = new Map();
-    [...apiTags, ...currentValues].forEach((opt) => {
-      map.set(opt.value.toLowerCase(), opt);
-    });
-
-    return Array.from(map.values()).sort((a, b) =>
+    [...apiTags, ...currentValues].forEach((opt) =>
+      map.set(opt.value.toLowerCase(), opt),
+    );
+    this.options = Array.from(map.values()).sort((a, b) =>
       a.label.localeCompare(b.label),
     );
+  }
+
+  loadTags(): void {
+    this.loading = true;
+    this.tagService
+      .fetchTags()
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (tags) => {
+          this.tags = tags;
+          this.rebuildOptions();
+        },
+        error: (err) => {
+          this.error = "Failed to load tags";
+        },
+      });
   }
 
   get atLimit(): boolean {
@@ -94,21 +106,6 @@ export class TagSelectorComponent implements ControlValueAccessor, OnInit {
         return true;
       })
       .slice(0, this.maxTags);
-  }
-
-  loadTags(): void {
-    this.loading = true;
-    this.error = null;
-    this.tagService
-      .fetchTags()
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: (tags) => (this.tags = tags),
-        error: (err) => {
-          this.error = "Failed to load tags";
-          console.error(err);
-        },
-      });
   }
 
   // ControlValueAccessor methods

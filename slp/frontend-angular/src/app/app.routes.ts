@@ -276,5 +276,6 @@ export const routes: Routes = [
         (m) => m.VerifyEmailComponent,
       ),
   },
+
   { path: "**", redirectTo: "" },
 ];

@@ -324,34 +324,30 @@ export class QuizRepository {
   }
 
   async getTopQuizzesByAttempts(limit: number): Promise<TopQuizDto[]> {
-    // Note: This would require joining with QuizAttempts. Adjust according to your attempts entity.
-    // This is a placeholder; you'll need to implement based on your actual attempt tables.
-    const query = this.quizRepo
+    const results = await this.quizRepo
       .createQueryBuilder("quiz")
-      .leftJoin("quiz.user", "user")
-      .leftJoin("quiz.attempts", "attempt") // assuming attempts relation exists
+      .leftJoin("quiz_attempt", "attempts", "attempts.quiz_id = quiz.id")
+      .leftJoin("users", "u", "u.id = quiz.user_id")
       .select([
         "quiz.id AS id",
         "quiz.title AS title",
-        "user.username AS authorUsername",
-        "COUNT(attempt.id) AS attemptCount",
-        // Add comment count, question count if needed
+        "u.username AS authorUsername",
+        "COUNT(DISTINCT attempts.id) AS attemptCount",
+        `(SELECT COUNT(*) FROM quiz_question qq WHERE qq.quiz_id = quiz.id) AS questionCount`,
       ])
-      .where("quiz.visibility = :visibility", { visibility: "public" })
-      .andWhere("quiz.disabled = false")
-      .groupBy("quiz.id, user.username")
+      .where("quiz.disabled = false")
+      .groupBy("quiz.id, u.username")
       .orderBy("attemptCount", "DESC")
-      .limit(limit);
+      .limit(limit)
+      .getRawMany();
 
-    const results = await query.getRawMany();
-    // Map to TopQuizDto
-    return results.map((r) => ({
-      id: r.id,
-      title: r.title,
-      authorUsername: r.authorUsername,
-      attemptCount: parseInt(r.attemptCount, 10),
-      commentCount: 0, // you need to join comments
-      questionCount: 0,
+    return results.map((row) => ({
+      id: row.id,
+      title: row.title,
+      authorUsername: row.authorusername ?? null, // postgres lowercases aliases
+      attemptCount: parseInt(row.attemptcount, 10) || 0,
+      commentCount: 0, // remove or wire up later if you add that table
+      questionCount: parseInt(row.questioncount, 10) || 0,
     }));
   }
 

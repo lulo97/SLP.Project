@@ -1,0 +1,251 @@
+<div
+  #scrollContainer
+  class="space-y-8 pb-12 px-4 bg-gray-50 min-h-screen"
+  data-testid="dashboard-container"
+>
+  <!-- Pull-to-refresh indicator -->
+  <div *ngIf="refreshing" class="text-center py-2 text-blue-500">
+    <i
+      nz-icon
+      nzType="reload"
+      nzTheme="outline"
+      class="animate-spin inline-block mr-2"
+    ></i>
+    <span class="text-sm">Refreshing...</span>
+  </div>
+
+  <!-- Intro Section -->
+  <section data-testid="intro-section" class="pt-4">
+    <div class="mb-5">
+      <h1 class="text-2xl font-bold text-gray-900">Welcome to SLP</h1>
+      <p class="text-sm text-gray-600 mt-2 leading-relaxed">
+        SLP is your intelligent learning companion. We help you master new
+        languages and technical topics through AI-powered analysis, smart
+        quizzes, and interactive study tools.
+      </p>
+    </div>
+
+    <div class="space-y-3" data-testid="intro-chips">
+      <div
+        *ngFor="let chip of introChips"
+        class="flex items-start gap-4 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm active:bg-gray-50 transition-colors cursor-pointer"
+        [routerLink]="chip.route"
+      >
+        <div
+          [class]="
+            'p-2.5 rounded-xl ' +
+            getChipColorClass(chip.color) +
+            ' shadow-sm text-center'
+          "
+        >
+          <i nz-icon [nzType]="chip.icon" nzTheme="outline" nzSize="20"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-bold text-gray-800 text-sm">{{ chip.label }}</h4>
+          <p class="text-xs text-gray-500 mt-0.5 leading-snug">
+            {{ chip.summary }}
+          </p>
+        </div>
+        <i
+          nz-icon
+          nzType="right"
+          nzTheme="outline"
+          class="text-gray-300 self-center"
+        ></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- Word of the Day Section -->
+  <section data-testid="wotd-section">
+    <h2 class="text-lg font-semibold mb-3 px-1">Word of the Day</h2>
+    <nz-card class="shadow-md rounded-3xl" [nzBordered]="false">
+      <!-- Loading skeleton -->
+      <div *ngIf="loadingWord$ | async" class="py-6">
+        <nz-skeleton
+          [nzActive]="true"
+          [nzParagraph]="{ rows: 3 }"
+        ></nz-skeleton>
+      </div>
+
+      <!-- Word data -->
+      <ng-container *ngIf="wordOfTheDay$ | async as word; else errorBlock">
+        <div class="flex flex-col items-center text-center space-y-4">
+          <div class="pt-2">
+            <div
+              class="text-3xl font-black text-blue-600"
+              data-testid="wotd-word"
+            >
+              {{ word.word }}
+            </div>
+            <div
+              class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1"
+              data-testid="wotd-part-of-speech"
+            >
+              {{ word.partOfSpeech }}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p
+              class="text-lg font-semibold text-gray-800"
+              data-testid="wotd-vietnamese"
+            >
+              {{ word.vietnameseTranslation }}
+            </p>
+            <p
+              class="text-sm italic text-gray-500 px-4"
+              data-testid="wotd-example"
+            >
+              “{{ word.example }}”
+            </p>
+          </div>
+
+          <button
+            (click)="toggleExpand()"
+            class="flex items-center justify-center gap-1 text-xs font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-full"
+          >
+            {{ expanded ? "Show Less" : "More Details" }}
+            <i
+              nz-icon
+              nzType="down"
+              nzTheme="outline"
+              [class.rotate-180]="expanded"
+              class="transition-transform"
+            ></i>
+          </button>
+
+          <div
+            *ngIf="expanded"
+            class="w-full bg-gray-50 rounded-2xl p-4 text-left space-y-3 transition-all"
+          >
+            <p *ngIf="word.origin" class="text-xs" data-testid="wotd-origin">
+              <span class="font-bold text-gray-700 block mb-0.5">Origin:</span>
+              {{ word.origin }}
+            </p>
+            <p *ngIf="word.funFact" class="text-xs" data-testid="wotd-funfact">
+              <span class="font-bold text-gray-700 block mb-0.5"
+                >Fun Fact:</span
+              >
+              {{ word.funFact }}
+            </p>
+          </div>
+
+          <div class="flex items-center justify-center gap-3 w-full pt-2">
+            <button
+              nz-button
+              nzShape="round"
+              class="flex-1 flex items-center justify-center h-10 border-blue-200 text-blue-600"
+              (click)="handleListen(word.word)"
+              [disabled]="(ttsService.state$ | async) === 'loading'"
+            >
+              <i nz-icon nzType="sound" nzTheme="outline" class="mr-1"></i>
+              Listen
+            </button>
+
+            <button
+              nz-button
+              nzType="primary"
+              nzShape="round"
+              class="flex-1 flex items-center justify-center h-10 shadow-lg shadow-blue-100"
+              (click)="handleSaveToFavorites(word)"
+              [nzLoading]="savingFavorite"
+            >
+              <i nz-icon nzType="star" nzTheme="outline" class="mr-1"></i>
+              Save
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #errorBlock>
+        <div class="text-center text-red-500 py-4">
+          {{ (errorWord$ | async) || "Failed to load word of the day" }}
+        </div>
+      </ng-template>
+    </nz-card>
+  </section>
+
+  <!-- Explore More Section -->
+  <section data-testid="features-section">
+    <h2 class="text-lg font-semibold mb-3 px-1">Explore More</h2>
+    <div class="space-y-4" data-testid="highlight-features">
+      <nz-card
+        *ngFor="let feature of features"
+        nzHoverable
+        class="w-full shadow-sm rounded-2xl cursor-pointer transition-transform active:scale-98"
+        [nzBordered]="false"
+        (click)="router.navigate([feature.route])"
+      >
+        <div class="flex items-center gap-4">
+          <div class="p-3 bg-blue-50 rounded-xl">
+            <i
+              nz-icon
+              [nzType]="feature.icon"
+              nzTheme="outline"
+              nzSize="24"
+              class="text-blue-500"
+            ></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-gray-900 leading-tight">
+              {{ feature.title }}
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">{{ feature.description }}</p>
+          </div>
+          <i
+            nz-icon
+            nzType="arrow-right"
+            nzTheme="outline"
+            class="text-gray-300"
+          ></i>
+        </div>
+      </nz-card>
+    </div>
+  </section>
+
+  <!-- User Stats Section -->
+  <section data-testid="user-stats-section">
+    <h2 class="text-lg font-semibold mb-3 px-1">Your Activity</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <ng-container *ngIf="userStats$ | async as stats; else statsSkeleton">
+        <nz-card
+          *ngFor="let stat of statCards"
+          nzHoverable
+          class="shadow-sm rounded-2xl cursor-pointer"
+          [nzBordered]="false"
+          (click)="router.navigate([stat.route])"
+        >
+          <div class="flex flex-col items-center py-1">
+            <i
+              nz-icon
+              [nzType]="stat.icon"
+              nzTheme="outline"
+              nzSize="24"
+              [class]="stat.iconColor + ' mb-2'"
+            ></i>
+            <span class="text-xl font-black">{{ stat.value }}</span>
+            <span class="text-[10px] uppercase font-bold text-gray-400 mt-1">{{
+              stat.label
+            }}</span>
+          </div>
+        </nz-card>
+      </ng-container>
+      <ng-template #statsSkeleton>
+        <nz-card
+          *ngFor="let i of [1, 2, 3, 4]"
+          class="shadow-sm rounded-2xl"
+          [nzBordered]="false"
+        >
+          <div class="flex flex-col items-center py-1">
+            <nz-skeleton
+              [nzActive]="true"
+              [nzParagraph]="{ rows: 2 }"
+              [nzTitle]="false"
+            ></nz-skeleton>
+          </div>
+        </nz-card>
+      </ng-template>
+    </div>
+  </section>
+</div>

@@ -55,6 +55,11 @@ import {
   CameraOutline,
   KeyOutline,
   SafetyCertificateOutline,
+  ArrowRightOutline,
+  BookOutline,
+  ReloadOutline,
+  DownOutline,
+  SoundOutline,
 } from "@ant-design/icons-angular/icons";
 
 // Your Routes
@@ -103,7 +108,13 @@ const icons = [
   RiseOutline,
   HeartOutline,
   KeyOutline,
-  SafetyCertificateOutline,
+  SafetyCertificateOutline,  
+  SoundOutline,
+  DownOutline,
+  ArrowRightOutline,
+  BookOutline,
+  LinkOutline,
+  ReloadOutline,
 ];
 
 import { provideCharts, withDefaultRegisterables } from "ng2-charts";
