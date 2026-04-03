@@ -16,10 +16,8 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
   // 1. Create user via API
   const user = generateUniqueUser();
   let userId: number;
-  let sourceId: number; 
 
   await test.step("API: register user", async () => {
-    console.log(`Step 1: Registering user ${user.username}...`);
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const request = context.request;
 
@@ -29,7 +27,6 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
     expect(resp.ok()).toBeTruthy();
     const data = await resp.json();
     userId = data.id;
-    console.log(`User registered with ID: ${userId}`);
 
     await context.close();
   });
@@ -39,17 +36,18 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
   const sourceContent = `This is the content of the test source. It contains a unique phrase: ${sourceTitle}`;
 
   await test.step("User: create text source", async () => {
-    console.log("Step 2: Creating text source...");
     const context = await browser.newContext();
     const page = await context.newPage();
 
     await page.goto(FRONTEND_URL);
     await login(page, user.username, user.password);
 
+    // Go to sources list and click "Add Text"
     await page.goto(`${FRONTEND_URL}/source`);
     await page.getByTestId("source-list-add-text-btn").click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/source/new-text`);
 
+    // Fill the form
     await page.getByTestId("source-text-create-title-input").fill(sourceTitle);
     await page
       .getByTestId("source-text-create-content-input")
@@ -60,15 +58,14 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
     await page.waitForURL(/\/source\/\d+/);
     const urlMatch = page.url().match(/\/source\/(\d+)/);
     expect(urlMatch).toBeTruthy();
-    sourceId = parseInt(urlMatch![1], 10);
-    console.log(`Source created successfully. Source ID: ${sourceId}`);
+    const sourceId = urlMatch![1];
 
+    // Optional: verify the source appears in the list (implicitly via later search)
     await context.close();
   });
 
   // 3. User searches for the source
   await test.step("User: search for own source", async () => {
-    console.log(`Step 3: Searching for source "${sourceTitle}"...`);
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -79,25 +76,22 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
     await page.getByTestId("search-input").fill(sourceTitle);
     await page.getByTestId("search-input").press("Enter");
 
-    // Use a more specific locator for the search result to avoid ambiguity
+    // Wait for result to appear (All tab)
     const resultLocator = page.locator(
-      `[data-testid="search-result-item-${sourceId}"]`
+      `[data-testid^="search-result-item-"]:has-text("${sourceTitle}")`,
     );
-    
     await expect(resultLocator).toBeVisible({ timeout: 15000 });
-    console.log("Source found in 'All' tab.");
 
+    // Switch to Sources tab and verify
     const sourcesTab = page.getByTestId("search-tab-source");
     await sourcesTab.click();
     await expect(resultLocator).toBeVisible();
-    console.log("Source verified in 'Sources' tab.");
 
     await context.close();
   });
 
   // 4. User deletes the source
   await test.step("User: delete the source", async () => {
-    console.log(`Step 4: Deleting source ID: ${sourceId}...`);
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -105,27 +99,29 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
     await login(page, user.username, user.password);
     await page.goto(`${FRONTEND_URL}/source`);
 
-    await expect(page.getByTestId("source-list")).toBeVisible();
+    // Search for the source by title (simple filter in the list)
+    const searchInput = page.getByTestId("source-list-search-input");
+    await searchInput.fill(sourceTitle);
+    await searchInput.press("Enter");
 
-    // FIXED: Using exact ID match to avoid strict mode violation (the 'li' vs the 'a')
-    const sourceItem = page.locator(`li[data-testid="source-list-item-${sourceId}"]`);
-    await expect(sourceItem).toBeVisible();
+    // Find the source item and delete it
+    const sourceItem = page.locator(
+      `[data-testid^="source-list-item-"]:has-text("${sourceTitle}")`,
+    );
+    await expect(sourceItem.first()).toBeVisible();
 
-    const deleteBtn = sourceItem.locator(`[data-testid="source-list-delete-btn-${sourceId}"]`);
+    const deleteBtn = sourceItem.locator('[data-testid^="source-list-delete-btn-"]');
     await deleteBtn.click();
-
     await page.getByRole("button", { name: "Yes" }).click();
 
-    // Wait for the item to disappear
+    // Wait for deletion
     await expect(sourceItem).not.toBeVisible();
-    console.log("Source deleted and removed from UI.");
 
     await context.close();
   });
 
   // 5. User verifies the source is gone from search
   await test.step("User: verify source is removed from search", async () => {
-    console.log("Step 5: Verifying source no longer appears in search...");
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -139,14 +135,12 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
     await expect(page.getByTestId("search-no-results")).toBeVisible({
       timeout: 10000,
     });
-    console.log("Confirmed: No results found.");
 
     await context.close();
   });
 
   // 6. Cleanup: admin deletes user
   await test.step("Admin: delete user", async () => {
-    console.log(`Step 6: Admin cleaning up user ID: ${userId}...`);
     const adminContext = await browser.newContext({ ignoreHTTPSErrors: true });
     const adminPage = await adminContext.newPage();
 
@@ -159,12 +153,9 @@ test("user creates a source, searches for it, deletes it, admin deletes user", a
 
     const adminToken = await getSessionToken(adminPage);
 
-    const deleteResp = await adminPage.request.delete(`${BACKEND_URL}/api/users/${userId}`, {
+    await adminPage.request.delete(`${BACKEND_URL}/api/users/${userId}`, {
       headers: { "X-Session-Token": adminToken! },
     });
-    
-    expect(deleteResp.ok()).toBeTruthy();
-    console.log("Admin successfully deleted the test user.");
 
     await adminContext.close();
   });

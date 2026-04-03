@@ -1,1 +1,1 @@
-npx playwright test search-question.spec --headed
+npx playwright test search-source.spec --headed
