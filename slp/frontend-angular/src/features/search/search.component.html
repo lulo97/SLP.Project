@@ -1,9 +1,8 @@
 <div class="max-w-2xl mx-auto p-4">
-  <!-- Search Input -->
-  <div class="mb-4">
+  <div class="mb-4 flex gap-2">
     <input
       type="text"
-      [ngModel]="store.query | async"
+      [ngModel]="query$ | async"
       (ngModelChange)="store.setQuery($event)"
       placeholder="Search quizzes, questions, sources, favorites…"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -11,30 +10,29 @@
     />
     <button
       (click)="onSearch()"
-      [disabled]="(store.loading$ | async)"
-      class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg"
+      [disabled]="loading$ | async"
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300"
     >
       Search
     </button>
   </div>
 
-  <!-- Tabs -->
   <div class="mb-4 overflow-x-auto">
     <div class="flex gap-2">
       <button
         *ngFor="let tab of tabs"
         (click)="onTypeChange(tab.type)"
-        [class.bg-blue-600]="(store.activeType$ | async) === tab.type"
-        [class.text-white]="(store.activeType$ | async) === tab.type"
-        [class.bg-white]="(store.activeType$ | async) !== tab.type"
-        class="px-3 py-1.5 rounded-full text-sm font-medium border"
+        [class.bg-blue-600]="(activeType$ | async) === tab.type"
+        [class.text-white]="(activeType$ | async) === tab.type"
+        [class.bg-white]="(activeType$ | async) !== tab.type"
+        class="px-3 py-1.5 rounded-full text-sm font-medium border whitespace-nowrap"
       >
         {{ tab.label }}
         <span
-          *ngIf="(store.hasSearched$ | async) && getTabCount(tab.type) !== null"
+          *ngIf="(hasSearched$ | async) && getTabCount(tab.type) !== null"
           class="ml-1 text-xs px-1.5 py-0.5 rounded-full"
-          [class.bg-blue-500]="(store.activeType$ | async) === tab.type"
-          [class.bg-gray-100]="(store.activeType$ | async) !== tab.type"
+          [class.bg-blue-500]="(activeType$ | async) === tab.type"
+          [class.bg-gray-100]="(activeType$ | async) !== tab.type"
         >
           {{ getTabCount(tab.type) }}
         </span>
@@ -42,22 +40,32 @@
     </div>
   </div>
 
-  <!-- Error Alert -->
-  <div *ngIf="store.error$ | async as error" class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+  <div
+    *ngIf="error$ | async as error"
+    class="mb-4 p-3 bg-red-100 text-red-700 rounded"
+  >
     {{ error }}
   </div>
 
-  <!-- Initial state -->
-  <div *ngIf="!(store.hasSearched$ | async) && !(store.loading$ | async)" class="py-20 text-center">
-    <div class="w-16 h-16 bg-blue-50 rounded-full mx-auto flex items-center justify-center">
+  <div
+    *ngIf="!(hasSearched$ | async) && !(loading$ | async)"
+    class="py-20 text-center"
+  >
+    <div
+      class="w-16 h-16 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-2xl"
+    >
       🔍
     </div>
-    <p class="text-gray-500">Search across your quizzes, questions, sources and favorites.</p>
+    <p class="mt-4 text-gray-500">
+      Search across your quizzes, questions, sources and favorites.
+    </p>
   </div>
 
-  <!-- Loading skeletons -->
-  <div *ngIf="store.loading$ | async" class="space-y-3">
-    <div *ngFor="let i of [1,2,3,4,5]" class="bg-white border rounded-xl p-4 animate-pulse">
+  <div *ngIf="loading$ | async" class="space-y-3">
+    <div
+      *ngFor="let i of [1, 2, 3, 4, 5]"
+      class="bg-white border rounded-xl p-4 animate-pulse"
+    >
       <div class="flex gap-3">
         <div class="w-8 h-8 bg-gray-100 rounded"></div>
         <div class="flex-1 space-y-2">
@@ -68,59 +76,104 @@
     </div>
   </div>
 
-  <!-- No results -->
-  <div *ngIf="(store.hasSearched$ | async) && !(store.hasResults$ | async) && !(store.loading$ | async)" class="py-16 text-center">
-    <div class="w-16 h-16 bg-gray-50 rounded-full mx-auto flex items-center justify-center">
+  <div
+    *ngIf="
+      (hasSearched$ | async) && !(hasResults$ | async) && !(loading$ | async)
+    "
+    class="py-16 text-center"
+  >
+    <div
+      class="w-16 h-16 bg-gray-50 rounded-full mx-auto flex items-center justify-center text-2xl"
+    >
       ❌
     </div>
-    <p class="font-medium text-gray-700">No results found</p>
-    <p class="text-sm text-gray-400">Try different keywords or switch to a different category.</p>
+    <p class="mt-4 font-medium text-gray-700">No results found</p>
+    <p class="text-sm text-gray-400">
+      Try different keywords or switch to a different category.
+    </p>
   </div>
 
-  <!-- Results list -->
-  <div *ngIf="store.hasResults$ | async" class="space-y-2">
-    <p class="text-xs text-gray-400">
-      {{ store.totalCount }} result{{ store.totalCount !== 1 ? 's' : '' }}
-      for <span class="font-medium">"{{ store.lastQuery }}"</span>
+  <div *ngIf="(hasResults$ | async) && !(loading$ | async)" class="space-y-2">
+    <p class="text-xs text-gray-400 mb-4">
+      {{ totalCount$ | async }} result{{
+        (totalCount$ | async) !== 1 ? "s" : ""
+      }}
+      for <span class="font-medium">"{{ lastQuery$ | async }}"</span>
     </p>
 
     <div
-      *ngFor="let item of store.results$ | async"
+      *ngFor="let item of results$ | async"
       (click)="navigateTo(item)"
-      class="bg-white border rounded-xl p-4 cursor-pointer hover:shadow-md transition"
+      class="bg-white border rounded-xl p-4 cursor-pointer hover:shadow-md transition group"
     >
       <div class="flex gap-3">
-        <div [class]="typeConfig[item.resultType].bg" class="w-9 h-9 rounded-lg flex items-center justify-center">
-          <!-- Icon placeholder, you can use a real icon library -->
+        <div
+          [class]="
+            item.resultType !== 'all'
+              ? typeConfig[item.resultType].bg
+              : 'bg-gray-100'
+          "
+          class="w-9 h-9 rounded-lg flex items-center justify-center"
+        >
           📄
         </div>
         <div class="flex-1">
-          <div class="font-medium text-gray-900 group-hover:text-blue-600" [innerHTML]="item.title"></div>
-          <div *ngIf="item.snippet" class="text-xs text-gray-500 mt-1" [innerHTML]="item.snippet"></div>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <span [class]="typeConfig[item.resultType].pill" class="text-xs px-2 py-0.5 rounded-md">
+          <div
+            class="font-medium text-gray-900 group-hover:text-blue-600"
+            [innerHTML]="item.title"
+          ></div>
+          <div
+            *ngIf="item.snippet"
+            class="text-xs text-gray-500 mt-1"
+            [innerHTML]="item.snippet"
+          ></div>
+
+          <div class="flex flex-wrap gap-2 mt-2 items-center">
+            <span
+              [class]="
+                item.resultType !== 'all'
+                  ? typeConfig[item.resultType].pill
+                  : 'bg-gray-100 text-gray-600'
+              "
+              class="text-xs px-2 py-0.5 rounded-md"
+            >
               {{ item.subType ?? item.resultType }}
             </span>
-            <span *ngFor="let tag of item.tags.slice(0,3)" class="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-600">
+
+            <span
+              *ngFor="let tag of item.tags.slice(0, 3)"
+              class="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-600"
+            >
               #{{ tag }}
             </span>
-            <span *ngIf="item.tags.length > 3" class="text-xs text-gray-400">+{{ item.tags.length - 3 }}</span>
-            <span class="text-xs text-gray-300 ml-auto">{{ formatDate(item.createdAt) }}</span>
+
+            <span *ngIf="item.tags.length > 3" class="text-xs text-gray-400">
+              +{{ item.tags.length - 3 }}
+            </span>
+            <span class="text-xs text-gray-300 ml-auto">{{
+              formatDate(item.createdAt)
+            }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div *ngIf="(store.totalPages$ | async) > 1" class="flex justify-center pt-4">
-      <button
-        *ngFor="let p of [].constructor(store.totalPages)"
-        (click)="onPageChange(p+1)"
-        [class.bg-blue-600]="(store.page$ | async) === p+1"
-        class="px-3 py-1 mx-1 border rounded"
-      >
-        {{ p+1 }}
-      </button>
+    <div
+      *ngIf="(totalPages$ | async) ?? 0 > 1"
+      class="flex justify-center pt-6 pb-10"
+    >
+      <div class="flex gap-1">
+        <button
+          *ngFor="let p of [].constructor(totalPages$ | async); let i = index"
+          (click)="onPageChange(i + 1)"
+          [class.bg-blue-600]="(page$ | async) === i + 1"
+          [class.text-white]="(page$ | async) === i + 1"
+          [class.bg-white]="(page$ | async) !== i + 1"
+          class="px-3 py-1 border rounded hover:bg-gray-50 transition"
+        >
+          {{ i + 1 }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

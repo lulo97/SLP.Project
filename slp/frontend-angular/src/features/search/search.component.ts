@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { AsyncPipe, NgFor, NgIf, DatePipe } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { Subscription, combineLatest, map } from "rxjs";
 import {
   SearchType,
@@ -10,8 +12,11 @@ import {
 
 @Component({
   selector: "app-search-page",
-  templateUrl: "./search-page.component.html",
+  templateUrl: "./search.component.html",
+  standalone: true,
+  imports: [AsyncPipe, NgFor, NgIf, FormsModule],
 })
+
 export class SearchPageComponent implements OnInit, OnDestroy {
   // Store observables used in template
   query$;
