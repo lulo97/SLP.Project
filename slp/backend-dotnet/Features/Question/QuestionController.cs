@@ -41,7 +41,6 @@ public class QuestionController : ControllerBase
     [FromQuery] string? search,
     [FromQuery] string? type,
     [FromQuery] List<string>? tags,
-    [FromQuery] bool? mine,
     [FromQuery] int page = 1,
     [FromQuery] int pageSize = 20)
     {
@@ -55,7 +54,7 @@ public class QuestionController : ControllerBase
             SearchTerm = search,
             Type = type,
             Tags = tags,
-            UserId = mine == true ? CurrentUserId : null
+            UserId = CurrentUserId //Questions is private by default
         };
 
         var results = await _questionService.SearchQuestionsAsync(searchDto, page, pageSize);
