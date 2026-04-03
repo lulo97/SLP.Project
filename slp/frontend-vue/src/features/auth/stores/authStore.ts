@@ -136,8 +136,20 @@ export const useAuthStore = defineStore("auth", {
           ...raw,
           avatarUrl: buildAvatarUrl(raw.avatarFilename),
         };
-      } catch (error) {
+      } catch (error: any) {
+        // ← type as any
         console.error("Failed to fetch user:", error);
+        // If the token is invalid/expired, clear it from the store so that
+        // isAuthenticated becomes false immediately. Without this, the axios
+        // interceptor removes the token from localStorage but the Pinia
+        // reactive state still holds the old value, causing the router guard
+        // to keep redirecting /login → /dashboard → /login in an infinite loop.
+        if (error.response?.status === 401) {
+          this.sessionToken = null;
+          this.user = null;
+          localStorage.removeItem("session_token");
+          localStorage.removeItem("user_id");
+        }
       }
     },
 

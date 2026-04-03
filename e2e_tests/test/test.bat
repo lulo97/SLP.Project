@@ -1,1 +1,1 @@
-npx playwright test change-password-new-password-null.spec --headed
+npx playwright test search-question.spec --headed
