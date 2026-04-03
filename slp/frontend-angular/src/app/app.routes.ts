@@ -252,6 +252,14 @@ export const routes: Routes = [
         canActivate: [AdminGuard],
         data: { breadcrumb: "API Metrics" },
       },
+      {
+        path: "search",
+        loadComponent: () =>
+          import("../features/search/search.component").then(
+            (m) => m.SearchPageComponent,
+          ),
+        data: { breadcrumb: "Search" },
+      },
     ],
   },
   {

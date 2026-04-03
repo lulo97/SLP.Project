@@ -1,46 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-
-// Internal row interfaces (matching SQL column aliases)
-interface QuizSearchRow {
-  id: number;
-  title: string;
-  visibility: string;
-  createdAt: Date;
-  rank: number;
-  snippet: string | null;
-  totalCount: number;
-}
-
-interface QuestionSearchRow {
-  id: number;
-  title: string;
-  subType: string;
-  createdAt: Date;
-  rank: number;
-  snippet: string | null;
-  totalCount: number;
-}
-
-interface SourceSearchRow {
-  id: number;
-  title: string;
-  subType: string;
-  createdAt: Date;
-  rank: number;
-  snippet: string | null;
-  totalCount: number;
-}
-
-interface FavoriteSearchRow {
-  id: number;
-  title: string;
-  subType: string;
-  createdAt: Date;
-  rank: number;
-  snippet: string | null;
-  totalCount: number;
-}
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, ILike, In } from "typeorm";
+import { Quiz } from "../quiz/quiz.entity";
+import { Question } from "../question/question.entity";
+import { Source } from "../source/source.entity";
+import { FavoriteItem } from "../favorite/favorite-item.entity";
+import { QuizTag } from "../quiz/quiz-tag.entity";
+import { QuestionTag } from "../question/question-tag.entity";
 
 export interface SearchParams {
   q: string;
@@ -53,21 +19,31 @@ export interface SearchParams {
 
 @Injectable()
 export class SearchService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Quiz)
+    private quizRepo: Repository<Quiz>,
+    @InjectRepository(Question)
+    private questionRepo: Repository<Question>,
+    @InjectRepository(Source)
+    private sourceRepo: Repository<Source>,
+    @InjectRepository(FavoriteItem)
+    private favoriteRepo: Repository<FavoriteItem>,
+    @InjectRepository(QuizTag)
+    private quizTagRepo: Repository<QuizTag>,
+    @InjectRepository(QuestionTag)
+    private questionTagRepo: Repository<QuestionTag>,
+  ) {}
 
   async search(params: SearchParams): Promise<any> {
     const { q, type, page, pageSize, offset, userId } = params;
-
-    // Single-type search
-    if (type !== 'all') {
+    if (type !== "all") {
       return this.searchSingleType(q, userId, page, pageSize, offset, type);
     }
-    // "all" mode: fetch up to pageSize from each category, merge by rank
     return this.searchAll(q, userId, pageSize);
   }
 
   // -------------------------------------------------------------------------
-  // Single type with proper pagination
+  // Single type with proper pagination (same as .NET)
   // -------------------------------------------------------------------------
   private async searchSingleType(
     q: string,
@@ -76,27 +52,32 @@ export class SearchService {
     pageSize: number,
     offset: number,
     type: string,
-  ): Promise<any> {
+  ) {
     let items: any[] = [];
     let totalCount = 0;
 
     switch (type) {
-      case 'quiz':
+      case "quiz":
         const quizRes = await this.searchQuizzes(q, userId, offset, pageSize);
         items = quizRes.items;
         totalCount = quizRes.totalCount;
         break;
-      case 'question':
-        const questionRes = await this.searchQuestions(q, userId, offset, pageSize);
+      case "question":
+        const questionRes = await this.searchQuestions(
+          q,
+          userId,
+          offset,
+          pageSize,
+        );
         items = questionRes.items;
         totalCount = questionRes.totalCount;
         break;
-      case 'source':
+      case "source":
         const sourceRes = await this.searchSources(q, userId, offset, pageSize);
         items = sourceRes.items;
         totalCount = sourceRes.totalCount;
         break;
-      case 'favorite':
+      case "favorite":
         const favRes = await this.searchFavorites(q, userId, offset, pageSize);
         items = favRes.items;
         totalCount = favRes.totalCount;
@@ -115,30 +96,39 @@ export class SearchService {
   }
 
   // -------------------------------------------------------------------------
-  // "all" mode: fetch top pageSize from each category, merge, return counts
+  // "all" mode: fetch up to pageSize from each category, merge by created_at DESC
   // -------------------------------------------------------------------------
-  private async searchAll(q: string, userId: number, pageSize: number): Promise<any> {
-    // Run sequentially (DbContext not thread-safe, but DataSource is fine concurrently?
-    // To mimic .NET behaviour we run sequentially)
+  private async searchAll(q: string, userId: number, pageSize: number) {
     const quizzes = await this.searchQuizzes(q, userId, 0, pageSize);
     const questions = await this.searchQuestions(q, userId, 0, pageSize);
     const sources = await this.searchSources(q, userId, 0, pageSize);
     const favorites = await this.searchFavorites(q, userId, 0, pageSize);
 
-    const merged = [...quizzes.items, ...questions.items, ...sources.items, ...favorites.items]
-      .sort((a, b) => b.rank - a.rank)
+    const merged = [
+      ...quizzes.items,
+      ...questions.items,
+      ...sources.items,
+      ...favorites.items,
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
       .slice(0, pageSize);
 
     const totalCount =
-      quizzes.totalCount + questions.totalCount + sources.totalCount + favorites.totalCount;
+      quizzes.totalCount +
+      questions.totalCount +
+      sources.totalCount +
+      favorites.totalCount;
 
     return {
       query: q,
-      type: 'all',
+      type: "all",
       page: 1,
       pageSize,
       totalCount,
-      totalPages: 1, // as per .NET spec
+      totalPages: 1,
       results: merged,
       categoryCounts: {
         quizzes: quizzes.totalCount,
@@ -150,165 +140,105 @@ export class SearchService {
   }
 
   // -------------------------------------------------------------------------
-  // Quiz search (public + user's private, disabled = false)
+  // Quiz search – identical to .NET: public + user's own, ILIKE on title
   // -------------------------------------------------------------------------
   private async searchQuizzes(
     q: string,
     userId: number,
     offset: number,
     limit: number,
-  ): Promise<{ items: any[]; totalCount: number }> {
-    const sql = `
-      SELECT
-        q.id AS "id",
-        q.title AS "title",
-        q.visibility AS "visibility",
-        q.created_at AS "createdAt",
-        ts_rank(
-          to_tsvector('english', q.title || ' ' || COALESCE(q.description, '')),
-          plainto_tsquery('english', $1)
-        ) AS "rank",
-        ts_headline(
-          'english',
-          COALESCE(q.description, q.title),
-          plainto_tsquery('english', $1),
-          'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-        ) AS "snippet",
-        COUNT(*) OVER()::int AS "totalCount"
-      FROM quiz q
-      WHERE q.disabled = false
-        AND (q.visibility = 'public' OR q.user_id = $2)
-        AND (
-          to_tsvector('english', q.title || ' ' || COALESCE(q.description, ''))
-            @@ plainto_tsquery('english', $1)
-          OR EXISTS (
-            SELECT 1
-            FROM quiz_tag qt
-            JOIN tag t ON t.id = qt.tag_id
-            WHERE qt.quiz_id = q.id
-              AND t.name ILIKE '%' || $1 || '%'
-          )
-        )
-      ORDER BY "rank" DESC, q.created_at DESC
-      LIMIT $3 OFFSET $4
-    `;
+  ) {
+    const pattern = `%${q}%`;
+    const queryBuilder = this.quizRepo
+      .createQueryBuilder("quiz")
+      .where("quiz.disabled = false")
+      .andWhere("(quiz.visibility = :public OR quiz.userId = :userId)", {
+        public: "public",
+        userId,
+      })
+      .andWhere("quiz.title ILIKE :pattern", { pattern })
+      .orderBy("quiz.createdAt", "DESC")
+      .skip(offset)
+      .take(limit);
 
-    const rows: QuizSearchRow[] = await this.dataSource.query(sql, [q, userId, limit, offset]);
-    if (rows.length === 0) {
-      return { items: [], totalCount: 0 };
-    }
+    const [quizzes, totalCount] = await queryBuilder.getManyAndCount();
 
-    const totalCount = rows[0].totalCount;
-    const quizIds = rows.map(r => r.id);
+    if (quizzes.length === 0) return { items: [], totalCount };
 
-    // Batch load tags
-    const tagRows = await this.dataSource.query(
-      `
-      SELECT qt.quiz_id AS "quizId", t.name AS "name"
-      FROM quiz_tag qt
-      JOIN tag t ON t.id = qt.tag_id
-      WHERE qt.quiz_id = ANY($1)
-      `,
-      [quizIds],
-    );
+    const quizIds = quizzes.map((q) => q.id);
+    const quizTags = await this.quizTagRepo.find({
+      where: { quizId: In(quizIds) },
+      relations: ["tag"],
+    });
     const tagMap = new Map<number, string[]>();
-    for (const row of tagRows) {
-      const quizId = row.quizId;
-      if (!tagMap.has(quizId)) tagMap.set(quizId, []);
-      tagMap.get(quizId)!.push(row.name);
+    for (const qt of quizTags) {
+      if (!tagMap.has(qt.quizId)) tagMap.set(qt.quizId, []);
+      tagMap.get(qt.quizId)!.push(qt.tag.name);
     }
 
-    const items = rows.map(row => ({
-      resultType: 'quiz',
-      id: row.id,
-      title: row.title,
-      snippet: row.snippet,
-      rank: row.rank,
-      tags: tagMap.get(row.id) || [],
-      createdAt: row.createdAt,
+    const items = quizzes.map((quiz) => ({
+      resultType: "quiz",
+      id: quiz.id,
+      title: quiz.title,
+      snippet:
+        quiz.title.length > 200
+          ? quiz.title.substring(0, 200) + "..."
+          : quiz.title,
+      rank: 1.0,
+      tags: tagMap.get(quiz.id) || [],
+      createdAt: quiz.createdAt,
       subType: null,
-      visibility: row.visibility,
+      visibility: quiz.visibility,
     }));
 
     return { items, totalCount };
   }
 
   // -------------------------------------------------------------------------
-  // Question search (user's own only)
+  // Question search – user's own, ILIKE on content
   // -------------------------------------------------------------------------
   private async searchQuestions(
     q: string,
     userId: number,
     offset: number,
     limit: number,
-  ): Promise<{ items: any[]; totalCount: number }> {
-    const sql = `
-      SELECT
-        q.id AS "id",
-        LEFT(q.content, 120) AS "title",
-        q.type AS "subType",
-        q.created_at AS "createdAt",
-        ts_rank(
-          to_tsvector('english', q.content || ' ' || COALESCE(q.explanation, '')),
-          plainto_tsquery('english', $1)
-        ) AS "rank",
-        ts_headline(
-          'english',
-          q.content || ' ' || COALESCE(q.explanation, ''),
-          plainto_tsquery('english', $1),
-          'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-        ) AS "snippet",
-        COUNT(*) OVER()::int AS "totalCount"
-      FROM question q
-      WHERE q.user_id = $2
-        AND (
-          to_tsvector('english', q.content || ' ' || COALESCE(q.explanation, ''))
-            @@ plainto_tsquery('english', $1)
-          OR EXISTS (
-            SELECT 1
-            FROM question_tag qt
-            JOIN tag t ON t.id = qt.tag_id
-            WHERE qt.question_id = q.id
-              AND t.name ILIKE '%' || $1 || '%'
-          )
-        )
-      ORDER BY "rank" DESC, q.created_at DESC
-      LIMIT $3 OFFSET $4
-    `;
+  ) {
+    const pattern = `%${q}%`;
+    const queryBuilder = this.questionRepo
+      .createQueryBuilder("question")
+      .where("question.userId = :userId", { userId })
+      .andWhere("question.content ILIKE :pattern", { pattern })
+      .orderBy("question.createdAt", "DESC")
+      .skip(offset)
+      .take(limit);
 
-    const rows: QuestionSearchRow[] = await this.dataSource.query(sql, [q, userId, limit, offset]);
-    if (rows.length === 0) {
-      return { items: [], totalCount: 0 };
-    }
+    const [questions, totalCount] = await queryBuilder.getManyAndCount();
 
-    const totalCount = rows[0].totalCount;
-    const questionIds = rows.map(r => r.id);
+    if (questions.length === 0) return { items: [], totalCount };
 
-    const tagRows = await this.dataSource.query(
-      `
-      SELECT qt.question_id AS "questionId", t.name AS "name"
-      FROM question_tag qt
-      JOIN tag t ON t.id = qt.tag_id
-      WHERE qt.question_id = ANY($1)
-      `,
-      [questionIds],
-    );
+    const questionIds = questions.map((q) => q.id);
+    const questionTags = await this.questionTagRepo.find({
+      where: { questionId: In(questionIds) },
+      relations: ["tag"],
+    });
     const tagMap = new Map<number, string[]>();
-    for (const row of tagRows) {
-      const qId = row.questionId;
-      if (!tagMap.has(qId)) tagMap.set(qId, []);
-      tagMap.get(qId)!.push(row.name);
+    for (const qt of questionTags) {
+      if (!tagMap.has(qt.questionId)) tagMap.set(qt.questionId, []);
+      tagMap.get(qt.questionId)!.push(qt.tag.name);
     }
 
-    const items = rows.map(row => ({
-      resultType: 'question',
-      id: row.id,
-      title: row.title,
-      snippet: row.snippet,
-      rank: row.rank,
-      tags: tagMap.get(row.id) || [],
-      createdAt: row.createdAt,
-      subType: row.subType,
+    const items = questions.map((q) => ({
+      resultType: "question",
+      id: q.id,
+      title: q.content.length > 120 ? q.content.substring(0, 120) : q.content,
+      snippet:
+        q.content.length > 200
+          ? q.content.substring(0, 200) + "..."
+          : q.content,
+      rank: 1.0,
+      tags: tagMap.get(q.id) || [],
+      createdAt: q.createdAt,
+      subType: q.type,
       visibility: null,
     }));
 
@@ -316,55 +246,35 @@ export class SearchService {
   }
 
   // -------------------------------------------------------------------------
-  // Source search (user's own, not deleted)
+  // Source search – user's own, not deleted, ILIKE on title
   // -------------------------------------------------------------------------
   private async searchSources(
     q: string,
     userId: number,
     offset: number,
     limit: number,
-  ): Promise<{ items: any[]; totalCount: number }> {
-    const sql = `
-      SELECT
-        s.id AS "id",
-        s.title AS "title",
-        s.type AS "subType",
-        s.created_at AS "createdAt",
-        ts_rank(
-          to_tsvector('english', s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), '')),
-          plainto_tsquery('english', $1)
-        ) AS "rank",
-        ts_headline(
-          'english',
-          s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), ''),
-          plainto_tsquery('english', $1),
-          'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-        ) AS "snippet",
-        COUNT(*) OVER()::int AS "totalCount"
-      FROM source s
-      WHERE s.user_id = $2
-        AND s.deleted_at IS NULL
-        AND to_tsvector('english', s.title || ' ' || COALESCE(LEFT(s.raw_text, 2000), ''))
-            @@ plainto_tsquery('english', $1)
-      ORDER BY "rank" DESC, s.created_at DESC
-      LIMIT $3 OFFSET $4
-    `;
+  ) {
+    const pattern = `%${q}%`;
+    const [sources, totalCount] = await this.sourceRepo
+      .createQueryBuilder("source")
+      .where("source.userId = :userId", { userId })
+      .andWhere("source.deletedAt IS NULL")
+      .andWhere("source.title ILIKE :pattern", { pattern })
+      .orderBy("source.createdAt", "DESC")
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
 
-    const rows: SourceSearchRow[] = await this.dataSource.query(sql, [q, userId, limit, offset]);
-    if (rows.length === 0) {
-      return { items: [], totalCount: 0 };
-    }
-
-    const totalCount = rows[0].totalCount;
-    const items = rows.map(row => ({
-      resultType: 'source',
-      id: row.id,
-      title: row.title,
-      snippet: row.snippet,
-      rank: row.rank,
+    const items = sources.map((s) => ({
+      resultType: "source",
+      id: s.id,
+      title: s.title,
+      snippet:
+        s.title.length > 200 ? s.title.substring(0, 200) + "..." : s.title,
+      rank: 1.0,
       tags: [],
-      createdAt: row.createdAt,
-      subType: row.subType,
+      createdAt: s.createdAt,
+      subType: s.type,
       visibility: null,
     }));
 
@@ -372,54 +282,33 @@ export class SearchService {
   }
 
   // -------------------------------------------------------------------------
-  // Favorite search (user's own)
+  // Favorite search – user's own, ILIKE on text
   // -------------------------------------------------------------------------
   private async searchFavorites(
     q: string,
     userId: number,
     offset: number,
     limit: number,
-  ): Promise<{ items: any[]; totalCount: number }> {
-    const sql = `
-      SELECT
-        fi.id AS "id",
-        fi.text AS "title",
-        fi.type AS "subType",
-        fi.created_at AS "createdAt",
-        ts_rank(
-          to_tsvector('english', fi.text || ' ' || COALESCE(fi.note, '')),
-          plainto_tsquery('english', $1)
-        ) AS "rank",
-        ts_headline(
-          'english',
-          fi.text || ' ' || COALESCE(fi.note, ''),
-          plainto_tsquery('english', $1),
-          'MaxWords=20,MinWords=5,StartSel=<mark>,StopSel=</mark>'
-        ) AS "snippet",
-        COUNT(*) OVER()::int AS "totalCount"
-      FROM favorite_item fi
-      WHERE fi.user_id = $2
-        AND to_tsvector('english', fi.text || ' ' || COALESCE(fi.note, ''))
-            @@ plainto_tsquery('english', $1)
-      ORDER BY "rank" DESC, fi.created_at DESC
-      LIMIT $3 OFFSET $4
-    `;
+  ) {
+    const pattern = `%${q}%`;
+    const [favorites, totalCount] = await this.favoriteRepo
+      .createQueryBuilder("fav")
+      .where("fav.userId = :userId", { userId })
+      .andWhere("fav.text ILIKE :pattern", { pattern })
+      .orderBy("fav.createdAt", "DESC")
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
 
-    const rows: FavoriteSearchRow[] = await this.dataSource.query(sql, [q, userId, limit, offset]);
-    if (rows.length === 0) {
-      return { items: [], totalCount: 0 };
-    }
-
-    const totalCount = rows[0].totalCount;
-    const items = rows.map(row => ({
-      resultType: 'favorite',
-      id: row.id,
-      title: row.title,
-      snippet: row.snippet,
-      rank: row.rank,
+    const items = favorites.map((f) => ({
+      resultType: "favorite",
+      id: f.id,
+      title: f.text,
+      snippet: f.text.length > 200 ? f.text.substring(0, 200) + "..." : f.text,
+      rank: 1.0,
       tags: [],
-      createdAt: row.createdAt,
-      subType: row.subType,
+      createdAt: f.createdAt,
+      subType: f.type,
       visibility: null,
     }));
 

@@ -2,7 +2,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3009';
 
 test.describe('Quiz comment and delete flow', () => {
   test('should create empty quiz, add a comment, and delete it', async ({ page }) => {

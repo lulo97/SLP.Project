@@ -1,7 +1,7 @@
 import { Page, Locator, expect, request } from "@playwright/test";
 
-const FRONTEND_URL = "http://localhost:4000";
-const BACKEND_URL = "http://localhost:5140";
+const FRONTEND_URL = "http://localhost:3009";
+const BACKEND_URL = "http://localhost:3008";
 
 // ----------------------------------------------------------------------
 // API Helpers
