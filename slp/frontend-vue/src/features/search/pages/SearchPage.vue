@@ -454,7 +454,7 @@ function navigateTo(item: SearchResultItem) {
       router.push(`/source/${item.id}`);
       break;
     case "favorite":
-      router.push("/favorites");
+      router.push(`/favourites/${item.id}`);
       break;
   }
 }
