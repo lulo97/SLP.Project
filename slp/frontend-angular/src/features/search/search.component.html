@@ -1,178 +1,259 @@
-<div class="max-w-2xl mx-auto p-4">
-  <div class="mb-4 flex gap-2">
-    <input
-      type="text"
-      [ngModel]="query$ | async"
-      (ngModelChange)="store.setQuery($event)"
-      placeholder="Search quizzes, questions, sources, favorites…"
-      class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      (keyup.enter)="onSearch()"
-    />
-    <button
-      (click)="onSearch()"
-      [disabled]="loading$ | async"
-      class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300"
-    >
-      Search
-    </button>
-  </div>
-
-  <div class="mb-4 overflow-x-auto">
-    <div class="flex gap-2">
+<div class="max-w-2xl mx-auto p-4" data-testid="search-page-layout">
+  <div class="max-w-2xl mx-auto" data-testid="search-content-container">
+    <div class="mb-4 flex gap-2" data-testid="search-input-container">
+      <input
+        type="text"
+        [ngModel]="query$ | async"
+        (ngModelChange)="store.setQuery($event)"
+        placeholder="Search quizzes, questions, sources, favorites…"
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+        (keyup.enter)="onSearch()"
+        data-testid="search-input"
+      />
       <button
-        *ngFor="let tab of tabs"
-        (click)="onTypeChange(tab.type)"
-        [class.bg-blue-600]="(activeType$ | async) === tab.type"
-        [class.text-white]="(activeType$ | async) === tab.type"
-        [class.bg-white]="(activeType$ | async) !== tab.type"
-        class="px-3 py-1.5 rounded-full text-sm font-medium border whitespace-nowrap"
+        (click)="onSearch()"
+        [disabled]="loading$ | async"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300"
       >
-        {{ tab.label }}
-        <span
-          *ngIf="(hasSearched$ | async) && getTabCount(tab.type) !== null"
-          class="ml-1 text-xs px-1.5 py-0.5 rounded-full"
-          [class.bg-blue-500]="(activeType$ | async) === tab.type"
-          [class.bg-gray-100]="(activeType$ | async) !== tab.type"
-        >
-          {{ getTabCount(tab.type) }}
-        </span>
+        Search
       </button>
     </div>
-  </div>
 
-  <div
-    *ngIf="error$ | async as error"
-    class="mb-4 p-3 bg-red-100 text-red-700 rounded"
-  >
-    {{ error }}
-  </div>
-
-  <div
-    *ngIf="!(hasSearched$ | async) && !(loading$ | async)"
-    class="py-20 text-center"
-  >
-    <div
-      class="w-16 h-16 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-2xl"
-    >
-      🔍
-    </div>
-    <p class="mt-4 text-gray-500">
-      Search across your quizzes, questions, sources and favorites.
-    </p>
-  </div>
-
-  <div *ngIf="loading$ | async" class="space-y-3">
-    <div
-      *ngFor="let i of [1, 2, 3, 4, 5]"
-      class="bg-white border rounded-xl p-4 animate-pulse"
-    >
-      <div class="flex gap-3">
-        <div class="w-8 h-8 bg-gray-100 rounded"></div>
-        <div class="flex-1 space-y-2">
-          <div class="h-4 bg-gray-100 rounded w-3/4"></div>
-          <div class="h-3 bg-gray-100 rounded w-full"></div>
-        </div>
+    <div class="mb-4 overflow-x-auto" data-testid="search-tabs-container">
+      <div class="flex gap-2" data-testid="search-tabs-list">
+        <button
+          *ngFor="let tab of tabs"
+          (click)="onTypeChange(tab.type)"
+          [attr.data-testid]="'search-tab-' + tab.type"
+          [class.bg-blue-600]="(activeType$ | async) === tab.type"
+          [class.text-white]="(activeType$ | async) === tab.type"
+          [class.bg-white]="(activeType$ | async) !== tab.type"
+          class="px-3 py-1.5 rounded-full text-sm font-medium border whitespace-nowrap"
+        >
+          <span class="mr-1" data-testid="search-tab-icon"></span>
+          {{ tab.label }}
+          <span
+            *ngIf="(hasSearched$ | async) && getTabCount(tab.type) !== null"
+            data-testid="tab-count-badge"
+            class="ml-1 text-xs px-1.5 py-0.5 rounded-full"
+            [class.bg-blue-500]="(activeType$ | async) === tab.type"
+            [class.bg-gray-100]="(activeType$ | async) !== tab.type"
+          >
+            {{ getTabCount(tab.type) }}
+          </span>
+        </button>
       </div>
     </div>
-  </div>
 
-  <div
-    *ngIf="
-      (hasSearched$ | async) && !(hasResults$ | async) && !(loading$ | async)
-    "
-    class="py-16 text-center"
-  >
     <div
-      class="w-16 h-16 bg-gray-50 rounded-full mx-auto flex items-center justify-center text-2xl"
+      *ngIf="error$ | async as error"
+      data-testid="search-error-alert"
+      class="mb-4 p-3 bg-red-100 text-red-700 rounded"
     >
-      ❌
+      {{ error }}
     </div>
-    <p class="mt-4 font-medium text-gray-700">No results found</p>
-    <p class="text-sm text-gray-400">
-      Try different keywords or switch to a different category.
-    </p>
-  </div>
-
-  <div *ngIf="(hasResults$ | async) && !(loading$ | async)" class="space-y-2">
-    <p class="text-xs text-gray-400 mb-4">
-      {{ totalCount$ | async }} result{{
-        (totalCount$ | async) !== 1 ? "s" : ""
-      }}
-      for <span class="font-medium">"{{ lastQuery$ | async }}"</span>
-    </p>
 
     <div
-      *ngFor="let item of results$ | async"
-      (click)="navigateTo(item)"
-      class="bg-white border rounded-xl p-4 cursor-pointer hover:shadow-md transition group"
+      *ngIf="!(hasSearched$ | async) && !(loading$ | async)"
+      data-testid="search-initial-state"
+      class="py-20 text-center"
     >
-      <div class="flex gap-3">
-        <div
-          [class]="
-            item.resultType !== 'all'
-              ? typeConfig[item.resultType].bg
-              : 'bg-gray-100'
-          "
-          class="w-9 h-9 rounded-lg flex items-center justify-center"
-        >
-          📄
-        </div>
-        <div class="flex-1">
+      <div
+        data-testid="initial-state-icon-wrapper"
+        class="w-16 h-16 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-2xl"
+      >
+        <span data-testid="initial-state-icon">🔍</span>
+      </div>
+      <p class="mt-4 text-gray-500" data-testid="initial-state-text">
+        Search across your quizzes, questions, sources and favorites.
+      </p>
+    </div>
+
+    <div
+      *ngIf="loading$ | async"
+      class="space-y-3"
+      data-testid="search-loading-skeleton"
+    >
+      <div
+        *ngFor="let i of [1, 2, 3, 4, 5]"
+        [attr.data-testid]="'loading-skeleton-item-' + i"
+        class="bg-white border rounded-xl p-4 animate-pulse"
+      >
+        <div class="flex gap-3" data-testid="skeleton-layout">
           <div
-            class="font-medium text-gray-900 group-hover:text-blue-600"
-            [innerHTML]="item.title"
+            class="w-8 h-8 bg-gray-100 rounded"
+            data-testid="skeleton-avatar"
           ></div>
-          <div
-            *ngIf="item.snippet"
-            class="text-xs text-gray-500 mt-1"
-            [innerHTML]="item.snippet"
-          ></div>
-
-          <div class="flex flex-wrap gap-2 mt-2 items-center">
-            <span
-              [class]="
-                item.resultType !== 'all'
-                  ? typeConfig[item.resultType].pill
-                  : 'bg-gray-100 text-gray-600'
-              "
-              class="text-xs px-2 py-0.5 rounded-md"
-            >
-              {{ item.subType ?? item.resultType }}
-            </span>
-
-            <span
-              *ngFor="let tag of item.tags.slice(0, 3)"
-              class="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-600"
-            >
-              #{{ tag }}
-            </span>
-
-            <span *ngIf="item.tags.length > 3" class="text-xs text-gray-400">
-              +{{ item.tags.length - 3 }}
-            </span>
-            <span class="text-xs text-gray-300 ml-auto">{{
-              formatDate(item.createdAt)
-            }}</span>
+          <div class="flex-1 space-y-2" data-testid="skeleton-lines-container">
+            <div
+              class="h-4 bg-gray-100 rounded w-3/4"
+              data-testid="skeleton-line-1"
+            ></div>
+            <div
+              class="h-3 bg-gray-100 rounded w-full"
+              data-testid="skeleton-line-2"
+            ></div>
+            <div
+              class="h-3 bg-gray-100 rounded w-1/2"
+              data-testid="skeleton-line-3"
+            ></div>
           </div>
         </div>
       </div>
     </div>
 
     <div
-      *ngIf="(totalPages$ | async) ?? 0 > 1"
-      class="flex justify-center pt-6 pb-10"
+      *ngIf="
+        (hasSearched$ | async) && !(hasResults$ | async) && !(loading$ | async)
+      "
+      data-testid="search-no-results"
+      class="py-16 text-center"
     >
-      <div class="flex gap-1">
-        <button
-          *ngFor="let p of [].constructor(totalPages$ | async); let i = index"
-          (click)="onPageChange(i + 1)"
-          [class.bg-blue-600]="(page$ | async) === i + 1"
-          [class.text-white]="(page$ | async) === i + 1"
-          [class.bg-white]="(page$ | async) !== i + 1"
-          class="px-3 py-1 border rounded hover:bg-gray-50 transition"
+      <div
+        data-testid="no-results-icon-wrapper"
+        class="w-16 h-16 bg-gray-50 rounded-full mx-auto flex items-center justify-center text-2xl"
+      >
+        <span data-testid="no-results-icon">❌</span>
+      </div>
+      <p class="mt-4 font-medium text-gray-700" data-testid="no-results-title">
+        No results found
+      </p>
+      <p class="text-sm text-gray-400" data-testid="no-results-description">
+        Try different keywords or switch to a different category.
+      </p>
+    </div>
+
+    <div
+      *ngIf="(hasResults$ | async) && !(loading$ | async)"
+      class="space-y-2"
+      data-testid="search-results-list"
+    >
+      <p class="text-xs text-gray-400 mb-4" data-testid="search-results-count">
+        {{ totalCount$ | async }} result{{
+          (totalCount$ | async) !== 1 ? "s" : ""
+        }}
+        for
+        <span class="font-medium" data-testid="search-results-query"
+          >"{{ lastQuery$ | async }}"</span
         >
-          {{ i + 1 }}
-        </button>
+        <span
+          *ngIf="(activeType$ | async) !== 'all'"
+          data-testid="search-results-filter-type"
+        >
+          in {{ activeType$ | async }}s
+        </span>
+      </p>
+
+      <div
+        *ngFor="let item of results$ | async"
+        [attr.data-testid]="'search-result-item-' + item.id"
+        (click)="navigateTo(item)"
+        class="bg-white border rounded-xl p-4 cursor-pointer hover:shadow-md transition group"
+      >
+        <div class="flex gap-3" data-testid="result-item-layout">
+          <div
+            [attr.data-testid]="'result-item-icon-wrapper-' + item.resultType"
+            [class]="
+              item.resultType !== 'all'
+                ? typeConfig[item.resultType].bg
+                : 'bg-gray-100'
+            "
+            class="w-9 h-9 rounded-lg flex items-center justify-center"
+          >
+            <span data-testid="result-item-icon">📄</span>
+          </div>
+
+          <div class="flex-1" data-testid="result-item-content">
+            <div
+              class="flex items-start justify-between gap-2 mb-1"
+              data-testid="result-item-header"
+            >
+              <div
+                class="font-medium text-gray-900 group-hover:text-blue-600"
+                [innerHTML]="item.title"
+                data-testid="result-item-title"
+              ></div>
+              <span
+                *ngIf="item.resultType === 'quiz' && item.visibility"
+                [attr.data-testid]="'result-visibility-' + item.visibility"
+                [class]="
+                  item.visibility === 'public'
+                    ? 'bg-green-50 text-green-600'
+                    : 'bg-gray-100 text-gray-500'
+                "
+                class="shrink-0 text-xs px-2 py-0.5 rounded-full font-medium"
+              >
+                {{ item.visibility }}
+              </span>
+            </div>
+
+            <div
+              *ngIf="item.snippet"
+              class="text-xs text-gray-500 mt-1 mb-2"
+              [innerHTML]="item.snippet"
+              data-testid="result-item-snippet"
+            ></div>
+
+            <div
+              class="flex flex-wrap gap-2 mt-2 items-center"
+              data-testid="result-item-footer"
+            >
+              <span
+                data-testid="result-item-type-pill"
+                [class]="
+                  item.resultType !== 'all'
+                    ? typeConfig[item.resultType].pill
+                    : 'bg-gray-100 text-gray-600'
+                "
+                class="text-xs px-2 py-0.5 rounded-md"
+              >
+                {{ item.subType ?? item.resultType }}
+              </span>
+
+              <span
+                *ngFor="let tag of item.tags.slice(0, 3)"
+                [attr.data-testid]="'result-item-tag-' + tag"
+                class="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-600"
+              >
+                #{{ tag }}
+              </span>
+
+              <span
+                *ngIf="item.tags.length > 3"
+                class="text-xs text-gray-400"
+                data-testid="result-item-more-tags"
+              >
+                +{{ item.tags.length - 3 }}
+              </span>
+
+              <span
+                class="text-xs text-gray-300 ml-auto"
+                data-testid="result-item-date"
+              >
+                {{ formatDate(item.createdAt) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngIf="((totalPages$ | async) ?? 0) > 1"
+        data-testid="search-pagination-container"
+        class="flex justify-center pt-6 pb-10"
+      >
+        <div class="flex gap-1" data-testid="search-pagination">
+          <button
+            *ngFor="let p of [].constructor(totalPages$ | async); let i = index"
+            (click)="onPageChange(i + 1)"
+            [class.bg-blue-600]="(page$ | async) === i + 1"
+            [class.text-white]="(page$ | async) === i + 1"
+            [class.bg-white]="(page$ | async) !== i + 1"
+            class="px-3 py-1 border rounded hover:bg-gray-50 transition"
+          >
+            {{ i + 1 }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
