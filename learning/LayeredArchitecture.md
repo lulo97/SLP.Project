@@ -12,3 +12,12 @@ Repository = Mediates between the domain and data mapping layers using a collect
 
 Entity = An object defined primarily by its identity is called an ENTITY.
     + Source: Domain-Driven Design: Tackling Complexity in the Heart of Software
+
+My own understanding:
+- Controllers = Receive input from client, passing data to services
+- Services = Perform bussiness logic, calling methods of Repository
+    + Services require interface because a bussiness logic goal can be implement in many ways (switching detail implement is easily and objective)
+- Repository = Perform direct access to database
+    + Repository require interface because a storage can be implement with different databases (switching database is easily and objective) 
+- Entity = An unique entity exist in bussiness logic, mapping name with table/column names in database.
+    + Required in object relational model framework, if writing SQL directly then entity can be skipped.
