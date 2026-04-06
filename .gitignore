@@ -155,3 +155,64 @@ uploads
 appsettings.json
 
 books
+
+.gradle
+
+### JetBrains (IntelliJ IDEA) ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/resources/archetype-resources/google-services.json
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+### VS Code ###
+.vscode/
+
+### Build Tools (Maven) ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### Build Tools (Gradle) ###
+.gradle/
+build/
+!**/src/main/resources/archetype-resources/gradle/wrapper/gradle-wrapper.jar
+!**/src/test/resources/archetype-resources/gradle/wrapper/gradle-wrapper.jar
+
+### Logs and Temp Files ###
+*.log
+logs/
+temp/
+tmp/
+
+### OS Specific ###
+.DS_Store
+Thumbs.db
+
+### Sensitive Data (CRITICAL) ###
+# Never commit your credentials or environment-specific configs
+.env
+.env.local
+*.jks
+*.p12
+*.pem
+
+### Documentation / Help ###
+.helphtml/
